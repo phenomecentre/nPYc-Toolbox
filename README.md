@@ -4,7 +4,7 @@
 
 A Python implementation of the [NPC](http://phenomecentre.org) toolchain for import, quality-control, and preprocessing of metabolic profiling datasets.
 
-* Version 1.0.0
+* Version 1.0.1a
 
 
 ## Source control 
@@ -42,7 +42,7 @@ To clear the current documentation in order to rebuild after making changes, run
 
 ### Testing
 
-Unit testing is managed *via* the [`unittest` framework](https://docs.python.org/3.5/library/unittest.html).
+Unit testing is managed *via* the [`unittest` framework](https://docs.python.org/3.5/library/unittest.html). Test coverage can be found on [codecov.io](https://codecov.io/gh/phenomecentre/nPYc-Toolbox/).
 
 To run all tests, cd into the `Tests` directory and run:
 
