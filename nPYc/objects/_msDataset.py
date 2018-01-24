@@ -952,7 +952,7 @@ class MSDataset(Dataset):
 		from distutils.dir_util import copy_tree
 		#import re
 
-		#copy the blank ISATAB to destinationPath so we can populate it
+		#copy the blank ISATAB to destinationPath so that we can populate it
 		copy_tree(os.path.join(toolboxPath(),'StudyDesigns','BlankISATAB','blank-ms'), destinationPath)
 
 		sampleMetadata = self.sampleMetadata.copy(deep=True)
