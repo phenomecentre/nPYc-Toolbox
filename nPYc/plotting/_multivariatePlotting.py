@@ -352,7 +352,7 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
 		palette['SP'] = sTypeColourDict[SampleType.StudyPool]
 	if any(sampleType == 'External Reference'):
 		ax.scatter(runOrder[sampleType.values == 'External Reference'], values[sampleType.values == 'External Reference'], c=sTypeColourDict[SampleType.ExternalReference], label='External Reference')
-		sampleMasks.append(('ER', sampleType.values=='Study Reference'))
+		sampleMasks.append(('ER', sampleType.values=='External Reference'))
 		palette['ER'] = sTypeColourDict[SampleType.ExternalReference]
 	if any(sampleType == 'Sample'):
 		ax.scatter(runOrder[sampleType.values == 'Sample'], values[sampleType.values == 'Sample'], c=sTypeColourDict['Other'], label='Sample')
