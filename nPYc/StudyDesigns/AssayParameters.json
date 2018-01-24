@@ -1,0 +1,83 @@
+{
+    "PCSOP.011": {
+        "jresgpprqf": [
+            {"param":"D 1","control": "==", "value": 2.0},
+            {"param":"D 16","control": "==", "value": 0.0002},
+            {"param":"DS","control": "==", "value": 16},
+            {"param":"GPNAM1","control": "==", "value": "SMSQ10.100"},
+            {"param":"GPNAM2","control": "==", "value": "SMSQ10.100"},
+            {"param":"GPZ 1","control": "==", "value": 10.0},
+            {"param":"GPZ 2","control": "==", "value": 10.0},
+            {"param":"NS","control": "==", "value": 2},
+            {"param":"P 16","control": "==", "value": 1000.0},
+            {"param":"PULPROG","control": "==", "value": "jresgpprqf"},
+            {"param":"RG","control": "==", "value": 90.5},
+            {"param":"SWH","control": "==", "value": 78.0},
+            {"param":"TD","control": "==", "value": 40}
+        ],
+        "noesygppr1d": [
+            {"param":"D 1","control": "==", "value": 4.0},
+            {"param":"D 16","control": "==", "value": 0.0002},
+            {"param":"D 8","control": "==", "value": 0.01},
+            {"param":"DIGMOD","control": "==", "value": 3},
+            {"param":"DS","control": "==", "value": 4},
+            {"param":"GPNAM1","control": "==", "value": "SMSQ10.100"},
+            {"param":"GPNAM2","control": "==", "value": "SMSQ10.100"},
+            {"param":"GPZ 1","control": "==", "value": 50.0},
+            {"param":"GPZ 2","control": "==", "value": -10.0},
+            {"param":"NS","control": "==", "value": 32},
+            {"param":"P 16","control": "==", "value": 1000.0},
+            {"param":"PULPROG","control": "==", "value": "noesygppr1d"},
+            {"param":"RG","control": "==", "value": 90.5},
+            {"param":"SWH","control": "==", "value": 12019.23},
+            {"param":"TD","control": "==", "value": 65536},
+            {"param":"ZGOPTNS","control": "==", "value": "-DFLAG_BLK"}
+        ]
+    },
+    "PCSOP.012": {
+        "cpmgpr1d": [
+            {"param":"D 1","control": "==", "value": 4.0},
+            {"param":"D 20","control": "==", "value": 0.0003},
+            {"param":"DIGMOD","control": "==", "value": 3},
+            {"param":"DS","control": "==", "value": 4},
+            {"param":"L 4","control": "==", "value": 128},
+            {"param":"NS","control": "==", "value": 32},
+            {"param":"PULPROG","control": "==", "value": "cpmgpr1d"},
+            {"param":"RG","control": "==", "value": 90.5},
+            {"param":"SWH","control": "==", "value": 12019.23},
+            {"param":"TD","control": "==", "value": 73728}
+        ],
+        "jresgpprqf": [
+            {"param":"D 1","control": "==", "value": 2.0},
+            {"param":"D 16","control": "==", "value": 0.0002},
+            {"param":"DS","control": "==", "value": 16},
+            {"param":"GPNAM1","control": "==", "value": "SMSQ10.100"},
+            {"param":"GPNAM2","control": "==", "value": "SMSQ10.100"},
+            {"param":"GPZ 1","control": "==", "value": 10.0},
+            {"param":"GPZ 2","control": "==", "value": 10.0},
+            {"param":"NS","control": "==", "value": 2},
+            {"param":"P 16","control": "==", "value": 1000.0},
+            {"param":"PULPROG","control": "==", "value": "jresgpprqf"},
+            {"param":"RG","control": "==", "value": 90.5},
+            {"param":"SWH","control": "==", "value": 78.0},
+            {"param":"TD","control": "==", "value": 40}
+        ],
+        "noesygppr1d": [
+            {"param":"D 1","control": "==", "value": 4.0},
+            {"param":"D 20","control": "==", "value": 0.0003},
+            {"param":"DIGMOD","control": "==", "value": 3},
+            {"param":"DS","control": "==", "value": 4},
+            {"param":"GPNAM1","control": "==", "value": "SMSQ10.100"},
+            {"param":"GPNAM2","control": "==", "value": "SMSQ10.100"},
+            {"param":"GPZ 1","control": "==", "value": 50.0},
+            {"param":"GPZ 2","control": "==", "value": -10.0},
+            {"param":"L 4","control": "==", "value": 128},
+            {"param":"NS","control": "==", "value": 32},
+            {"param":"PULPROG","control": "==", "value": "noesygppr1d"},
+            {"param":"RG","control": "==", "value": 90.5},
+            {"param":"SWH","control": "==", "value": 12019.23},
+            {"param":"TD","control": "==", "value": 73728},
+            {"param":"ZGOPTNS","control": "==", "value": "-DFLAG_BLK"}
+        ]
+    }
+}

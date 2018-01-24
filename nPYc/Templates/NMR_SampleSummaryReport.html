@@ -1,0 +1,59 @@
+{% extends "base_QC.html" %}
+
+{% block title %}NPC Sample Summary Report For: {{ item.Name}}{% endblock %}
+
+{% block content %}
+
+<!--Summary of samples acquired________________________________________________________________________________________________________________-->
+<h2>Summary of Samples Acquired</h2>
+
+{{ item['Acquired'].to_html() }}
+
+{% if 'Undefined Details' in item %}
+	<h3>Details of Samples of Unknown Type</h3>
+	{{ item['Undefined Details'].to_html() }}
+{% endif %}	
+
+{% if 'NoParam Details' in item %}
+	<h3>Details of Samples Missing Parameters</h3>
+	{{ item['NoParam Details'].to_html() }}
+{% endif %}	
+
+{% if 'Excluded Details' in item %}
+	<h3>Excluded Samples</h3><!--done based on marking samples with _x as per MS data-->
+	{{ item['Excluded Details'].to_html() }}
+{% endif %}	
+
+{% if 'LIMSmissing Details' in item %}
+	<h3>Details of Samples Marked as Missing in LIMS (i.e., not expected)</h3>
+	{{ item['LIMSmissing Details'].to_html() }}
+{% endif %}	
+
+{% if 'NoLIMS Details' in item %}
+	<h3>Details of Samples with no Corresponding LIMS Information</h3>
+	{{ item['NoLIMS Details'].to_html() }}
+{% endif %}	
+
+{% if 'NoSubjectInfo Details' in item %}
+	<h3>Details of Samples with no Corresponding Subject Information</h3>
+	{{ item['NoSubjectInfo Details'].to_html() }}
+{% endif %}	
+	
+<!--Summary of samples missing from acquisition________________________________________________________________________________________________-->
+
+{% if 'NotAcquired' in item %}
+	<h2>Summary of Samples Missing from Acquisition/Import (i.e., present in LIMS but not acquired/imported)</h2>
+	{{ item['NotAcquired'].to_html() }}
+{% endif %}	
+
+{% if 'NotAcquired Details' in item %}
+	<h3>Details of Samples Missing from Acquisition/Import (and not already excluded)</h3>
+	{{ item['NotAcquired Details'].to_html() }}
+{% endif %}	
+
+{% if 'exceed90CritVal' in item %}
+	<h3>All samples that exceeded critical value for BL or WPs</h3>
+	{{ item['exceed90CritVal'].to_html() }}
+{% endif %}	
+
+{% endblock %}

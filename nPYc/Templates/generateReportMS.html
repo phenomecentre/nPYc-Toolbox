@@ -1,0 +1,364 @@
+{% extends "base_QC.html" %}
+
+{% if item.ReportType == 'feature summary' %}
+	{% set reportTitle = 'NPC Feature Summary Report' %}
+{% elif item.ReportType == 'correlation to dilution' %}
+	{% set reportTitle = 'NPC Correlation to Dilution Report' %}
+{% elif item.ReportType == 'batch correction assessment' %}
+	{% set reportTitle = 'NPC Batch Correction Assessment Report' %}
+{% elif item.ReportType == 'batch correction summary' %}
+	{% set reportTitle = 'NPC Batch Correction Summary Report' %}
+{% elif item.ReportType == 'feature selection' %}
+	{% set reportTitle = 'NPC Feature Selection Report' %}
+{% elif item.ReportType == 'final report' %}
+	{% set reportTitle = 'NPC Final Summary Report' %}
+{% else %}
+	{% set reportTitle = 'NPC Summary Report ({{ item.ReportType }})' %}
+{% endif %}
+
+{% block title %}{{ reportTitle }} For: {{ item.Name }} {% endblock %}
+
+{% block content %}
+
+
+<!--Feature summary report - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+{% if item.ReportType == 'feature summary' %}
+
+	<!--Figure 1: Histogram of log mean abundance in SP samples-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;1.</span> Histogram of log of mean abundance of {{ item['No Features'] }} features in {{ item.SPcount }} study pool samples.</p>
+		<img src="{{ item.FeatureIntensityFigure }}" alt="Histogram of log of mean abundance of {{ item['No Features'] }} features in {{ item.SPcount }} study pool samples.">	
+	</div>
+	
+	<!--Figure 2: Sample intensity TIC and distribution by sample type-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;2.</span>  Sample TIC and distribtion (coloured by sample type).</p>
+		<img src="{{ item.SampleIntensityFigure }}" alt="Sample TIC and distribtion (coloured by sample type).">	
+	</div>	
+	
+	<!--Figure 3: Acquisition structure and detector voltage-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;3.</span>  Figure 3: Acquisition structure (coloured by detector voltage).</p>
+		<img src="{{ item.AcquisitionStructureFigure }}" alt="Figure 3: Acquisition structure (coloured by detector voltage).">	
+	</div>
+
+	<!--Figure 4: Histogram of Spearman correlation to dilution, segmented by abundance percentiles-->
+	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Histogram of {{ item.corrMethod }} correlation of features to serial dilution, segmented by percentile.</p>
+	{% if 'CorrelationByPercFigure' in item %}
+		<div class='figure'>
+			<img src="{{ item.CorrelationByPercFigure }}" alt="Histogram of {{ item.corrMethod }} correlation of features to serial dilution, segmented by percentile.">
+	</div>
+	{% else %}
+		<p>Unable to calculate (no serial dilution samples present in dataset).</p>
+	{% endif %}
+
+
+	<!--Figure 5: TIC of linearity reference (LR) samples coloured by sample dilution-->
+	<p class="caption"><span class="heading">Figure&nbsp;5.</span> Total Ion Count (TIC) of linearity reference (LR) samples coloured by sample dilution.</p>
+	{% if 'TICinLRfigure' in item %}
+		<div class='figure'>
+			<img src="{{ item.TICinLRfigure}}" alt="TIC of linearity reference (LR) samples coloured by sample dilution.">
+		</div>
+	{% else %}
+		<p>Unable to calculate (no linearity reference samples present in dataset).</p>
+	{% endif %}
+
+	<!--Figure 6: Histogram of RSD in SP samples, segmented by abundance percentiles-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;6.</span> Histogram of Residual Standard Deviation (RSD) in {{ item.SPcount }} study pool (SP) samples, segmented by percentile.</p>
+		<img src="{{ item.RsdByPercFigure }}" alt="Histogram of RSD in {{ item.SPcount }} study pool (SP) samples, segmented by percentile.">
+	</div>
+	
+	<!--Figure 7: Scatterplot of RSD vs correlation to dilution-->
+	<p class="caption"><span class="heading">Figure&nbsp;7.</span> Scatterplot of RSD vs. correlation to dilution.</p>
+	{% if 'RsdVsCorrelationFigure' in item %}
+		<div class='figure'>
+			<img src="{{ item.RsdVsCorrelationFigure}}" alt="Scatterplot of RSD vs. correlation to dilution.">
+		</div>
+	{% else %}
+		<p>Unable to calculate (no serial dilution samples present in dataset).</p>
+	{% endif %}
+
+	<!--Figure 8: Histogram of chromatographic peak width.-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;8.</span> Histogram of chromatographic peak width.</p>
+		{% if 'PeakWidthFigure' in item %}
+			<img src="{{ item.PeakWidthFigure}}" alt="Histogram of Chromatographic Peak Width.">
+		{% else %}
+			<p>No peak width data to plot.</p>
+		{% endif %}
+	</div>
+	
+	<!--Figure 9: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type)-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;9.</span> RSD distribution for all samples and all features in dataset (by sample type).</p>
+		<img src="{{ item.RSDdistributionFigure}}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type).">
+	</div>
+	
+	
+	<!--Figure 10: Ion map of all features (coloured by log median intensity)-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;10.</span> Ion map of all features (coloured by log median intensity).</p>
+		<img src="{{ item.IonMap}}" alt="Ion map of all features (coloured by log median intensity).">
+	</div>
+	
+{% endif %}
+
+
+<!-- Correlation to dilution report  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+{% if item.ReportType == 'correlation to dilution' %}
+
+	<!--For each batch subset and mean overall; plot TIC by dilution, TIC by detector voltage and correlation histogram-->
+	<h3>For each linearity reference (LR) sample batch subset and mean overall; plots of Total Ion Count (TIC) by dilution, TIC by detector voltage and correlation to dilution histogram</h3>
+	{% for key, value in item['figuresCorLRbyBatch'].items() %}
+    	<p>{{ key|e }}</p>
+		<div class='figure'>
+			<img src="{{ value|e }}" alt="Linearity reference (LR) plots by batch.">	
+		</div>
+	{% endfor %}
+
+	<!--Summary of the number of features passing correlation to dilution in each each batch subset and mean overall-->
+	<h3>Number of features exceeding correlation to dilution threshold ({{ item.corrThreshold }}) for each LR sample subset/correlation to dilution method</h3>
+	{{ item['NfeaturesSummary'].to_html() }}
+	<div class="content">
+	 	<p>
+	 		<p>Current correlation settings:</p>
+	 		<ul>
+	 			<li>Correlation Method: {{ item.corrMethod }}</li>
+				<li>Correlation Threshold: {{ item.corrThreshold }}</li>
+				<li>Correlation Style: {{ item.corrStyle }}</li>
+				<li>Correlation Exclusions: {{ item.corrExclusions }}</li>
+			</ul>
+	 	</p>
+	</div>
+
+	<!--Summary plots for the assessment of potential saturation-->
+	<h3>Assessment of potential saturation</h3>
+	<div class='figure'>
+	 	<p class="caption"> Heatmap showing the proportion of features (in different intensity quantiles, low:0-25, medium:25-75, and high:75-100%) where the median intensity at lower dilution factors is greater than or equal to that of higher dilution factors.</p>
+	 	<img src="{{ item.SatFeaturesHeatmap}}" alt="Heatmap showing the proportion of features where the median intensity at lower dilution factors exceeds that of higher dilution factors.">
+	</div>
+
+{% endif %}
+
+
+<!-- Batch correction assessment report  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+{% if item.ReportType == 'batch correction assessment' %}
+
+	<!--Overall TIC for all samples and features-->
+	<h3>Overall TIC for all samples and features, coloured by batch</h3>
+	<div class='figure'>
+	 	<img src="{{ item.TICdetectorBatches}}" alt="Pre-correction TIC for all samples, coloured by batch number.">
+	</div>
+
+	<!--Example results from batch correction-->
+	<h3>Example batch correction plots for a subset of features, results of batch correction with specified batches</h3>	
+	{% for key, value in item['figuresCorrectionExamples'].items() %}
+    	<p>{{ key|e }}</p>
+		<div class='figure'>
+			<img src="{{ value|e }}" alt="Example of batch correction for a subset of features.">	
+		</div>
+	{% endfor %}	
+		
+{% endif %}
+
+<!-- Batch correction summary report  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+{% if item.ReportType == 'batch correction summary' %}
+
+	<h3>Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type)</h3>
+	<h3>Pre-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.FeatureIntensityFigurePRE}}" alt="Pre-correction feature intensity histogram.">
+	</div>
+
+	<h3>Post-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.FeatureIntensityFigurePOST}}" alt="Post-correction feature intensity histogram.">
+	</div>
+
+	<h3>Figure 2: Sample Total Ion Count (TIC) and distribtion (coloured by sample type)</h3>
+	<h3>Pre-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.TicPRE}}" alt="Pre-correction TIC for all samples and all features.">
+	</div>
+
+	<h3>Post-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.TicPOST}}" alt="Post-correction TIC for all samples and all features.">
+	</div>
+	
+	<h3>Figure 3: Histogram of Residual Standard Deviation (RSD) in study pool (SP) samples, segmented by abundance percentiles</h3>
+	<h3>Pre-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.RsdByPercFigurePRE}}" alt="Pre-correction histogram of RSD in study pool (SP) samples.">
+	</div>
+
+	<h3>Post-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.RsdByPercFigurePOST}}" alt="Post-correction histogram of RSD in study pool (SP) samples.">
+	</div>
+	
+	<h3>Figure 4: RSD distribution for all samples and all features in dataset (by sample type)</h3>
+	<h3>Pre-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.RSDdistributionFigurePRE}}" alt="Pre-correction RSD distribution.">
+	</div>
+
+	<h3>Post-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.RSDdistributionFigurePOST}}" alt="Post-correction RSD distribution.">
+	</div>
+
+{% endif %}
+
+
+<!-- Feature selection report - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+{% if item.ReportType == 'feature selection' %}
+
+	<!--Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds-->
+	<h3>Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds</h3>
+	<div class='figure'>
+		<img src="{{ item.NoFeaturesHeatmap}}" alt="Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds.">
+	</div>
+	
+	<!--Summary of current feature filtering parameters and number of features passing at each stage-->
+	<h3>Summary of current feature filtering parameters and number of features passing at each stage</h3>
+	<div class="content">
+	 	<p>
+			<p>Number of features in original dataset: {{ item['No Features'] }}</p>
+	 		<p>Features filtered on:</p>
+	 		<ul>
+	 			<li>Correlation ({{ item.corrMethod }}, {{ item.corrStyle }}, exclusions: {{ item.corrExclusions }}) to dilution greater than {{ item.corrThreshold }}: {{ item.corrPassed }} features passed selection.</li>
+	 			<li>Relative Standard Deviation (RSD) in study pool (SP) samples below {{ item.rsdThreshold }}: {{ item.rsdPassed }} features passed selection.</li>
+				<li>RSD in study samples (SS) * {{ item.rsdSPvsSSvarianceRatio }} &gt; RSD in SP samples: {{ item.rsdSPvsSSPassed}} features passed selection.</li>
+				{% if 'artifactualPassed' in item %}
+					<li>Artifactual features filtering: {{ item.artifactualPassed }} features passed selection.</li>
+				{% endif %}
+	 		</ul>
+	 		<p>Number of features after filtering: {{ item['featuresPassed'] }}</p>
+	 	</p>
+	</div>
+	
+{% endif %}
+
+
+<!-- Final summary report  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+{% if item.ReportType == 'final report' %}
+
+	<!--Overall Summary-->
+	<h2>Final Dataset</h2>
+
+	<div class='content'>
+		<p>{{ item['Nsamples'] }} samples</p>
+		<p>{{ item['Nfeatures'] }} features</p>
+		<p></p>
+	</div>
+
+	<!--Sample Details-->
+	<h2>Sample Summary</h2>
+
+	<!--Summary of samples in final dataset-->
+	<h3>Sample Summary Table</h3>
+	{{ item['SampleSummaryTable'].to_html() }}
+
+	<div class='content'>
+		<p>*Details of any missing samples given at the end of the report</p>
+		<p></p>
+	</div>
+
+	<!--Acquisition Structure-->
+	<h2>Sample Acquisition Structure</h2>
+
+	<div class='content'>
+		<p>Samples acquired in {{ item['nBatchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
+		<p>Batch correction applied (LOESS regression fitted to SP samples in {{ item['nBatchesCorrect'] }}) for run-order correction and batch alignment</p>
+		<p></p>
+	</div>
+
+	<!--Figure 1: Sample Acquisition Structure-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;1.</span> Sample Acquisition Structure.</p>
+		<img src="{{ item['finalTICbatches'] }}" alt="Sample Acquisition Structure.">
+	</div>
+
+
+	<!--Feature Selection-->
+	<h2>Feature Selection Summary</h2>
+
+	<div class='content'>
+		<p>Features selected based on the following criteria:</p>
+		{{ item['FeatureSelectionTable'].to_html() }}
+	</div>
+
+	<!--Figure 2: TIC for all samples and features passing selection-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;2.</span> Total Ion Count (TIC) for all samples and all features in final dataset.</p>
+		<img src="{{ item['finalTIC'] }}" alt="TIC for all samples and all features passing selection.">
+	</div>
+
+	<!--Figure 3: TIC for all samples and features passing selection-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;3.</span> Feature intensity histogram for all samples and all features in final dataset (by sample type).</p>
+		<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature intensity histogram for all samples and all features in final dataset (by sample type).">
+	</div>	
+
+	<!--Figure 4: RSD for all samples and features passing selection-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;4.</span> Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).</p>
+		<img src="{{ item['finalRSDdistributionFigure'] }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
+	</div>
+
+	<!--Figure 5: Ion map of all features (coloured by log median intensity)-->
+	<div class='figure'>
+		<p class="caption"><span class="heading">Figure&nbsp;5.</span> Ion map of all features (coloured by log median intensity).</p>
+		<img src="{{ item.finalIonMap}}" alt="Ion map of all features (coloured by log median intensity).">
+	</div>
+
+	{% if 'QCscores' in item %}
+		<!--Figure 6: PCA scores plots coloured by sample type.-->
+		<p class="caption"><span class="heading">Figure&nbsp;6.</span> Principal Component Analysis (PCA) scores plots coloured by sample type.</p>
+		{% for key, value in item['QCscores'].items() %}
+	    	<p>{{ key|e }}</p>
+			<div class='figure'>
+				<img src="{{ value|e }}" alt="PCA scores plots coloured by sample type.">	
+			</div>
+		{% endfor %}
+	{% endif %}
+	
+	{% if 'QCloadings' in item %}
+		<!--Figure 7: PCA loadings plots.-->
+		<p class="caption"><span class="heading">Figure&nbsp;7.</span> PCA loadings plots.</p>
+		{% for key, value in item['QCloadings'].items() %}
+	    	<p>{{ key|e }}</p>
+			<div class='figure'>
+				<img src="{{ value|e }}" alt="PCA loadings plots.">	
+			</div>
+		{% endfor %}
+	{% endif %}
+
+	<!--Samples missing from acquisition-->
+	{% if 'SamplesMissingInfo' in item %}
+		<h2>Samples Missing from Acquisition</h2>
+	{% elif 'SamplesExcludedInfo' in item %}
+		<h2>Samples Missing from Acquisition</h2>
+	{% endif %}	
+
+	<!--Summary of samples missing from acquisition-->
+	{% if 'SamplesMissingInfo' in item %}
+		<h3>Samples unavailable for acquisition</h3>
+		{{ item['SamplesMissingInfo'].to_html() }}
+	{% endif %}	
+
+	{% if 'SamplesExcludedInfo' in item %}	
+		<h3>Samples excluded on analytical criteria</h3>
+		{{ item['SamplesExcludedInfo'].to_html() }}
+	{% endif %}
+
+{% endif %}	
+
+ 
+{% endblock %}

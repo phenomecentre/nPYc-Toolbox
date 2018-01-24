@@ -1,0 +1,17 @@
+{% macro basicPCAReport(item) -%}
+	<!--PCA scores plots coloured by sample type.-->
+	<div class="content">
+		<div class='figure'>
+			<p class="caption"><span class="heading">Figure&nbsp;{{ item.PCAcount }}.</span> PCA scores plots coloured by sample type.</p>
+			{% for key, value in item['QCscores'].items() %}
+				<img src="{{ value|e }}" alt="PCA scores plots coloured by sample type.">
+			{% endfor %}
+		</div>
+		<div class='figure'>
+			<p class="caption"><span class="heading">Figure&nbsp;{{ item.PCAcount + 1 }}.</span> PCA loadings plots coloured by magnitude.</p>
+			{% for key, value in item['loadings'].items() %}
+				<img src="{{ value|e }}" alt="PCA loadings plots coloured by magnitude.">
+			{% endfor %}
+		</div>
+	</div>
+{%- endmacro %}

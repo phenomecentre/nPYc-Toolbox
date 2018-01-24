@@ -1,0 +1,32 @@
+{
+	"Summary":{
+		"Triglycerides":["VLTG", "IDTG", "LDTG", "HDTG"],
+		"Cholesterol":["VLCH", "IDCH", "LDCH", "HDCH"],
+		"Free Cholesterol":["VLFC", "IDFC", "LDFC", "HDFC"],
+		"Phospholipids":["VLPL", "IDPL", "LDPL", "HDPL"],
+		"Apo-A1":["HDA1"],
+		"Apo-A2":["HDA2"],
+		"Apo-B":["VLAB", "IDAB", "LDAB"]
+	},
+	"VLDL Subfractions":{
+		"Free Cholesterol":["V1FC", "V2FC", "V3FC", "V4FC", "V5FC", "V6FC"],
+		"Cholesterol":["V1CH", "V2CH", "V3CH", "V4CH", "V5CH", "V6CH"],
+		"Phospholipids":["V1PL", "V2PL", "V3PL", "V4PL", "V5PL", "V6PL"],
+		"Triglycerides":["V1TG", "V2TG", "V3TG", "V4TG", "V5TG", "V6TG"]
+	},
+	"LDL Subfractions":{
+		"Free Cholesterol":["L1FC", "L2FC", "L3FC", "L4FC", "L5FC", "L6FC"],
+		"Cholesterol":["L1CH", "L2CH", "L3CH", "L4CH", "L5CH", "L6CH"],
+		"Phospholipids":["L1PL", "L2PL", "L3PL", "L4PL", "L5PL", "L6PL"],
+		"Triglycerides":["L1TG", "L2TG", "L3TG", "L4TG", "L5TG", "L6TG"],
+		"Apo-B":["L1AB", "L2AB", "L3AB", "L4AB", "L5AB", "L6AB"]
+	},
+	"HDL Subfractions":{
+		"Free Cholesterol":["H1FC", "H2FC", "H3FC", "H4FC"],
+		"Cholesterol":["H1CH", "H2CH", "H3CH", "H4CH"],
+		"Phospholipids":["H1PL", "H2PL", "H3PL", "H4PL"],
+		"Triglycerides":["H1TG", "H2TG", "H3TG", "H4TG"],
+		"Apo-A1":["H1A1", "H2A1", "H3A1", "H4A1"],
+		"Apo-A2":["H1A2", "H2A2", "H3A2", "H4A2"]
+	}
+}

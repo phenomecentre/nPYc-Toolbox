@@ -1,0 +1,13 @@
+{
+	"noFiles": 10,
+	"dpi": 300,
+	"histBins": 100,
+	"quantiles": [25, 75],
+	"figureFormat": "png",
+	"figureSize": [11,7],
+	"sampleMetadataNotExported":["Exclusion Details"],
+	"featureMetadataNotExported":[],
+	"analyticalMeasurements":{},
+	"excludeFromPlotting":[],
+	"sampleTypeColours":{"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
+}

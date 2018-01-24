@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="933px" height="368px" viewBox="0 0 933 368" enable-background="new 0 0 933 368" xml:space="preserve">
+<path fill="none" stroke="#D1D1D1" stroke-width="3" stroke-miterlimit="10" d="M491.5,337.86c0,5.968-5.373,11.307-12,11.307h-452
+	c-6.627,0-12-5.339-12-11.307V28.973c0-5.968,5.373-10.807,12-10.807h452c6.627,0,12,4.838,12,10.807V337.86z"/>
+<line fill="none" stroke="#D1D1D1" stroke-width="3" stroke-miterlimit="10" x1="15" y1="64.167" x2="491" y2="64.167"/>
+<text transform="matrix(1 0 0 1 155.334 51.1621)" font-family="'GillSans'" font-size="31.7064">Dataset Object</text>
+<g>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="257" y1="256.167" x2="480" y2="256.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="257" y1="228.167" x2="480" y2="228.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="257" y1="197.167" x2="480" y2="197.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="257" y1="167.167" x2="480" y2="167.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="257" y1="137.167" x2="480" y2="137.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="454.5" y1="106.667" x2="454.5" y2="286.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="424.5" y1="106.667" x2="424.5" y2="286.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="395.5" y1="106.667" x2="395.5" y2="286.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="368.5" y1="106.667" x2="368.5" y2="286.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="339.5" y1="106.667" x2="339.5" y2="286.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="314.5" y1="106.667" x2="314.5" y2="286.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="285.5" y1="106.667" x2="285.5" y2="286.667"/>
+	<rect x="256.5" y="106.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="223" height="180"/>
+	<text transform="matrix(1 0 0 1 321 186.1665)" font-family="'GillSans'" font-size="16.1733">.intensityData</text>
+	<text transform="matrix(0.9594 0 0 1 257 299.1665)" font-family="'Arial-ItalicMT'" font-size="10.4228">n × m</text>
+</g>
+<g>
+	<rect x="41" y="103.667" fill="#66CC5A" width="10" height="31"/>
+	<rect x="41" y="134.667" fill="#CC5C5C" width="10" height="30"/>
+	<rect x="41" y="164.667" fill="#66CC5A" width="10" height="118"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="42" y1="253.167" x2="52" y2="253.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="42" y1="225.167" x2="52" y2="225.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="42" y1="194.167" x2="52" y2="194.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="42" y1="164.167" x2="52" y2="164.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="42" y1="134.167" x2="52" y2="134.167"/>
+	<rect x="41.5" y="103.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="10" height="180"/>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 35.1328 235.0063)" font-family="'GillSans'" font-size="16.1733">.sampleMask</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 49.418 276.7876)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 49.418 247.2876)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 49.418 217.1196)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 49.418 188.7871)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 49.418 159.1201)" font-family="'Consolas'" font-size="7">False</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 49.418 127.7871)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(1.0353 0 0 1 43.0005 295.1665)" font-family="'Arial-ItalicMT'" font-size="10.4228">n</text>
+</g>
+<g>
+	<rect x="138" y="160.667" fill="#CC5C5C" width="10" height="25"/>
+	<rect x="138" y="103.667" fill="#66CC5A" width="10" height="57"/>
+	<rect x="138" y="186.667" fill="#66CC5A" width="10" height="29"/>
+	<rect x="138" y="215.667" fill="#CC5C5C" width="10" height="27"/>
+	<rect x="138" y="242.667" fill="#66CC5A" width="10" height="84"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="148" y1="301.167" x2="137" y2="301.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="148" y1="271.167" x2="137" y2="271.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="148" y1="242.167" x2="137" y2="242.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="148" y1="215.167" x2="137" y2="215.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="148" y1="186.167" x2="137" y2="186.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="148" y1="161.167" x2="137" y2="161.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="148" y1="132.167" x2="137" y2="132.167"/>
+	<rect x="137.5" y="103.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="11" height="223"/>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 132.5 235.436)" font-family="'GillSans'" font-size="16.1733">.featureMask</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 146.251 320.7876)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 146.251 294.1665)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 146.251 265.3716)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 146.251 155.4121)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 146.251 184.167)" font-family="'Consolas'" font-size="7">False</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 146.251 126.1621)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 146.251 240.1665)" font-family="'Consolas'" font-size="7">False</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 146.251 209.1211)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(1.0353 0 0 1 138 338.1665)" font-family="'Arial-ItalicMT'" font-size="10.4228">m</text>
+</g>
+<g>
+	<text transform="matrix(1.0353 0 0 1 159.334 338.1665)" font-family="'Arial-ItalicMT'" font-size="10.4228">m × q</text>
+	<rect x="156" y="103.667" fill="#689FAF" width="10" height="223"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="166.5" y1="102.667" x2="166.5" y2="326.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="184.5" y1="102.667" x2="184.5" y2="326.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="200.5" y1="102.667" x2="200.5" y2="326.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="217.5" y1="102.667" x2="217.5" y2="326.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="234" y1="301.167" x2="155" y2="301.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="234" y1="271.167" x2="155" y2="271.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="234" y1="242.167" x2="155" y2="242.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="234" y1="215.167" x2="155" y2="215.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="234" y1="186.167" x2="155" y2="186.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="234" y1="161.167" x2="155" y2="161.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="234" y1="132.167" x2="155" y2="132.167"/>
+	<rect x="155.5" y="103.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="79" height="223"/>
+	<path fill="none" stroke="#565656" stroke-miterlimit="10" d="M166.5,92.416c0-4.833,3.323-8.25,8.038-8.25h51.423
+		c4.716,0,8.539,3.417,8.539,8.25v0.5c0,4.833,0.177,9.25-4.539,9.25h-59.423c-4.715,0-4.038-4.418-4.038-9.25V92.416z"/>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 199.1587 248.5649)" font-family="'GillSans'" font-size="16.1733">.featureMetadata</text>
+	<text transform="matrix(1 0 0 1 184.5 96.0874)" font-family="'GillSans'" font-size="8.9603">Headers</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 163 101)" font-family="'GillSans'" font-size="8.9603">Index</text>
+</g>
+<g>
+	<text transform="matrix(1.0353 0 0 1 59.0005 295.1665)" font-family="'Arial-ItalicMT'" font-size="10.4228">n × p</text>
+	<rect x="59" y="103.667" fill="#689FAF" width="10" height="179"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="59" y1="253.167" x2="114" y2="253.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="59" y1="225.167" x2="114" y2="225.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="59" y1="194.167" x2="114" y2="194.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="59" y1="164.167" x2="114" y2="164.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="59" y1="134.167" x2="114" y2="134.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="98.5" y1="103.667" x2="98.5" y2="282.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="84.5" y1="103.667" x2="84.5" y2="282.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="69.5" y1="103.667" x2="69.5" y2="282.667"/>
+	<rect x="58.5" y="103.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="55" height="180"/>
+	<path fill="none" stroke="#565656" stroke-miterlimit="10" d="M113.5,92.917c0,4.833,0.677,9.25-4.039,9.25H74.039
+		c-4.715,0-4.539-4.417-4.539-9.25v-0.5c0-4.833,3.823-8.25,8.539-8.25h27.423c4.715,0,8.039,3.417,8.039,8.25V92.917z"/>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 96.6792 248.1353)" font-family="'GillSans'" font-size="16.1733">.sampleMetadata</text>
+	<text transform="matrix(1 0 0 1 77 96.1665)" font-family="'GillSans'" font-size="8.9603">Headers</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 66.334 101)" font-family="'GillSans'" font-size="8.9603">Index</text>
+</g>
+<g>
+	<text transform="matrix(1.0353 0 0 1 898.75 62.2944)" font-family="'Arial-ItalicMT'" font-size="10.4228">q × m</text>
+	<rect x="670" y="119.667" fill="#689FAF" width="223" height="10"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="669" y1="119.167" x2="893" y2="119.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="669" y1="101.167" x2="893" y2="101.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="669" y1="85.167" x2="893" y2="85.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="669" y1="68.167" x2="893" y2="68.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="867.5" y1="51.667" x2="867.5" y2="130.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="837.5" y1="51.667" x2="837.5" y2="130.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="808.5" y1="51.667" x2="808.5" y2="130.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="781.5" y1="51.667" x2="781.5" y2="130.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="752.5" y1="51.667" x2="752.5" y2="130.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="727.5" y1="51.667" x2="727.5" y2="130.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="698.5" y1="51.667" x2="698.5" y2="130.667"/>
+	<rect x="669.5" y="51.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="223" height="79"/>
+	<path fill="none" stroke="#565656" stroke-miterlimit="10" d="M658.921,119.167c-4.833,0-8.421-2.993-8.421-7.708V60.035
+		c0-4.716,3.588-8.869,8.421-8.869h0.5c4.832,0,9.079,0.153,9.079,4.869v59.423c0,4.716-4.247,3.708-9.079,3.708H658.921z"/>
+	<text transform="matrix(1 0 0 1 717.0352 96.7397)" font-family="'GillSans'" font-size="16.1733">.featureMetadata</text>
+	<text transform="matrix(1.192488e-08 -1 1 1.192488e-08 662.5928 101.4946)" font-family="'GillSans'" font-size="8.9603">Headers</text>
+	<text transform="matrix(1 0 0 1 647.4463 128.4834)" font-family="'GillSans'" font-size="8.9603">Index</text>
+</g>
+<g>
+	<rect x="810" y="32.667" fill="#CC5C5C" width="25" height="10"/>
+	<rect x="835" y="32.667" fill="#66CC5A" width="57" height="10"/>
+	<rect x="780" y="32.667" fill="#66CC5A" width="29" height="10"/>
+	<rect x="753" y="32.667" fill="#CC5C5C" width="27" height="10"/>
+	<rect x="669" y="32.667" fill="#66CC5A" width="84" height="10"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="694.5" y1="42.667" x2="694.5" y2="31.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="724.5" y1="42.667" x2="724.5" y2="31.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="753.5" y1="42.667" x2="753.5" y2="31.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="780.5" y1="42.667" x2="780.5" y2="31.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="809.5" y1="42.667" x2="809.5" y2="31.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="834.5" y1="42.667" x2="834.5" y2="31.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="863.5" y1="42.667" x2="863.5" y2="31.667"/>
+	<rect x="669.5" y="32.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="223" height="11"/>
+	<text transform="matrix(1 0 0 1 730.1641 27.1802)" font-family="'GillSans'" font-size="16.1733">.featureMask</text>
+	<text transform="matrix(1 0 0 1 675.251 40.9312)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(1 0 0 1 701.8721 40.9312)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(1 0 0 1 730.667 40.9312)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(1 0 0 1 840.626 40.9312)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(1 0 0 1 811.8711 40.9312)" font-family="'Consolas'" font-size="7">False</text>
+	<text transform="matrix(1 0 0 1 869.876 40.9312)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(1 0 0 1 755.8711 40.9312)" font-family="'Consolas'" font-size="7">False</text>
+	<text transform="matrix(1 0 0 1 786.917 40.9312)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(1.0353 0 0 1 898.75 40.9312)" font-family="'Arial-ItalicMT'" font-size="10.4228">m</text>
+</g>
+<g>
+	<rect x="565" y="155.667" fill="#66CC5A" width="10" height="31"/>
+	<rect x="565" y="186.667" fill="#CC5C5C" width="10" height="30"/>
+	<rect x="565" y="216.667" fill="#66CC5A" width="10" height="118"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="566" y1="305.167" x2="576" y2="305.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="566" y1="277.167" x2="576" y2="277.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="566" y1="246.167" x2="576" y2="246.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="566" y1="216.167" x2="576" y2="216.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="566" y1="186.167" x2="576" y2="186.167"/>
+	<rect x="565.5" y="155.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="10" height="180"/>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 559.1328 287.0063)" font-family="'GillSans'" font-size="16.1733">.sampleMask</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 573.418 328.7876)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 573.418 299.2876)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 573.418 269.1196)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 573.418 240.7876)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 573.418 211.1201)" font-family="'Consolas'" font-size="7">False</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 573.418 179.7871)" font-family="'Consolas'" font-size="7">True</text>
+	<text transform="matrix(1.0353 0 0 1 567 347.1665)" font-family="'Arial-ItalicMT'" font-size="10.4228">n</text>
+</g>
+<g>
+	<text transform="matrix(1.0353 0 0 1 583 347.1665)" font-family="'Arial-ItalicMT'" font-size="10.4228">n × p</text>
+	<rect x="583" y="155.667" fill="#689FAF" width="10" height="179"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="583" y1="305.167" x2="638" y2="305.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="583" y1="277.167" x2="638" y2="277.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="583" y1="246.167" x2="638" y2="246.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="583" y1="216.167" x2="638" y2="216.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="583" y1="186.167" x2="638" y2="186.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="622.5" y1="155.667" x2="622.5" y2="334.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="608.5" y1="155.667" x2="608.5" y2="334.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="593.5" y1="155.667" x2="593.5" y2="334.667"/>
+	<rect x="582.5" y="155.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="55" height="180"/>
+	<path fill="none" stroke="#565656" stroke-miterlimit="10" d="M637.5,144.917c0,4.833,0.677,9.25-4.039,9.25h-35.422
+		c-4.716,0-4.539-4.417-4.539-9.25v-0.5c0-4.833,3.823-8.25,8.539-8.25h27.422c4.716,0,8.039,3.417,8.039,8.25V144.917z"/>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 620.6797 300.1353)" font-family="'GillSans'" font-size="16.1733">.sampleMetadata</text>
+	<text transform="matrix(1 0 0 1 601 148.1665)" font-family="'GillSans'" font-size="8.9603">Headers</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 590.334 153)" font-family="'GillSans'" font-size="8.9603">Index</text>
+</g>
+<g>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="670" y1="305.167" x2="893" y2="305.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="670" y1="277.167" x2="893" y2="277.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="670" y1="246.167" x2="893" y2="246.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="670" y1="216.167" x2="893" y2="216.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="670" y1="186.167" x2="893" y2="186.167"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="867.5" y1="155.667" x2="867.5" y2="335.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="837.5" y1="155.667" x2="837.5" y2="335.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="808.5" y1="155.667" x2="808.5" y2="335.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="781.5" y1="155.667" x2="781.5" y2="335.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="752.5" y1="155.667" x2="752.5" y2="335.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="727.5" y1="155.667" x2="727.5" y2="335.667"/>
+	<line fill="none" stroke="#D1D1D1" stroke-miterlimit="10" x1="698.5" y1="155.667" x2="698.5" y2="335.667"/>
+	<rect x="669.5" y="155.167" fill="none" stroke="#565656" stroke-miterlimit="10" width="223" height="180"/>
+	<text transform="matrix(1 0 0 1 734 235.1665)" font-family="'GillSans'" font-size="16.1733">.intensityData</text>
+	<text transform="matrix(0.9594 0 0 1 670 348.1665)" font-family="'Arial-ItalicMT'" font-size="10.4228">n × m</text>
+</g>
+<rect x="256.5" y="314.167" fill="none" stroke="#000000" stroke-miterlimit="10" width="125" height="25"/>
+<text transform="matrix(1 0 0 1 281.0005 332.1665)" font-family="'GillSans'" font-size="16.1733">.Attributes</text>
+</svg>

@@ -1,0 +1,7 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "NPC Assay Parameter Validation Schema PCSOP.136",
+	"description": "JSON Schema draft 4 implementation of PCSOP.136",
+	"type": "object"
+
+}

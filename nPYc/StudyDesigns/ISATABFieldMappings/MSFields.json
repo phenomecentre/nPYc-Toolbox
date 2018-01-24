@@ -1,0 +1,17 @@
+{
+	"Sample Name" : "Sampling ID",
+	"MS Assay Name":"Assay data name",
+        "Date": "Acquisition Date",
+        "Comment[time]": "Acquisition Time",
+	"Characteristics[dilution final concentration]": "Dilution",
+	"Parameter Value[plate well]": "Well",
+	"Parameter Value[plate number]": "Plate",
+	"Parameter Value[batch number]": "Batch",
+	"Parameter Value[correction batch]": "Correction Batch",
+	"Parameter Value[run order]": "Run Order",
+	"Parameter Value[instrument]": "Instrument",
+	"Parameter Value[detector voltage]": "Detector",
+	"Parameter Value[chromatography]": "Chromatography",
+	"Parameter Value[ionisation]": "Ionisation",
+	"Parameter Value[sample batch]": "Sample batch"
+}

@@ -1,0 +1,100 @@
+{% extends "base_generic.html" %}
+
+{% block title %}NPC MS Feature ID Request: {{ item.FeatureID }}{% endblock %}
+
+{% block content %}
+
+<div class="content">
+	<p>
+		Feature: {{ item.FeatureID }}{% if item.Matrix is defined %}<br />
+		Observed in: {{ item.Matrix }}{% endif %}{% if item.Chromatography is defined %}<br />
+		Chromatography: {{ item.Chromatography }}{% endif %}<br />
+		<br />
+		Primary&nbsp;ion: {{ item.PrimaryIon }}&nbsp;m/z<br />
+		Retention&nbsp;time: {{ item.RetentionTime|round(4, 'common') }}&nbsp;minutes<br />
+		Isotope&nbsp;distribution: {{ item.IsotopeDistribution }}{% if item.Adducts is defined %}<br />
+		Detected&nbsp;adducts: {{ item.Adducts }}
+		{% endif %}
+	</p>
+</div>
+
+<div class="abundanceTable">
+	<p class="caption"><span class="heading">Table&nbsp;1.</span> List of the top-{{ item.AbundanceSamples|length }} samples with the greatest abundance of {{ item.FeatureID }}.</p>
+	<table class=table>
+		<tr class="tableHeader"><th>Rank</th><th>Sample ID</th><th>Abundance</th></tr>
+		{% for row in item.AbundanceSamples %}
+		  <tr class="{{ loop.cycle('odd', 'even') }}">
+			  <td>{{ row.rank }}</td><td>{{ row.id }}</td><td>{{ row.value | round(2, 'common') }}</td>
+		  </tr>
+		{% endfor %}
+	</table>
+</div>
+
+<div class='abundanceFigure'>
+	<img src="{{ item.AbundanceFigure }}" alt="Abundance for feature: {{ item.FeatureID }} across dataset.">
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Violin plot of intensity distribution of {{ item.FeatureID }} in Study-Samples, the Study-Reference, and Long-Term Reference. <br />
+		Study-derived samples are in blue, Long-Term Reference is green. The top-{{ item.AbundanceSamples|length }} samples with greatest abundance listed in Table&nbsp;1 are marked with red dashes.</p>
+</div>
+
+<div class="figure">
+	<img src="{{ item.IntensityFigure }}" alt="Feature intensity for feature: {{ item.FeatureID }}.">
+	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Feature intensity for {{ item.FeatureID }} across all samples, with the top {{ item.AbundanceSamples|length }} samples yielding highest intensity highlighted.</p>
+</div>
+
+<div class="coelutants">
+	<img src="{{ item.CoelutantsFigure }}" alt="{{ item.Coelutants }} with {{ item.FeatureID }} in {{ item.AbundanceSamples[0].id }}.">
+	<p class="caption"><span class="heading">Figure&nbsp;3.</span> {{ item.Coelutants }} with {{ item.FeatureID }} in {{ item.AbundanceSamples[0].id }}, the m/z of any features that show an intensity correlation with {{ item.FeatureID }} above 0.7 across the dataset are indicated on the plot.</p>
+</div>
+
+<div class="abundanceTable">
+	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features with an intensity observed to correlate most strongly with {{ item.FeatureID }} across the entire dataset, ranked by correlation.</p>
+	<table class=table>
+		<tr class="tableHeader"><th>Feature Name</th><th>m/z</th><th>Retention Time (min)</th><th>Correlation to<br />{{ item.FeatureID }}</th></tr>
+		{% for row in item.CorrelatedFeature %}
+		  <tr class="{{ loop.cycle('odd', 'even') }}">
+			  <td>{{ row.id }}</td><td>{{ row.mz | round(4, 'common') }}</td><td>{{ row.rt | round(3, 'common') }}</td><td>{{ row.corr | round(2, 'common') }}</td>
+		  </tr>
+		{% endfor %}
+	</table>
+</div>
+
+<div class="abundanceTable">
+	<p class="caption"><span class="heading">Table&nbsp;3.</span> Features with an intensity observed to anti-correlate with {{ item.FeatureID }} across the entire dataset, ranked by correlation.</p>
+	<table class=table>
+		<tr class="tableHeader"><th>Feature Name</th><th>m/z</th><th>Retention Time (min)</th><th>Correlation to<br />{{ item.FeatureID }}</th></tr>
+		{% if item.AntiCorrelatedFlag is defined %}
+			{% for row in item.AntiCorrelatedFeature %}
+			  <tr class="{{ loop.cycle('odd', 'even') }}">
+				  <td>{{ row.id }}</td><td>{{ row.mz | round(4, 'common') }}</td><td>{{ row.rt | round(3, 'common') }}</td><td>{{ row.corr | round(2, 'common') }}</td>
+			  </tr>
+			{% endfor %}
+		{% else %}
+			<tr class="odd"><td>None found</td><td></td><td></td><td></td></tr>
+		{% endif %}
+	</table>
+</div>
+
+<div class="relatedFeatures">
+	
+	<img src="{{ item.RelatedFigure }}" alt="Features observed to correlate with {{ item.FeatureID }} across the dataset.">
+	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Features observed to correlate with {{ item.FeatureID }} across the dataset.</p>
+	
+</div>
+
+<div class="abundanceTable">
+	<p class="caption"><span class="heading">Table&nbsp;4.</span> Database matches for {{ item.FeatureID }}.</p>
+	<table class=table>
+		<tr class="tableHeader"><th>Compound Name</th><th>Canonical m/z</th><th>Canonical Retention Time (min)</th></tr>
+		{% if item.dbMatches is defined %}
+			{% for row in item.dbMatches %}
+			  <tr class="{{ loop.cycle('odd', 'even') }}">
+				  <td>{{ row.name }}</td><td>{{ row.mz | round(4, 'common') }}</td><td>{{ row.rt | round(3, 'common') }}</td>
+			  </tr>
+			{% endfor %}
+		{% else %}
+			<tr class="odd"><td>None found</td><td></td><td></td></tr>
+		{% endif %}
+	</table>
+</div>
+
+{% endblock %}

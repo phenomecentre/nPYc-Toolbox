@@ -1,0 +1,78 @@
+{% extends "base_QC.html" %}
+
+{% import 'featureDistributionReport.html' as fdPlots %}
+{% import 'pcaReport.html' as pca %}
+
+{% block title %}NPC Assay Summary Report for: {{ item.Name }}{% endblock %}
+
+{% block content %}
+
+<!--Overall Summary_______________________________________________________________________________________________________________-->
+<h2>Final Dataset</h2>
+
+<div class='content'>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	<p></p>
+</div>
+
+<!--Sample Details________________________________________________________________________________________________________________-->
+<h2>Sample Summary</h2>
+
+<!--Summary of samples in final dataset-->
+<div class='content'>
+	<h3>Sample Summary Table</h3>
+	{{ item['SampleSummaryTable'].to_html() }}
+	<p>*Details of any missing samples given at the end of the report</p>
+</div>
+
+<!--Figure 1 RSD plot coloured by sample type.-->
+<div class='figure'>
+	<img src="{{ item.rsdPlot|e }}" alt="PCA scores plots coloured by sample type.">
+	<p class="caption"><span class="heading">Figure 1.</span> RSDs of measures in reference and biological samples.</p>
+</div>
+
+<div class="content">
+	<h2>Dataset Internal Correlations</h2>
+	{% if 'comparison' in item %}
+		<p>Heatmaps of internal correlations between subfractions. Values above the diagonal are differences from correlations in a reference dataset, values below the diagonal are raw correlations.</p>
+	{% endif %}
+	<!--Correlation plots________________________________________________________________________________________________________________-->
+	{% for key, value in item.correlationPlots|dictsort %}
+		<div class='figure'>
+			<img style="width:70%" src="{{ value.path|e }}" alt="Heatmap of internal correlations for {{ key }} BI-LISA components.">
+			<p class="caption"><span class="heading">Figure&nbsp;{{ value.counter }}.</span> Heatmap of internal correlations for {{ key }} BI-LISA components.</p>
+		</div>
+	{% endfor %}
+</div>
+
+<!-- Range plots -->
+{% if featureRanges is not none %}
+	{{ fdPlots.featureDistributionReport(featureRanges) }}
+{% endif %}
+
+<!--PCA Model________________________________________________________________________________________________________________-->
+{% if pcaPlots is not none %}
+	{{ pca.basicPCAReport(pcaPlots) }}
+{% endif %}
+
+<div class="content">
+	<!--Samples missing from acquisition_______________________________________________________________________________________________-->
+	{% if 'SamplesMissingInfo' in item %}
+		<h2>Samples Missing from Acquisition</h2>
+	{% elif 'SamplesExcludedInfo' in item %}
+		<h2>Samples Missing from Acquisition</h2>
+	{% endif %}	
+
+	<!--Summary of samples missing from acquisition-->
+	{% if 'SamplesMissingInfo' in item %}
+		<h3>Samples unavailable for acquisition</h3>
+		{{ item['SamplesMissingInfo'].to_html() }}
+	{% endif %}	
+
+	{% if 'SamplesExcludedInfo' in item %}	
+		<h3>Samples excluded on analytical criteria</h3>
+		{{ item['SamplesExcludedInfo'].to_html() }}
+	{% endif %}	
+ </div>
+{% endblock %}

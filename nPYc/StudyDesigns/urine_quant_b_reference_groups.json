@@ -1,0 +1,73 @@
+{
+	"Small Molecules": {
+		"Creatinine": [
+			"Creatinine"
+		],
+		"Amines and derivatives": [
+			"Dimethylamine",
+			"Trimethylamine"
+		],
+		"Amino acids and derivatives": [
+			"1-Methylhistidine",
+			"2-Furoylglycine",
+			"4-Aminobutyric acid",
+			"Alanine",
+			"Arginine",
+			"Betaine",
+			"Creatine",
+			"Glycine",
+			"Guanidinoacetic acid",
+			"Methionine",
+			"N,N-Dimethylglycine",
+			"Sarcosine",
+			"Taurine",
+			"Valine"
+		],
+		"Benzene and substituted derivatives": [
+			"Benzoic acid",
+			"D-Mandelic acid",
+			"Hippuric acid"
+		],
+		"Carboxylic acids": [
+			"Acetic acid",
+			"Citric acid",
+			"Formic acid",
+			"Fumaric acid",
+			"Imidazole",
+			"Lactic acid",
+			"Proline betaine",
+			"betaine",
+			"Succinic acid",
+			"Tartaric acid",
+			"Trigonelline"
+		],
+		"Fatty acids and derivatives": [
+			"2-Methylsuccinic acid"
+		],
+		"Keto acids and derivatives": [
+			"2-Oxoglutaric acid",
+			"3-Hydroxybutyric acid",
+			"Acetoacetic acid",
+			"Acetone",
+			"Oxaloacetic acid",
+			"Pyruvic acid"
+		],
+		"Purine, Pyridine and Pyrimidine derivatives": [
+			"1-Methyladenosine",
+			"1-Methylnicotinamide",
+			"Adenosine",
+			"Allantoin",
+			"Allopurinol",
+			"Caffeine",
+			"Inosine"
+		],
+		"Sugars and derivatives": [
+			"D-Galactose",
+			"D-Glucose",
+			"D-Lactose",
+			"D-Mannitol",
+			"D-Mannose",
+			"Myo-Inositol"
+		]
+	}
+}

@@ -1,0 +1,17 @@
+{% macro featureDistributionReport(item) -%}
+	<div class="content">
+		<h2>Feature Distribution Plots</h3>
+		<p>Plots of observed feature distributions. Where reference ranges are available, they are indicated on the plot as a grey box. Distributions that sit within the reference range are shaded green, those that sit outside red, and if no reference range is available distributions are shaded blue.</p>
+		{% for key, value in item|dictsort %}
+			<div class='figureGroup'>
+				<h3>{{ key }}</h3>
+				{% for key2, value2 in value|dictsort %}
+					<div class='floatingFigure'>
+						<img src="{{ value2|e }}" alt="Observed distribution of {{ key2 }}.">
+						<p class="caption"><span class="heading"></span>Observed distribution of {{ key2 }}.</p>
+					</div>
+				{% endfor %}
+			</div>
+		{% endfor %}
+	</div>
+{%- endmacro %}

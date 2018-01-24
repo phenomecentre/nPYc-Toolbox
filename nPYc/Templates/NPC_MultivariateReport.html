@@ -1,0 +1,204 @@
+{% extends "base_QC.html" %}
+
+{% block title %}NPC Multivariate Report ({{ item.ReportType }}) For: {{ item.Name }} {% endblock %}
+
+{% block content %}
+
+<!-- Dataset Summary - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<h2>Dataset</h2>
+
+<div class='content'>
+	<p>Original data consists of {{ item['Nsamples'] }} samples and {{ item['Nfeatures'] }} features<p>
+	<ul>
+		<li>{{ item['SScount'] }} Study Samples</li>
+		<li>{{ item['SPcount'] }} Study Pool Samples</li>
+		<li>{{ item['ERcount'] }} External Reference Samples</li>
+		<li>{{ item['OTHERcount'] }} Other Samples</li>
+	</ul>
+	</p>
+</div>
+
+<!-- Summary of PCA Parameters- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<h2>PCA Analysis</h2>
+
+<h3>PCA Model Parameters</h3>
+
+<div class='content'>
+	<ul>
+		<li>Normalisation method: {{ item['Normalisation'] }}</li>
+		<li>Scaling: {{ item['Scaling'] }} </li>
+		<li>Number of components: {{ item['Ncomponents'] }} </li>	
+		{% if 'Ncomponents_optimal' in item %}
+			<li><h4>IMPORTANT NOTE: Optimal number of components: 1 (second component added for plotting purposes)</h4></li>
+		{% endif %}			
+		<li>Critical value for flagging outliers in DmodX space: {{ item['dModX_criticalVal'] }}</li>
+		<li>Critical value for flagging outliers in scores space: {{ item['scores_criticalVal'] }}</li>
+	</ul>
+	</p>
+</div>
+
+<!--PCA Modelling - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<h3>PCA QC Outputs</h3>
+
+<!--Figure 1: PCA scree plot of variance explained by each component (cumulative).-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> PCA scree plot of variance explained by each component (cumulative).</p>
+	<img src="{{ item.PCA_screePlot }}" alt="PCA scree plot of variance explained by each component (cumulative).">	
+</div>
+
+<!--Figure 2: PCA scores plots coloured by sample type.-->
+<p class="caption"><span class="heading">Figure&nbsp;2.</span> PCA scores plots coloured by sample type.</p>
+{% for key, value in item['QCscores'].items() %}
+	<div class='figure'>
+		<img src="{{ value|e }}" alt="PCA scores plots coloured by sample type.">	
+	</div>
+{% endfor %}
+
+<!--Figure 3: Distribution in total distance from origin (scores space) by sample type.-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Distribution in total distance from origin (scores space) by sample type.</p>
+	<img src="{{ item.PCA_strongOutliersPlot }}" alt="Distribution in total distance from origin (scores space) by sample type.">	
+</div>
+
+{% if 'Noutliers_strong' in item %}
+	<p>Excluding samples with total distance from origin values exceeding the {{ item['scores_criticalVal'] }} limit would result in {{ item['Noutliers_strong'] }} exclusions.</p>
+{% endif %}
+
+<!--Figure 4: Distribution in distance from model (DmodX) by sample type.-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Distribution in distance from model (DmodX) by sample type.</p>
+	<img src="{{ item.PCA_modOutliersPlot }}" alt="Distribution in distance from model (DmodX) by sample type.">	
+</div>
+
+{% if 'Noutliers_moderate' in item %}
+	<p>Excluding samples with DmodX values exceeding the {{ item['dModX_criticalVal'] }} limit would result in {{ item['Noutliers_moderate'] }} exclusions.</p>
+{% endif %}
+
+{% if 'Noutliers_total' in item %}
+	<p>Excluding outliers in both scores and DmodX space would result in {{ item['Noutliers_total'] }} exclusions.</p>
+{% endif %}
+
+{% if 'Outliers_total_details' in item %}
+	<h3>Details of potentially outlying samples</h3>
+	{{ item['Outliers_total_details'].to_html() }}
+{% endif %}
+
+<!--Figure 5: PCA loadings.-->
+<p class="caption"><span class="heading">Figure&nbsp;5.</span> PCA loadings.</p>
+{% for key, value in item['loadings'].items() %}
+	<div class='figure'>
+		<img src="{{ value|e }}" alt="PCA loadings.">	
+	</div>
+{% endfor %}
+
+
+<h2>Distribution of Values in each Metadata Field</h2>
+
+<!--Figure 6: Distribution of values in each metadata field.-->
+<p class="caption"><span class="heading">Figure&nbsp;6.</span> Histograms of metadata distributions (plotted for fields with non-uniform values only).</p>
+
+{% if 'metadataDistContinuous' in item %}
+	<p>Continuous data.</p>
+	{% for key, value in item['metadataDistContinuous'].items() %}
+		<div class='figure'>
+			<img src="{{ value|e }}" alt="Histograms of metadata distributions.">	
+		</div>
+	{% endfor %}
+{% endif %}
+
+{% if 'metadataDistCategorical' in item %}
+	<p>Categorical data.</p>
+	{% for key, value in item['metadataDistCategorical'].items() %}
+		<div class='figure'>
+			<img src="{{ value|e }}" alt="Histograms of metadata distributions.">	
+		</div>
+	{% endfor %}
+{% endif %}
+
+{% if 'metadataDistDate' in item %}
+	<p>Date data.</p>
+	{% for key, value in item['metadataDistDate'].items() %}
+		<div class='figure'>
+			<img src="{{ value|e }}" alt="Histograms of metadata distributions.">	
+		</div>
+	{% endfor %}
+{% endif %}
+
+<h2>Association of PCA Scores with Metadata</h2>
+
+<h3>Calculations Performed</h3>
+
+<div class='content'>
+	<ul>
+		<li>{{ item['Nmetadata'] }} total number of metadata fields </li>
+		<li>{{ item['Ncorr'] }} fields where correlation to PCA scores calculated </li>
+		<li>{{ item['Nkw'] }} fields where Kruskal-Wallis test between groups in PCA scores calculated </li>
+		<li>{{ item['Ninsuf'] }} fields where insufficent sample numbers to estimate significance </li>
+		<li>{{ item['Nuniform'] }} fields with uniform class for all samples </li>
+		<li>{{ item['NuniformByType'] }} fields with uniform class for all samples with same sample type </li>
+		<li>{{ item['Nunique'] }} fields with unique non-numeric values for all samples in class </li>
+		<li>{{ item['Nex'] }} fields excluded from calculations </li>
+	</ul>
+	<ul>
+		<li>Correlation threshold for plotting: {{ item['r_threshold'] }}</li>
+		<li>Kruskal-Willis p-value threshold for plotting: {{ item['kw_threshold'] }}</li>
+	</ul>
+	</p>
+</div>
+
+<!--Figure 7: Heatmap of correlation to PCA scores for suitable metadata fields.-->
+<p class="caption"><span class="heading">Figure&nbsp;7.</span> Heatmap of correlation to PCA scores for suitable metadata fields.</p>
+{% if 'sigCorHeatmap' in item %}
+	<div class='figure'>
+		<img src="{{ item['sigCorHeatmap'] }}" alt="Heatmap of correlation to PCA scores for suitable metadata fields.">	
+	</div>
+{% else %}
+	<p>{{ item['Ncorr'] }} fields where correlation to PCA scores calculated.</p>
+{% endif %}
+
+<!--Figure 8: Heatmap of Kruskal-Wallis Test against PCA scores for suitable metadata fields.-->
+<p class="caption"><span class="heading">Figure&nbsp;8.</span> Heatmap of Kruskal-Wallis Test against PCA scores for suitable metadata fields.</p>
+{% if 'sigKruHeatmap' in item %}
+	<div class='figure'>
+		<img src="{{ item['sigKruHeatmap'] }}" alt="Heatmap of Kruskal-Wallis Test against PCA scores for suitable metadata fields.">	
+	</div>
+{% else %}
+	<p>{{ item['Nkw'] }} fields where Kruskal-Wallis test between groups in PCA scores calculated.</p>
+{% endif %}
+
+<!--Figure 9: PCA scores plots coloured by metadata (significance by correlation).-->
+<p class="caption"><span class="heading">Figure&nbsp;9.</span> PCA scores plots coloured by metadata (significance by correlation).</p>
+<p>{{ item['Ncorr_passing'] }} fields where correlation coefficient to PCA scores exceeded threshold of {{ item['r_threshold'] }}</p>
+{% if 'CORscores' in item %}
+	{% for key, value in item['CORscores'].items() %}
+		<div class='figure'>
+			<img src="{{ value|e }}" alt="PCA scores plots coloured by metadata (correlation).">	
+		</div>
+	{% endfor %}
+{% endif %}
+
+<!--Figure 10: PCA scores plots coloured by metadata (significance by Kruskal-Wallis).-->
+<p class="caption"><span class="heading">Figure&nbsp;10.</span> PCA scores plots coloured by metadata (significance by Kruskal-Wallis).</p>
+<p>{{ item['Nkw_passing'] }} fields where Kruskal-Wallis p-value against PCA scores exceeded threshold of {{ item['kw_threshold'] }}</p>
+{% if 'KWscores' in item %}
+	{% for key, value in item['KWscores'].items() %}
+		<div class='figure'>
+			<img src="{{ value|e }}" alt="PCA scores plots coloured by metadata (significance by Kruskal-Wallis).">	
+		</div>
+	{% endfor %}
+{% endif %}
+
+<!--Figure 11: PCA scores plots coloured by metadata (insufficent sample numbers to estimate significance).-->
+<p class="caption"><span class="heading">Figure&nbsp;11.</span> PCA scores plots coloured by metadata (insufficent sample numbers to estimate significance).</p>
+<p>{{ item['Nkw_insufficientClassNos'] }} fields where insufficent sample numbers to estimate significance.</p>
+{% if 'OTHERscores' in item %}
+	{% for key, value in item['OTHERscores'].items() %}
+		<div class='figure'>
+			<img src="{{ value|e }}" alt="PCA scores plots coloured by metadata (insufficent sample numbers to estimate significance).">	
+		</div>
+	{% endfor %}
+{% endif %}
+
+
+ 
+{% endblock %}

@@ -1,0 +1,10 @@
+{
+	"Sample Name" : "Sampling ID",
+	"NMR Assay Name":"Assay data name",
+	"Date": "Acquisition Date",
+        "Comment[time]": "Acquisition Time",
+	"Parameter Value[instrument]": "Instrument",
+	"Parameter Value[run order]": "Run Order",
+	"Parameter Value[sample batch]": "Sample batch",
+	"Parameter Value[acquisition batch]": "Batch"
+}
