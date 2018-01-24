@@ -214,6 +214,25 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		assert sampleSummary['Acquired'].loc['Other', 'Already Excluded'] == 0	
 
 
+class test_reports_nmr_generatereport(unittest.TestCase):
+
+	def test_report_nmr_raises(self):
+
+		from nPYc.reports._generateReportNMR import _generateReportNMR
+
+		self.assertRaises(TypeError, _generateReportNMR, 'not a NMRDataset object', None)
+
+		noSamp = numpy.random.randint(100, high=500, size=None)
+		noFeat = numpy.random.randint(3000, high=10000, size=None)
+
+		data = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', sop='GenericNMRurine')
+
+		self.assertRaises(ValueError, _generateReportNMR, data, 'Not a vaild plot type')
+		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', withExclusions='Not a bool')
+		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', output=True)
+		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', pcaModel='Not a PCA model')
+
+
 class test_reports_ms_generatereport(unittest.TestCase):
 
 	def test_reports_ms_featuresummary(self):
