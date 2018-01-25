@@ -1645,12 +1645,12 @@ class test_msdataset_import_xcms(unittest.TestCase):
 
 
 		with self.subTest(msg='Checking Retention Time'):
-			rt = pandas.Series([3.17485,
-							3.17485,
-							3.17485,
-							3.17485],
-							name='Retention Time',
-							dtype='float')
+			rt = pandas.Series([3.17485 / 60.0,
+								3.17485 / 60.0,
+								3.17485 / 60.0,
+								3.17485 / 60.0],
+								name='Retention Time',
+								dtype='float')
 
 			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Retention Time'], rt)
 			pandas.util.testing.assert_series_equal(self.msData_PeakTable.featureMetadata['Retention Time'], rt)
