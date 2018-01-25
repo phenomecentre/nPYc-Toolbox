@@ -2046,6 +2046,18 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 						msg='_artifactualLinkageMatrix hasnt been reset by deepcopy')
 
 
+	def test_deleter_artifactualFilter(self):
+		"""
+		Ensure variables necessary to artifactual filtering are reset when a deepcopy is employed
+		"""
+
+		del self.msData.artifactualLinkageMatrix
+		self.assertTrue(self.msData._tempArtifactualLinkageMatrix.empty,
+						msg='_tempArtifactualLinkageMatrix hasnt been reset by delete')
+		self.assertTrue(self.msData._artifactualLinkageMatrix.empty,
+						msg='_artifactualLinkageMatrix hasnt been reset by delete')
+
+
 	def test_artifactualFilter_parameterChange(self):
 		"""
 		Test artifactual filtering parameter alteration.
