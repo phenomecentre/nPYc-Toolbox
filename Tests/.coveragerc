@@ -1,6 +1,9 @@
 [run]
 branch = True
 source = nPYc
+omit = 
+    Notebooks/*
+	docs/*
 
 [report]
 exclude_lines =
