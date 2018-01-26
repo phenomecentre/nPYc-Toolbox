@@ -139,7 +139,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 			saveAs = item['FeatureIntensityFigure']
 		else:
 			print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')  
-            
+
 		_plotAbundanceBySampleType(msData.intensityData, SSmask, SPmask, ERmask, saveAs, msData)    
 
 
@@ -192,7 +192,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 				xlabel='Correlation to Dilution', 
 				histBins=msData.Attributes['histBins'],
 				quantiles=msData.Attributes['quantiles'],
-				inclusionVector=meanIntensitiesSP,
+				inclusionVector=numpy.exp(meanIntensitiesSP),
 				savePath=saveAs, 
 				figureFormat=msData.Attributes['figureFormat'],
 				dpi=msData.Attributes['dpi'],
@@ -210,7 +210,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 				savePath=saveAs,
 				figureFormat=msData.Attributes['figureFormat'],
 				dpi=msData.Attributes['dpi'],
-				figureSize=msData.Attributes['figureSize'])				
+				figureSize=msData.Attributes['figureSize'])
 
 		else:
 			if not output:
@@ -232,7 +232,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 			xlabel='RSD',
 			histBins=msData.Attributes['histBins'],
 			quantiles=msData.Attributes['quantiles'],
-			inclusionVector=meanIntensitiesSP,
+			inclusionVector=numpy.exp(meanIntensitiesSP),
 			logx=False,
 			xlim=(0, 100),
 			savePath=saveAs, 
@@ -543,7 +543,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
 				
 		# Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).
-		
+
 		# Pre-correction
 		if output:
 			item['FeatureIntensityFigurePRE'] = os.path.join(saveDir, item['Name'] + '_BCS1_meanIntesityFeaturePRE.' + msData.Attributes['figureFormat'])
@@ -551,7 +551,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		else:
 			print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')
 			print('Pre-correction.')
-            
+
 		_plotAbundanceBySampleType(msData.intensityData, SSmask, SPmask, ERmask, saveAs, msData)	
 		
 		# Post-correction
@@ -560,9 +560,9 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 			saveAs = item['FeatureIntensityFigurePOST']
 		else:
 			print('Post-correction.')  
-            
+
 		_plotAbundanceBySampleType(msDataCorrected.intensityData, SSmask, SPmask, ERmask, saveAs, msDataCorrected)
-       
+
 			
 		# Figure 2: TIC for all samples and features.
 					
@@ -612,7 +612,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 			xlabel='RSD',
 			histBins=msData.Attributes['histBins'],
 			quantiles=msData.Attributes['quantiles'],
-			inclusionVector=meanIntensitiesSP,
+			inclusionVector=numpy.exp(meanIntensitiesSP),
 			logx=False,
 			xlim=(0, 100),
 			savePath=saveAs, 
@@ -631,7 +631,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 			xlabel='RSD',
 			histBins=msData.Attributes['histBins'],
 			quantiles=msData.Attributes['quantiles'],
-			inclusionVector=meanIntensitiesSP,
+			inclusionVector=numpy.exp(meanIntensitiesSP),
 			logx=False,
 			xlim=(0, 100),
 			savePath=saveAs, 
