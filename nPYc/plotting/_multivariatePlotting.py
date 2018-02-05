@@ -287,24 +287,33 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 		return figures
 
 
-def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None, title='', xlabel='Run Order', ylabel='', savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None, FcritAlpha=None, PcritPercentile=None, title='', xlabel='Run Order', ylabel='', savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
-	Plot scatter plot of PCA outlier stats sumT (strong) or DmodX (moderate), with a line at [25, 50, 75, 95, 99] quantiles
+	Plot scatter plot of PCA outlier stats sumT (strong) or DmodX (moderate), with a line at [25, 50, 75, 95, 99] quantiles and at a critical value if specified
 
-	:param ChemometricsPCA PCAmodel: NPC PCA model object (scikit-learn based)
+	:param numpy.array values: dModX or sum of scores, measure of 'fit' for each sample
 	:param numpy.array runOrder: Order of sample acquisition (samples are plotted in this order)
 	:param pandas.Series sampleType: Sample type of each sample, must be from 'Study Sample', 'Study Pool', 'External Reference', or 'Sample' (see multivariateReport.py)
 	:param bool addViolin: If True adds a violin plot of distribution of values
 	:param float Fcrit: If not none, plots a line at Fcrit
+	:param float FcritAlpha: Alpha value for Fcrit (for legend)
+	:param float PcritPercentile: If not none, plots a line at this quantile
 	:param str title: Title for the plot
 	:param str xlabel: Label for the x-axis
 	"""
+	
 
 	# Preparation
 	if isinstance(sampleType, (str, type(None))):
 		sampleType = numpy.ones([runOrder.shape])
 
 	quantiles = [25, 50, 75, 95, 99]
+	
+	# Plot line at PcritPercentile in red if present
+	if PcritPercentile is not None:
+		if PcritPercentile in quantiles:
+			quantiles.remove(PcritPercentile)
+	
 	quantilesVals = numpy.percentile(values, quantiles)
 
 	## Try loading toolbox wide color scheme
@@ -367,9 +376,14 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
 	for q in numpy.arange(0, len(quantiles)):
 		ax.plot([xmin, xmax],[quantilesVals[q], quantilesVals[q]], 'k--', label='Q'+str(quantiles[q]))
 
-	# Add line at critical value
+	# Add line at Fcrit critical value
 	if Fcrit:
-		ax.plot([xmin, xmax],[Fcrit, Fcrit], 'c--', label='Fcrit')
+		ax.plot([xmin, xmax],[Fcrit, Fcrit], 'c--', label='Fcrit (' + str(FcritAlpha) + ')')
+		
+	# Add line at PcritPercentage critical value
+	if PcritPercentile:
+		Pcrit = numpy.percentile(values, PcritPercentile)
+		ax.plot([xmin, xmax],[Pcrit, Pcrit], 'r--', label='Q'+str(PcritPercentile))	
 
 	# Annotate
 	ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
