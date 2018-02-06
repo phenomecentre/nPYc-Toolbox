@@ -3,6 +3,7 @@ import pandas
 import math
 import os
 from pathlib import PurePath
+import datetime
 
 from ..utilities._nmr import cutSec
 from ..utilities._baseline import baseline
@@ -80,30 +81,44 @@ def baselinePWcalcs(scalePPM, intenData, start, stop, filePathList, alpha, thres
 	"""
 
 	#if the sample size is less than 80 use gold standard data as spectra for baseline calcs
-	#-----need to add the gold standard data loading here, need to ask Jake where to put the data(.npy files)----Ans: Jake wants data stored in json files so will neeed to extract and store for eg any arrays as text in json etc
-	#ive saved as text files for now due to it being an array couldnt get it to load json format; saved using numpy.savetxt(r'D:\npyc-toolbox\nPYc\StudyDesigns\gold1_data.out', gold1_data, delimiter=',')  
+	#-----need to add the gold standard data loading here,
+	# need to ask Jake where to put the data(.npy files)----
+	# Ans: Jake wants data stored in json files so will neeed to extract and store for eg any
+	#  arrays as text in json etc
+	#ive saved as text files for now due to it being an
+	#  array couldnt get it to load json format; saved using
+	# numpy.savetxt(r'D:\npyc-toolbox\nPYc\StudyDesigns\gold1_data.out', gold1_data, delimiter=',')
 	intenData_merged = intenData
 	sizeintenData=numpy.size(intenData,0)
-	
+
+
 	#cutsec
 	(ppmAfterCutSec, X, featureMask) = cutSec(scalePPM, intenData_merged, start, stop, featureMask)#flip ppm----inteData_merged is merged with gold standard data else same as as using intenData as does not get merged above remains original
 
 	#water peak
 
-	#	add the regions as variables for ppm not taken from attributes so we can return these values and save as attributes allowing us to use them later in plots and displaying in reports if need be
+	#	add the regions as variables for ppm not taken from attributes
+	# so we can return these values and save as attributes allowing us
+	# to use them later in plots and displaying in reports if need be
+
 	BL_lowRegionFrom=ppmAfterCutSec.min()
 	BL_highRegionTo=ppmAfterCutSec.max()
+
+
 	WP_lowRegionFrom=WPcutRegionA-0.1
 	WP_highRegionTo=WPcutRegionB+0.1
-	
+
 	[WPppmAfterCutSec, WP_X, featureMask]= cutSec(ppmAfterCutSec, X, WPcutRegionA, WPcutRegionB, featureMask)
+
 	#calculate baseline
 
-	df_outliers = baseline(filePathList, X, ppmAfterCutSec, BL_lowRegionFrom,baselineLow_regionTo,'BL_low_', alpha, threshold)
+	df_outliers = baseline(filePathList, X, ppmAfterCutSec, BL_lowRegionFrom,
+						   baselineLow_regionTo,'BL_low_', alpha, threshold)
+
    #Baseline fluctuations between 9.5 and max(ppm) (High)
 	baselineDF_High = baseline(filePathList, X, ppmAfterCutSec, baselineHigh_regionFrom,BL_highRegionTo, 'BL_high_', alpha, threshold)
                 
-  #now for water peak low region
+    #now for water peak low region
 	WPbaselineDF = baseline(filePathList, WP_X, WPppmAfterCutSec, WP_lowRegionFrom,WPcutRegionA, 'WP_low_', alpha, threshold)
   #waterPeak fluctuations between 9.5 and max(ppm) (High)
 	WPbaselineDF_High = baseline(filePathList, WP_X, WPppmAfterCutSec, WPcutRegionB,WP_highRegionTo, 'WP_high_', alpha, threshold)
@@ -111,6 +126,7 @@ def baselinePWcalcs(scalePPM, intenData, start, stop, filePathList, alpha, thres
 	mergedDF=pandas.merge(df_outliers, baselineDF_High, on='File Path', how='left').fillna(0)# had tp merge like this and fill values with blank that were missing else was throwing away all values that were missing from baselinedf
 	mergedDF=pandas.merge(mergedDF, WPbaselineDF, on='File Path', how='left').fillna(0)# had tp merge like this and fill values with blank that were missing else was throwing away all values that were missing from baselinedf
 	mergedDF=pandas.merge(mergedDF, WPbaselineDF_High, on='File Path', how='left').fillna(0)# had tp merge like this and fill values with blank that were missing else was throwing away all values that were missing from baselinedf
+
 	del df_outliers, baselineDF_High, WPbaselineDF, WPbaselineDF_High
 
 	return mergedDF, featureMask, BL_lowRegionFrom, BL_highRegionTo, WP_lowRegionFrom, WP_highRegionTo
@@ -187,7 +203,76 @@ def cutSec(ppm, X, start, stop, featureMask):
 	return ppm, X, featureMask
 	pass
 
-## FUNCTION ON PROBATION HERE - cannot work with self 
+
+def _qcCheckBaseline(ppm, spectrum, attributesDict):
+	"""
+	Checks the baseline
+	:param ppm:
+	:param spectrum:
+	:param attributesDict:
+	:return:
+	"""
+
+	# Assume the spec is already cut before?
+
+	baselineLowFrom = attributesDict['BL_lowRegionFrom']
+	baselineLowTo = attributesDict['BL_lowRegionTo']
+	baselineHighFrom = attributesDict['BL_highRegionFrom']
+	baselineHighTo = attributesDict['BL_highRegionTo']
+
+	# CUT THE SPEC HERE - DO WE NEED cutSPEC function?
+
+	# ALSO, no mention of sampleMetadata here... if this function is created expecting the apply logic in the
+	# future fine, if meant to use all dataset at once better to add sample Metadata checks
+
+	# Store the actual used value - really necessary?
+	BL_lowRegionFrom = ppmAfterCutSec.min()
+	BL_highRegionTo = ppmAfterCutSec.max()
+
+
+	# calculate baseline = low region
+
+	df_outliers = baseline(filePathList, X, ppmAfterCutSec, BL_lowRegionFrom,
+						   baselineLow_regionTo, 'BL_low_', alpha, threshold)
+
+
+	# calculate baseline = high_region
+
+	# Baseline fluctuations between 9.5 and max(ppm) (High)
+	baselineDF_High = baseline(filePathList, X, ppmAfterCutSec, baselineHigh_regionFrom, BL_highRegionTo, 'BL_high_',
+							   alpha, threshold)
+	metric1 = 1
+	metric2 = 2
+	metric3 = 3
+	metric4 = 4
+	return metric1, metric2, metric3, metric4
+
+
+def _qcCheckWaterPeak(ppm, spectrum, attributesDict):
+	"""
+	Checks the baseline
+	:param spec:
+	:param attributesDict:
+	:return:
+	"""
+
+	waterPeakLowFrom = attributesDict['BL_lowRegionFrom']
+	waterPeakLowTo = attributesDict['BL_lowRegionTo']
+	waterPeakHighFrom = attributesDict['BL_highRegionFrom']
+	waterPeakHighTo = attributesDict['BL_highRegionTo']
+
+	# now for water peak low region
+	WPbaselineDF = baseline(filePathList, WP_X, WPppmAfterCutSec, WP_lowRegionFrom, WPcutRegionA, 'WP_low_', alpha,
+							threshold)
+
+	metric1 = 1
+	metric2 = 2
+	metric3 = 3
+	metric4 = 4
+	return metric1, metric2, metric3, metric4
+
+
+## FUNCTION ON PROBATION HERE - cannot work with self
 def _calcBLWP_PWandMerge(self):#,scalePPM, intenData, start, stop, sampleType, filePathList, sf):
 
 	"""
@@ -196,29 +281,20 @@ def _calcBLWP_PWandMerge(self):#,scalePPM, intenData, start, stop, sampleType, f
 		Input: nmrData object
 
 	"""
+
 	self.sampleMetadata['ImportFail'] = False
-	if self.Attributes['pulseProgram'] in ['cpmgpr1d', 'noesygppr1d', 'noesypr1d']:#only for 1D data
-		[rawDataDf, featureMask,  BL_lowRegionFrom, BL_highRegionTo, WP_lowRegionFrom, WP_highRegionTo] = baselinePWcalcs(self._scale,self._intensityData, -0.2, 0.2, None, self.sampleMetadata['File Path'], max(self.sampleMetadata['SF']),self.Attributes['pulseProgram'], self.Attributes['baseline_alpha'], self.Attributes['baseline_threshold'], self.Attributes['baselineLow_regionTo'], self.Attributes['baselineHigh_regionFrom'], self.Attributes['waterPeakCutRegionA'], self.Attributes['waterPeakCutRegionB'], self.Attributes['LWpeakRange'][0], self.Attributes['LWpeakRange'][1], self.featureMask)
+	[rawDataDf] = baselinePWcalcs(self._scale, self._intensityData, -0.2, 0.2, None, self.sampleMetadata['File Path'], max(self.sampleMetadata['SF']),self.Attributes['pulseProgram'], self.Attributes['baseline_alpha'], self.Attributes['baseline_threshold'], self.Attributes['baselineLow_regionTo'], self.Attributes['baselineHigh_regionFrom'], self.Attributes['waterPeakCutRegionA'], self.Attributes['waterPeakCutRegionB'], self.Attributes['LWpeakRange'][0], self.Attributes['LWpeakRange'][1], self.featureMask)
 
-#			stick these in as attributes
-		self.Attributes['BL_lowRegionFrom']= BL_lowRegionFrom
-		self.Attributes['BL_highRegionTo']= BL_highRegionTo
-		self.Attributes['WP_lowRegionFrom']= WP_lowRegionFrom
-		self.Attributes['WP_highRegionTo']= WP_highRegionTo
+	self.sampleMetadata = pandas.merge(self.sampleMetadata, rawDataDf, on='File Path', how='left', sort=False)
 
-#			 merge
-		self.sampleMetadata = pandas.merge(self.sampleMetadata, rawDataDf, on='File Path', how='left', sort=False)
-
-		#create new column and mark as failed
-		self.sampleMetadata['overallFail'] = True
-		for i in range (len(self.sampleMetadata)):
-			if self.sampleMetadata.ImportFail[i] ==False and self.sampleMetadata.loc[i, 'Line Width (Hz)'] >0 and self.sampleMetadata.loc[i, 'Line Width (Hz)']<self.Attributes['PWFailThreshold'] and self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False and self.sampleMetadata.calibrPass[i] == True:
-				self.sampleMetadata.loc[i,('overallFail')] = False
-			else:
-				self.sampleMetadata.loc[i,('overallFail')] = True
-		self.Attributes['Log'].append([datetime.now(), 'data merged Total samples %s, Failed samples %s' % (str(len(self.sampleMetadata)), str(len(self.sampleMetadata[self.sampleMetadata.overallFail ==True])))])
-	else:
-		self.Attributes['Log'].append([datetime.now(), 'Total samples %s', 'Failed samples %s' % (str(len(self.sampleMetadata)),(str(len(self.sampleMetadata[self.sampleMetadata.ImportFail ==False]))))])
+	#create new column and mark as failed
+	self.sampleMetadata['overallFail'] = True
+	for i in range (len(self.sampleMetadata)):
+		if self.sampleMetadata.ImportFail[i] ==False and self.sampleMetadata.loc[i, 'Line Width (Hz)'] >0 and self.sampleMetadata.loc[i, 'Line Width (Hz)']<self.Attributes['PWFailThreshold'] and self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False and self.sampleMetadata.calibrPass[i] == True:
+			self.sampleMetadata.loc[i,('overallFail')] = False
+		else:
+			self.sampleMetadata.loc[i,('overallFail')] = True
+	self.Attributes['Log'].append([datetime.now(), 'data merged Total samples %s, Failed samples %s' % (str(len(self.sampleMetadata)), str(len(self.sampleMetadata[self.sampleMetadata.overallFail ==True])))])
 
 	self.sampleMetadata['exceed90critical'] = False#create new df column
 	for i in range (len(self.sampleMetadata)):

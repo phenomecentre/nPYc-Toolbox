@@ -7,6 +7,7 @@ Created on Tue Jun  7 14:08:25 2016
 import numpy as np
 from scipy.stats.mstats import mquantiles
 import pandas as pd
+
 def baseline(filePathList, X, ppm, regionFrom, regionTo, BLorWP, alpha, threshold):
 	"""
 	% Function to determine baseline differences from either end of the 
@@ -37,7 +38,7 @@ def baseline(filePathList, X, ppm, regionFrom, regionTo, BLorWP, alpha, threshol
 	%   output (struct) = variables generated during run
 	"""
 	#reverse data if necessary
-	if ppm[0]>ppm[1]:
+	if ppm[0] > ppm[1]:
 		ppm = ppm[::-1]
 		X = X[:, ::-1]
            
@@ -53,15 +54,16 @@ def baseline(filePathList, X, ppm, regionFrom, regionTo, BLorWP, alpha, threshol
 	area = areaTrap(X, ppm, ppm[minR], ppm[maxR])
 
 	areaAbs=np.absolute(area)#absolute value / or distance from 0 [basically removes all (-) from negative numbers
-        
+
         #proportion of points that exceed critical value for each sample
-        
-        #critical value
+
+    #critical value
 	areaCrit = mquantiles(areaAbs, 1 - alpha, axis=0)
-        
-        #proportion of points exceeding critical value
+
+    #proportion of points exceeding critical value
 	failAreaCalc = areaAbs>np.tile(areaCrit,[ns, 1])
 	failArea = [0] * np.size(failAreaCalc,0)
+
 	for i in range(np.size(failAreaCalc,0)):# the for loop and failArea calc here is the quivalent of the fist part of the failArea equation in matlab code line 82 ie sum(areaAbs > repmat(areaCrit, ns, 1), 2)
 		failAreaCalc1=sum(failAreaCalc[i])
 		failArea[i]=failAreaCalc1
@@ -70,7 +72,7 @@ def baseline(filePathList, X, ppm, regionFrom, regionTo, BLorWP, alpha, threshol
 	failArea = np.asarray(failArea)#first convert to array as cannot do division etc on list
 	failArea = failArea / float(np.size(area,1))*100
 
-        #proportion of points failing negativity test
+    #proportion of points failing negativity test
 	failNeg = [0] * np.size(failAreaCalc,0)
 	for i in range(np.size(failAreaCalc,0)):# the for loop and failNeg calc here is the quivalent of the fist part of the failNeg equation in matlab code
 		failNegCalc=sum(area[i]<0)/float(np.size(area,1))*100
@@ -91,6 +93,7 @@ def baseline(filePathList, X, ppm, regionFrom, regionTo, BLorWP, alpha, threshol
         #add other info to DF
 	outliersDF[BLorWP+'failArea'] = failArea[0:len(outliersDF)]#this is so ignores data that is from gold_standard data if sample sixe less than 80
 	outliersDF[BLorWP+'failNeg'] = failNeg[0:len(outliersDF)]
+
 	del regionFrom,regionTo,minR,maxR,area,alpha,threshold,areaCrit,failArea,failNeg
 	return outliersDF
 
@@ -115,6 +118,7 @@ def areaTrap(X, ppm, start, stop):
                 
 			area[i, j-start] = (X[i,j]+X[i,j+1])/2*step
 	return area
+
 def main():
 	pass
 

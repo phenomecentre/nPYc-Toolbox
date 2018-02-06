@@ -280,7 +280,6 @@ class NMRDataset(Dataset):
 			assayRoles,
 			', '.join("{!s}={!r}".format(key,val) for (key,val) in kwargs.items()))])
 
-
 	def _exportISATAB(self, destinationPath, escapeDelimiters=False):
 		"""
 		Export the dataset's metadata to the directory *destinationPath* as ISATAB
