@@ -4,6 +4,9 @@ import math
 import os
 from pathlib import PurePath
 
+from ..utilities._nmr import cutSec
+from ..utilities._baseline import baseline
+
 
 def interpolateSpectrum(spectrum, originalScale, targetScale):
 	"""
@@ -75,8 +78,7 @@ def baselinePWcalcs(scalePPM, intenData, start, stop, sampleType, filePathList,s
 	:param mergedDF: final output merge all the data in to one dataframe
 	:type mergedDF: Datafrane
 	"""
-	from ..utilities._cutSec import cutSec 
-	from ..utilities._baseline import baseline 
+
 	#if the sample size is less than 80 use gold standard data as spectra for baseline calcs
 	#-----need to add the gold standard data loading here, need to ask Jake where to put the data(.npy files)----Ans: Jake wants data stored in json files so will neeed to extract and store for eg any arrays as text in json etc
 	#ive saved as text files for now due to it being an array couldnt get it to load json format; saved using numpy.savetxt(r'D:\npyc-toolbox\nPYc\StudyDesigns\gold1_data.out', gold1_data, delimiter=',')  
@@ -87,7 +89,7 @@ def baselinePWcalcs(scalePPM, intenData, start, stop, sampleType, filePathList,s
 	(ppmAfterCutSec, X, featureMask) = cutSec(scalePPM, intenData_merged, start, stop, featureMask)#flip ppm----inteData_merged is merged with gold standard data else same as as using intenData as does not get merged above remains original
 
 	#water peak
-	
+
 	#	add the regions as variables for ppm not taken from attributes so we can return these values and save as attributes allowing us to use them later in plots and displaying in reports if need be
 	BL_lowRegionFrom=ppmAfterCutSec.min()
 	BL_highRegionTo=ppmAfterCutSec.max()
@@ -143,3 +145,44 @@ def generateBaseName(sampleMetadata):
 	roundedExpno = roundedExpno.astype(str)
 
 	return sampleMetadata.loc[:,'Sample File Name'].apply(splitRack).str.cat(roundedExpno, sep='/').values, expno.values
+
+
+def cutSec(ppm, X, start, stop, featureMask):
+	"""
+	Temove defined regions from NMR spectra data
+	input/output as per matlab version of code:
+
+	% ppm (1,nv) = ppm scale for nv variables
+	% X (ns,nv)  = NMR spectral data for ns samples
+	% start (1,1) = ppm value for start of region to remove
+	% stop (1,1) = ppm value for end of region to remove
+	%
+	% OUTPUT:
+	% ppm (1,nr) = ppm scale with region from start:stop removed
+	% X (ns,nr)  = NMR spectral with region from start:stop removed
+
+	"""
+
+	flip = 0
+	if ppm[0] > ppm[-1]:
+		flip = 1
+		ppm = ppm[::-1]
+		X = X[:, ::-1]
+
+	# find first entry in ppm with >='start' valu
+	start = (ppm >= start).nonzero()
+	start = start[0][0]  # first entry
+	stop = (ppm <= stop).nonzero()
+	stop = stop[0][-1]  # last entry
+
+	# currently setting featureMask will get rid of peaks in start:stop region BUT it also marks as excluded so have removed as inaccurately marking for exclusion when all we want to do is remove from intensityData not mark as exluded
+	try:
+		featureMask[0,
+		start:stop] = False  # this may only occur on unit test data, not sure need to check but either way was causing issue
+	except:
+		featureMask[start:stop] = False
+	if flip == 1:
+		ppm = ppm[::-1]
+		X = X[:, ::-1]
+	return ppm, X, featureMask
+	pass

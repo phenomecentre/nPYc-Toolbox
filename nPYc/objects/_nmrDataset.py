@@ -10,7 +10,7 @@ from ..enumerations import VariableType, AssayRole, SampleType
 import warnings
 
 from ._dataset import Dataset
-from ..utilities.nmr import interpolateSpectrum, baselinePWcalcs
+from ..utilities._nmr import interpolateSpectrum, baselinePWcalcs
 from ..utilities.extractParams import buildFileList
 from ..utilities._calibratePPMscale import calibratePPM
 from ..utilities._lineWidth import lineWidth
@@ -18,6 +18,7 @@ from ..utilities._fitPeak import integrateResonance
 from ..utilities import removeTrailingColumnNumbering
 from .._toolboxPath import toolboxPath
 from ..enumerations import VariableType, DatasetLevel, AssayRole, SampleType
+
 
 class NMRDataset(Dataset):
 	"""
@@ -38,7 +39,7 @@ class NMRDataset(Dataset):
 	:param str pulseprogram: When loading raw data, only import spectra aquired with *pulseprogram*
 	"""
 
-	__importTypes = ['Bruker', 'BI-LISA'] # Raw data types we understand
+	__importTypes = ['Bruker'] # Raw data types we understand
 
 	def __init__(self, datapath, fileType='Bruker', pulseProgram='noesygppr1d', sop='GenericNMRurine', xmlFileName=r'.*?results\.xml$', pdata=1, **kwargs):
 		"""
@@ -50,9 +51,6 @@ class NMRDataset(Dataset):
 
 		* Bruker
 			When loading Bruker format raw spectra (1r files), all directores below :file:`datapath` will be scanned for valid raw data, and those matching *pulseprogram* loaded and aligned onto a common scale as defined in *sop*.
-
-		* BI-LISA
-			BI-LISA data can be read from Excel workbooks, the name of the sheet containing the data to be loaded should be passed in the *pulseProgram* argument. Feature descriptors will be loaded from the 'Analytes' sheet, and file names converted back to the `ExperimentName/expno` format from `ExperimentName_EXPNO_expno`.
 
 		:param str fileType: Type of data to be loaded
 		:param str sheetname: Load data from the specifed sheet of the Excel workbook
@@ -121,11 +119,6 @@ class NMRDataset(Dataset):
 			self.sampleMask = self.sampleMetadata['overallFail'] == False
 			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
 
-		elif fileType == 'BI-LISA':
-			self._importBILISAData(datapath, pulseProgram)
-			self.VariableType = VariableType.Discrete
-			self.name = self.fileName
-
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
 			pass
@@ -134,85 +127,6 @@ class NMRDataset(Dataset):
 		
 		# Log init
 		self.Attributes['Log'].append([datetime.now(), '%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
-
-
-	def _importBILISAData(self, datapath, sheetname):
-		"""
-		find and load all the BILISA format data
-
-		"""
-		##
-		# Load excel sheet
-		##
-		dataT = pandas.read_excel(datapath, sheet_name=sheetname)
-		featureMappings = pandas.read_excel(datapath, sheet_name='Analytes')
-
-		# Extract data
-		self._intensityData = dataT.iloc[:,1:].as_matrix()
-
-		##
-		# Parse feature names into name + unit
-		##
-		varSpec = r"""
-					^
-					(?P<componentName>\w+?)
-					\s
-					in
-					\s
-					(?P<unit>.+)
-					$
-					"""
-		# Get column headers and transpose
-		varParser = re.compile(varSpec, re.VERBOSE)
-		features = dataT.transpose().reset_index()['index']
-		features.drop(0, axis=0, inplace=True)
-
-		# Seperate unit and variable type
-		featureMetadata = features.str.extract(varParser, expand=False)
-		featureMetadata.reset_index(inplace=True)
-		featureMetadata.drop('index', axis=1, inplace=True)
-
-		# Rename Columns
-		featureMetadata = featureMetadata.merge(featureMappings, on=None, left_on='componentName', right_on='Name', how='left')
-		featureMetadata.drop('unit', axis=1, inplace=True)
-		featureMetadata.drop('componentName', axis=1, inplace=True)
-		featureMetadata.rename(columns={'Matrix': 'Component'}, inplace=True)
-		featureMetadata.rename(columns={'Name': 'Feature Name'}, inplace=True)
-
-		self.featureMetadata = featureMetadata
-
-		##
-		# Convert sample IDs back to folder/expno
-		##
-		filenameSpec = r"""
-						^
-						(?P<Rack>\w+?)
-						_EXPNO_
-						(?P<expno>.+)
-						$
-						"""
-		fileNameParser = re.compile(filenameSpec, re.VERBOSE)
-		sampleMetadata = dataT['SampleID'].str.extract(fileNameParser, expand=False)
-		sampleMetadata['Sample File Name'] = sampleMetadata['Rack'].str.cat(sampleMetadata['expno'], sep='/')
-
-		sampleMetadata['expno'] = pandas.to_numeric(sampleMetadata['expno'])
-
-		sampleMetadata['Sample Base Name'] = sampleMetadata['Sample File Name']
-		sampleMetadata['Exclusion Details'] = None
-		sampleMetadata['AssayRole'] = numpy.nan
-		sampleMetadata['SampleType'] = numpy.nan
-		sampleMetadata['Dilution'] = numpy.nan
-		sampleMetadata['Batch'] = numpy.nan
-		sampleMetadata['Correction Batch'] = numpy.nan
-		sampleMetadata['Run Order'] = numpy.nan
-		sampleMetadata['Sampling ID'] = numpy.nan
-		sampleMetadata['Acquired Time'] = numpy.nan
-
-		self.sampleMetadata = sampleMetadata
-
-		self.initialiseMasks()
-
-		self.Attributes['Log'].append([datetime.now(), 'BI-LISA data loaded from %s' % (datapath)])
 
 
 	def _calcBLWP_PWandMerge(self):#,scalePPM, intenData, start, stop, sampleType, filePathList, sf):
@@ -293,7 +207,7 @@ class NMRDataset(Dataset):
 		# Prepare input
 		if 'Sample Base Name' not in self.sampleMetadata.columns:
 			# if 'Sample Base Name' is missing, generate it
-			from ..utilities.nmr import generateBaseName
+			from ..utilities._nmr import generateBaseName
 			self.sampleMetadata.loc[:, 'Sample Base Name'], self.sampleMetadata.loc[:, 'expno'] = generateBaseName(self.sampleMetadata)
 
 		# Merge LIMS file using Dataset method
@@ -341,7 +255,7 @@ class NMRDataset(Dataset):
 		# Only do this if 'Sample Base Name' is not defined already
 		##
 		if 'Sample Base Name' not in self.sampleMetadata.columns:
-			from ..utilities.nmr import generateBaseName
+			from ..utilities._nmr import generateBaseName
 
 			self.sampleMetadata.loc[:,'Sample Base Name'], self.sampleMetadata.loc[:,'expno'] = generateBaseName(self.sampleMetadata)
 

@@ -409,7 +409,7 @@ class test_nmrdataset_bilisa(unittest.TestCase):
 #unit test for Bruker data
 ##
 from nPYc.utilities._baseline import baseline
-from nPYc.utilities.nmr import interpolateSpectrum, baselinePWcalcs
+from nPYc.utilities._nmr import interpolateSpectrum, baselinePWcalcs
 from nPYc.reports._generateReportNMR import _generateReportNMR
 from math import ceil
 

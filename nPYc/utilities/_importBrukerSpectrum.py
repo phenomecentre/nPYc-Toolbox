@@ -6,7 +6,7 @@ from xml.etree import ElementTree
 from ..utilities._calibratePPMscale import calibratePPM
 from ..utilities._lineWidth import lineWidth
 from ..utilities._fitPeak import integrateResonance
-from ..utilities.nmr import interpolateSpectrum
+from ..utilities._nmr import interpolateSpectrum
 from ..utilities import extractParams
 
 def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
