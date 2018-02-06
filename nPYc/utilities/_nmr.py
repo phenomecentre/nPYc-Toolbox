@@ -204,7 +204,7 @@ def cutSec(ppm, X, start, stop, featureMask):
 	pass
 
 
-def _qcCheckBaseline(ppm, spectrum, attributesDict):
+def _qcCheckBaseline(ppm, spectrum):
 	"""
 	Checks the baseline
 	:param ppm:
@@ -213,34 +213,14 @@ def _qcCheckBaseline(ppm, spectrum, attributesDict):
 	:return:
 	"""
 
-	# Assume the spec is already cut before?
-
-	baselineLowFrom = attributesDict['BL_lowRegionFrom']
-	baselineLowTo = attributesDict['BL_lowRegionTo']
-	baselineHighFrom = attributesDict['BL_highRegionFrom']
-	baselineHighTo = attributesDict['BL_highRegionTo']
-
-	# CUT THE SPEC HERE - DO WE NEED cutSPEC function?
-
-	# ALSO, no mention of sampleMetadata here... if this function is created expecting the apply logic in the
-	# future fine, if meant to use all dataset at once better to add sample Metadata checks
-
-	# Store the actual used value - really necessary?
-	BL_lowRegionFrom = ppmAfterCutSec.min()
-	BL_highRegionTo = ppmAfterCutSec.max()
-
-
-	# calculate baseline = low region
-
-	df_outliers = baseline(filePathList, X, ppmAfterCutSec, BL_lowRegionFrom,
-						   baselineLow_regionTo, 'BL_low_', alpha, threshold)
-
+	baseline(filePathList, X, ppmAfterCutSec, BL_lowRegionFrom,
+	baselineLow_regionTo, 'BL_low_', alpha, threshold)
 
 	# calculate baseline = high_region
 
-	# Baseline fluctuations between 9.5 and max(ppm) (High)
 	baselineDF_High = baseline(filePathList, X, ppmAfterCutSec, baselineHigh_regionFrom, BL_highRegionTo, 'BL_high_',
 							   alpha, threshold)
+
 	metric1 = 1
 	metric2 = 2
 	metric3 = 3
@@ -248,19 +228,13 @@ def _qcCheckBaseline(ppm, spectrum, attributesDict):
 	return metric1, metric2, metric3, metric4
 
 
-def _qcCheckWaterPeak(ppm, spectrum, attributesDict):
+def _qcCheckWaterPeak(ppm, spectrum):
 	"""
 	Checks the baseline
 	:param spec:
 	:param attributesDict:
 	:return:
 	"""
-
-	waterPeakLowFrom = attributesDict['BL_lowRegionFrom']
-	waterPeakLowTo = attributesDict['BL_lowRegionTo']
-	waterPeakHighFrom = attributesDict['BL_highRegionFrom']
-	waterPeakHighTo = attributesDict['BL_highRegionTo']
-
 	# now for water peak low region
 	WPbaselineDF = baseline(filePathList, WP_X, WPppmAfterCutSec, WP_lowRegionFrom, WPcutRegionA, 'WP_low_', alpha,
 							threshold)
