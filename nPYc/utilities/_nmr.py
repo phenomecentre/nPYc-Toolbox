@@ -43,7 +43,7 @@ def interpolateSpectrum(spectrum, originalScale, targetScale):
 	return interpolatedSpectrum
 
 
-def baselinePWcalcs(scalePPM, intenData, start, stop, sampleType, filePathList,sf,pulProg, alpha, threshold, baselineLow_regionTo,baselineHigh_regionFrom, WPcutRegionA, WPcutRegionB, LWpeakRangeFrom, LWpeakRangeTo, featureMask):
+def baselinePWcalcs(scalePPM, intenData, start, stop, filePathList, alpha, threshold, baselineLow_regionTo,baselineHigh_regionFrom, WPcutRegionA, WPcutRegionB, featureMask):
 	"""
 	calculate the baseline high/low and water peak high/low and the peak width in Hz for chosen peak (TSP or lactate)
 	
@@ -186,3 +186,44 @@ def cutSec(ppm, X, start, stop, featureMask):
 		X = X[:, ::-1]
 	return ppm, X, featureMask
 	pass
+
+## FUNCTION ON PROBATION HERE - cannot work with self 
+def _calcBLWP_PWandMerge(self):#,scalePPM, intenData, start, stop, sampleType, filePathList, sf):
+
+	"""
+	calls the baselinePWcalcs function and works out fails and merges the dataframes saves as part of thenmrData object
+	params:
+		Input: nmrData object
+
+	"""
+	self.sampleMetadata['ImportFail'] = False
+	if self.Attributes['pulseProgram'] in ['cpmgpr1d', 'noesygppr1d', 'noesypr1d']:#only for 1D data
+		[rawDataDf, featureMask,  BL_lowRegionFrom, BL_highRegionTo, WP_lowRegionFrom, WP_highRegionTo] = baselinePWcalcs(self._scale,self._intensityData, -0.2, 0.2, None, self.sampleMetadata['File Path'], max(self.sampleMetadata['SF']),self.Attributes['pulseProgram'], self.Attributes['baseline_alpha'], self.Attributes['baseline_threshold'], self.Attributes['baselineLow_regionTo'], self.Attributes['baselineHigh_regionFrom'], self.Attributes['waterPeakCutRegionA'], self.Attributes['waterPeakCutRegionB'], self.Attributes['LWpeakRange'][0], self.Attributes['LWpeakRange'][1], self.featureMask)
+
+#			stick these in as attributes
+		self.Attributes['BL_lowRegionFrom']= BL_lowRegionFrom
+		self.Attributes['BL_highRegionTo']= BL_highRegionTo
+		self.Attributes['WP_lowRegionFrom']= WP_lowRegionFrom
+		self.Attributes['WP_highRegionTo']= WP_highRegionTo
+
+#			 merge
+		self.sampleMetadata = pandas.merge(self.sampleMetadata, rawDataDf, on='File Path', how='left', sort=False)
+
+		#create new column and mark as failed
+		self.sampleMetadata['overallFail'] = True
+		for i in range (len(self.sampleMetadata)):
+			if self.sampleMetadata.ImportFail[i] ==False and self.sampleMetadata.loc[i, 'Line Width (Hz)'] >0 and self.sampleMetadata.loc[i, 'Line Width (Hz)']<self.Attributes['PWFailThreshold'] and self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False and self.sampleMetadata.calibrPass[i] == True:
+				self.sampleMetadata.loc[i,('overallFail')] = False
+			else:
+				self.sampleMetadata.loc[i,('overallFail')] = True
+		self.Attributes['Log'].append([datetime.now(), 'data merged Total samples %s, Failed samples %s' % (str(len(self.sampleMetadata)), str(len(self.sampleMetadata[self.sampleMetadata.overallFail ==True])))])
+	else:
+		self.Attributes['Log'].append([datetime.now(), 'Total samples %s', 'Failed samples %s' % (str(len(self.sampleMetadata)),(str(len(self.sampleMetadata[self.sampleMetadata.ImportFail ==False]))))])
+
+	self.sampleMetadata['exceed90critical'] = False#create new df column
+	for i in range (len(self.sampleMetadata)):
+		if self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False:
+			self.sampleMetadata.loc[i,('exceed90critical')] = False
+		else:
+			self.sampleMetadata.loc[i,('exceed90critical')] = True
+

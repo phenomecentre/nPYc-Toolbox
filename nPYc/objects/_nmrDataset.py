@@ -2,22 +2,15 @@ import os
 from datetime import datetime
 import pandas
 import numpy
-import math
 import numbers
-from pathlib import PurePath
 import re
-from ..enumerations import VariableType, AssayRole, SampleType
 import warnings
 
 from ._dataset import Dataset
-from ..utilities._nmr import interpolateSpectrum, baselinePWcalcs
-from ..utilities.extractParams import buildFileList
-from ..utilities._calibratePPMscale import calibratePPM
-from ..utilities._lineWidth import lineWidth
-from ..utilities._fitPeak import integrateResonance
+from ..utilities._nmr import baselinePWcalcs
 from ..utilities import removeTrailingColumnNumbering
 from .._toolboxPath import toolboxPath
-from ..enumerations import VariableType, DatasetLevel, AssayRole, SampleType
+from ..enumerations import VariableType, AssayRole, SampleType
 
 
 class NMRDataset(Dataset):
@@ -41,7 +34,7 @@ class NMRDataset(Dataset):
 
 	__importTypes = ['Bruker'] # Raw data types we understand
 
-	def __init__(self, datapath, fileType='Bruker', pulseProgram='noesygppr1d', sop='GenericNMRurine', xmlFileName=r'.*?results\.xml$', pdata=1, **kwargs):
+	def __init__(self, datapath, fileType='Bruker', pulseProgram='noesygppr1d', sop='GenericNMRurine', pdata=1, **kwargs):
 		"""
 		NMRDataset(datapath, fileType='Bruker', sop='GenericNMRurine', pulseprogram='noesygpp1d', **kwargs)
 
@@ -127,46 +120,6 @@ class NMRDataset(Dataset):
 		
 		# Log init
 		self.Attributes['Log'].append([datetime.now(), '%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
-
-
-	def _calcBLWP_PWandMerge(self):#,scalePPM, intenData, start, stop, sampleType, filePathList, sf):
-
-		"""
-		calls the baselinePWcalcs function and works out fails and merges the dataframes saves as part of thenmrData object
-		params:
-			Input: nmrData object
-
-		"""
-		self.sampleMetadata['ImportFail'] = False
-		if self.Attributes['pulseProgram'] in ['cpmgpr1d', 'noesygppr1d', 'noesypr1d']:#only for 1D data
-			[rawDataDf, featureMask,  BL_lowRegionFrom, BL_highRegionTo, WP_lowRegionFrom, WP_highRegionTo] = baselinePWcalcs(self._scale,self._intensityData, -0.2, 0.2, None, self.sampleMetadata['File Path'], max(self.sampleMetadata['SF']),self.Attributes['pulseProgram'], self.Attributes['baseline_alpha'], self.Attributes['baseline_threshold'], self.Attributes['baselineLow_regionTo'], self.Attributes['baselineHigh_regionFrom'], self.Attributes['waterPeakCutRegionA'], self.Attributes['waterPeakCutRegionB'], self.Attributes['LWpeakRange'][0], self.Attributes['LWpeakRange'][1], self.featureMask)
-
-#			stick these in as attributes
-			self.Attributes['BL_lowRegionFrom']= BL_lowRegionFrom
-			self.Attributes['BL_highRegionTo']= BL_highRegionTo
-			self.Attributes['WP_lowRegionFrom']= WP_lowRegionFrom
-			self.Attributes['WP_highRegionTo']= WP_highRegionTo
-
-#			 merge
-			self.sampleMetadata = pandas.merge(self.sampleMetadata, rawDataDf, on='File Path', how='left', sort=False)
-
-			#create new column and mark as failed
-			self.sampleMetadata['overallFail'] = True
-			for i in range (len(self.sampleMetadata)):
-				if self.sampleMetadata.ImportFail[i] ==False and self.sampleMetadata.loc[i, 'Line Width (Hz)'] >0 and self.sampleMetadata.loc[i, 'Line Width (Hz)']<self.Attributes['PWFailThreshold'] and self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False and self.sampleMetadata.calibrPass[i] == True:
-					self.sampleMetadata.loc[i,('overallFail')] = False
-				else:
-					self.sampleMetadata.loc[i,('overallFail')] = True
-			self.Attributes['Log'].append([datetime.now(), 'data merged Total samples %s, Failed samples %s' % (str(len(self.sampleMetadata)), str(len(self.sampleMetadata[self.sampleMetadata.overallFail ==True])))])
-		else:
-			self.Attributes['Log'].append([datetime.now(), 'Total samples %s', 'Failed samples %s' % (str(len(self.sampleMetadata)),(str(len(self.sampleMetadata[self.sampleMetadata.ImportFail ==False]))))])
-
-		self.sampleMetadata['exceed90critical'] = False#create new df column
-		for i in range (len(self.sampleMetadata)):
-			if self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False:
-				self.sampleMetadata.loc[i,('exceed90critical')] = False
-			else:
-				self.sampleMetadata.loc[i,('exceed90critical')] = True
 
 
 	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, **kwargs):
