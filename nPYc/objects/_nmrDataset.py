@@ -111,16 +111,12 @@ class NMRDataset(Dataset):
 
 			self.addSampleInfo(descriptionFormat='Filenames')
 
-			##
-			# Do per-dataset QC work here
-			##
-			# TODO - refactor tp seperate these QC checks
+
 			bounds = numpy.std(self.sampleMetadata['Delta PPM']) * 3
 			meanVal = numpy.mean(self.sampleMetadata['Delta PPM'])
 			self.sampleMetadata['calibrPass'] = numpy.logical_or((self.sampleMetadata['Delta PPM'] > meanVal - bounds),
 																 (self.sampleMetadata['Delta PPM'] < meanVal + bounds))
 			self._scale = self.featureMetadata['ppm'].values
-			self._calcBLWP_PWandMerge()
 			self.featureMask[:] = True
 			self.sampleMask = self.sampleMetadata['overallFail'] == False
 			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
