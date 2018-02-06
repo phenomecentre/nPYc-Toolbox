@@ -204,7 +204,7 @@ def cutSec(ppm, X, start, stop, featureMask):
 	pass
 
 
-def _qcCheckBaseline(ppm, spectrum):
+def _qcCheckBaseline(ppm, spectrum, alpha):
 	"""
 	Checks the baseline
 	:param ppm:
@@ -213,19 +213,13 @@ def _qcCheckBaseline(ppm, spectrum):
 	:return:
 	"""
 
-	baseline(filePathList, X, ppmAfterCutSec, BL_lowRegionFrom,
-	baselineLow_regionTo, 'BL_low_', alpha, threshold)
+	# Single threshold
+	criticalThreshold = numpy.percentile(spectrum, 1 - alpha)
+	# Number of points
+	isOutlier = spectrum > criticalThreshold
 
-	# calculate baseline = high_region
-
-	baselineDF_High = baseline(filePathList, X, ppmAfterCutSec, baselineHigh_regionFrom, BL_highRegionTo, 'BL_high_',
-							   alpha, threshold)
-
-	metric1 = 1
-	metric2 = 2
-	metric3 = 3
-	metric4 = 4
-	return metric1, metric2, metric3, metric4
+	numpyp.sum(isOutlier)/spectrum.shape[0]
+	return isOutlier
 
 
 def _qcCheckWaterPeak(ppm, spectrum):
@@ -235,15 +229,14 @@ def _qcCheckWaterPeak(ppm, spectrum):
 	:param attributesDict:
 	:return:
 	"""
-	# now for water peak low region
-	WPbaselineDF = baseline(filePathList, WP_X, WPppmAfterCutSec, WP_lowRegionFrom, WPcutRegionA, 'WP_low_', alpha,
-							threshold)
 
-	metric1 = 1
-	metric2 = 2
-	metric3 = 3
-	metric4 = 4
-	return metric1, metric2, metric3, metric4
+	# Single threshold
+	criticalThreshold = numpy.percentile(spectrum, 1 - alpha)
+	# Number of points
+	isOutlier = spectrum > criticalThreshold
+
+	numpy.sum(isOutlier) / spectrum.shape[0]
+	return isOutlier
 
 
 ## FUNCTION ON PROBATION HERE - cannot work with self
