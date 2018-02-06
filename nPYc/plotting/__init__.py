@@ -35,9 +35,10 @@ from ._plotLOQRunOrder import plotLOQRunOrder
 from ._plotFeatureLOQ import plotFeatureLOQ
 from ._plotVariableScatter import plotVariableScatter
 from ._plotFeatureAccuracyPrecision import plotAccuracyPrecision
+from ._plotIonMap import plotIonMapInteractive
 
 __all__ = ['histogram', 'plotBatchAndROCorrection', 'plotTIC', 'plotTICinteractive', 'plotLRTIC', 'jointplotRSDvCorrelation', 'plotCorrelationToLRbyFeature',
 		   'plotIonMap', 'plotRSDs', 'plotRSDsInteractive', 'plotScree', 'plotOutliers', 'plotSpectralVariance', 'plotScores', 'plotScoresInteractive',
 		   'plotLoadings', 'plotLoadingsInteractive', 'plotDiscreteLoadings', 'plotFeatureRanges', 'plotMetadataDistribution', 'plotLOQRunOrder', 
 		   'plotFeatureLOQ', 'plotVariableScatter', 'plotAccuracyPrecision', 'plotCalibrationInteractive', 'plotLineWidth', 'plotLineWidthInteractive',
-		   'plotBaseline', 'plotBaselineInteractive', 'plotWaterResonance', 'plotWaterResonanceInteractive', 'plotSpectraInteractive']
+		   'plotBaseline', 'plotBaselineInteractive', 'plotWaterResonance', 'plotWaterResonanceInteractive', 'plotSpectraInteractive', 'plotIonMapInteractive']
