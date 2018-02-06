@@ -1,5 +1,7 @@
 import numpy
 import matplotlib.pyplot as plt
+import plotly.graph_objs as go
+
 from ..objects import MSDataset
 from ..enumerations import VariableType
 
@@ -95,3 +97,42 @@ def _plotMassSpectrum(ax, msData, xlim, ylim):
 
 	ax.set_ylabel('Median intensity')
 	ax.set_xlabel('m/z')
+
+
+def plotIonMapInteractive(dataset, title=None, xlim=None, ylim=None, logx=False, logy=False):
+	"""
+	Visualise features in a MSDataset, as an ion map.
+
+	Plotting requires the presence of 'm/z' and 'Retention Time' columns in the :py:attr:`~nPYc.objects.Dataset.featureMetadata` table.
+
+	:param MSDataset msData: Dataset object to visualise
+	"""
+	data = list()
+
+	ionMap = go.Scatter(
+		x = dataset.featureMetadata.loc[dataset.featureMask, 'Retention Time'],
+		y = dataset.featureMetadata.loc[dataset.featureMask, 'm/z'],
+		mode = 'markers',
+		text = dataset.featureMetadata.loc[dataset.featureMask, 'Feature Name'],
+		hoverinfo = 'x, y, text',
+		showlegend = False
+		)
+
+	data.append(ionMap)
+	Xlabel = 'Retention Time'
+	Ylabel = 'm/z'
+
+	layout = {
+		'xaxis' : dict(
+			title = Xlabel,
+			),
+		'yaxis' : dict(
+			title = Ylabel
+			),
+		'title' : 'Ion map for: ' + dataset.name,
+		'hovermode' : 'closest',
+	}
+
+	figure = go.Figure(data=data, layout=layout)
+
+	return figure

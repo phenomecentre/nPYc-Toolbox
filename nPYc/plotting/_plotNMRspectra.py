@@ -1,6 +1,8 @@
+import numpy
 import plotly.graph_objs as go
 
-from nPYc.objects._nmrDataset import NMRDataset
+from ..objects._nmrDataset import NMRDataset
+from ..enumerations import VariableType
 
 def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, sampleLabels='Sampling ID'):
 	"""
@@ -12,7 +14,7 @@ def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, 
 	:param xlim: Tuple of (minimum value, maximum value) defining a feature range to plot
 	:type xlim: (float, float)
 	"""
-	if not dataset.VariableType == nPYc.enumerations.VariableType.Spectral:
+	if not dataset.VariableType == VariableType.Spectral:
 		raise TypeError('Variables in dataset must be continuous.')
 
 	if featureNames is None:
