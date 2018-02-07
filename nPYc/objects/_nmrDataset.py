@@ -7,7 +7,6 @@ import re
 import warnings
 
 from ._dataset import Dataset
-from ..utilities._nmr import baselinePWcalcs
 from ..utilities import removeTrailingColumnNumbering
 from .._toolboxPath import toolboxPath
 from ..enumerations import VariableType, AssayRole, SampleType
@@ -104,7 +103,7 @@ class NMRDataset(Dataset):
 
 			self._scale = self.featureMetadata['ppm'].values
 			self.featureMask[:] = True
-			self.sampleMask = self.sampleMetadata['overallFail'] == False
+
 			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
 
 		elif fileType == 'empty':

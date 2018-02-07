@@ -22,7 +22,6 @@ import seaborn as sns
 import copy
 import pandas as pd
 from plotly.offline import iplot
-from ..utilities._nmr import cutSec
 
 from IPython.display import display
 import re
