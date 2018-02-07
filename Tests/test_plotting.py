@@ -752,6 +752,44 @@ class test_plotting(unittest.TestCase):
 					self.assertTrue(os.path.exists(figureLocs[fig]))
 
 
+	def test_plotOutliers(self):
+
+		with self.subTest(msg='Testing MSDataset and scores'):
+			noSamp = numpy.random.randint(100, high=500, size=None)
+			noFeat = numpy.random.randint(200, high=400, size=None)
+			dataset = generateTestDataset(noSamp, noFeat, dtype='MSDataset', variableType=VariableType.Discrete, sop='Generic')
+			dataset.sampleMetadata.loc[:, 'Plot Sample Type'] = 'Sample'
+			dataset.sampleMetadata.loc[dataset.sampleMetadata['SampleType'] == SampleType.StudySample, 'Plot Sample Type'] = 'Study Sample'
+			dataset.sampleMetadata.loc[dataset.sampleMetadata['SampleType'] == SampleType.StudyPool, 'Plot Sample Type'] = 'Study Pool'
+			dataset.sampleMetadata.loc[dataset.sampleMetadata['SampleType'] == SampleType.ExternalReference, 'Plot Sample Type'] = 'External Reference'
+			
+			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
+			sumT = numpy.sum(numpy.absolute(pcaModel.scores), axis=1)
+			
+			with tempfile.TemporaryDirectory() as tmpdirname:
+				outputPath = os.path.join(tmpdirname, 'plot')
+
+				nPYc.plotting.plotOutliers(sumT, dataset.sampleMetadata['Run Order'], sampleType=dataset.sampleMetadata['Plot Sample Type'], addViolin=True, PcritPercentile=95, savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath))
+
+		with self.subTest(msg='Testing NMRDataset and dmodx'):
+			noSamp = numpy.random.randint(100, high=500, size=None)
+			noFeat = numpy.random.randint(200, high=400, size=None)
+			dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=VariableType.Continuum, sop='Generic')
+
+			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
+			sample_dmodx_values = pcaModel.dmodx(dataset.intensityData)
+			Fcrit = pcaModel._dmodx_fcrit(dataset.intensityData, alpha = 0.05)
+			
+			with tempfile.TemporaryDirectory() as tmpdirname:
+				outputPath = os.path.join(tmpdirname, 'plot')
+
+				nPYc.plotting.plotOutliers(sample_dmodx_values, dataset.sampleMetadata['Run Order'], Fcrit=Fcrit, FcritAlpha=0.05, savePath=outputPath)
+				
+				self.assertTrue(os.path.exists(outputPath))
+
+
 class test_plotting_interactive(unittest.TestCase):
 
 	def setUp(self):
