@@ -6,6 +6,7 @@ Created on Wed Mar 15 10:53:12 2017
 """
 from .._toolboxPath import toolboxPath
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
+from ..utilities._nmr import _qcCheckBaseline, _qcCheckWaterPeak
 from ._generateSampleReport import _generateSampleReport
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 from collections import OrderedDict
@@ -21,6 +22,7 @@ import seaborn as sns
 import copy
 import pandas as pd
 from plotly.offline import iplot
+from ..utilities._nmr import cutSec
 
 from IPython.display import display
 import re
@@ -96,7 +98,7 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=Non
 	item['LTRcount'] = str(sum(ERmask))
 
 	# Feature summary report
-	if reportType == 'feature summary':#in nmr previously referred to as nmrQCSummaryreport
+	if reportType == 'feature summary':
 		"""
 		Generates feature summary report, plots figures including those for calibration, peak width and baseline calculations.
 
@@ -123,25 +125,43 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=Non
 			
 		else:
 			saveDir = None
-		sampleSummary=[]#set t o empty for now, just to not include the above line ie tables from samplesummaryreport
-		graphsAndPlots(nmrData,saveDir, item, reportType, SSmask, SPmask, ERmask, pcaModel)#do not actually need SR,SS and LTR for this report
-	
-		failAreaLowBLmask=nmrData.sampleMetadata.BL_low_outliersFailArea==True
-		failNegLowBLmask=nmrData.sampleMetadata.BL_low_outliersFailNeg==True
-		failAreaHighBLmask=nmrData.sampleMetadata.BL_high_outliersFailArea==True
-		failNegHighBLmask=nmrData.sampleMetadata.BL_high_outliersFailNeg==True
-		failAreaLowWPmask=nmrData.sampleMetadata.WP_low_outliersFailArea==True
-		failNegLowWPmask=nmrData.sampleMetadata.WP_low_outliersFailNeg==True
-		failAreaHighWPmask=nmrData.sampleMetadata.WP_high_outliersFailArea==True
-		failNegHighWPmask=nmrData.sampleMetadata.WP_high_outliersFailNeg==True
-	
-		failLWmask = nmrData.sampleMetadata['Line Width (Hz)']>nmrData.Attributes['PWFailThreshold']#get all the samples that fail according to our pw threshold
-		importFailmask = nmrData.sampleMetadata.ImportFail==True
-		calibrFailMask = nmrData.sampleMetadata.calibrPass==False#where false is fail 
+
+		sampleSummary=[] #set t o empty for now, just to not include the above line ie tables from samplesummaryreport
+
+		# Chemical shift calibration Check
+		bounds = numpy.std(nmrData.sampleMetadata['Delta PPM']) * 3
+		meanVal = numpy.mean(nmrData.sampleMetadata['Delta PPM'])
+		# QC metrics - keep the simple one here but we can remove for latter to feature summary
+		nmrData.sampleMetadata['calibrationPass'] = numpy.logical_or((nmrData.sampleMetadata['Delta PPM'] > meanVal - bounds),
+																  (nmrData.sampleMetadata['Delta PPM'] < meanVal + bounds))
+
+		# LineWidth quality check
+		nmrData.sampleMetadata['LineWidthPass'] = nmrData.sampleMetadata['Line Width (Hz)'] <= nmrData.Attributes[
+			'PWFailThreshold']
+
+		# Check baseline
+		baselineLowIndex = nmrData.Attributes['baselineCheckRegion'][0]
+		baselineHighIndex = nmrData.Attributes['baselineCheckRegion'][1]
+		specsLowBaselineRegion = nmrData.intensityData[nmrData.sampleMask, nmrData.featureMask & nmrData]
+		specsHighBaselineRegion = nmrData.intensityData[nmrData.sampleMask, nmrData.featureMask & nmrData]
+
+		isOutlierBaselineLow = _qcCheckBaseline(specsLowBaselineRegion)
+		isOutlierBaselineHigh = _qcCheckBaseline(specsHighBaselineRegion)
+
+		# Check water peaks
+		ppmWaterLowIndex = nmrData.Attributes['waterPeakCheckRegion'][0]
+		ppmWaterHighIndex = nmrData.Attributes['waterPeakCheckrRegion'][1]
+		specsLowWaterRegion = nmrData.intensityData[nmrData.sampleMask, nmrData.featureMask & nmrData]
+		specsHighWaterRegion = nmrData.intensityData[nmrData.sampleMask, nmrData.featureMask & nmrData]
+
+		isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterRegion)
+		isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterRegion)
+
+		graphsAndPlots(nmrData,saveDir, item, reportType, SSmask, SPmask, ERmask, pcaModel) #do not actually need SR,SS and LTR for this report
+
 		#convert each mask whihc are lists to one dataframe with column headings
-		tempDf = pd.DataFrame({'Sample_File_Name':(nmrData.sampleMetadata['Sample File Name']), 'BL_low_outliersFailArea':failAreaLowBLmask, 'BL_low_outliersFailNeg':failNegLowBLmask, 
-						 'BL_high_outliersFailArea':failAreaHighBLmask,'BL_high_outliersFailNeg':failNegHighBLmask,'WP_low_outliersFailArea':failAreaLowWPmask,
-						 'WP_low_outliersFailNeg':failNegLowWPmask,'WP_high_outliersFailArea':failAreaHighWPmask, 'WP_high_outliersFailNeg':failNegHighWPmask,'PW_threshold_Fail':failLWmask, 'Import_Fail':importFailmask, 'Calibration_Fail':calibrFailMask})
+		tempDf = pd.DataFrame({'Sample_File_Name':(nmrData.sampleMetadata['Sample File Name'])})
+
 		#reorder columns
 		tempDf = tempDf[['Sample_File_Name','Import_Fail', 'PW_threshold_Fail', 'BL_low_outliersFailArea','BL_low_outliersFailNeg','BL_high_outliersFailArea','BL_high_outliersFailNeg','WP_low_outliersFailArea','WP_low_outliersFailNeg', 'WP_high_outliersFailArea', 'WP_high_outliersFailNeg','Calibration_Fail']]
 		#convert to 0s and 1s rather than true false
@@ -149,10 +169,9 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=Non
 		item['failSummary'] = tempDf.query('BL_low_outliersFailArea == True | BL_low_outliersFailNeg== True | BL_high_outliersFailArea== True | BL_high_outliersFailNeg== True | WP_low_outliersFailArea== True |WP_low_outliersFailNeg== True | WP_high_outliersFailArea== True | WP_high_outliersFailNeg== True | PW_threshold_Fail == True | Import_Fail == True | Calibration_Fail == True')
 		#Import_Fail', 'PW_threshold_Fail', 'CritVal_BLWP_Exceed', 'Calibration_Fail
 		del tempDf
-		if not output:#we dont want to dusplay if we saving output
+		if not output:#we dont want to dosplay if we saving output
 			print('Table 1: All samples that failed')
 			display(item['failSummary'])
-
 
 		if output:
 	
@@ -176,6 +195,7 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=Non
 			copyBackingFiles(toolboxPath(), saveDir)
 
 		# Final summary report
+
 	if reportType == 'final report':
 		"""
 		Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.

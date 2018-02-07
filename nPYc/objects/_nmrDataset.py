@@ -102,11 +102,6 @@ class NMRDataset(Dataset):
 
 			self.addSampleInfo(descriptionFormat='Filenames')
 
-
-			bounds = numpy.std(self.sampleMetadata['Delta PPM']) * 3
-			meanVal = numpy.mean(self.sampleMetadata['Delta PPM'])
-			self.sampleMetadata['calibrPass'] = numpy.logical_or((self.sampleMetadata['Delta PPM'] > meanVal - bounds),
-																 (self.sampleMetadata['Delta PPM'] < meanVal + bounds))
 			self._scale = self.featureMetadata['ppm'].values
 			self.featureMask[:] = True
 			self.sampleMask = self.sampleMetadata['overallFail'] == False
