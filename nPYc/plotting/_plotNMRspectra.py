@@ -46,7 +46,7 @@ def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, 
 		samples = [samples]
 	elif isinstance(samples, numpy.ndarray):
 		sampleMask = sampleMask & samples
-		X = X[sampleMask, :]
+		samples = numpy.arange(dataset.noSamples)[sampleMask]
 
 	data = list()
 	if X.ndim == 1:

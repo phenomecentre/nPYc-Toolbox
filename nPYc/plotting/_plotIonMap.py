@@ -99,7 +99,7 @@ def _plotMassSpectrum(ax, msData, xlim, ylim):
 	ax.set_xlabel('m/z')
 
 
-def plotIonMapInteractive(dataset, title=None, xlim=None, ylim=None, logx=False, logy=False):
+def plotIonMapInteractive(dataset, title=None, xlim=None, ylim=None, logx=False, logy=False, featureName='Feature Name'):
 	"""
 	Visualise features in a MSDataset, as an ion map.
 
@@ -107,13 +107,36 @@ def plotIonMapInteractive(dataset, title=None, xlim=None, ylim=None, logx=False,
 
 	:param MSDataset msData: Dataset object to visualise
 	"""
-	data = list()
 
+	if featureName not in dataset.featureMetadata.columns:
+		raise ValueError('%s is not a column in dataset.featureMetadata' % (featureName))
+
+	if logx:
+		logx = 'log'
+	else:
+		logx = None
+	if logy:
+		logy = 'log'
+	else:
+		logy = None
+
+	featureMask = dataset.featureMask
+
+	if xlim is not None:
+		featureMask = (dataset.featureMetadata['Retention Time'].values > xlim[0]) & \
+					  (dataset.featureMetadata['Retention Time'].values < xlim[1]) & \
+					  featureMask
+	if ylim is not None:
+		featureMask = (dataset.featureMetadata['m/z'].values > ylim[0]) & \
+					  (dataset.featureMetadata['m/z'].values < ylim[1]) & \
+					  featureMask
+
+	data = list()
 	ionMap = go.Scatter(
-		x = dataset.featureMetadata.loc[dataset.featureMask, 'Retention Time'],
-		y = dataset.featureMetadata.loc[dataset.featureMask, 'm/z'],
+		x = dataset.featureMetadata.loc[featureMask, 'Retention Time'],
+		y = dataset.featureMetadata.loc[featureMask, 'm/z'],
 		mode = 'markers',
-		text = dataset.featureMetadata.loc[dataset.featureMask, 'Feature Name'],
+		text = dataset.featureMetadata.loc[featureMask, featureName],
 		hoverinfo = 'x, y, text',
 		showlegend = False
 		)
@@ -125,9 +148,11 @@ def plotIonMapInteractive(dataset, title=None, xlim=None, ylim=None, logx=False,
 	layout = {
 		'xaxis' : dict(
 			title = Xlabel,
+			type = logx
 			),
 		'yaxis' : dict(
-			title = Ylabel
+			title = Ylabel,
+			type = logy
 			),
 		'title' : 'Ion map for: ' + dataset.name,
 		'hovermode' : 'closest',
