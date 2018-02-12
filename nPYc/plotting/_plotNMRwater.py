@@ -10,7 +10,7 @@ import plotly.graph_objs as go
 
 from ._nmrPlotting import nmrRangeHelper, plotlyRangeHelper
 
-def plotWaterResonance(nmrData, margin=1, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotWaterResonance(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotWaterResonance(nmrData, margin=1. **kwargs)
 
@@ -21,7 +21,7 @@ def plotWaterResonance(nmrData, margin=1, savePath=None, figureFormat='png', dpi
 	:param savePath: If ``None`` draw interactively, otherwise save to this path
 	:type savePath: None or str
 	"""
-	bounds = (nmrData.Attributes['waterPeakCutRegionA'] - margin, nmrData.Attributes['waterPeakCutRegionB'] + margin)
+	bounds = (min(nmrData.Attributes['waterPeakCheckRegion'][0]), max(nmrData.Attributes['waterPeakCheck'][1]))
 
 	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, bounds, percentiles=(5, 95))
 
@@ -67,7 +67,7 @@ def plotWaterResonance(nmrData, margin=1, savePath=None, figureFormat='png', dpi
 		plt.show()
 
 
-def plotWaterResonanceInteractive(nmrData, margin=1):
+def plotWaterResonanceInteractive(nmrData):
 	"""
 	Ploty interactive version of :py:func:`plotWaterResonance`
 
@@ -80,7 +80,7 @@ def plotWaterResonanceInteractive(nmrData, margin=1):
 	data = []
 	failed = []
 
-	bounds = (nmrData.Attributes['waterPeakCutRegionA'] - margin, nmrData.Attributes['waterPeakCutRegionB'] + margin)
+	bounds = (min(nmrData.Attributes['waterPeakCheckRegion'][0]), max(nmrData.Attributes['waterPeakCheck'][1]))
 
 	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, bounds, percentiles=(5, 95))
 	trace = plotlyRangeHelper(localPPM, meanSpectrum, lowerPercentile, upperPercentile)
@@ -90,7 +90,7 @@ def plotWaterResonanceInteractive(nmrData, margin=1):
 	# Add fails
 	##
 	for i in range(nmrData.noSamples):
-
+		
 		if nmrData.sampleMetadata.loc[i, 'WP_high_outliersFailArea'] or nmrData.sampleMetadata.loc[i, 'WP_low_outliersFailArea']:
 
 			trace = go.Scatter(
@@ -174,9 +174,9 @@ def plotWaterResonanceInteractive(nmrData, margin=1):
 			{
 				'type': 'rect',
 				'yref': 'paper',
-				'x0': nmrData.Attributes['waterPeakCutRegionA'],
+				'x0': bounds[0],
 				'y0': 0,
-				'x1': nmrData.Attributes['waterPeakCutRegionB'],
+				'x1': bounds[1],
 				'y1': 1,
 				'line': {
 					'color': 'rgb(0, 0, 0, 0)',

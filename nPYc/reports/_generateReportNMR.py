@@ -139,7 +139,8 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=True, output=None
 													  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
 
 		# Check this step!
-		item['failSummary'] = fail_summary.any()
+
+		item['failSummary'] = fail_summary[(fail_summary.iloc[:, 1::] == 1).any(axis=1, bool_only=True)]
 
 		if not output: #we dont want to display if we saving output
 			print('Table 1: All samples that failed')
@@ -398,23 +399,23 @@ def graphsAndPlots(nmrData,output, item, reportType, SSmask, SPmask, ERmask, PCA
 	#print failed amounts under plots again only if its not the final report as we excluded this data in final anyway
 	if reportType != 'final report':
 		numpy.sum(nmrData.sampleMetadata)
-		#failAreaLowCountBL = sum(nmrData.sampleMetadata.BL_low_outliersFailArea==True)
-		#failNegLowCountBL = sum(nmrData.sampleMetadata.BL_low_outliersFailNeg==True)
-		#failAreaHighCountBL = sum(nmrData.sampleMetadata.BL_high_outliersFailArea==True)
-		#failNegHighCountBL = sum(nmrData.sampleMetadata.BL_high_outliersFailNeg==True)
-		#failAreaLowCountWP = sum(nmrData.sampleMetadata.WP_low_outliersFailArea==True)
-		#failNegLowCountWP = sum(nmrData.sampleMetadata.WP_low_outliersFailNeg==True)
-		#failAreaHighCountWP = sum(nmrData.sampleMetadata.WP_high_outliersFailArea==True)
-		#failNegHighCountWP = sum(nmrData.sampleMetadata.WP_high_outliersFailNeg==True)
+		failAreaLowCountBL = sum(nmrData.sampleMetadata.BL_low_outliersFailArea==True)
+		failNegLowCountBL = sum(nmrData.sampleMetadata.BL_low_outliersFailNeg==True)
+		failAreaHighCountBL = sum(nmrData.sampleMetadata.BL_high_outliersFailArea==True)
+		failNegHighCountBL = sum(nmrData.sampleMetadata.BL_high_outliersFailNeg==True)
+		failAreaLowCountWP = sum(nmrData.sampleMetadata.WP_low_outliersFailArea==True)
+		failNegLowCountWP = sum(nmrData.sampleMetadata.WP_low_outliersFailNeg==True)
+		failAreaHighCountWP = sum(nmrData.sampleMetadata.WP_high_outliersFailArea==True)
+		failNegHighCountWP = sum(nmrData.sampleMetadata.WP_high_outliersFailNeg==True)
 
-		item['fig2to3SummaryText'] = #(''+str(failAreaLowCountBL)+' sample(s) failed on BL low area'+'\n'+
-		#								''+str(failNegLowCountBL)+' sample(s) failed on BL low negative'+'\n'+
-		#								''+str(failAreaHighCountBL)+' sample(s) failed on BL high area'+'\n'+
-		#								''+str(failNegHighCountBL)+' sample(s) failed on BL high negative'+'\n'+
-		#								''+str(failAreaLowCountWP)+' sample(s) failed on WP low area'+'\n'+
-		#								''+str(failNegLowCountWP)+' sample(s) failed on WP low negative'+'\n'+
-		#								''+str(failAreaHighCountWP)+' sample(s) failed on WP high area'+'\n'+
-		#								''+str(failNegHighCountWP)+' sample(s) failed on WP high negative'+'\n')
+		item['fig2to3SummaryText'] = (''+str(failAreaLowCountBL)+' sample(s) failed on BL low area'+'\n'+
+										''+str(failNegLowCountBL)+' sample(s) failed on BL low negative'+'\n'+
+										''+str(failAreaHighCountBL)+' sample(s) failed on BL high area'+'\n'+
+										''+str(failNegHighCountBL)+' sample(s) failed on BL high negative'+'\n'+
+										''+str(failAreaLowCountWP)+' sample(s) failed on WP low area'+'\n'+
+										''+str(failNegLowCountWP)+' sample(s) failed on WP low negative'+'\n'+
+										''+str(failAreaHighCountWP)+' sample(s) failed on WP high area'+'\n'+
+										''+str(failNegHighCountWP)+' sample(s) failed on WP high negative'+'\n')
 		
 	else:
 		item['fig2to3SummaryText']=''
