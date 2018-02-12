@@ -10,6 +10,7 @@ from ._dataset import Dataset
 from ..utilities import removeTrailingColumnNumbering
 from .._toolboxPath import toolboxPath
 from ..enumerations import VariableType, AssayRole, SampleType
+from ..utilities._nmr import _qcCheckBaseline, _qcCheckWaterPeak
 
 
 class NMRDataset(Dataset):
@@ -103,6 +104,8 @@ class NMRDataset(Dataset):
 
 			self._scale = self.featureMetadata['ppm'].values
 			self.featureMask[:] = True
+			# Perform the quaality control checks to populate the class
+			self.__nmrQCChecks()
 
 			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
 
@@ -226,6 +229,7 @@ class NMRDataset(Dataset):
 		:type exclusionRegions: list of tuple
 		"""
 
+
 		# Feature exclusions
 		if filterFeatures:
 			if exclusionRegions is None and 'exclusionRegions' in self.Attributes.keys():
@@ -261,6 +265,9 @@ class NMRDataset(Dataset):
 		# Sample Exclusions
 		if filterSamples:
 
+			# Retrigger QC checks - Maybe not here...
+			self.__nmrQCChecks()
+			
 			super().updateMasks(filterSamples=True,
 								filterFeatures=False,
 								sampleTypes=sampleTypes,
@@ -390,6 +397,47 @@ class NMRDataset(Dataset):
 
 		nmrAssay.to_csv(nmrAssayPath,sep='\t', encoding='utf-8',index=False)
 
+	def __nmrQCChecks(self):
+
+		# Chemical shift calibration check
+		bounds = numpy.std(self.sampleMetadata['Delta PPM']) * 3
+		meanVal = numpy.mean(self.sampleMetadata['Delta PPM'])
+		# QC metrics - keep the simple one here but we can remove for latter to feature summary
+		self.sampleMetadata['calibrationFail'] = numpy.logical_or(
+			(self.sampleMetadata['Delta PPM'] < meanVal - bounds),
+			(self.sampleMetadata['Delta PPM'] > meanVal + bounds))
+
+		# LineWidth quality check
+		self.sampleMetadata['LineWidthFail'] = self.sampleMetadata['Line Width (Hz)'] >= self.Attributes[
+			'PWFailThreshold']
+
+		# Baseline check
+		# Read attributes to derive regions
+		ppmBaselineLow = tuple(self.Attributes['baselineCheckRegion'][0])
+		ppmBaselineHigh = tuple(self.Attributes['baselineCheckRegion'][1])
+
+		# Obtain the spectral regions - add sample Mask filter??here
+		specsLowBaselineRegion = self.getFeatures(ppmBaselineLow)[1]
+		specsHighBaselineRegion = self.getFeatures(ppmBaselineHigh)[1]
+
+		isOutlierBaselineLow = _qcCheckBaseline(specsLowBaselineRegion)
+		isOutlierBaselineHigh = _qcCheckBaseline(specsHighBaselineRegion)
+
+		# Water peak check
+		ppmWaterLow = tuple(self.Attributes['waterPeakCheckRegion'][0])
+		ppmWaterHigh = tuple(self.Attributes['waterPeakCheckRegion'][1])
+
+		# Obtain the spectral regions - add sample Mask filter??here
+		specsLowWaterPeakRegion = self.getFeatures(ppmWaterLow)[1]
+		specsHighWaterPeakRegion = self.getFeatures(ppmWaterHigh)[1]
+
+		isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterPeakRegion)
+		isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterPeakRegion)
+
+		self.sampleMetadata['WaterPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
+		self.sampleMetadata['BaselineFail'] = isOutlierBaselineHigh | isOutlierBaselineLow
+
+		return None
 
 def main():
 	pass

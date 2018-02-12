@@ -30,7 +30,7 @@ import shutil
 
 from ..__init__ import __version__ as version
 
-def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=None,  pcaModel=None):
+def _generateReportNMR(nmrDataTrue, reportType, withExclusions=True, output=None,  pcaModel=None):
 	"""
 	Summarise different aspects of an NMR dataset
 
@@ -125,35 +125,36 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=Non
 		else:
 			saveDir = None
 
-		sampleSummary=[] #set t o empty for now, just to not include the above line ie tables from samplesummaryreport
+		# To be used latter
+		sampleSummary = []
 
-		# Chemical shift calibration Check
+		# Quality control checks
+		# Chemical shift calibration check
 		bounds = numpy.std(nmrData.sampleMetadata['Delta PPM']) * 3
 		meanVal = numpy.mean(nmrData.sampleMetadata['Delta PPM'])
 		# QC metrics - keep the simple one here but we can remove for latter to feature summary
-		nmrData.sampleMetadata['calibrationPass'] = numpy.logical_or((nmrData.sampleMetadata['Delta PPM'] > meanVal - bounds),
-																  (nmrData.sampleMetadata['Delta PPM'] < meanVal + bounds))
+		nmrData.sampleMetadata['calibrationFail'] = numpy.logical_or((nmrData.sampleMetadata['Delta PPM'] < meanVal - bounds),
+																  (nmrData.sampleMetadata['Delta PPM'] > meanVal + bounds))
 
 		# LineWidth quality check
-		nmrData.sampleMetadata['LineWidthPass'] = nmrData.sampleMetadata['Line Width (Hz)'] <= nmrData.Attributes[
+		nmrData.sampleMetadata['LineWidthFail'] = nmrData.sampleMetadata['Line Width (Hz)'] >= nmrData.Attributes[
 			'PWFailThreshold']
 
-		# Check baseline
+		# Baseline check
 		# Read attributes to derive regions
 		ppmBaselineLow = tuple(nmrData.Attributes['baselineCheckRegion'][0])
 		ppmBaselineHigh = tuple(nmrData.Attributes['baselineCheckRegion'][1])
 
 		# Obtain the spectral regions - add sample Mask filter??here
-
 		specsLowBaselineRegion = nmrData.getFeatures(ppmBaselineLow)[1]
 		specsHighBaselineRegion = nmrData.getFeatures(ppmBaselineHigh)[1]
 
 		isOutlierBaselineLow = _qcCheckBaseline(specsLowBaselineRegion)
 		isOutlierBaselineHigh = _qcCheckBaseline(specsHighBaselineRegion)
 
-		# Check water peaks
+		# Water peak check
 		ppmWaterLow = tuple(nmrData.Attributes['waterPeakCheckRegion'][0])
-		ppmWaterHigh = tuple(nmrData.Attributes['waterPeakCheckrRegion'][1])
+		ppmWaterHigh = tuple(nmrData.Attributes['waterPeakCheckRegion'][1])
 
 		# Obtain the spectral regions - add sample Mask filter??here
 		specsLowWaterPeakRegion = nmrData.getFeatures(ppmWaterLow)[1]
@@ -162,24 +163,21 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=Non
 		isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterPeakRegion)
 		isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterPeakRegion)
 
+		# ISOLATE THIS FUNCTION
 		graphsAndPlots(nmrData,saveDir, item, reportType, SSmask, SPmask, ERmask, pcaModel) #do not actually need SR,SS and LTR for this report
 
-		#convert each mask whihc are lists to one dataframe with column headings
-		tempDf = pd.DataFrame({'Sample_File_Name':(nmrData.sampleMetadata['Sample File Name'])})
-
-		#reorder columns
-		tempDf = tempDf[['Sample_File_Name','Import_Fail', 'PW_threshold_Fail', 'BL_low_outliersFailArea','BL_low_outliersFailNeg','BL_high_outliersFailArea','BL_high_outliersFailNeg','WP_low_outliersFailArea','WP_low_outliersFailNeg', 'WP_high_outliersFailArea', 'WP_high_outliersFailNeg','Calibration_Fail']]
 		#convert to 0s and 1s rather than true false
-		tempDf[['Import_Fail', 'PW_threshold_Fail', 'BL_low_outliersFailArea','BL_low_outliersFailNeg','BL_high_outliersFailArea','BL_high_outliersFailNeg','WP_low_outliersFailArea','WP_low_outliersFailNeg', 'WP_high_outliersFailArea', 'WP_high_outliersFailNeg', 'Calibration_Fail']] = tempDf[['Import_Fail', 'PW_threshold_Fail', 'BL_low_outliersFailArea','BL_low_outliersFailNeg','BL_high_outliersFailArea','BL_high_outliersFailNeg','WP_low_outliersFailArea','WP_low_outliersFailNeg', 'WP_high_outliersFailArea', 'WP_high_outliersFailNeg', 'Calibration_Fail']].astype(int)
-		item['failSummary'] = tempDf.query('BL_low_outliersFailArea == True | BL_low_outliersFailNeg== True | BL_high_outliersFailArea== True | BL_high_outliersFailNeg== True | WP_low_outliersFailArea== True |WP_low_outliersFailNeg== True | WP_high_outliersFailArea== True | WP_high_outliersFailNeg== True | PW_threshold_Fail == True | Import_Fail == True | Calibration_Fail == True')
-		#Import_Fail', 'PW_threshold_Fail', 'CritVal_BLWP_Exceed', 'Calibration_Fail
-		del tempDf
-		if not output:#we dont want to dosplay if we saving output
+		fail_summary = nmrData.sampleMetadata.loc[:, ['Sample File Name', 'ImportFail', 'LineWidthFail',
+													  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
+		# Check this step!
+
+		item['failSummary'] = fail_summary.any()
+		if not output: #we dont want to dosplay if we saving output
 			print('Table 1: All samples that failed')
 			display(item['failSummary'])
 
 		if output:
-	
+
 			# Make paths for graphics local not absolute for use in the HTML.
 			for key in item:
 				if os.path.join(output, 'graphics') in str(item[key]):
@@ -224,7 +222,7 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=Non
 			saveDir = None
 		
 		#generate the final dataset   
-		generateNMRFinalDataset(nmrData, output,sampleTypeOutput=False)
+		generateNMRFinalDataset(nmrData, output, sampleTypeOutput=False)
 		
 		# Table 1: Sample summary
 										
@@ -430,23 +428,24 @@ def graphsAndPlots(nmrData,output, item, reportType, SSmask, SPmask, ERmask, PCA
 
 	#print failed amounts under plots again only if its not the final report as we excluded this data in final anyway
 	if reportType != 'final report':
-		failAreaLowCountBL=sum(nmrData.sampleMetadata.BL_low_outliersFailArea==True)
-		failNegLowCountBL=sum(nmrData.sampleMetadata.BL_low_outliersFailNeg==True)
-		failAreaHighCountBL=sum(nmrData.sampleMetadata.BL_high_outliersFailArea==True)
-		failNegHighCountBL=sum(nmrData.sampleMetadata.BL_high_outliersFailNeg==True)
-		failAreaLowCountWP=sum(nmrData.sampleMetadata.WP_low_outliersFailArea==True)
-		failNegLowCountWP=sum(nmrData.sampleMetadata.WP_low_outliersFailNeg==True)
-		failAreaHighCountWP=sum(nmrData.sampleMetadata.WP_high_outliersFailArea==True)
-		failNegHighCountWP=sum(nmrData.sampleMetadata.WP_high_outliersFailNeg==True)
+		numpy.sum(nmrData.sampleMetadata)
+		#failAreaLowCountBL = sum(nmrData.sampleMetadata.BL_low_outliersFailArea==True)
+		#failNegLowCountBL = sum(nmrData.sampleMetadata.BL_low_outliersFailNeg==True)
+		#failAreaHighCountBL = sum(nmrData.sampleMetadata.BL_high_outliersFailArea==True)
+		#failNegHighCountBL = sum(nmrData.sampleMetadata.BL_high_outliersFailNeg==True)
+		#failAreaLowCountWP = sum(nmrData.sampleMetadata.WP_low_outliersFailArea==True)
+		#failNegLowCountWP = sum(nmrData.sampleMetadata.WP_low_outliersFailNeg==True)
+		#failAreaHighCountWP = sum(nmrData.sampleMetadata.WP_high_outliersFailArea==True)
+		#failNegHighCountWP = sum(nmrData.sampleMetadata.WP_high_outliersFailNeg==True)
 
-		item['fig2to3SummaryText']=(''+str(failAreaLowCountBL)+' sample(s) failed on BL low area'+'\n'+
-										''+str(failNegLowCountBL)+' sample(s) failed on BL low negative'+'\n'+
-										''+str(failAreaHighCountBL)+' sample(s) failed on BL high area'+'\n'+
-										''+str(failNegHighCountBL)+' sample(s) failed on BL high negative'+'\n'+
-										''+str(failAreaLowCountWP)+' sample(s) failed on WP low area'+'\n'+
-										''+str(failNegLowCountWP)+' sample(s) failed on WP low negative'+'\n'+
-										''+str(failAreaHighCountWP)+' sample(s) failed on WP high area'+'\n'+
-										''+str(failNegHighCountWP)+' sample(s) failed on WP high negative'+'\n')
+		item['fig2to3SummaryText'] = #(''+str(failAreaLowCountBL)+' sample(s) failed on BL low area'+'\n'+
+		#								''+str(failNegLowCountBL)+' sample(s) failed on BL low negative'+'\n'+
+		#								''+str(failAreaHighCountBL)+' sample(s) failed on BL high area'+'\n'+
+		#								''+str(failNegHighCountBL)+' sample(s) failed on BL high negative'+'\n'+
+		#								''+str(failAreaLowCountWP)+' sample(s) failed on WP low area'+'\n'+
+		#								''+str(failNegLowCountWP)+' sample(s) failed on WP low negative'+'\n'+
+		#								''+str(failAreaHighCountWP)+' sample(s) failed on WP high area'+'\n'+
+		#								''+str(failNegHighCountWP)+' sample(s) failed on WP high negative'+'\n')
 		
 	else:
 		item['fig2to3SummaryText']=''
