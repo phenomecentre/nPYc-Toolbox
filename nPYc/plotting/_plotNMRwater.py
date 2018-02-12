@@ -21,7 +21,7 @@ def plotWaterResonance(nmrData, savePath=None, figureFormat='png', dpi=72, figur
 	:param savePath: If ``None`` draw interactively, otherwise save to this path
 	:type savePath: None or str
 	"""
-	bounds = (min(nmrData.Attributes['waterPeakCheckRegion'][0]), max(nmrData.Attributes['waterPeakCheck'][1]))
+	bounds = (min(nmrData.Attributes['waterPeakCheckRegion'][0]), max(nmrData.Attributes['waterPeakCheckRegion'][1]))
 
 	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, bounds, percentiles=(5, 95))
 
@@ -38,14 +38,14 @@ def plotWaterResonance(nmrData, savePath=None, figureFormat='png', dpi=72, figur
 	##
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'WP_high_outliersFailArea'] or nmrData.sampleMetadata.loc[i, 'WP_low_outliersFailArea']:
+		if nmrData.sampleMetadata.loc[i, 'WaterPeakFail']:
 				ax.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.8,0.05,0.01,0.7))
 
-		if nmrData.sampleMetadata.loc[i, 'WP_high_outliersFailNeg'] or nmrData.sampleMetadata.loc[i, 'WP_low_outliersFailNeg']:
+		if nmrData.sampleMetadata.loc[i, 'WaterPeakFail']:
 			ax.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.05,0.05,0.8,0.7))
 
 
-	ax.axvspan(nmrData.Attributes['waterPeakCutRegionA'], nmrData.Attributes['waterPeakCutRegionB'], facecolor='k', alpha=0.2)
+	ax.axvspan(bounds[0], bounds[1], facecolor='k', alpha=0.2)
 	# ax.set_xlabel('ppm')
 	ax.invert_xaxis()
 	ax.get_yaxis().set_ticks([])
@@ -56,9 +56,7 @@ def plotWaterResonance(nmrData, savePath=None, figureFormat='png', dpi=72, figur
 	water = patches.Patch(color=(0,0,0,0.2), label='Water region to be removed')
 	failures = lines.Line2D([], [], color=(0.8,0.05,0.01,0.7), marker='',
 									label='Water resonances failed on area')
-	uncalculated = lines.Line2D([], [], color=(0.05,0.05,0.8,0.7), marker='',
-									label='Water resonance failed on negativity')
-	plt.legend(handles=[variance, water, failures, uncalculated])
+	plt.legend(handles=[variance, water, failures])
 
 	if savePath:
 		plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
@@ -80,7 +78,7 @@ def plotWaterResonanceInteractive(nmrData):
 	data = []
 	failed = []
 
-	bounds = (min(nmrData.Attributes['waterPeakCheckRegion'][0]), max(nmrData.Attributes['waterPeakCheck'][1]))
+	bounds = (min(nmrData.Attributes['waterPeakCheckRegion'][0]), max(nmrData.Attributes['waterPeakCheckRegion'][1]))
 
 	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, bounds, percentiles=(5, 95))
 	trace = plotlyRangeHelper(localPPM, meanSpectrum, lowerPercentile, upperPercentile)
@@ -90,28 +88,14 @@ def plotWaterResonanceInteractive(nmrData):
 	# Add fails
 	##
 	for i in range(nmrData.noSamples):
-		
-		if nmrData.sampleMetadata.loc[i, 'WP_high_outliersFailArea'] or nmrData.sampleMetadata.loc[i, 'WP_low_outliersFailArea']:
+
+		if nmrData.sampleMetadata.loc[i, 'WaterPeakFail']:
 
 			trace = go.Scatter(
 				x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
 				y = nmrData.intensityData[i, ppmMask],
 				line = dict(
 					color = ('rgb(12, 12, 205)')
-				),
-				text = '%s' % (nmrData.sampleMetadata.loc[i, 'Sample File Name']),
-				hoverinfo = 'text',
-				showlegend = False
-			)
-			failed.append(trace)
-
-		if nmrData.sampleMetadata.loc[i, 'WP_high_outliersFailNeg'] or nmrData.sampleMetadata.loc[i, 'WP_low_outliersFailNeg']:
-
-			trace = go.Scatter(
-				x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
-				y = nmrData.intensityData[i, ppmMask],
-				line = dict(
-					color = ('rgba(205, 12, 24, 0.7)')
 				),
 				text = '%s' % (nmrData.sampleMetadata.loc[i, 'Sample File Name']),
 				hoverinfo = 'text',
@@ -128,29 +112,6 @@ def plotWaterResonanceInteractive(nmrData):
 		line = dict(
 			color = ('rgb(117,182,160)')
 		),
-		mode = 'lines',
-		visible = 'legendonly'
-		)
-	data.append(trace)
-	trace = go.Scatter(
-		x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
-		y = nmrData.intensityData[0, ppmMask],
-		line = dict(
-			color = ('rgb(205, 12, 24)')
-		),
-		name = 'Spectra failing on water negativity',
-		mode = 'lines',
-		visible = 'legendonly'
-		)
-	data.append(trace)
-	trace = go.Scatter(
-		x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
-		y = nmrData.intensityData[0, ppmMask],
-		line = dict(
-			color = ('rgb(12, 12, 205)')
-		),
-		fillcolor = 'rgba(0,100,80,0.2)',
-		name = 'Spectra failing on water area',
 		mode = 'lines',
 		visible = 'legendonly'
 		)

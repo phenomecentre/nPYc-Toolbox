@@ -28,11 +28,8 @@ def plotBaseline(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=
 
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'BL_low_outliersFailArea']:
+		if nmrData.sampleMetadata.loc[i, 'BaselineFail']:
 			ax2.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.05,0.05,0.8,0.7))
-
-		if nmrData.sampleMetadata.loc[i, 'BL_low_outliersFailNeg']:
-			ax2.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.8,0.05,0.01,0.7))
 
 	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (nmrData.Attributes['baselineHigh_regionFrom'], nmrData.featureMetadata.loc[:, 'ppm'].max()), percentiles=(5, 95))
 	ax1.plot(localPPM, meanSpectrum, color=(0.46,0.71,0.63))
@@ -40,11 +37,8 @@ def plotBaseline(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=
 
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'BL_high_outliersFailArea']:
+		if nmrData.sampleMetadata.loc[i, 'BaselineFail']:
 			ax1.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.05,0.05,0.8,0.7))
-
-		if nmrData.sampleMetadata.loc[i, 'BL_high_outliersFailNeg']:
-			ax1.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.8,0.05,0.01,0.7))
 
 	ax1.set_xlabel('ppm')
 	ax1.invert_xaxis()
@@ -60,9 +54,7 @@ def plotBaseline(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=
 
 	failures = lines.Line2D([], [], color=(0.05,0.05,0.8,0.7), marker='',
 							label='Baseline failed on area')
-	uncalculated = lines.Line2D([], [], color=(0.8,0.05,0.01,0.7), marker='',
-							label='Baseline failed on negativity')
-	plt.legend(handles=[variance, failures, uncalculated])
+	plt.legend(handles=[variance, failures])
 
 	if savePath:
 		plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
