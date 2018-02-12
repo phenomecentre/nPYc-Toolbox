@@ -212,7 +212,10 @@ class NMRDataset(Dataset):
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
 
-	def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool], assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], exclusionRegions=None, **kwargs):
+	def updateMasks(self, filterSamples=True, filterFeatures=True,
+					sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
+					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], exclusionRegions=None,
+					sampleQCChecks=['ImportFail','CalibrationFail','LineWidthFail','CalibrationFail','BaselineFail','WaterPeakFail'],**kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
@@ -226,9 +229,9 @@ class NMRDataset(Dataset):
 		:type sampleTypes: SampleType
 		:param AssayRole sampleRoles: List of assays roles to retain
 		:param exclusionRegions: If ``None`` Exclude ranges defined in :py:attr:`~Dataset.Attributes`['exclusionRegions']
+		:param list sampleQCChecks: Which quality control metrics to use.
 		:type exclusionRegions: list of tuple
 		"""
-
 
 		# Feature exclusions
 		if filterFeatures:
@@ -262,17 +265,27 @@ class NMRDataset(Dataset):
 				self.featureMask = numpy.logical_and(self.featureMask,
 													 regionMask)
 
+			# If features are modified, retrigger
+			self.__nmrQCChecks()
+
 		# Sample Exclusions
 		if filterSamples:
 
-			# Retrigger QC checks - Maybe not here...
-			self.__nmrQCChecks()
-			
+			# Retrigger QC checks before checking which samples need to be updated
+			if not filterFeatures:
+				self.__nmrQCChecks()
+
 			super().updateMasks(filterSamples=True,
 								filterFeatures=False,
 								sampleTypes=sampleTypes,
 								assayRoles=assayRoles,
 								**kwargs)
+			columnNames = ['Sample File Name'].extend()
+			fail_summary = self.sampleMetadata.loc[:, ['Sample File Name', 'ImportFail', 'LineWidthFail',
+														  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
+
+			# Check this step!
+			self.sampleMask &= ~fail_summary.any()
 
 		self.Attributes['Log'].append([datetime.now(), "Dataset filtered with: filterSamples=%s, filterFeatures=%s, sampleClasses=%s, sampleRoles=%s, %s." % (
 			filterSamples,
@@ -398,7 +411,12 @@ class NMRDataset(Dataset):
 		nmrAssay.to_csv(nmrAssayPath,sep='\t', encoding='utf-8',index=False)
 
 	def __nmrQCChecks(self):
+		"""
 
+		Apply the quality control checks to the current dataset and apply the sampleMetadata dataframe.
+
+		:return None:
+		"""
 		# Chemical shift calibration check
 		bounds = numpy.std(self.sampleMetadata['Delta PPM']) * 3
 		meanVal = numpy.mean(self.sampleMetadata['Delta PPM'])

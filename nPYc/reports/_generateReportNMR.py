@@ -128,51 +128,20 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=True, output=None
 		# To be used latter
 		sampleSummary = []
 
-		# Quality control checks
-		# Chemical shift calibration check
-		bounds = numpy.std(nmrData.sampleMetadata['Delta PPM']) * 3
-		meanVal = numpy.mean(nmrData.sampleMetadata['Delta PPM'])
-		# QC metrics - keep the simple one here but we can remove for latter to feature summary
-		nmrData.sampleMetadata['calibrationFail'] = numpy.logical_or((nmrData.sampleMetadata['Delta PPM'] < meanVal - bounds),
-																  (nmrData.sampleMetadata['Delta PPM'] > meanVal + bounds))
-
-		# LineWidth quality check
-		nmrData.sampleMetadata['LineWidthFail'] = nmrData.sampleMetadata['Line Width (Hz)'] >= nmrData.Attributes[
-			'PWFailThreshold']
-
-		# Baseline check
-		# Read attributes to derive regions
-		ppmBaselineLow = tuple(nmrData.Attributes['baselineCheckRegion'][0])
-		ppmBaselineHigh = tuple(nmrData.Attributes['baselineCheckRegion'][1])
-
-		# Obtain the spectral regions - add sample Mask filter??here
-		specsLowBaselineRegion = nmrData.getFeatures(ppmBaselineLow)[1]
-		specsHighBaselineRegion = nmrData.getFeatures(ppmBaselineHigh)[1]
-
-		isOutlierBaselineLow = _qcCheckBaseline(specsLowBaselineRegion)
-		isOutlierBaselineHigh = _qcCheckBaseline(specsHighBaselineRegion)
-
-		# Water peak check
-		ppmWaterLow = tuple(nmrData.Attributes['waterPeakCheckRegion'][0])
-		ppmWaterHigh = tuple(nmrData.Attributes['waterPeakCheckRegion'][1])
-
-		# Obtain the spectral regions - add sample Mask filter??here
-		specsLowWaterPeakRegion = nmrData.getFeatures(ppmWaterLow)[1]
-		specsHighWaterPeakRegion = nmrData.getFeatures(ppmWaterHigh)[1]
-
-		isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterPeakRegion)
-		isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterPeakRegion)
+		# Apply the QC checks just in case
+		nmrData.__nmrQCChecks()
 
 		# ISOLATE THIS FUNCTION
-		graphsAndPlots(nmrData,saveDir, item, reportType, SSmask, SPmask, ERmask, pcaModel) #do not actually need SR,SS and LTR for this report
+		graphsAndPlots(nmrData, saveDir, item, reportType, SSmask, SPmask, ERmask, pcaModel)
 
 		#convert to 0s and 1s rather than true false
 		fail_summary = nmrData.sampleMetadata.loc[:, ['Sample File Name', 'ImportFail', 'LineWidthFail',
 													  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
-		# Check this step!
 
+		# Check this step!
 		item['failSummary'] = fail_summary.any()
-		if not output: #we dont want to dosplay if we saving output
+
+		if not output: #we dont want to display if we saving output
 			print('Table 1: All samples that failed')
 			display(item['failSummary'])
 
@@ -202,9 +171,9 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=True, output=None
 	if reportType == 'final report':
 		"""
 		Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
-		"""   
-		
-				# Create directory to save output		
+		"""
+
+		# Create directory to save output
 		if output:
 			
 			reportTypeCase = reportType.title().replace(" ","")
