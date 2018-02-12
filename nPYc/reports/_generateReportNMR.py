@@ -139,22 +139,28 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=Non
 			'PWFailThreshold']
 
 		# Check baseline
-		baselineLowIndex = nmrData.Attributes['baselineCheckRegion'][0]
-		baselineHighIndex = nmrData.Attributes['baselineCheckRegion'][1]
-		specsLowBaselineRegion = nmrData.intensityData[nmrData.sampleMask, nmrData.featureMask & nmrData]
-		specsHighBaselineRegion = nmrData.intensityData[nmrData.sampleMask, nmrData.featureMask & nmrData]
+		# Read attributes to derive regions
+		ppmBaselineLow = tuple(nmrData.Attributes['baselineCheckRegion'][0])
+		ppmBaselineHigh = tuple(nmrData.Attributes['baselineCheckRegion'][1])
+
+		# Obtain the spectral regions - add sample Mask filter??here
+
+		specsLowBaselineRegion = nmrData.getFeatures(ppmBaselineLow)[1]
+		specsHighBaselineRegion = nmrData.getFeatures(ppmBaselineHigh)[1]
 
 		isOutlierBaselineLow = _qcCheckBaseline(specsLowBaselineRegion)
 		isOutlierBaselineHigh = _qcCheckBaseline(specsHighBaselineRegion)
 
 		# Check water peaks
-		ppmWaterLowIndex = nmrData.Attributes['waterPeakCheckRegion'][0]
-		ppmWaterHighIndex = nmrData.Attributes['waterPeakCheckrRegion'][1]
-		specsLowWaterRegion = nmrData.intensityData[nmrData.sampleMask, nmrData.featureMask & nmrData]
-		specsHighWaterRegion = nmrData.intensityData[nmrData.sampleMask, nmrData.featureMask & nmrData]
+		ppmWaterLow = tuple(nmrData.Attributes['waterPeakCheckRegion'][0])
+		ppmWaterHigh = tuple(nmrData.Attributes['waterPeakCheckrRegion'][1])
 
-		isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterRegion)
-		isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterRegion)
+		# Obtain the spectral regions - add sample Mask filter??here
+		specsLowWaterPeakRegion = nmrData.getFeatures(ppmWaterLow)[1]
+		specsHighWaterPeakRegion = nmrData.getFeatures(ppmWaterHigh)[1]
+
+		isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterPeakRegion)
+		isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterPeakRegion)
 
 		graphsAndPlots(nmrData,saveDir, item, reportType, SSmask, SPmask, ERmask, pcaModel) #do not actually need SR,SS and LTR for this report
 
@@ -264,31 +270,28 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=False, output=Non
 					item['SamplesExcludedInfo'] = sampleSummary['Excluded Details'].loc[(sampleSummary['Excluded Details']['SampleType'] == SampleType.StudySample) & (sampleSummary['Excluded Details']['AssayRole'] == AssayRole.Assay),:]
 					item['SamplesExcludedInfo'] = item['SamplesExcludedInfo'].drop(['Sample Base Name', 'SampleType', 'AssayRole'], axis=1)
 					item['SamplesExcludedNo'] = str(sampleSummaryTable['Excluded']['Study Sample'] )
-				
-			
-	
-			#item['Nsamples'] = nmrData.noSamples
-			item['baselineLow_regionTo']=nmrData.Attributes['baselineLow_regionTo']
-			item['baselineHigh_regionFrom']=nmrData.Attributes['baselineHigh_regionFrom']
-			item['baseline_alpha']=nmrData.Attributes['baseline_alpha']
-			item['baseline_threshold']=nmrData.Attributes['baseline_threshold']
-			item['PWFailThreshold']=nmrData.Attributes['PWFailThreshold']
-			item['points']=nmrData.intensityData.shape[1]
-			item['alignTo']=nmrData.Attributes['alignTo']
-			item['waterPeakCutRegionA']=nmrData.Attributes['waterPeakCutRegionA']
-			item['waterPeakCutRegionB']=nmrData.Attributes['waterPeakCutRegionB']
-			item['LWpeakRange']=nmrData.Attributes['LWpeakRange']
+
+			# Temporarily left like this to avoid disturbing plots
+			# TODO refactor for new nomenclature of attributes
+			item['baselineLow_regionTo'] = nmrData.Attributes['baselineCheckRegion'][0][1]
+			item['baselineHigh_regionFrom'] = nmrData.Attributes['baselineCheckRegion'][1][0]
+			item['baseline_alpha'] = nmrData.Attributes['baseline_alpha']
+			item['baseline_threshold'] = nmrData.Attributes['baseline_threshold']
+			item['PWFailThreshold'] = nmrData.Attributes['PWFailThreshold']
+			item['points'] = nmrData.intensityData.shape[1]
+			item['alignTo'] = nmrData.Attributes['alignTo']
+			item['LWpeakRange'] = nmrData.Attributes['LWpeakRange']
 			#datetime code
-			
+
 			dt = min(nmrData.sampleMetadata['Acquired Time'])
 			dd = dt.day, dt.month, dt.year
-			dd=str(dd).replace(", ", "/")
-			item['toA_from']=dd
+			dd = str(dd).replace(", ", "/")
+			item['toA_from'] = dd
 		
 			dt = max(nmrData.sampleMetadata['Acquired Time'])
 			dd = dt.day, dt.month, dt.year
-			dd=str(dd).replace(", ", "/")
-			item['toA_to']=dd
+			dd = str(dd).replace(", ", "/")
+			item['toA_to'] = dd
 
 			sampleSummary = _generateSampleReport(nmrData, withExclusions=True, output=None, returnOutput=True)
 		
@@ -370,7 +373,7 @@ def graphsAndPlots(nmrData,output, item, reportType, SSmask, SPmask, ERmask, PCA
 
 	#summary text ie how many failed so can place below plot output
 	if reportType != 'final report':#why? because we have excluded all the failures by the time of final report so the final should not have any failures in 
-		tempNo=sum(nmrData.sampleMetadata['Line Width (Hz)']>nmrData.Attributes['PWFailThreshold'])
+		tempNo = sum(nmrData.sampleMetadata['Line Width (Hz)'] > nmrData.Attributes['PWFailThreshold'])
 		item['fig1SummaryText'] = str(tempNo)+' sample(s) failed (shown as red dots) based on peakwidth: >'+ str(nmrData.Attributes['PWFailThreshold'])+'Hz'
 		del tempNo
 	else:
