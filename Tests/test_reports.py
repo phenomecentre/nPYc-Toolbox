@@ -940,9 +940,11 @@ class test_reports_multivariate(unittest.TestCase):
 
 		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, reportType=1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=-1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=0.05, dModX_criticalVal_type=None)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=101)
+		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=-1, dModX_criticalVal_type='Fcrit')
+
+		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=101, dModX_criticalVal_type='Fcrit')
 
 		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal_type = -1)
 
@@ -956,9 +958,13 @@ class test_reports_multivariate(unittest.TestCase):
 
 		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, r_threshold=-1.5)
 
+		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, hotellings_alpha=-1.5)
+
 		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, excludeFields='not a list')
 
 		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, output=1)
+
+		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=0.05)
 
 
 if __name__ == '__main__':

@@ -162,14 +162,6 @@ class Dataset:
 
 
 	@property
-	def datasetLevel(self):
-		"""
-		Subclasses override this method to test their sampleMetadata and return the relevant level.
-		"""
-		return DatasetLevel.Unknown
-
-
-	@property
 	def name(self) -> str:
 		"""
 		Returns or sets the name of the dataset. *name* must be a string
@@ -1703,14 +1695,9 @@ class Dataset:
 		:param bool filterMetadata: If ``True`` does not export the sampleMetadata and featureMetadata columns listed in self.Attributes['sampleMetadataNotExported'] and self.Attributes['featureMetadataNotExported']
 		:raises ValueError: if *saveFormat* is not understood
 		"""
-
-		saveFormats = ['CSV', 'UnifiedCSV','ISATAB']
-
 		# Validate inputs
 		if not isinstance(destinationPath, str):
 			raise TypeError('`destinationPath` must be a string.')
-		if not saveFormat in saveFormats:
-			raise ValueError('`saveFormat` must be one of: %s' % (str(saveFormats)))
 		if not isinstance(withExclusions, bool):
 			raise TypeError('`withExclusions` must be True or False')
 		if not isinstance(filterMetadata, bool):
@@ -1892,7 +1879,8 @@ class Dataset:
 				rangeMask[numpy.logical_and(self.featureMetadata[by].values >= featureRange[0], self.featureMetadata[by].values <= featureRange[1])] = True
 
 			return self.featureMetadata.loc[rangeMask], self.intensityData[:, rangeMask]
-
+		else:
+			raise TypeError('Dataset.VariableType type not understood!')
 
 	def _exportHDF5(self, destinationPath):
 

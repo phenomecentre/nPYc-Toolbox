@@ -365,7 +365,7 @@ class NMRDataset(Dataset):
 		:param sampleTypes: List of types of samples to retain
 		:type sampleTypes: SampleType
 		:param AssayRole sampleRoles: List of assays roles to retain
-		:param exclusionRegions: If ``None`` Exclude ranges defined in :py:attr:`~Dataset.Attributes`['exclusionRegions']
+		:param exclusionRegions: If ``None`` Exclude ranges defined in :py:attr:`~Dataset.Attributes` ['exclusionRegions']
 		:type exclusionRegions: list of tuple
 		"""
 

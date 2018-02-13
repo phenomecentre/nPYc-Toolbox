@@ -132,14 +132,14 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 				range=(minVal, maxVal),
 				label=key,
 				bins=nbins)
-				
+
 	# If we are segmenting by quantiles
 	elif quantiles:
 
 		# Find bounds in inclusion vector
 		quantiles = numpy.percentile(inclusionVector, quantiles)
 
-		label = "Below {0:,.2f}".format(numpy.exp(quantiles[0]))
+		label = "Below {0:,.2f}".format(quantiles[0])
 		mask = inclusionVector <= quantiles[0]
 		if sum(mask) <= 1:
 			plt.plot([],
@@ -151,7 +151,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 					 bins=nbins)
 
 		for i in range(0, len(quantiles)-1):
-			label = "Between {0:,.2f} and {1:,.2f}".format(numpy.exp(quantiles[i]), numpy.exp(quantiles[i+1]))
+			label = "Between {0:,.2f} and {1:,.2f}".format(quantiles[i], quantiles[i+1])
 			mask = (inclusionVector > quantiles[i]) & (inclusionVector <= quantiles[i+1])
 			if sum(mask) <= 1:
 				plt.plot([],
@@ -162,7 +162,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 						 label=label,
 						 bins=nbins)
 
-		label = "Above {0:,.2f}".format(numpy.exp(quantiles[-1]))
+		label = "Above {0:,.2f}".format(quantiles[-1])
 		mask = inclusionVector > quantiles[-1]
 		if sum(mask) <= 1:
 			plt.plot([],

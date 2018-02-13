@@ -8,16 +8,15 @@ import copy
 def exploratoryAnalysisPCA(npycDataset, scaling=1, maxComponents=10, minQ2=0.05, withExclusions=False, **kwargs):
     """
 
-    Performs and exploratory analysis using PCA on the data contained in an :py:class:`~nPYc:objects._dataset`.
+    Performs and exploratory analysis using PCA on the data contained in an :py:class:`~nPYc:objects.Dataset`.
 
-    :param :py:class:`~nPYc.objects._dataset npycDataset:
+    :param Dataset npycDataset: Dataset to model
     :param scaling: Choice of scaling.
     :param int maxComponents: Maximum number of components to fit.
     :param minQ2: Minimum % of improvement in Q2Y over the previous component to add .
-    :param Boolean withExclusions: If True, PCA will be fitted on the npyc_dataset after applying feature and sample Mask,
-    if False the PCA is performed on whole dataset.
+    :param Boolean withExclusions: If True, PCA will be fitted on the npyc_dataset after applying feature and sample Mask, if False the PCA is performed on whole dataset.
     :return: Fitted PCA model
-    :rtype:
+    :rtype: ChemometricsPCA
     """
 
     try:
