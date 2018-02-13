@@ -214,7 +214,7 @@ class Dataset:
 		Checks for attributes existence and type.
 		Check for mandatory columns existence, but does not check the column values (type or uniqueness).
 		If 'sampleMetadataExcluded', 'intensityDataExcluded', 'featureMetadataExcluded' or 'excludedFlag' exist, the existence and number of exclusions (based on 'sampleMetadataExcluded') is checked
-	
+
 		:param verbose: if True the result of each check is printed (default True)
 		:type verbose: bool
 		:param raiseError: if True an error is raised when a check fails and the validation is interrupted (default False)
@@ -223,7 +223,7 @@ class Dataset:
 		:type raiseWarning: bool
 		:return: True if the Object conforms to basic :py:class:`Dataset`
 		:rtype: bool
-	
+
 		:raises TypeError: if the Object class is wrong
 		:raises AttributeError: if self.Attributes does not exist
 		:raises TypeError: if self.Attributes is not a dict
@@ -969,7 +969,7 @@ class Dataset:
 
 			# Samples
 			if sum(self.sampleMask) != len(self.sampleMask):
-				
+
 				# Account for if self.sampleMask is a pandas.series
 				try:
 					self.sampleMask = self.sampleMask.values
@@ -1306,7 +1306,7 @@ class Dataset:
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
-		
+
 		# Remove any rows which are just nans
 		self.samplingInfo = self.samplingInfo.loc[self.samplingInfo['Sampling ID'].values != 'nan', :]
 
@@ -1364,7 +1364,7 @@ class Dataset:
 			return False
 
 
-	def _matchDatasetToISATAB(self,pathToISATABFile, studyID = 1, assay='MS', assayID=1,filenameSpec=''):
+	def _matchDatasetToISATAB(self,pathToISATABFile, studyID = 1, assay='MS', assayID=1,filenameSpec='', dataType = 'QI'):
 		"""
 		Match the Sample IDs in :py:attr:`sampleMetadata` to the subject and assay information in the ISATAB File.
 
@@ -1375,6 +1375,11 @@ class Dataset:
 		:param int assayID: the Assay index in the ISATAB File
 		:param str assay: the assay type 'MS' or 'NMR'
 		"""
+
+
+		#if 'Dilution' in self.sampleMetadata.columns:
+		#	self.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
+
 		if not (assay in ['MS','NMR']):
 			raise ValueError('assay should be either \'MS\' or \'NMR\'')
 
@@ -1437,6 +1442,8 @@ class Dataset:
 			limsFile = limsFile[['Sampling ID','Assay data name','Run Order','Acquisition Date','Acquisition Time','Instrument','Batch','Sample batch']]
 
 
+		#self.Attributes['DataPath'] = limsFile['Data Path'][0]
+
 		#merge the two fields 'Acquisition Date','Acquisition Time' into one field 'Acquired Time'
 		#a few lines down we make sure 'Acquired Time' is a proper date/time field that pandas is happy with!
 		limsFile['Acquired Time'] = limsFile[['Acquisition Date', 'Acquisition Time']].apply(lambda x: ' '.join(x), axis=1)
@@ -1475,10 +1482,11 @@ class Dataset:
 
 
 		# Match limsFile to sampleMetdata for samples with data PRESENT
-		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.limsFile, left_on='Sample Base Name Normalised', right_on='Assay data name Normalised', how='left', sort=False)
+		self.sampleMetadata = pandas.merge(self.limsFile,self.sampleMetadata, left_on='Assay data name Normalised', right_on='Sample Base Name Normalised', how='right', sort=False)
 		self.sampleMetadata = removeDuplicateColumns(self.sampleMetadata)
 		#check with Jake/Caroline
-		self.sampleMetadata['Exclusion Details'] = None
+		if 'Exclusion Details' not in self.sampleMetadata:
+			self.sampleMetadata['Exclusion Details'] = None
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
 		#self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Sampling ID'].notnull().astype(bool)
@@ -1686,7 +1694,7 @@ class Dataset:
 		return notFound
 
 
-	def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False, filterMetadata=True):
+	def exportDataset(self, destinationPath='.', saveFormat='CSV', isaDetailsDict = {}, withExclusions=True, escapeDelimiters=False, filterMetadata=True):
 		"""
 		Export dataset object in a variety of formats for import in other software, the export is named according to the :py:attr:`name` attribute of the Dataset object.
 
@@ -1728,7 +1736,8 @@ class Dataset:
 		if withExclusions:
 			exportDataset.applyMasks()
 
-		if filterMetadata:
+		# do not filter metadata if safe format is ISATAB
+		if filterMetadata and saveFormats in ['CSV', 'UnifiedCSV']:
 			# sampleMetadata not exported
 			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(exportDataset.Attributes['sampleMetadataNotExported']))
 			exportDataset.sampleMetadata.drop(sampleMetaColToRemove, axis=1, inplace=True)
@@ -1736,13 +1745,15 @@ class Dataset:
 			featureMetaColToRemove = list(set(exportDataset.featureMetadata.columns.tolist()) & set(exportDataset.Attributes['featureMetadataNotExported']))
 			exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1, inplace=True)
 
-		destinationPath = os.path.join(destinationPath, exportDataset.name)
+
 		if saveFormat == 'CSV':
+			destinationPath = os.path.join(destinationPath, exportDataset.name)
 			exportDataset._exportCSV(destinationPath, escapeDelimiters=escapeDelimiters)
 		elif saveFormat == 'UnifiedCSV':
+			destinationPath = os.path.join(destinationPath, exportDataset.name)
 			exportDataset._exportUnifiedCSV(destinationPath, escapeDelimiters=escapeDelimiters)
 		elif saveFormat == 'ISATAB':
-			exportDataset._exportISATAB(destinationPath, escapeDelimiters=escapeDelimiters)
+			exportDataset._exportISATAB(destinationPath, isaDetailsDict)
 		else:
 			raise ValueError('Save format \'%s\' not understood.' % saveFormat)
 
@@ -1795,7 +1806,7 @@ class Dataset:
 			self.intensityData, delimiter=",")
 
 
-	def _exportISATAB(self, destinationPath, escapeDelimiters=True, assay='MS'):
+	def _exportISATAB(self, destinationPath, isaDetailsDict,assay='MS'):
 		"""
 		Export the dataset's metadata to the directory *destinationPath* as ISATAB
 

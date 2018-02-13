@@ -130,7 +130,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 								SampleType.MethodReference],
 								name='SampleType',
 								dtype=object)
-								
+
 
 		with self.subTest(msg='Default Parameters'):
 			expectedSampleMask = numpy.array([False, False, False, False, False,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, False, False], dtype=bool)
@@ -145,7 +145,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 			dataset.initialiseMasks()
 			dataset.updateMasks(filterFeatures=False,
-								sampleTypes=[SampleType.StudyPool, SampleType.ExternalReference], 
+								sampleTypes=[SampleType.StudyPool, SampleType.ExternalReference],
 								assayRoles=[AssayRole.PrecisionReference])
 
 			numpy.testing.assert_array_equal(expectedSampleMask, dataset.sampleMask)
@@ -155,7 +155,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 			dataset.initialiseMasks()
 			dataset.updateMasks(filterFeatures=False,
-								sampleTypes=[SampleType.StudyPool], 
+								sampleTypes=[SampleType.StudyPool],
 								assayRoles=[AssayRole.LinearityReference])
 
 			numpy.testing.assert_array_equal(expectedSampleMask, dataset.sampleMask)
@@ -246,7 +246,7 @@ class test_nmrdataset_bilisa(unittest.TestCase):
 
 
 	def test_dimensions(self):
-		
+
 		self.assertEqual((self.testData.noSamples, self.testData.noFeatures), (self.noSamp, self.noFeat))
 
 
@@ -254,7 +254,7 @@ class test_nmrdataset_bilisa(unittest.TestCase):
 		"""
 		Check loaded samples names against hard coded values.
 		"""
-		
+
 		sampleName = pandas.Series(['UnitTest3_Serum_Rack01_RCM_190116/10',
 									'UnitTest3_Serum_Rack01_RCM_190116/100',
 									'UnitTest3_Serum_Rack01_RCM_190116/110',
@@ -432,13 +432,13 @@ class test_nmrdataset_bruker(unittest.TestCase):
 		for i in range(91):
 			filePathList.loc[i] = 'unitTestData'+str(i)
 		variableSize = 20000#numpy.random.randint(low=1000, high=50000, size=1)#normally coded into sop as 20000
-		#create array of random exponetial values		
+		#create array of random exponetial values
 		X=numpy.random.rand(86, variableSize)*1000
 		X = numpy.r_[X, numpy.full((1, variableSize), -10000)]# add a minus  val row r_ shortcut notation for vstack
 		X = numpy.r_[X, numpy.full((1, variableSize), 200000)]# add a minus  val row r_ shortcut notation for vstack
 		a1=numpy.arange(0,variableSize,1)[numpy.newaxis]#diagonal ie another known fail
 		X=numpy.concatenate((X, a1), axis=0)#concatenate into X
-		
+
 		X = numpy.r_[X, numpy.random.rand(2, variableSize)* 10000]		#add more fails random but more variablility than the average 86 above
 
 		#create ppm
@@ -449,7 +449,7 @@ class test_nmrdataset_bruker(unittest.TestCase):
 		df1 = baseline(filePathList, X, ppm, -1.0,-0.5,'BL_low_', 0.05, 90)#leave one harcoded version covering neg range
 		df2 = baseline(filePathList, X, ppm, ppmrange1,ppmrange2,'BL_high_', 0.05, 90)#normally defined in sop as 9.5-10
 		df3 = baseline(filePathList, X, ppm, ppmrange1,ppmrange2,'BL_high_', 5, 90)#nchanging alpha to higher value should fail more so lets put to 5
-		
+
 		#NOTE: NOT tested for adjusting threshold only testing at 90 !!
 
 		numpy.testing.assert_array_equal(df1['BL_low_outliersFailArea'], [False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, True, False, True, True])
@@ -467,7 +467,7 @@ class test_nmrdataset_bruker(unittest.TestCase):
 		"""
 		Validate generate feature summary report
 		at the moment all it will test is if the plots and reports are saved, not checking contents
-		"""	
+		"""
 
 #		empty object
 		testData = nPYc.NMRDataset('', fileType='empty')
@@ -553,7 +553,7 @@ class test_nmrdataset_bruker(unittest.TestCase):
 													   False,
 													   False,
 													   False]
-		
+
 		testData.sampleMetadata['calibrPass'] = [True,
 												 True,
 												 True,
@@ -642,16 +642,16 @@ class test_nmrdataset_bruker(unittest.TestCase):
 			assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_featureSummary','NMRDataset_peakWidthBoxplot.png'))==1
 			assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_featureSummary','npc-main.css'))==1
 			assert os.path.exists(os.path.join(tmpdirname,'NMRDataset_report_featureSummary.html')) ==1
-		
+
 		#test final report using same data
 		with tempfile.TemporaryDirectory() as tmpdirname:
-			_generateReportNMR(testData, 'final report', output=tmpdirname, withExclusions=False)#run the code for feature summary		
+			_generateReportNMR(testData, 'final report', output=tmpdirname, withExclusions=False)#run the code for feature summary
 			assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','NMRDataset_finalFeatureBLWPplots1.png')) == 1
 			assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','NMRDataset_finalFeatureBLWPplots3.png')) ==1
 			assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','NMRDataset_finalFeatureIntensityHist.png')) ==1
 			assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','NMRDataset_peakWidthBoxplot.png'))==1
 			assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','npc-main.css'))==1
-			assert os.path.exists(os.path.join(tmpdirname,'NMRDataset_report_finalReport.html')) ==1	
+			assert os.path.exists(os.path.join(tmpdirname,'NMRDataset_report_finalReport.html')) ==1
 
 
 	def test_addSampleInfo_npclims(self):
@@ -759,8 +759,26 @@ class test_nmrdataset_ISATAB(unittest.TestCase):
 														   'Run Order', 'Instrument', 'Assay data name'])
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
-			nmrData.exportDataset(destinationPath=tmpdirname, saveFormat='ISATAB', withExclusions=False)
-			a = os.path.join(tmpdirname, 'NMRDataset', 'a_npc-test-study_metabolite_profiling_NMR_spectroscopy.txt')
+			details = {
+			    'investigation_identifier' : "i1",
+			    'investigation_title' : "Give it a title",
+			    'investigation_description' : "Add a description",
+			    'investigation_submission_date' : "2016-11-03", #use today if not specified
+			    'investigation_public_release_date' : "2016-11-03",
+			    'first_name' : "Noureddin",
+			    'last_name' : "Sadawi",
+			    'affiliation' : "University",
+			    'study_filename' : "my_nmr_study",
+			    'study_material_type' : "Serum",
+			    'study_identifier' : "s1",
+			    'study_title' : "Give the study a title",
+			    'study_description' : "Add study description",
+			    'study_submission_date' : "2016-11-03",
+			    'study_public_release_date' : "2016-11-03",
+			    'assay_filename' : "my_nmr_assay"
+			}
+			nmrData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
+			a = os.path.join(tmpdirname,'a_my_nmr_assay.txt')
 			self.assertTrue(os.path.exists(a))
 
 
