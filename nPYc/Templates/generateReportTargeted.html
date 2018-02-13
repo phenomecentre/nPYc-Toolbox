@@ -3,13 +3,13 @@
 {% import 'pcaReport.html' as pca %}
 
 {% if item.ReportType == 'feature summary' %}
-	{% set reportTitle = 'NPC Feature Summary Report' %}
+	{% set reportTitle = 'Feature Summary Report' %}
 {% elif item.ReportType == 'merge loq assessment' %}
-	{% set reportTitle = 'NPC Limits Of Quantification Assessment Report' %}
+	{% set reportTitle = 'Limits Of Quantification Assessment Report' %}
 {% elif item.ReportType == 'final report' %}
-	{% set reportTitle = 'NPC Final Report' %}
+	{% set reportTitle = 'Final Report' %}
 {% else %}
-	{% set reportTitle = 'NPC Summary Report ({{ item.ReportType }})' %}
+	{% set reportTitle = 'Summary Report ({{ item.ReportType }})' %}
 {% endif %}
 
 {% block title %}{{ reportTitle }} For: {{ item.Name }} {% endblock %}
