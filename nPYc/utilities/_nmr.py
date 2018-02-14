@@ -78,31 +78,41 @@ def _qcCheckBaseline(spectrum, alpha):
 	"""
 
 	# Single threshold
-	criticalThreshold = numpy.percentile(spectrum, (1 - alpha)*100)
-	# Number of points
-	isOutlier_point = spectrum > criticalThreshold
+	criticalThresholdUpper = numpy.percentile(spectrum, (1 - alpha)*100)
+	criticalThresholdLower = numpy.percentile(spectrum, (alpha)*100)
 
-	sumOut = numpy.sum(isOutlier_point, 1)/spectrum.shape[1]
+	# check for each point if it outside the percentiles defined by alpha
+	isOutlierPoint = spectrum > criticalThresholdUpper
+	isOutlierPoint |= spectrum < criticalThresholdLower
 
-	isOutlier = sumOut > 0.95
+	# Check proportion of points out per sample
+	sumOut = numpy.sum(isOutlierPoint, 1)/spectrum.shape[1]
+	# Check if proportion of points either above or below is higher than expected
+	isOutlier = sumOut > 1 - alpha
+
 	return isOutlier
 
 
 # For now same as previous function, but keeping room for different algorithms
 def _qcCheckWaterPeak(spectrum, alpha):
 	"""
-	Baseline checks
+	Water peak checks
 	:param spectrum:
 	:param alpha:
 	:return:
 	"""
 
 	# Single threshold
-	criticalThreshold = numpy.percentile(spectrum, (1 - alpha)*100)
-	# Number of points
-	isOutlier = spectrum > criticalThreshold
+	criticalThresholdUpper = numpy.percentile(spectrum, (1 - alpha) * 100)
+	criticalThresholdLower = numpy.percentile(spectrum, (alpha) * 100)
 
-	sumOut = numpy.sum(isOutlier, 1) / spectrum.shape[1]
+	# check for each point if it outside the percentiles defined by alpha
+	isOutlierPoint = spectrum > criticalThresholdUpper
+	isOutlierPoint |= spectrum < criticalThresholdLower
 
-	isOutlier = sumOut > 0.95
+	# Check proportion of points out per sample
+	sumOut = numpy.sum(isOutlierPoint, 1) / spectrum.shape[1]
+	# Check if proportion of points either above or below is higher than expected
+	isOutlier = sumOut > 1 - alpha
+
 	return isOutlier
