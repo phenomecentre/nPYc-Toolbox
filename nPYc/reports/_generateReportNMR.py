@@ -129,13 +129,13 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=True, output=None
 		sampleSummary = []
 
 		# Apply the QC checks just in case
-		nmrData.__nmrQCChecks()
+		nmrData._nmrQCChecks()
 
 		# ISOLATE THIS FUNCTION
 		graphsAndPlots(nmrData, saveDir, item, reportType, SSmask, SPmask, ERmask, pcaModel)
 
 		#convert to 0s and 1s rather than true false
-		fail_summary = nmrData.sampleMetadata.loc[:, ['Sample File Name', 'ImportFail', 'LineWidthFail',
+		fail_summary = nmrData.sampleMetadata.loc[:, ['Sample File Name', 'LineWidthFail',
 													  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
 
 		# Check this step!
@@ -342,7 +342,7 @@ def graphsAndPlots(nmrData,output, item, reportType, SSmask, SPmask, ERmask, PCA
 	#summary text ie how many failed so can place below plot output
 	if reportType != 'final report':#why? because we have excluded all the failures by the time of final report so the final should not have any failures in 
 		tempNo = sum(nmrData.sampleMetadata['Line Width (Hz)'] > nmrData.Attributes['PWFailThreshold'])
-		item['fig1SummaryText'] = str(tempNo)+' sample(s) failed (shown as red dots) based on peakwidth: >'+ str(nmrData.Attributes['PWFailThreshold'])+'Hz'
+		item['fig1SummaryText'] = str(tempNo)+' sample(.aept) failed (shown as red dots) based on peakwidth: >'+ str(nmrData.Attributes['PWFailThreshold'])+'Hz'
 		del tempNo
 	else:
 		item['fig1SummaryText'] =''
@@ -398,25 +398,12 @@ def graphsAndPlots(nmrData,output, item, reportType, SSmask, SPmask, ERmask, PCA
 
 	#print failed amounts under plots again only if its not the final report as we excluded this data in final anyway
 	if reportType != 'final report':
-		numpy.sum(nmrData.sampleMetadata)
-		failAreaLowCountBL = sum(nmrData.sampleMetadata.BL_low_outliersFailArea==True)
-		failNegLowCountBL = sum(nmrData.sampleMetadata.BL_low_outliersFailNeg==True)
-		failAreaHighCountBL = sum(nmrData.sampleMetadata.BL_high_outliersFailArea==True)
-		failNegHighCountBL = sum(nmrData.sampleMetadata.BL_high_outliersFailNeg==True)
-		failAreaLowCountWP = sum(nmrData.sampleMetadata.WP_low_outliersFailArea==True)
-		failNegLowCountWP = sum(nmrData.sampleMetadata.WP_low_outliersFailNeg==True)
-		failAreaHighCountWP = sum(nmrData.sampleMetadata.WP_high_outliersFailArea==True)
-		failNegHighCountWP = sum(nmrData.sampleMetadata.WP_high_outliersFailNeg==True)
+		failBaseline = sum(nmrData.sampleMetadata.BaselineFail == True)
+		failWaterPeak = sum(nmrData.sampleMetadata.WaterPeakFail == True)
 
-		item['fig2to3SummaryText'] = (''+str(failAreaLowCountBL)+' sample(s) failed on BL low area'+'\n'+
-										''+str(failNegLowCountBL)+' sample(s) failed on BL low negative'+'\n'+
-										''+str(failAreaHighCountBL)+' sample(s) failed on BL high area'+'\n'+
-										''+str(failNegHighCountBL)+' sample(s) failed on BL high negative'+'\n'+
-										''+str(failAreaLowCountWP)+' sample(s) failed on WP low area'+'\n'+
-										''+str(failNegLowCountWP)+' sample(s) failed on WP low negative'+'\n'+
-										''+str(failAreaHighCountWP)+' sample(s) failed on WP high area'+'\n'+
-										''+str(failNegHighCountWP)+' sample(s) failed on WP high negative'+'\n')
-		
+		item['fig2to3SummaryText'] = (''+str(failBaseline)+' sample(s) failed on baseline QC'+'\n'+
+										''+str(failWaterPeak)+' sample(s) failed on water peak peak QC'+'\n')
+
 	else:
 		item['fig2to3SummaryText']=''
 	if not output:

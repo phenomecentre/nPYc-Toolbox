@@ -105,7 +105,7 @@ class NMRDataset(Dataset):
 			self._scale = self.featureMetadata['ppm'].values
 			self.featureMask[:] = True
 			# Perform the quaality control checks to populate the class
-			self.__nmrQCChecks()
+			self._nmrQCChecks()
 
 			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
 
@@ -266,26 +266,27 @@ class NMRDataset(Dataset):
 													 regionMask)
 
 			# If features are modified, retrigger
-			self.__nmrQCChecks()
+			self._nmrQCChecks()
 
 		# Sample Exclusions
 		if filterSamples:
 
 			# Retrigger QC checks before checking which samples need to be updated
 			if not filterFeatures:
-				self.__nmrQCChecks()
+				self._nmrQCChecks()
 
 			super().updateMasks(filterSamples=True,
 								filterFeatures=False,
 								sampleTypes=sampleTypes,
 								assayRoles=assayRoles,
 								**kwargs)
-			columnNames = ['Sample File Name'].extend()
-			fail_summary = self.sampleMetadata.loc[:, ['Sample File Name', 'ImportFail', 'LineWidthFail',
-														  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
+			columnNames = ['Sample File Name']
+			columnNames.extend(sampleQCChecks)
+			fail_summary = self.sampleMetadata.loc[:, columnNames]
 
-			# Check this step!
-			self.sampleMask &= ~fail_summary.any()
+			idxToMask = fail_summary[(fail_summary == True).any(1)].index
+
+			self.sampleMask[idxToMask] = False
 
 		self.Attributes['Log'].append([datetime.now(), "Dataset filtered with: filterSamples=%s, filterFeatures=%s, sampleClasses=%s, sampleRoles=%s, %s." % (
 			filterSamples,
@@ -410,7 +411,7 @@ class NMRDataset(Dataset):
 
 		nmrAssay.to_csv(nmrAssayPath,sep='\t', encoding='utf-8',index=False)
 
-	def __nmrQCChecks(self):
+	def _nmrQCChecks(self):
 		"""
 
 		Apply the quality control checks to the current dataset and apply the sampleMetadata dataframe.
@@ -421,9 +422,9 @@ class NMRDataset(Dataset):
 		bounds = numpy.std(self.sampleMetadata['Delta PPM']) * 3
 		meanVal = numpy.mean(self.sampleMetadata['Delta PPM'])
 		# QC metrics - keep the simple one here but we can remove for latter to feature summary
-		self.sampleMetadata['calibrationFail'] = numpy.logical_or(
-			(self.sampleMetadata['Delta PPM'] < meanVal - bounds),
-			(self.sampleMetadata['Delta PPM'] > meanVal + bounds))
+		self.sampleMetadata['CalibrationFail'] = ~numpy.logical_or(
+			(self.sampleMetadata['Delta PPM'] > meanVal - bounds),
+			(self.sampleMetadata['Delta PPM'] < meanVal + bounds))
 
 		# LineWidth quality check
 		self.sampleMetadata['LineWidthFail'] = self.sampleMetadata['Line Width (Hz)'] >= self.Attributes[
@@ -438,8 +439,8 @@ class NMRDataset(Dataset):
 		specsLowBaselineRegion = self.getFeatures(ppmBaselineLow)[1]
 		specsHighBaselineRegion = self.getFeatures(ppmBaselineHigh)[1]
 
-		isOutlierBaselineLow = _qcCheckBaseline(specsLowBaselineRegion)
-		isOutlierBaselineHigh = _qcCheckBaseline(specsHighBaselineRegion)
+		isOutlierBaselineLow = _qcCheckBaseline(specsLowBaselineRegion, self.Attributes['baseline_alpha'])
+		isOutlierBaselineHigh = _qcCheckBaseline(specsHighBaselineRegion, self.Attributes['baseline_alpha'])
 
 		# Water peak check
 		ppmWaterLow = tuple(self.Attributes['waterPeakCheckRegion'][0])
@@ -449,8 +450,8 @@ class NMRDataset(Dataset):
 		specsLowWaterPeakRegion = self.getFeatures(ppmWaterLow)[1]
 		specsHighWaterPeakRegion = self.getFeatures(ppmWaterHigh)[1]
 
-		isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterPeakRegion)
-		isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterPeakRegion)
+		isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterPeakRegion, self.Attributes['baseline_alpha'])
+		isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterPeakRegion, self.Attributes['baseline_alpha'])
 
 		self.sampleMetadata['WaterPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
 		self.sampleMetadata['BaselineFail'] = isOutlierBaselineHigh | isOutlierBaselineLow

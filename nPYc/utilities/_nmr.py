@@ -78,12 +78,13 @@ def _qcCheckBaseline(spectrum, alpha):
 	"""
 
 	# Single threshold
-	criticalThreshold = numpy.percentile(spectrum, 1 - alpha)
+	criticalThreshold = numpy.percentile(spectrum, (1 - alpha)*100)
 	# Number of points
-	isOutlier = spectrum > criticalThreshold
+	isOutlier_point = spectrum > criticalThreshold
 
-	numpy.sum(isOutlier)/spectrum.shape[0]
+	sumOut = numpy.sum(isOutlier_point, 1)/spectrum.shape[1]
 
+	isOutlier = sumOut > 0.95
 	return isOutlier
 
 
@@ -97,10 +98,11 @@ def _qcCheckWaterPeak(spectrum, alpha):
 	"""
 
 	# Single threshold
-	criticalThreshold = numpy.percentile(spectrum, 1 - alpha)
+	criticalThreshold = numpy.percentile(spectrum, (1 - alpha)*100)
 	# Number of points
 	isOutlier = spectrum > criticalThreshold
 
-	numpy.sum(isOutlier) / spectrum.shape[0]
+	sumOut = numpy.sum(isOutlier, 1) / spectrum.shape[1]
 
+	isOutlier = sumOut > 0.95
 	return isOutlier
