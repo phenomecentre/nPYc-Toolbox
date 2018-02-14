@@ -22,7 +22,7 @@ def plotBaseline(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=
 	"""
 	fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(15, 7), dpi=72)
 
-	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (min(nmrData.Attributes['baselineCheckRegion'][0]),max(nmrData.Attributes['baselineCheckRegion'][1])), percentiles=(5, 95))
+	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (min(nmrData.Attributes['baselineCheckRegion'][0]),max(nmrData.Attributes['baselineCheckRegion'][0])), percentiles=(5, 95))
 	ax2.plot(localPPM, meanSpectrum, color=(0.46,0.71,0.63))
 	ax2.fill_between(localPPM, lowerPercentile, y2=upperPercentile, color=(0,0.4,.3,0.2))
 

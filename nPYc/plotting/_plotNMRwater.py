@@ -12,12 +12,11 @@ from ._nmrPlotting import nmrRangeHelper, plotlyRangeHelper
 
 def plotWaterResonance(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
-	plotWaterResonance(nmrData, margin=1. **kwargs)
+	plotWaterResonance(nmrData, **kwargs)
 
 	Plot the water region to be cut from the spectrum along with spectra failing water region checks.
 
 	:param NMRDataset nmrData: Dataset to plot
-	:param float margin: Margin about the water are to be removed to be ploted
 	:param savePath: If ``None`` draw interactively, otherwise save to this path
 	:type savePath: None or str
 	"""
@@ -45,7 +44,8 @@ def plotWaterResonance(nmrData, savePath=None, figureFormat='png', dpi=72, figur
 			ax.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.05,0.05,0.8,0.7))
 
 
-	ax.axvspan(bounds[0], bounds[1], facecolor='k', alpha=0.2)
+	ax.axvspan(max(nmrData.Attributes['waterPeakCheckRegion'][0]),
+			   min(nmrData.Attributes['waterPeakCheckRegion'][1]), facecolor='k', alpha=0.2)
 	# ax.set_xlabel('ppm')
 	ax.invert_xaxis()
 	ax.get_yaxis().set_ticks([])
@@ -56,6 +56,7 @@ def plotWaterResonance(nmrData, savePath=None, figureFormat='png', dpi=72, figur
 	water = patches.Patch(color=(0,0,0,0.2), label='Water region to be removed')
 	failures = lines.Line2D([], [], color=(0.8,0.05,0.01,0.7), marker='',
 									label='Water resonances failed on area')
+
 	plt.legend(handles=[variance, water, failures])
 
 	if savePath:
@@ -72,7 +73,6 @@ def plotWaterResonanceInteractive(nmrData):
 	Plot the water region to be cut from the spectrum along with spectra failing water region checks.
 
 	:param NMRDataset nmrData: Dataset to plot
-	:param float margin: Margin about the water are to be removed to be ploted
 	:returns: Plotly figure object to plot with iPlot
 	"""
 	data = []
@@ -118,7 +118,7 @@ def plotWaterResonanceInteractive(nmrData):
 	data.append(trace)
 
 	##
-	# Add water region in layou
+	# Add water region in layout
 	##
 	layout = go.Layout(
 		title='Residual water resonance',
@@ -126,7 +126,7 @@ def plotWaterResonanceInteractive(nmrData):
 			orientation="h"),
 		hovermode = "closest",
 		xaxis=dict(
-			range=(bounds[1], bounds[0])
+			range=(min(nmrData.Attributes['waterPeakCheckRegion'][0]), max(nmrData.Attributes['waterPeakCheckRegion'][1]))
 		),
 		yaxis = dict(
 			showticklabels=False
@@ -135,9 +135,9 @@ def plotWaterResonanceInteractive(nmrData):
 			{
 				'type': 'rect',
 				'yref': 'paper',
-				'x0': bounds[0],
+				'x0': max(nmrData.Attributes['waterPeakCheckRegion'][0]),
 				'y0': 0,
-				'x1': bounds[1],
+				'x1': min(nmrData.Attributes['waterPeakCheckRegion'][1]),
 				'y1': 1,
 				'line': {
 					'color': 'rgb(0, 0, 0, 0)',

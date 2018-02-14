@@ -386,8 +386,7 @@ def graphsAndPlots(nmrData,output, item, reportType, SSmask, SPmask, ERmask, PCA
 			print('Figure 4: Waterpeak Low and High')
 		saveAs = None
 	if output:
-		plotWaterResonance(nmrData, margin=1,
-									savePath=saveAs,
+		plotWaterResonance(nmrData,	savePath=saveAs,
 									figureFormat=nmrData.Attributes['figureFormat'],
 									dpi=nmrData.Attributes['dpi'],
 									figureSize=nmrData.Attributes['figureSize'])
