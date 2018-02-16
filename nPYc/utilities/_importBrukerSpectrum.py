@@ -168,6 +168,61 @@ def importBrukerSpectrum(path, offset, sw_p, nc_proc, sf, si, bytordp):
 
 	return spectra_real, spectra_ppm
 
+def importBruker2DSpectrum(path, offset, sw_p, nc_proc, sf, si, bytordp):
+	"""
+	Load processed 1D Bruker spectra (*1r* files) from *path*.
+
+	:param str path: Path to *1r* file
+	:param float offset: *offset* (ppm value of the first data point of the spectrum) parameter from *procs* file
+	:param float sw_p: *SW_p* (spectral width) parameter from *procs* file
+	:param int nc_proc: *NC_proc*  intensity scaling factor from *procs* file
+	:param float sf: *SF* (spectral reference frequency) parameter from *procs* file
+	:param int si: *SI* (number of points in the processed data) parameter from *procs* file
+	:param int bytordp: *BYTORDP* parameter from *procs* file
+	:param int xdim: *XDIM* (submatrix size) parameter from *procs* file (only relevant for 2D data)
+	"""
+
+	##
+	# Determine type of spectrum from filename
+	##
+	fileName = os.path.basename(path)
+	if fileName == '1r':
+		dimensions = 1
+	elif fileName == '2rr':
+		raise NotImplementedError('Reading of 2D NMR data is not implemented')
+
+	##
+	# Check file exists
+	##
+	if not os.path.isfile(path):
+		raise IOError('Unable to read %s' % (path))
+
+	##
+	# Parse endianness for numpy
+	##
+	if int(bytordp) == 0:
+		machine_format = '<i4'
+	else:
+		machine_format = '>i4'
+
+	##
+	# Open and read spectrum
+	##
+	fid = open(path, 'rb')
+	x1 = pow(2, int(nc_proc))
+	dim1 = numpy.fromfile(fid, dtype=machine_format)
+	spectra_real = (dim1 * x1)
+	fid.close()
+
+	##
+	# Build ppm scale
+	##
+	swp = float(sw_p) / float(sf)
+	dppm = swp / float(si)
+	spectra_ppm = numpy.arange(float(offset), (float(offset) - swp), -dppm)
+
+	return spectra_real, spectra_ppm
+
 
 def parseQuantFactorSample(path):
 	"""
