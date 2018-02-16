@@ -30,19 +30,15 @@ Additional study design parameters or sample metadata may be mapped into the Dat
 
 In brief, :term:`precision reference` assays are acquired to characterise analytical variability, while :term:`linearity reference` assays provide a measure of a samples response to changes in abundance. These measurements may be made on :term:`synthetic reference mixtures<method reference>`, repeatedly measured samples of a :term:`representative matrix<external reference>`, or a :term:`pool<study reference>` of the samples in the study.
 
-`ISA-TAB <http://isa-tools.org>`_ format study design documents provide the simplest method for mapping experimental design parameters into the object::
-
-	datasetObject.addSampleInfo(descriptionFormat='ISATAB', filePath='~/path to study file')
-
-Or if analytical data is also represented in ISA-TAB, Dataset objects may be instantiated from the ISA-TAB documents [#]_::
-
-	dataset = nPYc.Dataset('~/path to ISATAB study directory/', fileType='ISATAB', assay='assay name')
-
-For simple study designs, the 'Basic CSV' format (see :doc:`here<SampleMetadata>` for details) specifies as simple method for matching data to metadata::
+For basic experimental designs, the 'Basic CSV' format (see :doc:`here<SampleMetadata>` for details) specifies a simple method for matching analytical data to metadata::
 
 	datasetObject.addSampleInfo(descriptionFormat='Basic CSV', filePath='~/path to basic csv file')
 
-The 'Basic CSV' file matches based on the entries in the 'Sample File Name' column to the 'Sample File Name' in the :py:attr:`~nPYc.objects.Dataset.sampleMetadata` table. :term:`Sample types<sample type>` and :term:`assay roles<assay role>` can be described using the values defined in the :py:mod:`~nPYc.enumerations` module. Where 'Include Sample' is ``False``, the :py:attr:`~nPYc.objects.Dataset.sampleMask` for that sample will be set to ``False``. By default samples that cannot be matched to entries in the basic csv file are also masked.
+`ISA-TAB <http://isa-tools.org>`_ format study design documents provide a method for mapping rich experimental design parameters into the object::
+
+	datasetObject.addSampleInfo(descriptionFormat='ISATAB', filePath='~/path to study file.csv')
+
+The 'Basic CSV' file matches based on the entries in the 'Sample File Name' column to the 'Sample File Name' in the :py:attr:`~nPYc.objects.Dataset.sampleMetadata` table. :term:`Sample types<sample type>` and :term:`assay roles<assay role>` can be described using the values defined in the :py:mod:`~nPYc.enumerations` module. Where 'Include Sample' is ``False``, the :py:attr:`~nPYc.objects.Dataset.sampleMask` for that sample will be set to ``False``. By default samples that cannot be matched to entries in the basic ; file are also masked.
 
 .. table:: Minimal structure of a basic csv file
    :widths: auto
@@ -85,11 +81,13 @@ When adding multiple rounds of metadata, the content of columns already present 
 Assessing Analytical Quality
 ============================
 
-The nPYc toolbox incorporates the concept of analytical quality directly into the subclasses of :py:class:`~nPYc.objects.Dataset`. Depending on the analytical platform and protocol, quality metrics may be judged on a sample-by-sample, or feature-by-feature basis, or both.
+The nPYc toolbox incorporates the concept of analytical quality directly into the subclasses of :py:class:`~nPYc.objects.Dataset`. Depending on the analytical platform and protocol, quality metrics may be judged on the basis of sample-by-sample or feature-by-feature comparisons, or both.
 
 To generate reports of analytical quality, call the :py:func:`~nPYc.reports.generateReport` function, with the dataset object as an argument::
 
 	nPYc.reports.generateReport(datasetObject, 'feature summary')
+
+Parameters for the quality control procedure can be specified in a :doc:`SOP JSON<configuration/configurationSOPs>` file as the Dataset object is created, and amended after creation by modifying the relevant entry of the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
 
 
 Quality-control of UPLC-MS profiling datasets
@@ -115,11 +113,11 @@ Quality-control of NMR profiling datasets
 * Line-width
 	By default, line-widths below 1.4\ Hz, are considered acceptable
 * Even baseline
-	The noise in the baseline regions flanking the spectrum are expected to have equal variance across the dataset, and not bee predominantly below zero
+	The noise in the baseline regions flanking the spectrum are expected to have equal variance across the dataset, and not be predominantly below zero
 * Adequate water-suppression
 	The residual water signal should not affect the spectrum outside of the 4.9 to 4.5 ppm region
 
-Before finalising the dataset, typically the wings of the spectrum will be trimmed, and the residual water signal and references peaks removed. Where necessary the chemical shift scale can also referenced to a specified peak.
+Before finalising the dataset, typically the wings of the spectrum will be trimmed, and the residual water signal and references resonance removed. Where necessary the chemical shift scale can also referenced to a specified resonance.
 
 
 Filtering of samples *&* variables
@@ -149,10 +147,10 @@ By default new :py:class:`~nPYc.objects.Dataset` objects have a :py:class:`~nPYc
 will cause all calls to :py:attr:`~nPYc.objects.Dataset.intensityData` to return values transformed by the normaliser.
 
 
-Basic Multivariate Modeling
-===========================
+Basic Multivariate Visualisation
+================================
 
-Simple PCA models of a :py:class:`~nPYc.objects.Dataset` can be generated by the :py:func:`~nPYc.reports.multivariateQCreport` function. This report will build a PCA model of the dataset, and visualise the scores and loadings of the model, optionally highlighting the scores by the supplied sample metadata.
+Simple PCA models of a :py:class:`~nPYc.objects.Dataset` can be visualised by the :py:func:`~nPYc.reports.multivariateQCreport` function. This report will take a pyChemomentrics PCA model of the dataset, and visualise the scores and loadings of the model, optionally highlighting the scores by the supplied sample metadata.
 
 Scores and loadings of the models generated by :py:func:`~nPYc.reports.multivariateQCreport` can be explored interactively with the :py:func:`~nPYc.plotting.plotScoresInteractive` and :py:func:`~nPYc.plotting.plotLoadingsInteractive` functions.
 
@@ -167,12 +165,10 @@ Saving reports
 
 Report generated interactively by the :py:mod:`~nPYc.reports` module can be saved as html documents with static images by supplying a path in which to save the report and figures to the *output=* parameter of the :py:func:`~nPYc.reports.generateReport` function.
 
-Exporting Data
+Exporting data
 **************
 
-Datasets can be export in a variety of formats with the :py:meth:`~nPYc.objects.Dataset.exportDataset` method. '*UnifiedCSV*' provides a good default output, exporting the :-:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` concatenated as a single coma-separated text file, with samples in rows, and features in columns. Where the number of features in a dataset might result in a file with too many columns to be opened by certain software, the '*CSV*' option allows the :py:attr:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` to each be saved to a separate CSV file.
-
-.. [#] Not yet implemented.
+Datasets can be exported in a variety of formats with the :py:meth:`~nPYc.objects.Dataset.exportDataset` method. '*UnifiedCSV*' provides a good default output, exporting the :-:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` concatenated as a single coma-separated text file, with samples in rows, and features in columns. Where the number of features in a dataset might result in a file with too many columns to be opened by certain software packages, the '*CSV*' option allows the :py:attr:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` to each be saved to a separate CSV file.
 
 .. [#] Development and Application of Ultra-Performance Liquid Chromatography-TOF MS for Precision Large Scale Urinary Metabolic Phenotyping, Lewis MR, *et al.*, **Anal. Chem.**, 2016, 88, pp 9004-9013
 

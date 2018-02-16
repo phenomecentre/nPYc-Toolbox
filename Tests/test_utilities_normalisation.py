@@ -58,6 +58,14 @@ class test_utilities_normalisation(unittest.TestCase):
 			with self.subTest(msg=comparison):
 				self.assertNotEqual(norm, comparison)
 
+class test_utilities_totalAreaNormaliser(unittest.TestCase):
+
+	def setUp(self):
+		# Simulate some data
+		self.noSamp = numpy.random.randint(5, high=50, size=None)
+		self.noFeat = numpy.random.randint(60, high=200, size=None)
+
+		self.X = numpy.random.randn(self.noSamp, self.noFeat)
 
 	# Object test
 	def test_totalAreaNormaliser(self):
@@ -73,7 +81,7 @@ class test_utilities_normalisation(unittest.TestCase):
 		numpy.testing.assert_array_equal(X.sum(axis=1), tanorm.normalisation_coefficients)
 
 
-	def test_totalAreaNormaliser_eq_(self):
+	def test_eq_(self):
 		"""
 		Check that the TotalAreaNormaliser equality testing works
 		"""
@@ -95,7 +103,7 @@ class test_utilities_normalisation(unittest.TestCase):
 				self.assertNotEqual(tanorm, comparison)
 
 
-	def test_totalAreaNormaliser_raises(self):
+	def test_raises(self):
 
 		tanorm = TotalAreaNormaliser(keepMagnitude=False)
 
@@ -108,7 +116,7 @@ class test_utilities_normalisation(unittest.TestCase):
 			self.assertRaises(ValueError, tanorm.normalise, X)
 
 
-	def test_totalAreaNormaliser_repr(self):
+	def test_repr(self):
 
 		with self.subTest(msg='Preserving magnitude'):
 
@@ -121,6 +129,16 @@ class test_utilities_normalisation(unittest.TestCase):
 			tanorm = TotalAreaNormaliser(keepMagnitude=True)
 			strform = str(tanorm)
 			self.assertEqual(strform, 'Normalised to constant area, preserving magnitude.')
+
+
+class test_utilities_probabilisticQuotientNormaliser(unittest.TestCase):
+
+	def setUp(self):
+		# Simulate some data
+		self.noSamp = numpy.random.randint(5, high=50, size=None)
+		self.noFeat = numpy.random.randint(60, high=200, size=None)
+
+		self.X = numpy.random.randn(self.noSamp, self.noFeat)
 
 
 	# Object test
@@ -138,11 +156,13 @@ class test_utilities_normalisation(unittest.TestCase):
 		pqn_normed = X / pqn_norm_coefs[:, None]
 
 		numpy.testing.assert_array_almost_equal(pqn_normed, pqn_norm.normalise(self.X), err_msg="PQN normaliser not working correctly - mismatching normalised data")
+		# Run twice to pick up the hashed coefficients
+		numpy.testing.assert_array_almost_equal(pqn_normed, pqn_norm.normalise(self.X), err_msg="PQN normaliser not working correctly - mismatching normalised data")
 		numpy.testing.assert_array_almost_equal(pqn_norm_coefs, pqn_norm.normalisation_coefficients, err_msg="PQN normaliser not working correctly - non-matching PQN coefficients")
 		numpy.testing.assert_array_equal(reference, pqn_norm.reference)
 
 
-	def test_probabilisticQuotientNormaliser_nans(self):
+	def test_nans(self):
 		##
 		# Check we dont crash with NaNs
 		##
@@ -153,13 +173,40 @@ class test_utilities_normalisation(unittest.TestCase):
 		pqn_norm.normalise(self.X)
 
 
-	def test_probabilisticQuotientNormaliser_repr(self):
+	def test_repr(self):
 
 		with self.subTest(msg='Default reference profile'):
 
 			pqn_norm = ProbabilisticQuotientNormaliser()
 			strform = str(pqn_norm)
 			self.assertEqual(strform, 'Normalised to median fold-change, reference profile was the median profile.')
+
+
+	def test_delete_reference(self):
+
+		pqn_norm = ProbabilisticQuotientNormaliser()
+		pqn_norm.normalise(self.X)
+
+		del(pqn_norm.reference)
+
+		self.assertIsNone(pqn_norm.normalisation_coefficients)
+
+
+	def test_raises(self):
+
+		pqn_norm = ProbabilisticQuotientNormaliser()
+		with self.subTest(msg='1D X matrix'):
+			X = numpy.array([2])
+			self.assertRaises(ValueError, pqn_norm.normalise, X)
+
+		with self.subTest(msg='3D X matrix'):
+			X = numpy.array([2,2,2])
+			self.assertRaises(ValueError, pqn_norm.normalise, X)
+
+		with self.subTest(msg='Reference wrong size'):
+			X = numpy.array([5,5])
+			pqn_norm.reference = numpy.array([4])
+			self.assertRaises(ValueError, pqn_norm.normalise, X)
 
 
 if __name__ == '__main__':

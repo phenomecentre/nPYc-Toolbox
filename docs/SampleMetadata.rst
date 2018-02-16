@@ -6,7 +6,7 @@ A bare-bones CSV description file includes six columns:
 ================ ========
 Column           Contents
 ================ ========
-Sampling ID      :term:`Sampling ID`
+Sampling ID      :term:`Sampling ID<Sampling Event>`,
 Sample File Name :term:`Sample File Name`
 AssayRole        :term:`Assay Role`, if the entry can be mapped to an :py:class:`~nPYc.enumerations.AssayRole` enum, this will be used, otherwise the entry is preserved as is.
 SampleType       :term:`Sample Type`, if the entry can be mapped to an :py:class:`~nPYc.enumerations.SampleType` enum, this will be used, otherwise the entry is preserved as is.
