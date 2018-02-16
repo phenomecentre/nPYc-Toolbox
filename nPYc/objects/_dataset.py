@@ -961,7 +961,7 @@ class Dataset:
 
 			# Samples
 			if sum(self.sampleMask) != len(self.sampleMask):
-				
+
 				# Account for if self.sampleMask is a pandas.series
 				try:
 					self.sampleMask = self.sampleMask.values
@@ -1298,7 +1298,7 @@ class Dataset:
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
-		
+
 		# Remove any rows which are just nans
 		self.samplingInfo = self.samplingInfo.loc[self.samplingInfo['Sampling ID'].values != 'nan', :]
 
@@ -1840,7 +1840,7 @@ class Dataset:
 			encoding='utf-8', date_format=self._timestampFormat)
 
 
-	def getFeatures(self, featureIDs, by=None):
+	def getFeatures(self, featureIDs, by=None, useMasks=True):
 		"""
 		Get a feature or list of features by name or ranges.
 
@@ -1858,7 +1858,7 @@ class Dataset:
 			featureIDs = [featureIDs]
 
 		if by is None:
-			by = self.Attributes['Feature Name']
+			by = self.Attributes['Feature Names']
 
 		if by not in self.featureMetadata.keys():
 			raise KeyError('"by": %s is not a key in featureMetadata' % (by))
@@ -1867,6 +1867,10 @@ class Dataset:
 		if self.VariableType == VariableType.Discrete:
 			for feature in featureIDs:
 				indexes.append(self.featureMetadata.loc[self.featureMetadata[by] == feature].index[0])
+
+			if useMasks:
+				varsToRemove = numpy.where(~self.featureMask)
+				indexes.pop(varsToRemove)
 
 			return self.featureMetadata.iloc[indexes], self.intensityData[:, indexes]
 
@@ -1877,6 +1881,9 @@ class Dataset:
 					featureRange = tuple(reversed(featureRange))
 
 				rangeMask[numpy.logical_and(self.featureMetadata[by].values >= featureRange[0], self.featureMetadata[by].values <= featureRange[1])] = True
+
+			if useMasks:
+				rangeMask &= self.featureMask
 
 			return self.featureMetadata.loc[rangeMask], self.intensityData[:, rangeMask]
 		else:

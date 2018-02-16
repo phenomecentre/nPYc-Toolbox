@@ -47,29 +47,29 @@ def plotPW(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)
 	sns.set_color_codes(palette='deep')	
 	fig, ax = plt.subplots(1, figsize=figureSize, dpi=dpi)
 	#all the pw values
-	pw_ER=nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].values == SampleType.ExternalReference]['Line Width (Hz)']
-	pw_SP=nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].values == SampleType.StudyPool]['Line Width (Hz)']
-	pw_SS=nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].values == SampleType.StudySample]['Line Width (Hz)']
-	pw_unknown=nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].isnull().values]['Line Width (Hz)']#this is the ones that either had missing info or for what ever reason the status column has a nan or null value and cannot identify as ltr, sr etc
-	tempDF=pd.concat([pw_SS, pw_SP, pw_ER, pw_unknown], axis=1)#put them all together in a new df
+	pw_ER = nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].values == SampleType.ExternalReference]['Line Width (Hz)']
+	pw_SP = nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].values == SampleType.StudyPool]['Line Width (Hz)']
+	pw_SS = nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].values == SampleType.StudySample]['Line Width (Hz)']
+	pw_unknown = nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].isnull().values]['Line Width (Hz)']#this is the ones that either had missing info or for what ever reason the status column has a nan or null value and cannot identify as ltr, sr etc
+	tempDF = pd.concat([pw_SS, pw_SP, pw_ER, pw_unknown], axis=1)#put them all together in a new df
 	tempDF.columns = [SampleType.StudySample, SampleType.StudyPool, SampleType.ExternalReference, 'Other']
 	tempDF.dropna(axis='columns', how='all', inplace=True) # remove empty columns
 	
 		#all the outliers only
-	pw_ER=pw_ER.where(pw_ER>nmrData.Attributes['PWFailThreshold'], numpy.nan) #anything smaller than pw threshold set to NaN so doesnt plot
-	pw_SP=pw_SP.where(pw_SP>nmrData.Attributes['PWFailThreshold'], numpy.nan)
-	pw_SS=pw_SS.where(pw_SS>nmrData.Attributes['PWFailThreshold'], numpy.nan)
-	pw_unknown=pw_unknown.where(pw_unknown>nmrData.Attributes['PWFailThreshold'], numpy.nan)
-	tempDF_outliers=pd.concat([pw_SS, pw_SP, pw_ER, pw_unknown], axis=1)#put them all together in a new df
+	pw_ER = pw_ER.where(pw_ER>nmrData.Attributes['PWFailThreshold'], numpy.nan) #anything smaller than pw threshold set to NaN so doesnt plot
+	pw_SP = pw_SP.where(pw_SP>nmrData.Attributes['PWFailThreshold'], numpy.nan)
+	pw_SS = pw_SS.where(pw_SS>nmrData.Attributes['PWFailThreshold'], numpy.nan)
+	pw_unknown = pw_unknown.where(pw_unknown>nmrData.Attributes['PWFailThreshold'], numpy.nan)
+	tempDF_outliers = pd.concat([pw_SS, pw_SP, pw_ER, pw_unknown], axis=1)#put them all together in a new df
 	tempDF_outliers.columns = ['SS', 'SP','ER', 'Unknown(missing status)']
 	tempDF_outliers.dropna(axis='columns', how='all', inplace=True) # remove empty columns
 	
 	#plot fail threshold line only if there exists values greater than the fail (normally 1.4 set in SOP)
-	if numpy.max(nmrData.sampleMetadata['Line Width (Hz)'])>nmrData.Attributes['PWFailThreshold']:#numpy.max(tempDF)[0]>nmrData.Attributes['PWFailThreshold']:
-		plt.plot([-0.5,5], [nmrData.Attributes['PWFailThreshold'],nmrData.Attributes['PWFailThreshold']], 'r-', label='PW fail threshold')#-0.5 to 3 as on box plot as i understand the first plot is 1 at x so put to 3 as we have max of 3 categories normally (may have to revisit this)
+	if numpy.max(nmrData.sampleMetadata['Line Width (Hz)']) > nmrData.Attributes['PWFailThreshold']:#numpy.max(tempDF)[0]>nmrData.Attributes['PWFailThreshold']:
+		plt.plot([-0.5,5], [nmrData.Attributes['PWFailThreshold'], nmrData.Attributes['PWFailThreshold']], 'r-', label='PW fail threshold')#-0.5 to 3 as on box plot as i understand the first plot is 1 at x so put to 3 as we have max of 3 categories normally (may have to revisit this)
 		plt.legend(loc='best')#also we only need legend if the line is present
 
-	if numpy.size(tempDF_outliers)>0:#we dont attempt to plot if their is no outliers
+	if numpy.size(tempDF_outliers) > 0:#we dont attempt to plot if their is no outliers
 		sns.stripplot(data=tempDF_outliers, jitter=True, color="red")#overlay strip plot so can see the data points are outliers
 	sns.violinplot(data=tempDF, cut=0, palette=sTypeColourDict) #cut:Set to 0 to limit the violin range within the range of the observed data
 	plt.suptitle('Peak width values in Hz')

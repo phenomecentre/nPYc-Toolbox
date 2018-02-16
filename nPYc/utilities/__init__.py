@@ -10,4 +10,5 @@ from ._buildSpectrumFromQIfeature import buildMassSpectrumFromQIfeature
 from ._massSpectrumBuilder import massSpectrumBuilder
 
 
-__all__ = ['rsd', 'normalisation', 'buildFileList', 'buildMassSpectrumFromQIfeature', 'massSpectrumBuilder', 'sequentialPrecision', 'rsdsBySampleType']
+__all__ = ['rsd', 'normalisation', 'buildFileList', 'buildMassSpectrumFromQIfeature',
+           'massSpectrumBuilder', 'sequentialPrecision', 'rsdsBySampleType']

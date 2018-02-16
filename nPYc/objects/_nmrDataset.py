@@ -2,22 +2,16 @@ import os
 from datetime import datetime
 import pandas
 import numpy
-import math
 import numbers
-from pathlib import PurePath
 import re
-from ..enumerations import VariableType, AssayRole, SampleType
 import warnings
 
 from ._dataset import Dataset
-from ..utilities.nmr import interpolateSpectrum, baselinePWcalcs
-from ..utilities.extractParams import buildFileList
-from ..utilities._calibratePPMscale import calibratePPM
-from ..utilities._lineWidth import lineWidth
-from ..utilities._fitPeak import integrateResonance
 from ..utilities import removeTrailingColumnNumbering
 from .._toolboxPath import toolboxPath
-from ..enumerations import VariableType, DatasetLevel, AssayRole, SampleType
+from ..enumerations import VariableType, AssayRole, SampleType
+from ..utilities._nmr import _qcCheckBaseline, _qcCheckWaterPeak
+
 
 class NMRDataset(Dataset):
 	"""
@@ -38,9 +32,9 @@ class NMRDataset(Dataset):
 	:param str pulseprogram: When loading raw data, only import spectra aquired with *pulseprogram*
 	"""
 
-	__importTypes = ['Bruker', 'BI-LISA'] # Raw data types we understand
+	__importTypes = ['Bruker'] # Raw data types we understand
 
-	def __init__(self, datapath, fileType='Bruker', pulseProgram='noesygppr1d', sop='GenericNMRurine', xmlFileName=r'.*?results\.xml$', pdata=1, **kwargs):
+	def __init__(self, datapath, fileType='Bruker', pulseProgram='noesygppr1d', sop='GenericNMRurine', pdata=1, **kwargs):
 		"""
 		NMRDataset(datapath, fileType='Bruker', sop='GenericNMRurine', pulseprogram='noesygpp1d', **kwargs)
 
@@ -50,9 +44,6 @@ class NMRDataset(Dataset):
 
 		* Bruker
 			When loading Bruker format raw spectra (1r files), all directores below :file:`datapath` will be scanned for valid raw data, and those matching *pulseprogram* loaded and aligned onto a common scale as defined in *sop*.
-
-		* BI-LISA
-			BI-LISA data can be read from Excel workbooks, the name of the sheet containing the data to be loaded should be passed in the *pulseProgram* argument. Feature descriptors will be loaded from the 'Analytes' sheet, and file names converted back to the `ExperimentName/expno` format from `ExperimentName_EXPNO_expno`.
 
 		:param str fileType: Type of data to be loaded
 		:param str sheetname: Load data from the specifed sheet of the Excel workbook
@@ -111,24 +102,12 @@ class NMRDataset(Dataset):
 
 			self.addSampleInfo(descriptionFormat='Filenames')
 
-			##
-			# Do per-dataset QC work here
-			##
-			# TODO - refactor tp seperate these QC checks
-			bounds = numpy.std(self.sampleMetadata['Delta PPM']) * 3
-			meanVal = numpy.mean(self.sampleMetadata['Delta PPM'])
-			self.sampleMetadata['calibrPass'] = numpy.logical_or((self.sampleMetadata['Delta PPM'] > meanVal - bounds),
-																 (self.sampleMetadata['Delta PPM'] < meanVal + bounds))
 			self._scale = self.featureMetadata['ppm'].values
-			self._calcBLWP_PWandMerge()
 			self.featureMask[:] = True
-			self.sampleMask = self.sampleMetadata['overallFail'] == False
-			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
+			# Perform the quaality control checks to populate the class
+			self._nmrQCChecks()
 
-		elif fileType == 'BI-LISA':
-			self._importBILISAData(datapath, pulseProgram)
-			self.VariableType = VariableType.Discrete
-			self.name = self.fileName
+			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
 
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
@@ -138,125 +117,6 @@ class NMRDataset(Dataset):
 		
 		# Log init
 		self.Attributes['Log'].append([datetime.now(), '%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
-
-
-	def _importBILISAData(self, datapath, sheetname):
-		"""
-		find and load all the BILISA format data
-
-		"""
-		##
-		# Load excel sheet
-		##
-		dataT = pandas.read_excel(datapath, sheet_name=sheetname)
-		featureMappings = pandas.read_excel(datapath, sheet_name='Analytes')
-
-		# Extract data
-		self._intensityData = dataT.iloc[:,1:].as_matrix()
-
-		##
-		# Parse feature names into name + unit
-		##
-		varSpec = r"""
-					^
-					(?P<componentName>\w+?)
-					\s
-					in
-					\s
-					(?P<unit>.+)
-					$
-					"""
-		# Get column headers and transpose
-		varParser = re.compile(varSpec, re.VERBOSE)
-		features = dataT.transpose().reset_index()['index']
-		features.drop(0, axis=0, inplace=True)
-
-		# Seperate unit and variable type
-		featureMetadata = features.str.extract(varParser, expand=False)
-		featureMetadata.reset_index(inplace=True)
-		featureMetadata.drop('index', axis=1, inplace=True)
-
-		# Rename Columns
-		featureMetadata = featureMetadata.merge(featureMappings, on=None, left_on='componentName', right_on='Name', how='left')
-		featureMetadata.drop('unit', axis=1, inplace=True)
-		featureMetadata.drop('componentName', axis=1, inplace=True)
-		featureMetadata.rename(columns={'Matrix': 'Component'}, inplace=True)
-		featureMetadata.rename(columns={'Name': 'Feature Name'}, inplace=True)
-
-		self.featureMetadata = featureMetadata
-
-		##
-		# Convert sample IDs back to folder/expno
-		##
-		filenameSpec = r"""
-						^
-						(?P<Rack>\w+?)
-						_EXPNO_
-						(?P<expno>.+)
-						$
-						"""
-		fileNameParser = re.compile(filenameSpec, re.VERBOSE)
-		sampleMetadata = dataT['SampleID'].str.extract(fileNameParser, expand=False)
-		sampleMetadata['Sample File Name'] = sampleMetadata['Rack'].str.cat(sampleMetadata['expno'], sep='/')
-
-		sampleMetadata['expno'] = pandas.to_numeric(sampleMetadata['expno'])
-
-		sampleMetadata['Sample Base Name'] = sampleMetadata['Sample File Name']
-		sampleMetadata['Exclusion Details'] = None
-		sampleMetadata['AssayRole'] = numpy.nan
-		sampleMetadata['SampleType'] = numpy.nan
-		sampleMetadata['Dilution'] = numpy.nan
-		sampleMetadata['Batch'] = numpy.nan
-		sampleMetadata['Correction Batch'] = numpy.nan
-		sampleMetadata['Run Order'] = numpy.nan
-		sampleMetadata['Sampling ID'] = numpy.nan
-		sampleMetadata['Acquired Time'] = numpy.nan
-
-		self.sampleMetadata = sampleMetadata
-
-		self.initialiseMasks()
-
-		self.Attributes['Log'].append([datetime.now(), 'BI-LISA data loaded from %s' % (datapath)])
-
-
-	def _calcBLWP_PWandMerge(self):#,scalePPM, intenData, start, stop, sampleType, filePathList, sf):
-
-		"""
-		calls the baselinePWcalcs function and works out fails and merges the dataframes saves as part of thenmrData object
-		params:
-			Input: nmrData object
-
-		"""
-		self.sampleMetadata['ImportFail'] = False
-		if self.Attributes['pulseProgram'] in ['cpmgpr1d', 'noesygppr1d', 'noesypr1d']:#only for 1D data
-			[rawDataDf, featureMask,  BL_lowRegionFrom, BL_highRegionTo, WP_lowRegionFrom, WP_highRegionTo] = baselinePWcalcs(self._scale,self._intensityData, -0.2, 0.2, None, self.sampleMetadata['File Path'], max(self.sampleMetadata['SF']),self.Attributes['pulseProgram'], self.Attributes['baseline_alpha'], self.Attributes['baseline_threshold'], self.Attributes['baselineLow_regionTo'], self.Attributes['baselineHigh_regionFrom'], self.Attributes['waterPeakCutRegionA'], self.Attributes['waterPeakCutRegionB'], self.Attributes['LWpeakRange'][0], self.Attributes['LWpeakRange'][1], self.featureMask)
-
-#			stick these in as attributes
-			self.Attributes['BL_lowRegionFrom']= BL_lowRegionFrom
-			self.Attributes['BL_highRegionTo']= BL_highRegionTo
-			self.Attributes['WP_lowRegionFrom']= WP_lowRegionFrom
-			self.Attributes['WP_highRegionTo']= WP_highRegionTo
-
-#			 merge
-			self.sampleMetadata = pandas.merge(self.sampleMetadata, rawDataDf, on='File Path', how='left', sort=False)
-
-			#create new column and mark as failed
-			self.sampleMetadata['overallFail'] = True
-			for i in range (len(self.sampleMetadata)):
-				if self.sampleMetadata.ImportFail[i] ==False and self.sampleMetadata.loc[i, 'Line Width (Hz)'] >0 and self.sampleMetadata.loc[i, 'Line Width (Hz)']<self.Attributes['PWFailThreshold'] and self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False and self.sampleMetadata.calibrPass[i] == True:
-					self.sampleMetadata.loc[i,('overallFail')] = False
-				else:
-					self.sampleMetadata.loc[i,('overallFail')] = True
-			self.Attributes['Log'].append([datetime.now(), 'data merged Total samples %s, Failed samples %s' % (str(len(self.sampleMetadata)), str(len(self.sampleMetadata[self.sampleMetadata.overallFail ==True])))])
-		else:
-			self.Attributes['Log'].append([datetime.now(), 'Total samples %s', 'Failed samples %s' % (str(len(self.sampleMetadata)),(str(len(self.sampleMetadata[self.sampleMetadata.ImportFail ==False]))))])
-
-		self.sampleMetadata['exceed90critical'] = False#create new df column
-		for i in range (len(self.sampleMetadata)):
-			if self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False:
-				self.sampleMetadata.loc[i,('exceed90critical')] = False
-			else:
-				self.sampleMetadata.loc[i,('exceed90critical')] = True
 
 
 	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, **kwargs):
@@ -297,7 +157,7 @@ class NMRDataset(Dataset):
 		# Prepare input
 		if 'Sample Base Name' not in self.sampleMetadata.columns:
 			# if 'Sample Base Name' is missing, generate it
-			from ..utilities.nmr import generateBaseName
+			from ..utilities._nmr import generateBaseName
 			self.sampleMetadata.loc[:, 'Sample Base Name'], self.sampleMetadata.loc[:, 'expno'] = generateBaseName(self.sampleMetadata)
 
 		# Merge LIMS file using Dataset method
@@ -345,14 +205,17 @@ class NMRDataset(Dataset):
 		# Only do this if 'Sample Base Name' is not defined already
 		##
 		if 'Sample Base Name' not in self.sampleMetadata.columns:
-			from ..utilities.nmr import generateBaseName
+			from ..utilities._nmr import generateBaseName
 
 			self.sampleMetadata.loc[:,'Sample Base Name'], self.sampleMetadata.loc[:,'expno'] = generateBaseName(self.sampleMetadata)
 
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
 
-	def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool], assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], exclusionRegions=None, **kwargs):
+	def updateMasks(self, filterSamples=True, filterFeatures=True,
+					sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
+					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], exclusionRegions=None,
+					sampleQCChecks=['ImportFail','CalibrationFail','LineWidthFail','CalibrationFail','BaselineFail','WaterPeakFail'],**kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
@@ -365,7 +228,8 @@ class NMRDataset(Dataset):
 		:param sampleTypes: List of types of samples to retain
 		:type sampleTypes: SampleType
 		:param AssayRole sampleRoles: List of assays roles to retain
-		:param exclusionRegions: If ``None`` Exclude ranges defined in :py:attr:`~Dataset.Attributes` ['exclusionRegions']
+		:param exclusionRegions: If ``None`` Exclude ranges defined in :py:attr:`~Dataset.Attributes`['exclusionRegions']
+		:param list sampleQCChecks: Which quality control metrics to use.
 		:type exclusionRegions: list of tuple
 		"""
 
@@ -401,14 +265,28 @@ class NMRDataset(Dataset):
 				self.featureMask = numpy.logical_and(self.featureMask,
 													 regionMask)
 
+			# If features are modified, retrigger
+			self._nmrQCChecks()
+
 		# Sample Exclusions
 		if filterSamples:
+
+			# Retrigger QC checks before checking which samples need to be updated
+			if not filterFeatures:
+				self._nmrQCChecks()
 
 			super().updateMasks(filterSamples=True,
 								filterFeatures=False,
 								sampleTypes=sampleTypes,
 								assayRoles=assayRoles,
 								**kwargs)
+			columnNames = ['Sample File Name']
+			columnNames.extend(sampleQCChecks)
+			fail_summary = self.sampleMetadata.loc[:, columnNames]
+
+			idxToMask = fail_summary[(fail_summary == True).any(1)].index
+
+			self.sampleMask[idxToMask] = False
 
 		self.Attributes['Log'].append([datetime.now(), "Dataset filtered with: filterSamples=%s, filterFeatures=%s, sampleClasses=%s, sampleRoles=%s, %s." % (
 			filterSamples,
@@ -416,7 +294,6 @@ class NMRDataset(Dataset):
 			sampleTypes,
 			assayRoles,
 			', '.join("{!s}={!r}".format(key,val) for (key,val) in kwargs.items()))])
-
 
 	def _exportISATAB(self, destinationPath, escapeDelimiters=False):
 		"""
@@ -534,6 +411,52 @@ class NMRDataset(Dataset):
 
 		nmrAssay.to_csv(nmrAssayPath,sep='\t', encoding='utf-8',index=False)
 
+	def _nmrQCChecks(self):
+		"""
+
+		Apply the quality control checks to the current dataset and apply the sampleMetadata dataframe.
+
+		:return None:
+		"""
+		# Chemical shift calibration check
+		bounds = numpy.std(self.sampleMetadata['Delta PPM']) * 3
+		meanVal = numpy.mean(self.sampleMetadata['Delta PPM'])
+		# QC metrics - keep the simple one here but we can remove for latter to feature summary
+		self.sampleMetadata['CalibrationFail'] = ~numpy.logical_or(
+			(self.sampleMetadata['Delta PPM'] > meanVal - bounds),
+			(self.sampleMetadata['Delta PPM'] < meanVal + bounds))
+
+		# LineWidth quality check
+		self.sampleMetadata['LineWidthFail'] = self.sampleMetadata['Line Width (Hz)'] >= self.Attributes[
+			'PWFailThreshold']
+
+		# Baseline check
+		# Read attributes to derive regions
+		ppmBaselineLow = tuple(self.Attributes['baselineCheckRegion'][0])
+		ppmBaselineHigh = tuple(self.Attributes['baselineCheckRegion'][1])
+
+		# Obtain the spectral regions - add sample Mask filter??here
+		specsLowBaselineRegion = self.getFeatures(ppmBaselineLow)[1]
+		specsHighBaselineRegion = self.getFeatures(ppmBaselineHigh)[1]
+
+		isOutlierBaselineLow = _qcCheckBaseline(specsLowBaselineRegion, self.Attributes['baseline_alpha'])
+		isOutlierBaselineHigh = _qcCheckBaseline(specsHighBaselineRegion, self.Attributes['baseline_alpha'])
+
+		# Water peak check
+		ppmWaterLow = tuple(self.Attributes['waterPeakCheckRegion'][0])
+		ppmWaterHigh = tuple(self.Attributes['waterPeakCheckRegion'][1])
+
+		# Obtain the spectral regions - add sample Mask filter??here
+		specsLowWaterPeakRegion = self.getFeatures(ppmWaterLow)[1]
+		specsHighWaterPeakRegion = self.getFeatures(ppmWaterHigh)[1]
+
+		isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterPeakRegion, self.Attributes['baseline_alpha'])
+		isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterPeakRegion, self.Attributes['baseline_alpha'])
+
+		self.sampleMetadata['WaterPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
+		self.sampleMetadata['BaselineFail'] = isOutlierBaselineHigh | isOutlierBaselineLow
+
+		return None
 
 def main():
 	pass

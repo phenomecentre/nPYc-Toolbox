@@ -944,7 +944,7 @@ class test_utilities_nmr(unittest.TestCase):
 
 
 	def test_generateBaseName(self):
-		from nPYc.utilities.nmr import generateBaseName
+		from nPYc.utilities._nmr import generateBaseName
 
 		sampleMetadata = pandas.DataFrame(['UnitTest3_Serum_Rack01_RCM_190116/10',
 										   'UnitTest3_Serum_Rack01_RCM_190116/11',
@@ -966,7 +966,7 @@ class test_utilities_nmr(unittest.TestCase):
 
 
 	def test_generateBaseName_definedexpno(self):
-		from nPYc.utilities.nmr import generateBaseName
+		from nPYc.utilities._nmr import generateBaseName
 
 		sampleMetadata = pandas.DataFrame(['UnitTest3_Serum_Rack01_RCM_190116/10',
 										   'UnitTest3_Serum_Rack01_RCM_190116/11',
