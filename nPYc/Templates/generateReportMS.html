@@ -1,19 +1,19 @@
 {% extends "base_QC.html" %}
 
 {% if item.ReportType == 'feature summary' %}
-	{% set reportTitle = 'NPC Feature Summary Report' %}
+	{% set reportTitle = 'Feature Summary Report' %}
 {% elif item.ReportType == 'correlation to dilution' %}
-	{% set reportTitle = 'NPC Correlation to Dilution Report' %}
+	{% set reportTitle = 'Correlation to Dilution Report' %}
 {% elif item.ReportType == 'batch correction assessment' %}
-	{% set reportTitle = 'NPC Batch Correction Assessment Report' %}
+	{% set reportTitle = 'Batch Correction Assessment Report' %}
 {% elif item.ReportType == 'batch correction summary' %}
-	{% set reportTitle = 'NPC Batch Correction Summary Report' %}
+	{% set reportTitle = 'Batch Correction Summary Report' %}
 {% elif item.ReportType == 'feature selection' %}
-	{% set reportTitle = 'NPC Feature Selection Report' %}
+	{% set reportTitle = 'Feature Selection Report' %}
 {% elif item.ReportType == 'final report' %}
-	{% set reportTitle = 'NPC Final Summary Report' %}
+	{% set reportTitle = 'Final Summary Report' %}
 {% else %}
-	{% set reportTitle = 'NPC Summary Report ({{ item.ReportType }})' %}
+	{% set reportTitle = 'Summary Report ({{ item.ReportType }})' %}
 {% endif %}
 
 {% block title %}{{ reportTitle }} For: {{ item.Name }} {% endblock %}

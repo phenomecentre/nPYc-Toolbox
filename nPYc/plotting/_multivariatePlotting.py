@@ -301,11 +301,10 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
 	:param str title: Title for the plot
 	:param str xlabel: Label for the x-axis
 	"""
-	
 
 	# Preparation
 	if isinstance(sampleType, (str, type(None))):
-		sampleType = numpy.ones([runOrder.shape])
+		sampleType = pandas.Series(['Sample' for i in range(0, len(values))], name='sampleType')
 
 	quantiles = [25, 50, 75, 95, 99]
 	
