@@ -1125,7 +1125,7 @@ class test_dataset_synthetic(unittest.TestCase):
 		featureNames = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(numpy.random.randint(3,15)))
 
 		self.data.VariableType = nPYc.enumerations.VariableType.Discrete
-		self.data.Attributes['Feature Name'] = featureNames
+		self.data.Attributes['Feature Names'] = featureNames
 
 		self.data.featureMetadata.rename(columns={'Feature Name': featureNames}, inplace=True)
 
