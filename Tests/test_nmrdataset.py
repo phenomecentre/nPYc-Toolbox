@@ -11,6 +11,7 @@ import tempfile
 sys.path.append("..")
 import nPYc
 from nPYc.enumerations import AssayRole, SampleType
+from nPYc.utilities._nmr import _qcCheckBaseline
 
 class test_nmrdataset_synthetic(unittest.TestCase):
 
@@ -254,37 +255,33 @@ class test_nmrdataset_bruker(unittest.TestCase):
 		Validate baseline/WP code, creates random spectra and values that should always fail ie <0 and high extreme and diagonal.
 		"""
 
-		filePathList = pandas.Series(['user1\\Desktop\\unitTestData'], name='File Path', dtype='str')
-		for i in range(91):
-			filePathList.loc[i] = 'unitTestData'+str(i)
-		variableSize = 20000#numpy.random.randint(low=1000, high=50000, size=1)#normally coded into sop as 20000
-		#create array of random exponetial values		
-		X=numpy.random.rand(86, variableSize)*1000
-		X = numpy.r_[X, numpy.full((1, variableSize), -10000)]# add a minus  val row r_ shortcut notation for vstack
-		X = numpy.r_[X, numpy.full((1, variableSize), 200000)]# add a minus  val row r_ shortcut notation for vstack
-		a1=numpy.arange(0,variableSize,1)[numpy.newaxis]#diagonal ie another known fail
-		X=numpy.concatenate((X, a1), axis=0)#concatenate into X
-		
-		X = numpy.r_[X, numpy.random.rand(2, variableSize)* 10000]		#add more fails random but more variablility than the average 86 above
+		variableSize = 20000
+
+		X = numpy.random.rand(86, variableSize)*1000
+
+		X = numpy.r_[X, numpy.full((1, variableSize), -10000)] # add a minus  val row r_ shortcut notation for vstack
+		X = numpy.r_[X, numpy.full((1, variableSize), 200000)] # add a minus  val row r_ shortcut notation for vstack
+
+		a1 = numpy.arange(0,variableSize,1)[numpy.newaxis] #diagonal ie another known fail
+
+		X = numpy.concatenate((X, a1), axis=0)#concatenate into X
+
+		X = numpy.r_[X, numpy.random.rand(2, variableSize)* 10000]
+		#add more fails random but more variablility than the average 86 above
 
 		#create ppm
-		ppm=numpy.linspace(-1,10, variableSize)#bounds and variablesize read from SOP
-		#scale[::-1]#if need to flip
-		ppmrange1=ppm[numpy.random.randint(numpy.max(numpy.where(ppm<1)), high=numpy.min(numpy.where(ppm>4.9)), size=1)[0]]#get random range value so we not testing static values
-		ppmrange2=ppm[numpy.random.randint(numpy.max(numpy.where(ppm<5)), high=numpy.min(numpy.where(ppm>9.9)), size=1)[0]]
-		df1 = baseline(filePathList, X, ppm, -1.0,-0.5,'BL_low_', 0.05, 90) #leave one harcoded version covering neg range
-		df2 = baseline(filePathList, X, ppm, ppmrange1,ppmrange2,'BL_high_', 0.05, 90)#normally defined in sop as 9.5-10
-		df3 = baseline(filePathList, X, ppm, ppmrange1,ppmrange2,'BL_high_', 5, 90)#nchanging alpha to higher value should fail more so lets put to 5
-		
-		#NOTE: NOT tested for adjusting threshold only testing at 90 !!
+		ppm = numpy.linspace(-1,10, variableSize) #
+		ppm_high = numpy.where(ppm >= 9.5)[0]
+		ppm_low = numpy.where(ppm <= -0.5)[0]
 
-		numpy.testing.assert_array_equal(df1['BL_low_outliersFailArea'], numpy.array([False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, True, False, True, True], dtype=bool)
-		numpy.testing.assert_array_equal(df1['BL_low_outliersFailNeg'], numpy.array([False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, True, False, False, False, False], dtype=bool)
-		numpy.testing.assert_array_equal(df2['BL_high_outliersFailArea'], numpy.array([False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, True, True, True, False, False], dtype=bool)
-		numpy.testing.assert_array_equal(df2['BL_high_outliersFailNeg'], numpy.array([False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, True, False, False, False, False], dtype=bool)
-		numpy.testing.assert_array_equal(df3['BL_high_outliersFailArea'], numpy.array([True, True, True, True, True, True, True, True, True, True,True, True, True, True, True, True, True, True, True, True,True, True, True, True, True, True, True, True, True, True,True, True, True, True, True, True, True, True, True, True,True, True, True, True, True, True, True, True, True, True,True, True, True, True, True, True, True, True, True, True,True, True, True, True, True, True, True, True, True, True,True, True, True, True, True, True, True, True, True, True,True, True, True, True, True, True, True, True, True, True, True], dtype=book)
-		numpy.testing.assert_array_equal(df3['BL_high_outliersFailNeg'], numpy.array([False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, False, False, False, False,False, False, False, False, False, False, True, False, False, False, False], dtype=bool)
+		high_baseline = _qcCheckBaseline(X[:, ppm_high], 0.05)
+		low_baseline = _qcCheckBaseline(X[:, ppm_low], 0.05)
 
+		baseline_fail_calculated = high_baseline | low_baseline
+		baseline_fail_expected = numpy.zeros(91, dtype=bool)
+		baseline_fail_expected[86:89] = True
+
+		numpy.testing.assert_array_equal(baseline_fail_expected, baseline_fail_calculated)
 
 	def test_reports(self):
 		from nPYc.enumerations import AssayRole
