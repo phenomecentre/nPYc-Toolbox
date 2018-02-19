@@ -34,7 +34,7 @@
 	"sampleMetadataNotExported":["AUNM", "BF1", "BYTORDP", "Computer", "NC_proc", "NS", "O1",
       "OFFSET", "OWNER", "P", "PROBHD", "PULPROG", "RG", "SF", "SFO1", "SI", "SW", "SW_p",
       "Sample File Name","TD", "XDIM", "Delta PPM", "ERETIC Intergral","ERETIC Concentration (mM)",
-      "Line Width (Hz)", "Run Order", "Sampling ID", "Exclusion Details", "Rack",
-      "Study", "Sample Base Name", "expno", "Data location", "Exp No.", "Exp No. NOESY", "RUN ORDER"],
+      "Line Width (Hz)", "Exclusion Details", "Rack",
+      "Sample Base Name", "expno", "Data location", "Exp No.", "Exp No. NOESY", "RUN ORDER"],
 	"featureMetadataNotExported":[]
 }
