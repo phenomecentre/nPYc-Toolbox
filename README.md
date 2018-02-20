@@ -6,6 +6,21 @@
 
 A Python implementation of the [NPC](http://phenomecentre.org) toolchain for the import, quality-control, and preprocessing of metabolic profiling datasets.
 
+Imports:
+ - Peak-picked LC-MS data (XCMS, Progenesis QI)
+ - Raw NMR spectra (Bruker format)
+ - Targeted datasets (TargetLynx, Bruker BI-LISA & BI-Quant-Ur)
+
+Provides:
+ - Batch *&* drift correction for LC-MS datasets
+ - Feature filtering by RSD and linearity of response
+ - Calculation of spectral line-width in NMR
+ - PCA of datasets
+ - Visualisation of datasets
+
+Exports:
+ - Basic tabular csv
+ - `ISA-TAB <http://isa-tools.org>`_
 
 ## Installation
 
