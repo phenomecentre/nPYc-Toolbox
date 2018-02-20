@@ -765,10 +765,10 @@ class test_plotting(unittest.TestCase):
 			dataset.sampleMetadata.loc[dataset.sampleMetadata['SampleType'] == SampleType.StudySample, 'Plot Sample Type'] = 'Study Sample'
 			dataset.sampleMetadata.loc[dataset.sampleMetadata['SampleType'] == SampleType.StudyPool, 'Plot Sample Type'] = 'Study Pool'
 			dataset.sampleMetadata.loc[dataset.sampleMetadata['SampleType'] == SampleType.ExternalReference, 'Plot Sample Type'] = 'External Reference'
-			
+
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 			sumT = numpy.sum(numpy.absolute(pcaModel.scores), axis=1)
-			
+
 			with tempfile.TemporaryDirectory() as tmpdirname:
 				outputPath = os.path.join(tmpdirname, 'plot')
 
@@ -789,8 +789,21 @@ class test_plotting(unittest.TestCase):
 				outputPath = os.path.join(tmpdirname, 'plot')
 
 				nPYc.plotting.plotOutliers(sample_dmodx_values, dataset.sampleMetadata['Run Order'], Fcrit=Fcrit, FcritAlpha=0.05, savePath=outputPath)
-				
+
 				self.assertTrue(os.path.exists(outputPath))
+
+
+	def test_plotPW(self):
+		noSamp = numpy.random.randint(100, high=500, size=None)
+		noFeat = numpy.random.randint(2000, high=10000, size=None)
+		dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=VariableType.Continuum, sop='GenericNMRurine')
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			outputPath = os.path.join(tmpdirname, 'plot')
+
+			nPYc.plotting.plotPW(dataset, savePath=outputPath)
+
+			self.assertTrue(os.path.exists(outputPath))
 
 
 class test_plotting_interactive(unittest.TestCase):
