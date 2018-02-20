@@ -20,7 +20,7 @@ Provides:
 
 Exports:
  - Basic tabular csv
- - `ISA-TAB <http://isa-tools.org>`_
+ - [ISA-TAB](http://isa-tools.org)
 
 ## Installation
 
