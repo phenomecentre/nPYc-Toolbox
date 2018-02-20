@@ -53,7 +53,7 @@ def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
 	skipERETIC = False
 
 	metadata['Delta PPM'] = numpy.nan
-	metadata['ERETIC Intergral'] = numpy.nan
+	metadata['ERETIC Integral'] = numpy.nan
 	metadata['ERETIC Concentration (mM)'] = numpy.nan
 	metadata['Line Width (Hz)'] = numpy.nan
 	metadata['Warnings'] = ''
@@ -85,9 +85,9 @@ def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
 					position, erLineWidth, concentration = parseQuantFactorSample(quantFilePath)
 
 					metadata.loc[row[0], 'ERETIC Concentration (mM)'] = concentration
-					metadata.loc[row[0], 'ERETIC Intergral'] = integrateResonance(spectrum, localPPM, position)
+					metadata.loc[row[0], 'ERETIC Integral'] = integrateResonance(spectrum, localPPM, position)
 				except:
-					metadata.loc[row[0], 'Warnings'] = 'Error calculating ERETIC intergral'
+					metadata.loc[row[0], 'Warnings'] = 'Error calculating ERETIC integral'
 					warnings.warn('Error parsing `QuantFactorSample`.\nSkipping integration of ERETIC signal for %s.' % (row[1]['File Path']))
 
 			##
