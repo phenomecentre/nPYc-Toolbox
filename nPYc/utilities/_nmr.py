@@ -69,7 +69,7 @@ def generateBaseName(sampleMetadata):
 	return sampleMetadata.loc[:,'Sample File Name'].apply(splitRack).str.cat(roundedExpno, sep='/').values, expno.values
 
 
-def _qcCheckBaseline(spectrum, alpha):
+def qcCheckBaseline(spectrum, alpha):
 	"""
 	Baseline checks
 	:param spectrum:
@@ -94,7 +94,7 @@ def _qcCheckBaseline(spectrum, alpha):
 
 
 # For now same as previous function, but keeping room for different algorithms
-def _qcCheckWaterPeak(spectrum, alpha):
+def qcCheckWaterPeak(spectrum, alpha):
 	"""
 	Water peak checks
 	:param spectrum:

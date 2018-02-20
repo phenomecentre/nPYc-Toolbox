@@ -6,7 +6,7 @@ Created on Wed Mar 15 10:53:12 2017
 """
 from .._toolboxPath import toolboxPath
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..utilities._nmr import _qcCheckBaseline, _qcCheckWaterPeak
+from ..utilities._nmr import qcCheckBaseline, qcCheckWaterPeak
 from ._generateSampleReport import _generateSampleReport
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 from collections import OrderedDict

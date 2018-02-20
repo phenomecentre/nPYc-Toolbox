@@ -11,7 +11,7 @@ import tempfile
 sys.path.append("..")
 import nPYc
 from nPYc.enumerations import AssayRole, SampleType
-from nPYc.utilities._nmr import _qcCheckBaseline
+from nPYc.utilities._nmr import qcCheckBaseline
 
 from generateTestDataset import generateTestDataset
 
@@ -290,8 +290,8 @@ class test_nmrdataset_bruker(unittest.TestCase):
 		ppm_high = numpy.where(ppm >= 9.5)[0]
 		ppm_low = numpy.where(ppm <= -0.5)[0]
 
-		high_baseline = _qcCheckBaseline(X[:, ppm_high], 0.05)
-		low_baseline = _qcCheckBaseline(X[:, ppm_low], 0.05)
+		high_baseline = qcCheckBaseline(X[:, ppm_high], 0.05)
+		low_baseline = qcCheckBaseline(X[:, ppm_low], 0.05)
 
 		baseline_fail_calculated = high_baseline | low_baseline
 		baseline_fail_expected = numpy.zeros(91, dtype=bool)

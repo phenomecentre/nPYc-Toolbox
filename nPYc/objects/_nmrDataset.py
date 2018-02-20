@@ -10,7 +10,7 @@ from ._dataset import Dataset
 from ..utilities import removeTrailingColumnNumbering
 from .._toolboxPath import toolboxPath
 from ..enumerations import VariableType, AssayRole, SampleType
-from ..utilities._nmr import _qcCheckBaseline, _qcCheckWaterPeak
+from ..utilities._nmr import qcCheckBaseline, qcCheckWaterPeak
 
 
 class NMRDataset(Dataset):
@@ -442,8 +442,8 @@ class NMRDataset(Dataset):
 			specsLowBaselineRegion = self.getFeatures(ppmBaselineLow)[1]
 			specsHighBaselineRegion = self.getFeatures(ppmBaselineHigh)[1]
 
-			isOutlierBaselineLow = _qcCheckBaseline(specsLowBaselineRegion, self.Attributes['baseline_alpha'])
-			isOutlierBaselineHigh = _qcCheckBaseline(specsHighBaselineRegion, self.Attributes['baseline_alpha'])
+			isOutlierBaselineLow = qcCheckBaseline(specsLowBaselineRegion, self.Attributes['baseline_alpha'])
+			isOutlierBaselineHigh = qcCheckBaseline(specsHighBaselineRegion, self.Attributes['baseline_alpha'])
 
 			self.sampleMetadata['BaselineFail'] = isOutlierBaselineHigh | isOutlierBaselineLow
 
@@ -456,8 +456,8 @@ class NMRDataset(Dataset):
 			specsLowWaterPeakRegion = self.getFeatures(ppmWaterLow)[1]
 			specsHighWaterPeakRegion = self.getFeatures(ppmWaterHigh)[1]
 
-			isOutlierWaterPeakLow = _qcCheckWaterPeak(specsLowWaterPeakRegion, self.Attributes['baseline_alpha'])
-			isOutlierWaterPeakHigh = _qcCheckWaterPeak(specsHighWaterPeakRegion, self.Attributes['baseline_alpha'])
+			isOutlierWaterPeakLow = qcCheckWaterPeak(specsLowWaterPeakRegion, self.Attributes['baseline_alpha'])
+			isOutlierWaterPeakHigh = qcCheckWaterPeak(specsHighWaterPeakRegion, self.Attributes['baseline_alpha'])
 
 			self.sampleMetadata['WaterPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
 
