@@ -313,26 +313,9 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 			expected = numpy.zeros_like(self.dataset.sampleMask, dtype=bool)
 			expected[0] = True
-			expected[2] = True
+			# expected[2] = True
 
 			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['WaterPeakFail'].values)
-
-
-##
-#unit test for Bruker data
-##
-from nPYc.utilities._nmr import interpolateSpectrum
-from nPYc.reports._generateReportNMR import _generateReportNMR
-from math import ceil
-
-class test_nmrdataset_bruker(unittest.TestCase):
-
-	def setUp(self):
-		"""
-		setup the pulseprogram and path for purpose of testing NMR bruker data functions
-		"""
-		self.pulseProgram = 'noesygppr1d'
-		self.path=os.path.join('..','..','npc-standard-project','unitTest_Data','nmr')#where path is location of test files
 
 
 	def test_baselineAreaAndNeg(self):
@@ -368,198 +351,22 @@ class test_nmrdataset_bruker(unittest.TestCase):
 
 		numpy.testing.assert_array_equal(baseline_fail_expected, baseline_fail_calculated)
 
-	def test_reports(self):
-		from nPYc.enumerations import AssayRole
-		from nPYc.enumerations import SampleType
-		from datetime import datetime
+
+##
+#unit test for Bruker data
+##
+from nPYc.utilities._nmr import interpolateSpectrum
+from nPYc.reports._generateReportNMR import _generateReportNMR
+from math import ceil
+
+class test_nmrdataset_bruker(unittest.TestCase):
+
+	def setUp(self):
 		"""
-		Validate generate feature summary report
-		at the moment all it will test is if the plots and reports are saved, not checking contents
-		"""	
-
-#		empty object
-		testData = nPYc.NMRDataset('', fileType='empty')
-		#need to hardcode in attributes for testing purposes only rather than read in from the SOP, some are generated from the code
-		testData.Attributes['WP_highRegionTo'] =5.0
-		testData.Attributes['WP_lowRegionFrom']=4.6000000000000005
-		testData.Attributes['BL_lowRegionFrom']=-1.0
-		testData.Attributes['BL_highRegionTo']=10.0
-
-		testData.Attributes['alignTo']= 'xxxx'#as i dont want it to execute plotting code, maybe for future to do code coverage will have to modify and let it use default from SOP
-		testData.sampleMetadata['BL_low_outliersFailArea']=[False,
-														False,
-														False,
-														False]
-		testData.sampleMetadata['BL_low_outliersFailNeg']=[False,
-														False,
-														False,
-														False]
-		testData.sampleMetadata['BL_high_outliersFailArea']=[False,
-														False,
-														False,
-														False]
-		testData.sampleMetadata['BL_high_outliersFailNeg']=[False,
-														False,
-														False,
-														False]
-		testData.sampleMetadata['WP_low_outliersFailArea']=[False,
-														False,
-														False,
-														False]
-		testData.sampleMetadata['WP_low_outliersFailNeg']=[False,
-														False,
-														False,
-														False]
-		testData.sampleMetadata['WP_high_outliersFailArea']=[False,
-														False,
-														False,
-														False]
-		testData.sampleMetadata['WP_high_outliersFailNeg']=[False,
-														False,
-														False,
-														False]
-		testData.sampleMetadata['Rack']=['Rack1',
-														'Rack1',
-														'Rack1',
-														'Rack1']
-		testData.sampleMetadata['Study']=['unitTest',
-														'unitTest',
-														'unitTest',
-														'unitTest']
-
-		testData.sampleMetadata['AssayRole'] = pandas.Series([
-								AssayRole.Assay,
-								AssayRole.Assay,
-								AssayRole.Assay,
-								AssayRole.Assay,],
-								name='AssayRole',
-								dtype=object)
-
-		testData.sampleMetadata['SampleType'] = pandas.Series([SampleType.StudySample,
-								SampleType.StudySample,
-								SampleType.StudySample,
-								SampleType.StudySample,],
-								name='SampleType',
-								dtype=object)
-
-		testData.sampleMetadata['Acquired Time'] = [datetime(2012,12,1),
-													datetime(2012,12,2),
-													datetime(2012,12,3),
-													datetime(2012,12,4)]
-
-		testData.sampleMetadata['Exclusion Details'] = ['None',
-														'None',
-														'None',
-														'None']
-
-		testData.sampleMetadata['ImportFail'] = [False,
-												 False,
-												 False,
-												 False]
-
-		testData.sampleMetadata['exceed90critical'] = [False,
-													   False,
-													   False,
-													   False]
-		
-		testData.sampleMetadata['calibrPass'] = [True,
-												 True,
-												 True,
-												 True]
-
-		testData.sampleMetadata['Line Width (Hz)']=[0.818454,
-													1.060146,
-													0.876968,
-													0.876968]
-
-		testData.sampleMetadata['BL_low_failArea']=[0.220022,
-													0.000000,
-													1.210121,
-													1.210121]
-
-		testData.sampleMetadata['BL_low_failNeg']=[0.0,
-												   0.0,
-												   0.0,
-												   0.0]
-
-		testData.sampleMetadata['BL_high_failArea']=[7.929515,
-													 6.387665,
-													 11.563877,
-													 11.563877]
-
-		testData.sampleMetadata['BL_high_failNeg']=[0.0,
-													0.0,
-													0.0,
-													0.0]
-
-		testData.sampleMetadata['WP_low_failArea']=[1.657459,
-													0.000000,
-													1.210121,
-													1.210121]
-
-		testData.sampleMetadata['WP_low_failNeg']=[0.0,
-												   0.0,
-												   28.176796,
-												   28.176796]
-
-		testData.sampleMetadata['WP_high_failArea']=[19.889503,
-													 13.812155,
-													 53.038674,
-													 53.038674]
-
-		testData.sampleMetadata['WP_high_failNeg']=[0.0,
-													0.0,
-													0.0,
-													0.0]
-
-		testData.sampleMetadata['Status'] = ['Sample',
-											 'Sample',
-											 'Sample',
-											 'Sample']
-
-		testData.sampleMetadata['path']=['UNITTEST01_test/UNITTEST01_Plasma_Rack39_RCM_101214/10',
-										 'UNITTEST01_test/UNITTEST01_Plasma_Rack39_RCM_101214/20',
-										 'UNITTEST01_test/UNITTEST01_Plasma_Rack39_RCM_101214/30',
-										 'UNITTEST01_Plasma_Rack39_RCM_101214/40']
-
-		testData.sampleMetadata['Sample File Name']=['UNITTEST01_Plasma_Rack39_RCM_101214/10',
-													 'UNITTEST01_Plasma_Rack39_RCM_101214/20',
-													 'UNITTEST01_Plasma_Rack39_RCM_101214/30',
-													 'UNITTEST01_Plasma_Rack39_RCM_101214/40']
-
-		testData.sampleMetadata['Sample Base Name']=['UNITTEST01_Plasma_Rack39_RCM_101214/10',
-													 'UNITTEST01_Plasma_Rack39_RCM_101214/20',
-													 'UNITTEST01_Plasma_Rack39_RCM_101214/30',
-													 'UNITTEST01_Plasma_Rack39_RCM_101214/40']
-
-		noFeat = 2000
-
-		testData.sampleMask = numpy.array([False, True, False, False], dtype=bool)
-		testData.featureMask = numpy.ones(noFeat, dtype=bool)
-
-		testData.intensityData =  numpy.random.randn(4, noFeat)
-		testData.featureMetadata = pandas.DataFrame(numpy.linspace(10, -1, noFeat), columns=('ppm',), dtype=float)
-
-		# # create a temporary directory using the context manager
-		# with tempfile.TemporaryDirectory() as tmpdirname:
-		# 	_generateReportNMR(testData, 'feature summary', output=tmpdirname)#run the code for feature summary
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics','report_featureSummary', 'NMRDataset_calibrationCheck.png')) == 1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics','report_featureSummary', 'NMRDataset_finalFeatureBLWPplots1.png')) == 1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics','report_featureSummary', 'NMRDataset_finalFeatureBLWPplots3.png')) ==1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics','report_featureSummary', 'NMRDataset_finalFeatureIntensityHist.png')) ==1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_featureSummary','NMRDataset_peakWidthBoxplot.png'))==1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_featureSummary','npc-main.css'))==1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'NMRDataset_report_featureSummary.html')) ==1
-		#
-		# #test final report using same data
-		# with tempfile.TemporaryDirectory() as tmpdirname:
-		# 	_generateReportNMR(testData, 'final report', output=tmpdirname, withExclusions=False)#run the code for feature summary
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','NMRDataset_finalFeatureBLWPplots1.png')) == 1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','NMRDataset_finalFeatureBLWPplots3.png')) ==1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','NMRDataset_finalFeatureIntensityHist.png')) ==1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','NMRDataset_peakWidthBoxplot.png'))==1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'graphics', 'report_finalReport','npc-main.css'))==1
-		# 	assert os.path.exists(os.path.join(tmpdirname,'NMRDataset_report_finalReport.html')) ==1
+		setup the pulseprogram and path for purpose of testing NMR bruker data functions
+		"""
+		self.pulseProgram = 'noesygppr1d'
+		self.path=os.path.join('..','..','npc-standard-project','unitTest_Data','nmr')#where path is location of test files
 
 
 	def test_addSampleInfo_npclims(self):

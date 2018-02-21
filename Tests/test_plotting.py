@@ -793,6 +793,44 @@ class test_plotting(unittest.TestCase):
 				self.assertTrue(os.path.exists(outputPath))
 
 
+	def test_plotScores(self):
+
+		noSamp = numpy.random.randint(50, high=100, size=None)
+		noFeat = numpy.random.randint(200, high=400, size=None)
+		dataset = generateTestDataset(noSamp, noFeat, dtype='MSDataset')
+
+		pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			with self.subTest(msg='Continuous varaible'):
+				outputPath = os.path.join(tmpdirname, 'continuous')
+
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], classType='continuous', figureFormat='png', savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath + '.png'))
+
+			with self.subTest(msg='Discrete variables'):
+				outputPath = os.path.join(tmpdirname, 'categorical')
+
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], classType='categorical', figureFormat='png', savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath + '.png'))
+
+			with self.subTest(msg='Association plot'):
+				outputPath = os.path.join(tmpdirname, 'categoricalAssociation')
+
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], classType='categorical', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath + '.png'))
+
+			with self.subTest(msg='Continuous Association'):
+				outputPath = os.path.join(tmpdirname, 'continuousAssociation')
+
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], classType='continuous', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath + '.png'))
+
+
 	def test_plotPW(self):
 		noSamp = numpy.random.randint(100, high=500, size=None)
 		noFeat = numpy.random.randint(2000, high=10000, size=None)

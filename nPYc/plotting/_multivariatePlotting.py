@@ -99,6 +99,8 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 		title = title.translate ({ord(c): " " for c in "!@#$%^&*()[]{};:,./<>?\|`~-=_+"})
 		plotTitle = title + ' '
 		title = ''.join(title.split())
+	else:
+		plotTitle = ''
 
 	if classes is None:
 		classes = pandas.Series('Sample' for i in range(ns))
