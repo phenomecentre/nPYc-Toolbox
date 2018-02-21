@@ -423,7 +423,7 @@ class NMRDataset(Dataset):
 		bounds = numpy.std(self.sampleMetadata['Delta PPM']) * 3
 		meanVal = numpy.mean(self.sampleMetadata['Delta PPM'])
 		# QC metrics - keep the simple one here but we can remove for latter to feature summary
-		self.sampleMetadata['CalibrationFail'] = ~numpy.logical_and(
+		self.sampleMetadata['CalibrationFail'] = ~numpy.logical_or(
 			(self.sampleMetadata['Delta PPM'] > meanVal - bounds),
 			(self.sampleMetadata['Delta PPM'] < meanVal + bounds))
 
