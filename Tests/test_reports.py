@@ -216,6 +216,64 @@ class test_reports_generateSamplereport(unittest.TestCase):
 
 class test_reports_nmr_generatereport(unittest.TestCase):
 
+	def setUp(self):
+
+		self.noSamp = numpy.random.randint(100, high=500, size=None)
+		self.noFeat = numpy.random.randint(2000, high=10000, size=None)
+		self.dataset = generateTestDataset(self.noSamp, self.noFeat, dtype='NMRDataset', variableType=VariableType.Continuum, sop='GenericNMRurine')
+
+
+	def test_report_nmr_features(self):
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			self.dataset.name = 'TestData'
+			nPYc.reports.generateReport(self.dataset, 'Feature Summary', output=tmpdirname)
+
+			expectedPath = os.path.join(tmpdirname, 'TestData_report_featureSummary.html')
+			self.assertTrue(os.path.exists(expectedPath))
+
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_calibrationCheck.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_finalFeatureBLWPplots1.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_finalFeatureBLWPplots3.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_finalFeatureIntensityHist.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_peakWidthBoxplot.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+
+	def test_report_nmr_final(self):
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			self.dataset.name = 'TestData'
+			self.dataset.sampleMetadata['Sample Base Name'] = self.dataset.sampleMetadata['Sample File Name']
+			self.dataset.sampleMetadata['BaselineFail'] = False
+			self.dataset.sampleMetadata['WaterPeakFail'] = False
+
+			nPYc.reports.generateReport(self.dataset, 'Final Report', output=tmpdirname)
+
+			expectedPath = os.path.join(tmpdirname, 'TestData_report_finalReport.html')
+			self.assertTrue(os.path.exists(expectedPath))
+
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_finalFeatureBLWPplots1.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_finalFeatureBLWPplots3.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_finalFeatureIntensityHist.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_peakWidthBoxplot.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+
 	def test_report_nmr_raises(self):
 
 		from nPYc.reports._generateReportNMR import _generateReportNMR

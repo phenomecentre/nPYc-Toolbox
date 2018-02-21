@@ -78,6 +78,8 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 
 	elif dtype == 'NMRDataset':
 		data.featureMetadata = pandas.DataFrame(numpy.linspace(10, -1, noFeat), columns=('ppm',), dtype=float)
+		data.sampleMetadata['Delta PPM'] = numpy.random.rand(noSamp)
+		data.sampleMetadata['Line Width (Hz)'] = numpy.random.rand(noSamp)
 		data.Attributes['Feature Names'] = 'ppm'
 
 	data.VariableType = variableType

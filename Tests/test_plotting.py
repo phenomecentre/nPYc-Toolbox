@@ -659,16 +659,17 @@ class test_plotting(unittest.TestCase):
 												variableType=VariableType.Continuum,
 												sop='GenericNMRurine')
 
-		dataset.sampleMetadata['WP_high_outliersFailArea'] = [True, False, False, False, False, False, False, False, False, True]
-		dataset.sampleMetadata['WP_high_outliersFailNeg'] = [False, True, False, False, False, False, False, False, False, True]
+		high_area = numpy.array([True, False, False, False, False, False, False, False, False, True], dtype=bool)
+		high_neg = numpy.array([False, True, False, False, False, False, False, False, False, True], dtype=bool)
 
-		dataset.sampleMetadata['WP_low_outliersFailArea'] = [False, False, True, False, False, False, False, False, False, True]
-		dataset.sampleMetadata['WP_low_outliersFailNeg'] = [False, False, False, True, False, False, False, False, False, True]
+		low_area = numpy.array([False, False, True, False, False, False, False, False, False, True], dtype=bool)
+		low_neg = numpy.array([False, False, False, True, False, False, False, False, False, True], dtype=bool)
 
+		dataset.sampleMetadata['WaterPeakFail'] = low_area | low_neg | high_area | high_neg
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			outputPath = os.path.join(tmpdirname, 'plot')
 
-			nPYc.plotting.plotWaterResonance(dataset, margin=2, savePath=outputPath)
+			nPYc.plotting.plotWaterResonance(dataset, savePath=outputPath)
 
 			self.assertTrue(os.path.exists(outputPath))
 
@@ -691,11 +692,13 @@ class test_plotting(unittest.TestCase):
 												variableType=VariableType.Continuum,
 												sop='GenericNMRurine')
 
-		dataset.sampleMetadata['BL_high_outliersFailArea'] = [True, False, False, False, False, False, False, False, False, True]
-		dataset.sampleMetadata['BL_high_outliersFailNeg'] = [False, True, False, False, False, False, False, False, False, True]
+		high_area = numpy.array([True, False, False, False, False, False, False, False, False, True], dtype=bool)
+		high_neg = numpy.array([False, True, False, False, False, False, False, False, False, True], dtype=bool)
 
-		dataset.sampleMetadata['BL_low_outliersFailArea'] = [False, False, True, False, False, False, False, False, False, True]
-		dataset.sampleMetadata['BL_low_outliersFailNeg'] = [False, False, False, True, False, False, False, False, False, True]
+		low_area = numpy.array([False, False, True, False, False, False, False, False, False, True], dtype=bool)
+		low_neg = numpy.array([False, False, False, True, False, False, False, False, False, True], dtype=bool)
+
+		dataset.sampleMetadata['BaselineFail'] = high_area | high_neg | low_area | low_neg
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			outputPath = os.path.join(tmpdirname, 'plot')
@@ -762,10 +765,10 @@ class test_plotting(unittest.TestCase):
 			dataset.sampleMetadata.loc[dataset.sampleMetadata['SampleType'] == SampleType.StudySample, 'Plot Sample Type'] = 'Study Sample'
 			dataset.sampleMetadata.loc[dataset.sampleMetadata['SampleType'] == SampleType.StudyPool, 'Plot Sample Type'] = 'Study Pool'
 			dataset.sampleMetadata.loc[dataset.sampleMetadata['SampleType'] == SampleType.ExternalReference, 'Plot Sample Type'] = 'External Reference'
-			
+
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 			sumT = numpy.sum(numpy.absolute(pcaModel.scores), axis=1)
-			
+
 			with tempfile.TemporaryDirectory() as tmpdirname:
 				outputPath = os.path.join(tmpdirname, 'plot')
 
@@ -786,8 +789,59 @@ class test_plotting(unittest.TestCase):
 				outputPath = os.path.join(tmpdirname, 'plot')
 
 				nPYc.plotting.plotOutliers(sample_dmodx_values, dataset.sampleMetadata['Run Order'], Fcrit=Fcrit, FcritAlpha=0.05, savePath=outputPath)
-				
+
 				self.assertTrue(os.path.exists(outputPath))
+
+
+	def test_plotScores(self):
+
+		noSamp = numpy.random.randint(50, high=100, size=None)
+		noFeat = numpy.random.randint(200, high=400, size=None)
+		dataset = generateTestDataset(noSamp, noFeat, dtype='MSDataset')
+
+		pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			with self.subTest(msg='Continuous varaible'):
+				outputPath = os.path.join(tmpdirname, 'continuous')
+
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], classType='continuous', figureFormat='png', savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath + '.png'))
+
+			with self.subTest(msg='Discrete variables'):
+				outputPath = os.path.join(tmpdirname, 'categorical')
+
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], classType='categorical', figureFormat='png', savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath + '.png'))
+
+			with self.subTest(msg='Association plot'):
+				outputPath = os.path.join(tmpdirname, 'categoricalAssociation')
+
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], classType='categorical', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath + '.png'))
+
+			with self.subTest(msg='Continuous Association'):
+				outputPath = os.path.join(tmpdirname, 'continuousAssociation')
+
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], classType='continuous', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath + '.png'))
+
+
+	def test_plotPW(self):
+		noSamp = numpy.random.randint(100, high=500, size=None)
+		noFeat = numpy.random.randint(2000, high=10000, size=None)
+		dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=VariableType.Continuum, sop='GenericNMRurine')
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			outputPath = os.path.join(tmpdirname, 'plot')
+
+			nPYc.plotting.plotPW(dataset, savePath=outputPath)
+
+			self.assertTrue(os.path.exists(outputPath))
 
 
 class test_plotting_interactive(unittest.TestCase):
@@ -826,13 +880,15 @@ class test_plotting_interactive(unittest.TestCase):
 												variableType=VariableType.Continuum,
 												sop='GenericNMRurine')
 
-		dataset.sampleMetadata['WP_high_outliersFailArea'] = [True, False, False, False, False, False, False, False, False, True]
-		dataset.sampleMetadata['WP_high_outliersFailNeg'] = [False, True, False, False, False, False, False, False, False, True]
+		high_area = numpy.array([True, False, False, False, False, False, False, False, False, True], dtype=bool)
+		high_neg = numpy.array([False, True, False, False, False, False, False, False, False, True], dtype=bool)
 
-		dataset.sampleMetadata['WP_low_outliersFailArea'] = [False, False, True, False, False, False, False, False, False, True]
-		dataset.sampleMetadata['WP_low_outliersFailNeg'] = [False, False, False, True, False, False, False, False, False, True]
+		low_area = numpy.array([False, False, True, False, False, False, False, False, False, True], dtype=bool)
+		low_neg = numpy.array([False, False, False, True, False, False, False, False, False, True], dtype=bool)
 
-		figure = nPYc.plotting.plotWaterResonanceInteractive(dataset, margin=2)
+		dataset.sampleMetadata['WaterPeakFail'] = low_area | low_neg | high_area | high_neg
+
+		figure = nPYc.plotting.plotWaterResonanceInteractive(dataset)
 		self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
 
 
@@ -850,11 +906,13 @@ class test_plotting_interactive(unittest.TestCase):
 												variableType=VariableType.Continuum,
 												sop='GenericNMRurine')
 
-		dataset.sampleMetadata['BL_high_outliersFailArea'] = [True, False, False, False, False, False, False, False, False, True]
-		dataset.sampleMetadata['BL_high_outliersFailNeg'] = [False, True, False, False, False, False, False, False, False, True]
+		high_area = numpy.array([True, False, False, False, False, False, False, False, False, True], dtype=bool)
+		high_neg = numpy.array([False, True, False, False, False, False, False, False, False, True], dtype=bool)
 
-		dataset.sampleMetadata['BL_low_outliersFailArea'] = [False, False, True, False, False, False, False, False, False, True]
-		dataset.sampleMetadata['BL_low_outliersFailNeg'] = [False, False, False, True, False, False, False, False, False, True]
+		low_area = numpy.array([False, False, True, False, False, False, False, False, False, True], dtype=bool)
+		low_neg = numpy.array([False, False, False, True, False, False, False, False, False, True], dtype=bool)
+
+		dataset.sampleMetadata['BaselineFail'] = high_area | high_neg | low_area | low_neg
 
 		figure = nPYc.plotting.plotBaselineInteractive(dataset)
 		self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)

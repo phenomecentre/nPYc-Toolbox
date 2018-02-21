@@ -912,7 +912,7 @@ class test_utilities_nmr(unittest.TestCase):
 			target = numpy.sin(x)
 			interpolationStartPoint = numpy.sin(x2)
 
-			result = nPYc.utilities.nmr.interpolateSpectrum(interpolationStartPoint, x2, x)
+			result = nPYc.utilities._nmr.interpolateSpectrum(interpolationStartPoint, x2, x)
 
 			numpy.testing.assert_allclose(target, result, atol=1e-3)
 
@@ -931,7 +931,7 @@ class test_utilities_nmr(unittest.TestCase):
 				target[i, :] = numpy.sin(x + offset)
 				interpolationStartPoint[i, :] = numpy.sin(x2 + offset)
 
-			result = nPYc.utilities.nmr.interpolateSpectrum(interpolationStartPoint, x2, x)
+			result = nPYc.utilities._nmr.interpolateSpectrum(interpolationStartPoint, x2, x)
 
 			numpy.testing.assert_allclose(target, result, atol=1e-3)
 
@@ -940,11 +940,11 @@ class test_utilities_nmr(unittest.TestCase):
 
 		threeD = numpy.empty((3,3,3))
 
-		self.assertRaises(ValueError, nPYc.utilities.nmr.interpolateSpectrum, threeD, None, None)
+		self.assertRaises(ValueError, nPYc.utilities._nmr.interpolateSpectrum, threeD, None, None)
 
 
 	def test_generateBaseName(self):
-		from nPYc.utilities.nmr import generateBaseName
+		from nPYc.utilities._nmr import generateBaseName
 
 		sampleMetadata = pandas.DataFrame(['UnitTest3_Serum_Rack01_RCM_190116/10',
 										   'UnitTest3_Serum_Rack01_RCM_190116/11',
@@ -966,7 +966,7 @@ class test_utilities_nmr(unittest.TestCase):
 
 
 	def test_generateBaseName_definedexpno(self):
-		from nPYc.utilities.nmr import generateBaseName
+		from nPYc.utilities._nmr import generateBaseName
 
 		sampleMetadata = pandas.DataFrame(['UnitTest3_Serum_Rack01_RCM_190116/10',
 										   'UnitTest3_Serum_Rack01_RCM_190116/11',

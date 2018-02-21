@@ -70,7 +70,7 @@ class test_multivariate_multivariateutilities(unittest.TestCase):
 
 		with self.subTest(msg='Dates'):
 
-			testData = pandas.Series([datetime.datetime.now(), datetime.datetime.now()])
+			testData = pandas.Series([datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(0,3)])
 
 			result = nPYc.multivariate.metadataTypeGrouping(testData)
 			self.assertEqual(result, 'date')

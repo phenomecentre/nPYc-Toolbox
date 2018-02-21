@@ -22,29 +22,23 @@ def plotBaseline(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=
 	"""
 	fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(15, 7), dpi=72)
 
-	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (nmrData.featureMetadata.loc[:, 'ppm'].min(),nmrData.Attributes['baselineLow_regionTo']), percentiles=(5, 95))
+	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (min(nmrData.Attributes['baselineCheckRegion'][0]),max(nmrData.Attributes['baselineCheckRegion'][0])), percentiles=(5, 95))
 	ax2.plot(localPPM, meanSpectrum, color=(0.46,0.71,0.63))
 	ax2.fill_between(localPPM, lowerPercentile, y2=upperPercentile, color=(0,0.4,.3,0.2))
 
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'BL_low_outliersFailArea']:
+		if nmrData.sampleMetadata.loc[i, 'BaselineFail']:
 			ax2.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.05,0.05,0.8,0.7))
 
-		if nmrData.sampleMetadata.loc[i, 'BL_low_outliersFailNeg']:
-			ax2.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.8,0.05,0.01,0.7))
-
-	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (nmrData.Attributes['baselineHigh_regionFrom'], nmrData.featureMetadata.loc[:, 'ppm'].max()), percentiles=(5, 95))
+	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (min(nmrData.Attributes['baselineCheckRegion'][1]), max(nmrData.Attributes['baselineCheckRegion'][1])), percentiles=(5, 95))
 	ax1.plot(localPPM, meanSpectrum, color=(0.46,0.71,0.63))
 	ax1.fill_between(localPPM, lowerPercentile, y2=upperPercentile, color=(0,0.4,.3,0.2))
 
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'BL_high_outliersFailArea']:
+		if nmrData.sampleMetadata.loc[i, 'BaselineFail']:
 			ax1.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.05,0.05,0.8,0.7))
-
-		if nmrData.sampleMetadata.loc[i, 'BL_high_outliersFailNeg']:
-			ax1.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.8,0.05,0.01,0.7))
 
 	ax1.set_xlabel('ppm')
 	ax1.invert_xaxis()
@@ -60,9 +54,7 @@ def plotBaseline(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=
 
 	failures = lines.Line2D([], [], color=(0.05,0.05,0.8,0.7), marker='',
 							label='Baseline failed on area')
-	uncalculated = lines.Line2D([], [], color=(0.8,0.05,0.01,0.7), marker='',
-							label='Baseline failed on negativity')
-	plt.legend(handles=[variance, failures, uncalculated])
+	plt.legend(handles=[variance, failures])
 
 	if savePath:
 		plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
@@ -83,7 +75,7 @@ def plotBaselineInteractive(nmrData):
 	failedHigh = []
 	failedLow = []
 
-	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (nmrData.featureMetadata.loc[:, 'ppm'].min(),nmrData.Attributes['baselineLow_regionTo']), percentiles=(5, 95))
+	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (min(nmrData.Attributes['baselineCheckRegion'][0]),max(nmrData.Attributes['baselineCheckRegion'][0])), percentiles=(5, 95))
 	trace = plotlyRangeHelper(localPPM, meanSpectrum, lowerPercentile, upperPercentile, xaxis='x2')
 	data = data + trace
 
@@ -92,7 +84,7 @@ def plotBaselineInteractive(nmrData):
 	##
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'BL_low_outliersFailArea']:
+		if nmrData.sampleMetadata.loc[i, 'BaselineFail']:
 			trace = go.Scatter(
 				x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
 				y = nmrData.intensityData[i, ppmMask],
@@ -106,22 +98,7 @@ def plotBaselineInteractive(nmrData):
 			)
 			failedLow.append(trace)
 
-		if nmrData.sampleMetadata.loc[i, 'BL_low_outliersFailNeg']:
-
-			trace = go.Scatter(
-				x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
-				y = nmrData.intensityData[i, ppmMask],
-				line = dict(
-					color = ('rgba(205, 12, 24, 0.7)')
-				),
-				text = '%s' % (nmrData.sampleMetadata.loc[i, 'Sample File Name']),
-				hoverinfo = 'text',
-				showlegend = False,
-				xaxis='x2'
-			)
-			failedLow.append(trace)
-
-	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (nmrData.Attributes['baselineHigh_regionFrom'], nmrData.featureMetadata.loc[:, 'ppm'].max()), percentiles=(5, 95))
+	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, (min(nmrData.Attributes['baselineCheckRegion'][1]),max(nmrData.Attributes['baselineCheckRegion'][1])), percentiles=(5, 95))
 	trace = plotlyRangeHelper(localPPM, meanSpectrum, lowerPercentile, upperPercentile)
 	data = data + trace
 
@@ -130,27 +107,13 @@ def plotBaselineInteractive(nmrData):
 	##
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'BL_high_outliersFailArea']:
+		if nmrData.sampleMetadata.loc[i, 'BaselineFail']:
 
 			trace = go.Scatter(
 				x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
 				y = nmrData.intensityData[i, ppmMask],
 				line = dict(
 					color = ('rgb(12, 12, 205)')
-				),
-				text = '%s' % (nmrData.sampleMetadata.loc[i, 'Sample File Name']),
-				hoverinfo = 'text',
-				showlegend = False
-			)
-			failedHigh.append(trace)
-
-		if nmrData.sampleMetadata.loc[i, 'BL_high_outliersFailNeg']:
-
-			trace = go.Scatter(
-				x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
-				y = nmrData.intensityData[i, ppmMask],
-				line = dict(
-					color = ('rgba(205, 12, 24, 0.7)')
 				),
 				text = '%s' % (nmrData.sampleMetadata.loc[i, 'Sample File Name']),
 				hoverinfo = 'text',
@@ -169,17 +132,7 @@ def plotBaselineInteractive(nmrData):
 		visible = 'legendonly'
 		)
 	data.append(trace)
-	trace = go.Scatter(
-		x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
-		y = nmrData.intensityData[0, ppmMask],
-		line = dict(
-			color = ('rgb(205, 12, 24)')
-		),
-		name = 'Spectra failing on baseline negativity',
-		mode = 'lines',
-		visible = 'legendonly'
-		)
-	data.append(trace)
+
 	trace = go.Scatter(
 		x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
 		y = nmrData.intensityData[0, ppmMask],
@@ -203,11 +156,11 @@ def plotBaselineInteractive(nmrData):
 				hovermode = "closest",
 				xaxis=dict(
 					domain = [0, 0.48],
-					range=[nmrData.featureMetadata.loc[:, 'ppm'].max(), nmrData.Attributes['baselineHigh_regionFrom']]
+					range=[(max(nmrData.Attributes['baselineCheckRegion'][1]),min(nmrData.Attributes['baselineCheckRegion'][1]))]
 				),
 				xaxis2=dict(
 					domain = [0.52, 1],
-					range=[nmrData.Attributes['baselineLow_regionTo'], nmrData.featureMetadata.loc[:, 'ppm'].min()]
+					range=[(max(nmrData.Attributes['baselineCheckRegion'][0]),min(nmrData.Attributes['baselineCheckRegion'][0]))]
 					),
 				)
 

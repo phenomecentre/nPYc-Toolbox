@@ -15,6 +15,7 @@ from ..utilities import normalisation
 from ..utilities.normalisation._normaliserABC import Normaliser
 import warnings
 
+
 class Dataset:
 	"""
 	Base class for nPYc dataset objects.
@@ -49,7 +50,10 @@ class Dataset:
 		Feature Name     str or float                              ID of the :term:`feature` measured in this column. Each 'Feature Name' must be unique in the table. If 'Feature Name' is numeric, the columns should be sorted in ascending or descending order.
 		================ ========================================= ============
 		"""
-		self.sampleMetadata = pandas.DataFrame(None, columns=['Sampling ID','AssayRole','SampleType','Sample File Name','Sample Base Name','Dilution','Batch','Correction Batch','Acquired Time','Run Order','Exclusion Details'])
+		self.sampleMetadata = pandas.DataFrame(None,
+											   columns=['Sampling ID', 'AssayRole', 'SampleType', 'Sample File Name',
+														'Sample Base Name', 'Dilution', 'Batch', 'Correction Batch',
+														'Acquired Time', 'Run Order', 'Exclusion Details'])
 		"""
 		:math:`n` × :math:`p` dataframe of sample identifiers and metadata.
 
@@ -106,7 +110,6 @@ class Dataset:
 
 		self._name = self.__class__.__name__
 
-
 	@property
 	def intensityData(self):
 		"""
@@ -115,10 +118,9 @@ class Dataset:
 		return self.Normalisation.normalise(self._intensityData)
 
 	@intensityData.setter
-	def intensityData(self, X : numpy.ndarray):
+	def intensityData(self, X: numpy.ndarray):
 
 		self._intensityData = X
-
 
 	@property
 	def noSamples(self) -> int:
@@ -132,7 +134,6 @@ class Dataset:
 			noSamples = 0
 		return noSamples
 
-
 	@property
 	def noFeatures(self) -> int:
 		"""
@@ -144,7 +145,6 @@ class Dataset:
 		except:
 			noFeatures = 0
 		return noFeatures
-
 
 	@property
 	def log(self) -> str:
@@ -160,7 +160,6 @@ class Dataset:
 
 		return output
 
-
 	@property
 	def name(self) -> str:
 		"""
@@ -168,9 +167,8 @@ class Dataset:
 		"""
 		return self._name
 
-
 	@name.setter
-	def name(self, value : str):
+	def name(self, value: str):
 		"""
 		Validates *value* is valid for filenames
 		"""
@@ -192,13 +190,12 @@ class Dataset:
 		else:
 			self._Normalisation = normaliser
 
-
 	def __repr__(self):
 		"""
 		Customise printing of instance description.
 		"""
-		return "<%s instance at %s, named %s, with %d samples, %d features>" % (self.__class__.__name__, id(self), self.name, self.noSamples, self.noFeatures)
-
+		return "<%s instance at %s, named %s, with %d samples, %d features>" % (
+		self.__class__.__name__, id(self), self.name, self.noSamples, self.noFeatures)
 
 	def validateObject(self, verbose=True, raiseError=False, raiseWarning=True):
 		"""
@@ -312,197 +309,244 @@ class Dataset:
 		condition = isinstance(self, Dataset)
 		success = 'Check Object class:\tOK'
 		failure = 'Check Object class:\tFailure, not Dataset, but ' + str(type(self))
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=TypeError(failure))
 
 		## self.Attributes
 		# exist
 		condition = hasattr(self, 'Attributes')
 		success = 'Check self.Attributes exists:\tOK'
 		failure = 'Check self.Attributes exists:\tFailure, no attribute \'self.Attributes\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=AttributeError(failure))
 		if condition:
 			# is a dict
 			condition = isinstance(self.Attributes, dict)
 			success = 'Check self.Attributes is a dict:\tOK'
 			failure = 'Check self.Attributes is a dict:\tFailure, \'self.Attributes\' is' + str(type(self.Attributes))
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=TypeError(failure))
 			if condition:
-			## self.Attributes keys
+				## self.Attributes keys
 				## Log
 				# exist
 				condition = 'Log' in self.Attributes
 				success = 'Check self.Attributes[\'Log\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'Log\'] exists:\tFailure, no attribute \'self.Attributes[\'Log\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is a list
 					condition = isinstance(self.Attributes['Log'], list)
 					success = 'Check self.Attributes[\'Log\'] is a list:\tOK'
 					failure = 'Check self.Attributes[\'Log\'] is a list:\tFailure, \'self.Attributes[\'Log\']\' is ' + str(
 						type(self.Attributes['Log']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 				# end self.Attributes['Log']
 				## dpi
 				# exist
 				condition = 'dpi' in self.Attributes
 				success = 'Check self.Attributes[\'dpi\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'dpi\'] exists:\tFailure, no attribute \'self.Attributes[\'dpi\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is an int
 					condition = isinstance(self.Attributes['dpi'], (int, numpy.integer))
 					success = 'Check self.Attributes[\'dpi\'] is an int:\tOK'
-					failure = 'Check self.Attributes[\'dpi\'] is an int:\tFailure, \'self.Attributes[\'dpi\']\' is ' + str(type(self.Attributes['dpi']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failure = 'Check self.Attributes[\'dpi\'] is an int:\tFailure, \'self.Attributes[\'dpi\']\' is ' + str(
+						type(self.Attributes['dpi']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 				# end self.Attributes['dpi']
 				## figureSize
 				# exist
 				condition = 'figureSize' in self.Attributes
 				success = 'Check self.Attributes[\'figureSize\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'figureSize\'] exists:\tFailure, no attribute \'self.Attributes[\'figureSize\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is a list
 					condition = isinstance(self.Attributes['figureSize'], list)
 					success = 'Check self.Attributes[\'figureSize\'] is a list:\tOK'
-					failure = 'Check self.Attributes[\'figureSize\'] is a list:\tFailure, \'self.Attributes[\'figureSize\']\' is ' + str(type(self.Attributes['figureSize']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failure = 'Check self.Attributes[\'figureSize\'] is a list:\tFailure, \'self.Attributes[\'figureSize\']\' is ' + str(
+						type(self.Attributes['figureSize']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 					if condition:
 						# is of length 2
 						condition = (len(self.Attributes['figureSize']) == 2)
 						success = 'Check self.Attributes[\'figureSize\'] is of length 2:\tOK'
-						failure = 'Check self.Attributes[\'figureSize\'] is of length 2:\tFailure, \'self.Attributes[\'figureSize\']\' is of length ' + str(len(self.Attributes['figureSize']))
-						failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=ValueError(failure))
+						failure = 'Check self.Attributes[\'figureSize\'] is of length 2:\tFailure, \'self.Attributes[\'figureSize\']\' is of length ' + str(
+							len(self.Attributes['figureSize']))
+						failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+													raiseWarning, exception=ValueError(failure))
 						if condition:
 							# figureSize[] are int
 							for i in range(2):
-								condition = isinstance(self.Attributes['figureSize'][i], (int, float, numpy.integer, numpy.floating))
+								condition = isinstance(self.Attributes['figureSize'][i],
+													   (int, float, numpy.integer, numpy.floating))
 								success = 'Check self.Attributes[\'figureSize\'][' + str(i) + '] is int or float:\tOK'
-								failure = 'Check self.Attributes[\'figureSize\'][' + str(i) + '] is int or float:\tFailure, \'self.Attributes[\'figureSize\'][' + str(i) + '] is ' + str(type(self.Attributes['figureSize'][i]))
-								failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
-						# end self.Attributes['figureSize'] length 2
-					# end self.Attributes['figureSize] list
+								failure = 'Check self.Attributes[\'figureSize\'][' + str(
+									i) + '] is int or float:\tFailure, \'self.Attributes[\'figureSize\'][' + str(
+									i) + '] is ' + str(type(self.Attributes['figureSize'][i]))
+								failureList = conditionTest(condition, success, failure, failureList, verbose,
+															raiseError, raiseWarning, exception=TypeError(failure))
+					# end self.Attributes['figureSize'] length 2
+				# end self.Attributes['figureSize] list
 				# end self.Attributes['figureSize']
 				## figureFormat
 				# exist
 				condition = 'figureFormat' in self.Attributes
 				success = 'Check self.Attributes[\'figureFormat\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'figureFormat\'] exists:\tFailure, no attribute \'self.Attributes[\'figureFormat\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is a str
 					condition = isinstance(self.Attributes['figureFormat'], str)
 					success = 'Check self.Attributes[\'figureFormat\'] is a str:\tOK'
-					failure = 'Check self.Attributes[\'figureFormat\'] is a str:\tFailure, \'self.Attributes[\'figureFormat\']\' is ' + str( type(self.Attributes['figureFormat']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failure = 'Check self.Attributes[\'figureFormat\'] is a str:\tFailure, \'self.Attributes[\'figureFormat\']\' is ' + str(
+						type(self.Attributes['figureFormat']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 				# end self.Attributes['figureFormat']
 				## histBins
 				# exist
 				condition = 'histBins' in self.Attributes
 				success = 'Check self.Attributes[\'histBins\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'histBins\'] exists:\tFailure, no attribute \'self.Attributes[\'histBins\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is an int
 					condition = isinstance(self.Attributes['histBins'], (int, numpy.integer))
 					success = 'Check self.Attributes[\'histBins\'] is an int:\tOK'
-					failure = 'Check self.Attributes[\'histBins\'] is an int:\tFailure, \'self.Attributes[\'histBins\']\' is ' + str(type(self.Attributes['histBins']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failure = 'Check self.Attributes[\'histBins\'] is an int:\tFailure, \'self.Attributes[\'histBins\']\' is ' + str(
+						type(self.Attributes['histBins']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 				# end self.Attributes['histBins']
 				## noFiles
 				# exist
 				condition = 'noFiles' in self.Attributes
 				success = 'Check self.Attributes[\'noFiles\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'noFiles\'] exists:\tFailure, no attribute \'self.Attributes[\'noFiles\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is an int
 					condition = isinstance(self.Attributes['noFiles'], (int, numpy.integer))
 					success = 'Check self.Attributes[\'noFiles\'] is an int:\tOK'
-					failure = 'Check self.Attributes[\'noFiles\'] is an int:\tFailure, \'self.Attributes[\'noFiles\']\' is ' + str(type(self.Attributes['noFiles']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failure = 'Check self.Attributes[\'noFiles\'] is an int:\tFailure, \'self.Attributes[\'noFiles\']\' is ' + str(
+						type(self.Attributes['noFiles']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 				# end self.Attributes['noFiles']
 				## quantiles
 				# exist
 				condition = 'quantiles' in self.Attributes
 				success = 'Check self.Attributes[\'quantiles\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'quantiles\'] exists:\tFailure, no attribute \'self.Attributes[\'quantiles\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is a list
 					condition = isinstance(self.Attributes['quantiles'], list)
 					success = 'Check self.Attributes[\'quantiles\'] is a list:\tOK'
-					failure = 'Check self.Attributes[\'quantiles\'] is a list:\tFailure, \'self.Attributes[\'quantiles\']\' is ' + str(type(self.Attributes['quantiles']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failure = 'Check self.Attributes[\'quantiles\'] is a list:\tFailure, \'self.Attributes[\'quantiles\']\' is ' + str(
+						type(self.Attributes['quantiles']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 					if condition:
 						# is of length 2
 						condition = (len(self.Attributes['quantiles']) == 2)
 						success = 'Check self.Attributes[\'quantiles\'] is of length 2:\tOK'
-						failure = 'Check self.Attributes[\'quantiles\'] is of length 2:\tFailure, \'self.Attributes[\'quantiles\']\' is of length ' + str(len(self.Attributes['quantiles']))
-						failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=ValueError(failure))
+						failure = 'Check self.Attributes[\'quantiles\'] is of length 2:\tFailure, \'self.Attributes[\'quantiles\']\' is of length ' + str(
+							len(self.Attributes['quantiles']))
+						failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+													raiseWarning, exception=ValueError(failure))
 						if condition:
-						# quantiles[] are int
+							# quantiles[] are int
 							for i in range(2):
-								condition = isinstance(self.Attributes['quantiles'][i], (int, float, numpy.integer, numpy.floating))
+								condition = isinstance(self.Attributes['quantiles'][i],
+													   (int, float, numpy.integer, numpy.floating))
 								success = 'Check self.Attributes[\'quantiles\'][' + str(i) + '] is int or float:\tOK'
-								failure = 'Check self.Attributes[\'quantiles\'][' + str(i) + '] is int or float:\tFailure, \'self.Attributes[\'quantiles\'][' + str(i) + '] is ' + str(type(self.Attributes['quantiles'][i]))
-								failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
-						# end self.Attributes['quantiles'] length 2
-					# end self.Attributes['quantiles'] list
+								failure = 'Check self.Attributes[\'quantiles\'][' + str(
+									i) + '] is int or float:\tFailure, \'self.Attributes[\'quantiles\'][' + str(
+									i) + '] is ' + str(type(self.Attributes['quantiles'][i]))
+								failureList = conditionTest(condition, success, failure, failureList, verbose,
+															raiseError, raiseWarning, exception=TypeError(failure))
+					# end self.Attributes['quantiles'] length 2
+				# end self.Attributes['quantiles'] list
 				# end self.Attributes['quantiles']
 				## sampleMetadataNotExported
 				# exist
 				condition = 'sampleMetadataNotExported' in self.Attributes
 				success = 'Check self.Attributes[\'sampleMetadataNotExported\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'sampleMetadataNotExported\'] exists:\tFailure, no attribute \'self.Attributes[\'sampleMetadataNotExported\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is a list
 					condition = isinstance(self.Attributes['sampleMetadataNotExported'], list)
 					success = 'Check self.Attributes[\'sampleMetadataNotExported\'] is a list:\tOK'
-					failure = 'Check self.Attributes[\'sampleMetadataNotExported\'] is a list:\tFailure, \'self.Attributes[\'sampleMetadataNotExported\']\' is ' + str(type(self.Attributes['sampleMetadataNotExported']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failure = 'Check self.Attributes[\'sampleMetadataNotExported\'] is a list:\tFailure, \'self.Attributes[\'sampleMetadataNotExported\']\' is ' + str(
+						type(self.Attributes['sampleMetadataNotExported']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 				# end self.Attributes['sampleMetadataNotExported']
 				## featureMetadataNotExported
 				# exist
 				condition = 'featureMetadataNotExported' in self.Attributes
 				success = 'Check self.Attributes[\'featureMetadataNotExported\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'featureMetadataNotExported\'] exists:\tFailure, no attribute \'self.Attributes[\'featureMetadataNotExported\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is a list
 					condition = isinstance(self.Attributes['featureMetadataNotExported'], list)
 					success = 'Check self.Attributes[\'featureMetadataNotExported\'] is a list:\tOK'
-					failure = 'Check self.Attributes[\'featureMetadataNotExported\'] is a list:\tFailure, \'self.Attributes[\'featureMetadataNotExported\']\' is ' + str(type(self.Attributes['featureMetadataNotExported']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failure = 'Check self.Attributes[\'featureMetadataNotExported\'] is a list:\tFailure, \'self.Attributes[\'featureMetadataNotExported\']\' is ' + str(
+						type(self.Attributes['featureMetadataNotExported']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 				# end self.Attributes['featureMetadataNotExported']
 				## analyticalMeasurements
 				# exist
 				condition = 'analyticalMeasurements' in self.Attributes
 				success = 'Check self.Attributes[\'analyticalMeasurements\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'analyticalMeasurements\'] exists:\tFailure, no attribute \'self.Attributes[\'analyticalMeasurements\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is a dict
 					condition = isinstance(self.Attributes['analyticalMeasurements'], dict)
 					success = 'Check self.Attributes[\'analyticalMeasurements\'] is a dict:\tOK'
-					failure = 'Check self.Attributes[\'analyticalMeasurements\'] is a dict:\tFailure, \'self.Attributes[\'analyticalMeasurements\']\' is ' + str(type(self.Attributes['analyticalMeasurements']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+					failure = 'Check self.Attributes[\'analyticalMeasurements\'] is a dict:\tFailure, \'self.Attributes[\'analyticalMeasurements\']\' is ' + str(
+						type(self.Attributes['analyticalMeasurements']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
 				# end self.Attributes['analyticalMeasurements']
 				## excludeFromPlotting
 				# exist
 				condition = 'excludeFromPlotting' in self.Attributes
 				success = 'Check self.Attributes[\'excludeFromPlotting\'] exists:\tOK'
 				failure = 'Check self.Attributes[\'excludeFromPlotting\'] exists:\tFailure, no attribute \'self.Attributes[\'excludeFromPlotting\']\''
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=AttributeError(failure))
 				if condition:
 					# is a list
 					condition = isinstance(self.Attributes['excludeFromPlotting'], list)
 					success = 'Check self.Attributes[\'excludeFromPlotting\'] is a list:\tOK'
-					failure = 'Check self.Attributes[\'excludeFromPlotting\'] is a list:\tFailure, \'self.Attributes[\'excludeFromPlotting\']\' is ' + str(type(self.Attributes['excludeFromPlotting']))
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
-				# end self.Attributes['excludeFromPlotting']
-			# end self.Attributes dictionary
+					failure = 'Check self.Attributes[\'excludeFromPlotting\'] is a list:\tFailure, \'self.Attributes[\'excludeFromPlotting\']\' is ' + str(
+						type(self.Attributes['excludeFromPlotting']))
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=TypeError(failure))
+			# end self.Attributes['excludeFromPlotting']
+		# end self.Attributes dictionary
 		# end self.Attributes
 
 		## self.VariableType
@@ -510,7 +554,8 @@ class Dataset:
 		condition = hasattr(self, 'VariableType')
 		success = 'Check self.VariableType exists:\tOK'
 		failure = 'Check self.VariableType exists:\tFailure, no attribute \'self.VariableType\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=AttributeError(failure))
 		# end Variabletype
 
 		## self._Normalisation
@@ -518,13 +563,16 @@ class Dataset:
 		condition = hasattr(self, '_Normalisation')
 		success = 'Check self._Normalisation exists:\tOK'
 		failure = 'Check self._Normalisation exists:\tFailure, no attribute \'self._Normalisation\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=AttributeError(failure))
 		if condition:
 			# is Normaliser ABC
 			condition = isinstance(self._Normalisation, Normaliser)
 			success = 'Check self._Normalisation is Normaliser ABC:\tOK'
-			failure = 'Check self._Normalisation is Normaliser ABC:\tFailure, \'self._Normalisation\' is ' + str(type(self._Normalisation))
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+			failure = 'Check self._Normalisation is Normaliser ABC:\tFailure, \'self._Normalisation\' is ' + str(
+				type(self._Normalisation))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=TypeError(failure))
 		# end self._Normalisation
 
 		## self._name
@@ -532,13 +580,15 @@ class Dataset:
 		condition = hasattr(self, '_name')
 		success = 'Check self._name exists:\tOK'
 		failure = 'Check self._name exists:\tFailure, no attribute \'self._name\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=AttributeError(failure))
 		if condition:
 			# is a str
 			condition = isinstance(self._name, str)
 			success = 'Check self._name is a str:\tOK'
 			failure = 'Check self._name is a str:\tFailure, \'self._name\' is ' + str(type(self._name))
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=TypeError(failure))
 		# end self._name
 
 		## self._intensityData
@@ -546,14 +596,17 @@ class Dataset:
 		condition = hasattr(self, '_intensityData')
 		success = 'Check self._intensityData exists:\tOK'
 		failure = 'Check self._intensityData exists:\tFailure, no attribute \'self._intensityData\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=AttributeError(failure))
 		if condition:
 			# is a numpy.ndarray
 			condition = isinstance(self._intensityData, numpy.ndarray)
 			success = 'Check self._intensityData is a numpy.ndarray:\tOK'
-			failure = 'Check self._intensityData is a numpy.ndarray:\tFailure, \'self._intensityData\' is ' + str(type(self._intensityData))
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
-			# end self._intensityData numpy.ndarray
+			failure = 'Check self._intensityData is a numpy.ndarray:\tFailure, \'self._intensityData\' is ' + str(
+				type(self._intensityData))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=TypeError(failure))
+		# end self._intensityData numpy.ndarray
 		# end self._intensityData
 
 		## self.sampleMetadata
@@ -561,70 +614,84 @@ class Dataset:
 		condition = hasattr(self, 'sampleMetadata')
 		success = 'Check self.sampleMetadata exists:\tOK'
 		failure = 'Check self.sampleMetadata exists:\tFailure, no attribute \'self.sampleMetadata\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=AttributeError(failure))
 		if condition:
 			# is a pandas.DataFrame
 			condition = isinstance(self.sampleMetadata, pandas.DataFrame)
 			success = 'Check self.sampleMetadata is a pandas.DataFrame:\tOK'
-			failure = 'Check self.sampleMetadata is a pandas.DataFrame:\tFailure, \'self.sampleMetadata\' is ' + str(type(self.sampleMetadata))
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+			failure = 'Check self.sampleMetadata is a pandas.DataFrame:\tFailure, \'self.sampleMetadata\' is ' + str(
+				type(self.sampleMetadata))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=TypeError(failure))
 			if condition:
 				# ['Sample File Name']
 				condition = ('Sample File Name' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'Sample File Name\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'Sample File Name\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Sample File Name\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['AssayRole']
 				condition = ('AssayRole' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'AssayRole\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'AssayRole\'] exists:\tFailure, \'self.sampleMetadata\' lacks an \'AssayRole\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['SampleType']
 				condition = ('SampleType' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'SampleType\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'SampleType\'] exists:\tFailure, \'self.sampleMetadata\' lacks an \'SampleType\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['Dilution']
 				condition = ('Dilution' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'Dilution\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'Dilution\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Dilution\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['Batch']
 				condition = ('Batch' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'Batch\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'Batch\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Batch\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['Correction Batch']
 				condition = ('Correction Batch' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'Correction Batch\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'Correction Batch\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Correction Batch\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['Run Order']
 				condition = ('Run Order' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'Run Order\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'Run Order\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Run Order\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['Sampling ID']
 				condition = ('Sampling ID' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'Sampling ID\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'Sampling ID\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Sampling ID\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['Sample Base Name']
 				condition = ('Sample Base Name' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'Sample Base Name\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'Sample Base Name\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Sample Base Name\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['Acquired Time']
 				condition = ('Acquired Time' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'Acquired Time\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'Acquired Time\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Acquired Time\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
 				# ['Exclusion Details']
 				condition = ('Exclusion Details' in self.sampleMetadata.columns)
 				success = 'Check self.sampleMetadata[\'Exclusion Details\'] exists:\tOK'
 				failure = 'Check self.sampleMetadata[\'Exclusion Details\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Exclusion Details\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
-			# end self.sampleMetadata pandas.DataFrame
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
+		# end self.sampleMetadata pandas.DataFrame
 		# end self.sampleMetadata
 
 		## self.featureMetadata
@@ -632,21 +699,25 @@ class Dataset:
 		condition = hasattr(self, 'featureMetadata')
 		success = 'Check self.featureMetadata exists:\tOK'
 		failure = 'Check self.featureMetadata exists:\tFailure, no attribute \'self.featureMetadata\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=AttributeError(failure))
 		if condition:
 			# is a pandas.DataFrame
 			condition = isinstance(self.featureMetadata, pandas.DataFrame)
 			success = 'Check self.featureMetadata is a pandas.DataFrame:\tOK'
-			failure = 'Check self.featureMetadata is a pandas.DataFrame:\tFailure, \'self.featureMetadata\' is ' + str(type(self.featureMetadata))
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+			failure = 'Check self.featureMetadata is a pandas.DataFrame:\tFailure, \'self.featureMetadata\' is ' + str(
+				type(self.featureMetadata))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=TypeError(failure))
 			if condition:
 				# ['Feature Name']
 				condition = ('Feature Name' in self.featureMetadata.columns)
 				success = 'Check self.featureMetadata[\'Feature Name\'] exists:\tOK'
 				failure = 'Check self.featureMetadata[\'Feature Name\'] exists:\tFailure, \'self.featureMetadata\' lacks a \'Feature Name\' column'
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=LookupError(failure))
-				# end self.featureMetadata['Feature Name']
-			# end self.featureMetadata pandas.DataFrame
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=LookupError(failure))
+			# end self.featureMetadata['Feature Name']
+		# end self.featureMetadata pandas.DataFrame
 		# end self.featureMetadata
 
 		## self.sampleMask
@@ -654,21 +725,26 @@ class Dataset:
 		condition = hasattr(self, 'sampleMask')
 		success = 'Check self.sampleMask exists:\tOK'
 		failure = 'Check self.sampleMask exists:\tFailure, no attribute \'self.sampleMask\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=AttributeError(failure))
 		if condition:
 			# is a numpy.ndarray
 			condition = isinstance(self.sampleMask, numpy.ndarray)
 			success = 'Check self.sampleMask is a numpy.ndarray:\tOK'
-			failure = 'Check self.sampleMask is a numpy.ndarray:\tFailure, \'self.sampleMask\' is ' + str(type(self.sampleMask))
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+			failure = 'Check self.sampleMask is a numpy.ndarray:\tFailure, \'self.sampleMask\' is ' + str(
+				type(self.sampleMask))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=TypeError(failure))
 			if condition:
-				#if (self.sampleMask.all() != numpy.array(False, dtype=bool)):
+				# if (self.sampleMask.all() != numpy.array(False, dtype=bool)):
 				# self.sampleMask is bool
 				condition = (self.sampleMask.dtype == numpy.dtype(numpy.bool))
 				success = 'Check self.sampleMask is bool:\tOK'
-				failure = 'Check self.sampleMask is bool:\tFailure, \'self.sampleMask\' is ' + str(self.sampleMask.dtype)
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=ValueError(failure))
-			# end self.samplemask numpy.ndarray
+				failure = 'Check self.sampleMask is bool:\tFailure, \'self.sampleMask\' is ' + str(
+					self.sampleMask.dtype)
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=ValueError(failure))
+		# end self.samplemask numpy.ndarray
 		## end self.sampleMask
 
 		## self.featureMask
@@ -676,26 +752,33 @@ class Dataset:
 		condition = hasattr(self, 'featureMask')
 		success = 'Check self.featureMask exists:\tOK'
 		failure = 'Check self.featureMask exists:\tFailure, no attribute \'self.featureMask\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+									exception=AttributeError(failure))
 		if condition:
 			# is a numpy.ndarray
 			condition = isinstance(self.featureMask, numpy.ndarray)
 			success = 'Check self.featureMask is a numpy.ndarray:\tOK'
-			failure = 'Check self.featureMask is a numpy.ndarray:\tFailure, \'self.featureMask\' is ' + str(type(self.featureMask))
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+			failure = 'Check self.featureMask is a numpy.ndarray:\tFailure, \'self.featureMask\' is ' + str(
+				type(self.featureMask))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=TypeError(failure))
 			if condition:
-				#if (self.featureMask.all() != numpy.array(False, dtype=bool)):
+				# if (self.featureMask.all() != numpy.array(False, dtype=bool)):
 				# self.featureMask is bool
 				condition = (self.featureMask.dtype == numpy.dtype(numpy.bool))
 				success = 'Check self.featureMask is bool:\tOK'
-				failure = 'Check self.featureMask is bool:\tFailure, \'self.featureMask\' is ' + str(self.featureMask.dtype)
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=ValueError(failure))
-			# end self.featureMask numpy.ndarray
+				failure = 'Check self.featureMask is bool:\tFailure, \'self.featureMask\' is ' + str(
+					self.featureMask.dtype)
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=ValueError(failure))
+		# end self.featureMask numpy.ndarray
 		## end self.featureMask
 
 		## Exclusion data
 		# If any exclusion exists
-		if (hasattr(self, 'sampleMetadataExcluded') | hasattr(self, 'intensityDataExcluded') | hasattr(self, 'featureMetadataExcluded') | hasattr(self, 'excludedFlag')):
+		if (hasattr(self, 'sampleMetadataExcluded') | hasattr(self, 'intensityDataExcluded') | hasattr(self,
+																									   'featureMetadataExcluded') | hasattr(
+				self, 'excludedFlag')):
 			if verbose:
 				print('---- exclusion lists found, check exclusions ----')
 			## sampleMetadataExcluded
@@ -703,81 +786,99 @@ class Dataset:
 			condition = hasattr(self, 'sampleMetadataExcluded')
 			success = 'Check self.sampleMetadataExcluded exists:\tOK'
 			failure = 'Check self.sampleMetadataExcluded exists:\tFailure, no attribute \'self.sampleMetadataExcluded\''
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=AttributeError(failure))
 			if condition:
 				# is a list
 				condition = isinstance(self.sampleMetadataExcluded, list)
 				success = 'Check self.sampleMetadataExcluded is a list:\tOK'
-				failure = 'Check self.sampleMetadataExcluded is a list:\tFailure, \'self.sampleMetadataExcluded\' is ' + str(type(self.sampleMetadataExcluded))
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+				failure = 'Check self.sampleMetadataExcluded is a list:\tFailure, \'self.sampleMetadataExcluded\' is ' + str(
+					type(self.sampleMetadataExcluded))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=TypeError(failure))
 				if condition:
 					# Use sampleMetadataExcluded as reference number of exclusions
 					refNumExcluded = len(self.sampleMetadataExcluded)
 					if verbose:
 						print('---- self.sampleMetadataExcluded used as reference number of exclusions ----')
 						print('\t' + str(refNumExcluded) + ' exclusions')
-				# end sampleMetadataExcluded is a list
+			# end sampleMetadataExcluded is a list
 			# end sampleMetadataExcluded
 			## intensityDataExcluded
 			# exist
 			condition = hasattr(self, 'intensityDataExcluded')
 			success = 'Check self.intensityDataExcluded exists:\tOK'
 			failure = 'Check self.intensityDataExcluded exists:\tFailure, no attribute \'self.intensityDataExcluded\''
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=AttributeError(failure))
 			if condition:
 				# is a list
 				condition = isinstance(self.intensityDataExcluded, list)
 				success = 'Check self.intensityDataExcluded is a list:\tOK'
-				failure = 'Check self.intensityDataExcluded is a list:\tFailure, \'self.intensityDataExcluded\' is ' + str(type(self.intensityDataExcluded))
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+				failure = 'Check self.intensityDataExcluded is a list:\tFailure, \'self.intensityDataExcluded\' is ' + str(
+					type(self.intensityDataExcluded))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=TypeError(failure))
 				if condition:
 					# number of exclusions
 					condition = (len(self.intensityDataExcluded) == refNumExcluded)
 					success = 'Check self.intensityDataExcluded number of exclusions:\tOK'
-					failure = 'Check self.intensityDataExcluded number of exclusions:\tFailure, \'self.intensityDataExcluded\' has ' + str(len(self.intensityDataExcluded)) + ' exclusions, ' + str(refNumExcluded) + ' expected'
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=ValueError(failure))
-				# end intensityDataExcluded is a list
+					failure = 'Check self.intensityDataExcluded number of exclusions:\tFailure, \'self.intensityDataExcluded\' has ' + str(
+						len(self.intensityDataExcluded)) + ' exclusions, ' + str(refNumExcluded) + ' expected'
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=ValueError(failure))
+			# end intensityDataExcluded is a list
 			# end intensityDataExclude
 			## featureMetadataExcluded
 			# exist
 			condition = hasattr(self, 'featureMetadataExcluded')
 			success = 'Check self.featureMetadataExcluded exists:\tOK'
 			failure = 'Check self.featureMetadataExcluded exists:\tFailure, no attribute \'self.featureMetadataExcluded\''
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=AttributeError(failure))
 			if condition:
 				# is a list
 				condition = isinstance(self.featureMetadataExcluded, list)
 				success = 'Check self.featureMetadataExcluded is a list:\tOK'
-				failure = 'Check self.featureMetadataExcluded is a list:\tFailure, \'self.featureMetadataExcluded\' is ' + str(type(self.featureMetadataExcluded))
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+				failure = 'Check self.featureMetadataExcluded is a list:\tFailure, \'self.featureMetadataExcluded\' is ' + str(
+					type(self.featureMetadataExcluded))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=TypeError(failure))
 				if condition:
 					# number of exclusions
 					condition = (len(self.featureMetadataExcluded) == refNumExcluded)
 					success = 'Check self.featureMetadataExcluded number of exclusions:\tOK'
-					failure = 'Check self.featureMetadataExcluded number of exclusions:\tFailure, \'self.featureMetadataExcluded\' has ' + str(len(self.featureMetadataExcluded)) + ' exclusions, ' + str(refNumExcluded) + ' expected'
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=ValueError(failure))
-				# end featureMetadataExcluded is a list
+					failure = 'Check self.featureMetadataExcluded number of exclusions:\tFailure, \'self.featureMetadataExcluded\' has ' + str(
+						len(self.featureMetadataExcluded)) + ' exclusions, ' + str(refNumExcluded) + ' expected'
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=ValueError(failure))
+			# end featureMetadataExcluded is a list
 			# end featureMetadataExcluded
 			## excludedFlag
 			# exist
 			condition = hasattr(self, 'excludedFlag')
 			success = 'Check self.excludedFlag exists:\tOK'
 			failure = 'Check self.excludedFlag exists:\tFailure, no attribute \'self.excludedFlag\''
-			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
+			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+										exception=AttributeError(failure))
 			if condition:
 				# is a list
 				condition = isinstance(self.excludedFlag, list)
 				success = 'Check self.excludedFlag is a list:\tOK'
-				failure = 'Check self.excludedFlag is a list:\tFailure, \'self.excludedFlag\' is ' + str(type(self.excludedFlag))
-				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+				failure = 'Check self.excludedFlag is a list:\tFailure, \'self.excludedFlag\' is ' + str(
+					type(self.excludedFlag))
+				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
+											exception=TypeError(failure))
 				if condition:
 					# number of exclusions
 					condition = (len(self.excludedFlag) == refNumExcluded)
 					success = 'Check self.excludedFlag number of exclusions:\tOK'
-					failure = 'Check self.excludedFlag number of exclusions:\tFailure, \'self.excludedFlag\' has ' + str(len(self.excludedFlag)) + ' exclusions, ' + str(refNumExcluded) + ' expected'
-					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning, exception=ValueError(failure))
-				# end excludedFlag is a list
-			# end excludedFlag
+					failure = 'Check self.excludedFlag number of exclusions:\tFailure, \'self.excludedFlag\' has ' + str(
+						len(self.excludedFlag)) + ' exclusions, ' + str(refNumExcluded) + ' expected'
+					failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError,
+												raiseWarning, exception=ValueError(failure))
+			# end excludedFlag is a list
+		# end excludedFlag
 		# end exclusions are present
 		else:
 			if verbose:
@@ -804,7 +905,10 @@ class Dataset:
 		# Basic failure might compromise logging, failure of QC compromises sample meta
 		if len(failureList) == 0:
 			# Log
-			self.Attributes['Log'].append([datetime.now(), 'Conforms to Dataset (0 errors), (%i samples and %i features), with %i additional attributes in the object: %s' % (self.noSamples, self.noFeatures, len(additionalAttributes),list(additionalAttributes))])
+			self.Attributes['Log'].append([datetime.now(),
+										   'Conforms to Dataset (0 errors), (%i samples and %i features), with %i additional attributes in the object: %s' % (
+										   self.noSamples, self.noFeatures, len(additionalAttributes),
+										   list(additionalAttributes))])
 			# print results
 			if verbose:
 				print('--------')
@@ -815,7 +919,9 @@ class Dataset:
 		else:
 			# try logging
 			try:
-				self.Attributes['Log'].append([datetime.now(), 'Failed Dataset validation, with the following %i issues: %s' % (len(failureList), failureList)])
+				self.Attributes['Log'].append([datetime.now(),
+											   'Failed Dataset validation, with the following %i issues: %s' % (
+											   len(failureList), failureList)])
 			except (AttributeError, KeyError, TypeError):
 				if verbose:
 					print('--------')
@@ -828,7 +934,6 @@ class Dataset:
 			if raiseWarning:
 				warnings.warn('Does not conform to Dataset:\t %i errors found' % (len(failureList)))
 			return False
-
 
 	def _loadParameters(self, sop, sopPath):
 		"""
@@ -850,9 +955,8 @@ class Dataset:
 		if sop == 'Generic':
 			return
 
-
 		def splitext(path):
-			return {os.path.splitext(os.path.basename(path))[0]:path}
+			return {os.path.splitext(os.path.basename(path))[0]: path}
 
 		pattern = re.compile('.+?\.json$')
 
@@ -881,7 +985,6 @@ class Dataset:
 
 		self.Attributes['Log'].append([datetime.now(), 'SOP configuration %s loaded from %s.' % (sop, sopPaths[sop])])
 
-
 	def initialiseMasks(self):
 		"""
 		Re-initialise :py:attr:`featureMask` and :py:attr:`sampleMask` to match the current dimensions of :py:attr:`intensityData`, and include all samples.
@@ -894,8 +997,9 @@ class Dataset:
 
 		self.Attributes['Log'].append([datetime.now(), "Masks Initialised to True.\n"])
 
-
-	def updateMasks(self, filterSamples=True, filterFeatures=False, sampleTypes=[SampleType.StudySample, SampleType.StudyPool], assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], **kwargs):
+	def updateMasks(self, filterSamples=True, filterFeatures=False,
+					sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
+					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], **kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
@@ -928,7 +1032,6 @@ class Dataset:
 
 		# Sample Exclusions
 		if filterSamples:
-
 			sampleMask = self.sampleMetadata['SampleType'].isin(sampleTypes)
 			assayMask = self.sampleMetadata['AssayRole'].isin(assayRoles)
 
@@ -936,13 +1039,13 @@ class Dataset:
 
 			self.sampleMask = numpy.logical_and(sampleMask, self.sampleMask)
 
-		self.Attributes['Log'].append([datetime.now(), "Dataset filtered with: filterSamples=%s, filterFeatures=%s, sampleClasses=%s, sampleRoles=%s, %s." % (
-			filterSamples,
-			filterFeatures,
-			sampleTypes,
-			assayRoles,
-			', '.join("{!s}={!r}".format(key,val) for (key,val) in kwargs.items()))])
-
+		self.Attributes['Log'].append([datetime.now(),
+									   "Dataset filtered with: filterSamples=%s, filterFeatures=%s, sampleClasses=%s, sampleRoles=%s, %s." % (
+										   filterSamples,
+										   filterFeatures,
+										   sampleTypes,
+										   assayRoles,
+										   ', '.join("{!s}={!r}".format(key, val) for (key, val) in kwargs.items()))])
 
 	def applyMasks(self):
 		"""
@@ -950,7 +1053,7 @@ class Dataset:
 		"""
 
 		# Only save to excluded if features or samples masked
-		if (sum(self.sampleMask==False) > 0) | (sum(self.featureMask==False) > 0):
+		if (sum(self.sampleMask == False) > 0) | (sum(self.featureMask == False) > 0):
 
 			# Instantiate lists if first application
 			if not hasattr(self, 'sampleMetadataExcluded'):
@@ -961,7 +1064,7 @@ class Dataset:
 
 			# Samples
 			if sum(self.sampleMask) != len(self.sampleMask):
-				
+
 				# Account for if self.sampleMask is a pandas.series
 				try:
 					self.sampleMask = self.sampleMask.values
@@ -969,8 +1072,8 @@ class Dataset:
 					pass
 
 				# Save excluded samples
-				self.sampleMetadataExcluded.append(self.sampleMetadata[:][self.sampleMask==False])
-				self.intensityDataExcluded.append(self._intensityData[self.sampleMask==False, :])
+				self.sampleMetadataExcluded.append(self.sampleMetadata[:][self.sampleMask == False])
+				self.intensityDataExcluded.append(self._intensityData[self.sampleMask == False, :])
 				self.featureMetadataExcluded.append(self.featureMetadata)
 				self.excludedFlag.append('Samples')
 
@@ -986,8 +1089,8 @@ class Dataset:
 			if sum(self.featureMask) != len(self.featureMask):
 
 				# Save excluded features
-				self.featureMetadataExcluded.append(self.featureMetadata[:][self.featureMask==False])
-				self.intensityDataExcluded.append(self._intensityData[:, self.featureMask==False])
+				self.featureMetadataExcluded.append(self.featureMetadata[:][self.featureMask == False])
+				self.intensityDataExcluded.append(self._intensityData[:, self.featureMask == False])
 				self.sampleMetadataExcluded.append(self.sampleMetadata)
 				self.excludedFlag.append('Features')
 
@@ -997,13 +1100,13 @@ class Dataset:
 				self._intensityData = self._intensityData[:, self.featureMask]
 
 				if hasattr(self, 'fit'):
-					self.fit = self.fit[:,self.featureMask]
+					self.fit = self.fit[:, self.featureMask]
 
-			self.Attributes['Log'].append([datetime.now(), '%i samples and %i features removed from dataset.' % (sum(self.sampleMask == False), sum(self.featureMask == False))])
+			self.Attributes['Log'].append([datetime.now(), '%i samples and %i features removed from dataset.' % (
+			sum(self.sampleMask == False), sum(self.featureMask == False))])
 
 			# Build new masks
 			self.initialiseMasks()
-
 
 	def addSampleInfo(self, descriptionFormat=None, filePath=None, **kwargs):
 		"""
@@ -1037,7 +1140,6 @@ class Dataset:
 		else:
 			raise NotImplementedError
 
-
 	def addFeatureInfo(self, descriptionFormat=None, filePath=None, **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`featureMetadata` table.
@@ -1055,7 +1157,6 @@ class Dataset:
 			addReferenceRanges(self.featureMetadata, filePath)
 		else:
 			raise NotImplementedError
-
 
 	def _matchBasicCSV(self, filePath):
 		"""
@@ -1096,7 +1197,8 @@ class Dataset:
 			csv_datetime = pandas.to_datetime(csvData['Acquired Time'], errors='ignore')
 			# msData.sampleMetadata['Acquired Time'] = z
 			csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype('O')
+			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype(
+				'O')
 
 		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
 		# Preserve information about sample mask alongside merge
@@ -1107,14 +1209,15 @@ class Dataset:
 
 		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
 		# which are used in some plotting functions
-		#if 'Acquired Time' in joinedTable:
-	#		csv_datetime = pandas.to_datetime(joinedTable['Acquired Time'], errors='ignore')
-			# msData.sampleMetadata['Acquired Time'] = z
-	#		csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-	#		joinedTable['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype('O')
+		# if 'Acquired Time' in joinedTable:
+		#		csv_datetime = pandas.to_datetime(joinedTable['Acquired Time'], errors='ignore')
+		# msData.sampleMetadata['Acquired Time'] = z
+		#		csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
+		#		joinedTable['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype('O')
 
 		# Samples in the CSV file but not acquired will go for sampleAbsentMetadata, for consistency with NPC Lims import
-		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(self.sampleMetadata['Sample File Name']) == False, :]
+		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(self.sampleMetadata['Sample File Name']) == False,
+						:]
 
 		if csv_butnotacq.shape[0] != 0:
 			sampleAbsentMetadata = csv_butnotacq.copy(deep=True)
@@ -1123,7 +1226,8 @@ class Dataset:
 			sampleAbsentMetadata.loc[:, 'SampleType'] = SampleType.StudySample
 			sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'].str.match('StudyPool', na=False).astype(
 				bool), 'SampleType'] = SampleType.StudyPool
-			sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'].str.match('ExternalReference', na=False).astype(bool), 'SampleType'] = SampleType.ExternalReference
+			sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'].str.match('ExternalReference', na=False).astype(
+				bool), 'SampleType'] = SampleType.ExternalReference
 
 			sampleAbsentMetadata.loc[:, 'AssayRole'] = AssayRole.Assay
 			sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'].str.match('PrecisionReference', na=False).astype(
@@ -1165,10 +1269,7 @@ class Dataset:
 		if 'Batch' not in self.sampleMetadata:
 			self.sampleMetadata['Batch'] = 1
 
-
-
 		self.Attributes['Log'].append([datetime.now(), 'Basic CSV matched from %s' % (filePath)])
-
 
 	def _getSampleMetadataFromFilename(self, filenameSpec):
 		"""
@@ -1176,13 +1277,11 @@ class Dataset:
 		"""
 		raise NotImplementedError
 
-
 	def _getSampleMetadataFromRawData(self, rawDataPath):
 		"""
 		Pull metadata out of raw experiment files.
 		"""
 		raise NotImplementedError
-
 
 	def _matchDatasetToLIMS(self, pathToLIMSfile):
 		"""
@@ -1206,18 +1305,21 @@ class Dataset:
 		self.sampleMetadata.loc[:, 'Sample Base Name Normalised'] = self.sampleMetadata['Sample Base Name'].str.lower()
 		# if is float, make it a string with 'Assay data location'
 		if isinstance(self.limsFile.loc[0, 'Assay data name'], (int, float, numpy.integer, numpy.floating)):
-			self.limsFile.loc[:, 'Assay data name'] = self.limsFile.loc[:, 'Assay data location'].str.cat(self.limsFile['Assay data name'].astype(str), sep='/')
+			self.limsFile.loc[:, 'Assay data name'] = self.limsFile.loc[:, 'Assay data location'].str.cat(
+				self.limsFile['Assay data name'].astype(str), sep='/')
 		self.limsFile.loc[:, 'Assay data name Normalised'] = self.limsFile['Assay data name'].str.lower()
 
 		# Match limsFile to sampleMetdata for samples with data PRESENT
 		# Remove already present columns
 		if 'Sampling ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sampling ID'], axis=1, inplace=True)
 		if 'Subject ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Subject ID'], axis=1, inplace=True)
-		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.limsFile, left_on='Sample Base Name Normalised', right_on='Assay data name Normalised', how='left', sort=False)
+		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.limsFile, left_on='Sample Base Name Normalised',
+										   right_on='Assay data name Normalised', how='left', sort=False)
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
 		self.sampleMetadata.loc[:, 'Data Present'] = self.sampleMetadata['Sample File Name'].str.match('.+', na=False)
-		self.sampleMetadata.loc[:, 'LIMS Present'] = self.sampleMetadata['Assay data name'].str.match('.+', na=False, case=False)
+		self.sampleMetadata.loc[:, 'LIMS Present'] = self.sampleMetadata['Assay data name'].str.match('.+', na=False,
+																									  case=False)
 		self.sampleMetadata.loc[:, 'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing', na=False)
 
 		# Remove duplicate columns (these will be appended with _x or _y)
@@ -1226,10 +1328,12 @@ class Dataset:
 		self.sampleMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
 
 		# Find samples present in LIMS but not acquired
-		lims_butnotacq = self.limsFile.loc[self.limsFile['Assay data name Normalised'].isin(self.sampleMetadata['Sample Base Name Normalised']) == False, :]
+		lims_butnotacq = self.limsFile.loc[self.limsFile['Assay data name Normalised'].isin(
+			self.sampleMetadata['Sample Base Name Normalised']) == False, :]
 
 		# Removed normalised index coloumns
-		self.sampleMetadata.drop(labels=['Sample Base Name Normalised', 'Assay data name Normalised'], axis=1, inplace=True)
+		self.sampleMetadata.drop(labels=['Sample Base Name Normalised', 'Assay data name Normalised'], axis=1,
+								 inplace=True)
 		self.limsFile.drop(labels=['Assay data name Normalised'], axis=1, inplace=True)
 
 		# Enforce string type on matched data
@@ -1249,14 +1353,20 @@ class Dataset:
 
 			# Enum masks describing the data in each row
 			sampleAbsentMetadata.loc[:, 'SampleType'] = SampleType.StudySample
-			sampleAbsentMetadata.loc[sampleAbsentMetadata['Status'].str.match('Study Reference', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
-			sampleAbsentMetadata.loc[sampleAbsentMetadata['Status'].str.match('Long Term Reference', na=False).astype(bool), 'SampleType'] = SampleType.ExternalReference
+			sampleAbsentMetadata.loc[sampleAbsentMetadata['Status'].str.match('Study Reference', na=False).astype(
+				bool), 'SampleType'] = SampleType.StudyPool
+			sampleAbsentMetadata.loc[sampleAbsentMetadata['Status'].str.match('Long Term Reference', na=False).astype(
+				bool), 'SampleType'] = SampleType.ExternalReference
 
 			sampleAbsentMetadata.loc[:, 'AssayRole'] = AssayRole.Assay
-			sampleAbsentMetadata.loc[sampleAbsentMetadata['Status'].str.match('Study Reference', na=False).astype(bool), 'AssayRole'] = AssayRole.PrecisionReference
-			sampleAbsentMetadata.loc[sampleAbsentMetadata['Status'].str.match('Long Term Reference', na=False).astype(bool), 'AssayRole'] = AssayRole.PrecisionReference
+			sampleAbsentMetadata.loc[sampleAbsentMetadata['Status'].str.match('Study Reference', na=False).astype(
+				bool), 'AssayRole'] = AssayRole.PrecisionReference
+			sampleAbsentMetadata.loc[sampleAbsentMetadata['Status'].str.match('Long Term Reference', na=False).astype(
+				bool), 'AssayRole'] = AssayRole.PrecisionReference
 
-			sampleAbsentMetadata.loc[:, 'LIMS Marked Missing'] = sampleAbsentMetadata['Status'].str.match('Missing', na=False).astype(bool)
+			sampleAbsentMetadata.loc[:, 'LIMS Marked Missing'] = sampleAbsentMetadata['Status'].str.match('Missing',
+																										  na=False).astype(
+				bool)
 
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in sampleAbsentMetadata.columns if c[-2:] != '_y']
@@ -1267,15 +1377,21 @@ class Dataset:
 
 		# Rename values in Sampling ID, special case for Study Pool, External Reference and Procedural Blank
 		if 'SampleType' in self.sampleMetadata.columns:
-			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata['SampleType'] == SampleType.StudyPool)).tolist(), 'Sampling ID'] = 'Study Pool Sample'
-			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata['SampleType'] == SampleType.ExternalReference)).tolist(), 'Sampling ID'] = 'External Reference Sample'
-			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sampling ID'] = 'Procedural Blank Sample'
+			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (
+						self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata[
+																		  'SampleType'] == SampleType.StudyPool)).tolist(), 'Sampling ID'] = 'Study Pool Sample'
+			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (
+						self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata[
+																		  'SampleType'] == SampleType.ExternalReference)).tolist(), 'Sampling ID'] = 'External Reference Sample'
+			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (
+						self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata[
+																		  'SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sampling ID'] = 'Procedural Blank Sample'
 		self.sampleMetadata.loc[(self.sampleMetadata['Sampling ID'] == 'nan').tolist(), 'Sampling ID'] = 'Not specified'
-		self.sampleMetadata.loc[(self.sampleMetadata['Sampling ID'] == '').tolist(), 'Sampling ID'] = 'Present but undefined in the LIMS file'
+		self.sampleMetadata.loc[(self.sampleMetadata[
+									 'Sampling ID'] == '').tolist(), 'Sampling ID'] = 'Present but undefined in the LIMS file'
 
 		# Log
 		self.Attributes['Log'].append([datetime.now(), 'LIMS sample IDs matched from %s' % (pathToLIMSfile)])
-
 
 	def _matchDatasetToSubjectInfo(self, pathToSubjectInfoFile):
 		"""
@@ -1285,20 +1401,23 @@ class Dataset:
 
 		:param str pathToSubjectInfoFile: path to subject information file, an Excel file with sheets 'Subject Info' and 'Sampling Events'
 		"""
-		self.subjectInfo = pandas.read_excel(pathToSubjectInfoFile, sheet_name='Subject Info', converters={'Subject ID' : str})
+		self.subjectInfo = pandas.read_excel(pathToSubjectInfoFile, sheet_name='Subject Info',
+											 converters={'Subject ID': str})
 		cols = [c for c in self.subjectInfo.columns if c[:7] != 'Unnamed']
 		self.subjectInfo = self.subjectInfo[cols]
 
-		self.samplingEvents = pandas.read_excel(pathToSubjectInfoFile, sheet_name='Sampling Events', converters={'Subject ID' : str, 'Sampling ID' : str})
+		self.samplingEvents = pandas.read_excel(pathToSubjectInfoFile, sheet_name='Sampling Events',
+												converters={'Subject ID': str, 'Sampling ID': str})
 		cols = [c for c in self.samplingEvents.columns if c[:7] != 'Unnamed']
 		self.samplingEvents = self.samplingEvents[cols]
 
 		# Create one overall samplingInfo sheet - combine subjectInfo and samplingEvents for samples present in samplingEvents
-		self.samplingInfo = pandas.merge(self.samplingEvents, self.subjectInfo, left_on='Subject ID', right_on='Subject ID', how='left', sort=False)
+		self.samplingInfo = pandas.merge(self.samplingEvents, self.subjectInfo, left_on='Subject ID',
+										 right_on='Subject ID', how='left', sort=False)
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
-		
+
 		# Remove any rows which are just nans
 		self.samplingInfo = self.samplingInfo.loc[self.samplingInfo['Sampling ID'].values != 'nan', :]
 
@@ -1313,7 +1432,9 @@ class Dataset:
 
 		# Match subjectInfo to sampleMetadata for samples with data ABSENT (i.e., samples in sampleAbsentMetadata)
 		if hasattr(self, 'sampleAbsentMetadata'):
-			self.sampleAbsentMetadata = pandas.merge(self.sampleAbsentMetadata, self.samplingInfo, left_on='Sampling ID', right_on='Sampling ID', how='left', sort=False)
+			self.sampleAbsentMetadata = pandas.merge(self.sampleAbsentMetadata, self.samplingInfo,
+													 left_on='Sampling ID', right_on='Sampling ID', how='left',
+													 sort=False)
 
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in self.sampleAbsentMetadata.columns if c[-2:] != '_y']
@@ -1323,9 +1444,9 @@ class Dataset:
 			self.sampleAbsentMetadata['SubjectInfoData'] = False
 			self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
 
-
 		# Match subjectInfo to sampleMetdata for samples with data PRESENT
-		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.samplingInfo, left_on='Sampling ID', right_on='Sampling ID', how='left', sort=False)
+		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.samplingInfo, left_on='Sampling ID',
+										   right_on='Sampling ID', how='left', sort=False)
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		cols = [c for c in self.sampleMetadata.columns if c[-2:] != '_y']
@@ -1336,27 +1457,29 @@ class Dataset:
 		self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
 
 		# Find samples present in sampleInfo but not in LIMS
-		info_butnotlims = self.samplingInfo.loc[self.samplingInfo['Sampling ID'].isin(self.limsFile['Sampling ID'])==False,:]
+		info_butnotlims = self.samplingInfo.loc[
+						  self.samplingInfo['Sampling ID'].isin(self.limsFile['Sampling ID']) == False, :]
 
 		if info_butnotlims.shape[0] != 0:
 			self.subjectAbsentMetadata = info_butnotlims.copy(deep=True)
 
-
 		self.Attributes['Log'].append([datetime.now(), 'Subject information matched from %s' % (pathToSubjectInfoFile)])
 
-
-	def __validateColumns(self,df,assay):
-		if (assay == 'NMR') and set(['Sample Name','NMR Assay Name', 'Date','Comment[time]', 'Parameter Value[run order]','Parameter Value[sample batch]',
-		  'Parameter Value[acquisition batch]','Parameter Value[instrument]']).issubset(df.columns):
+	def __validateColumns(self, df, assay):
+		if (assay == 'NMR') and set(
+				['Sample Name', 'NMR Assay Name', 'Date', 'Comment[time]', 'Parameter Value[run order]',
+				 'Parameter Value[sample batch]',
+				 'Parameter Value[acquisition batch]', 'Parameter Value[instrument]']).issubset(df.columns):
 			return True
-		elif (assay == 'MS') and set(['Sample Name','MS Assay Name', 'Date','Comment[time]', 'Parameter Value[run order]','Parameter Value[sample batch]',
-		  'Parameter Value[instrument]']).issubset(df.columns):
+		elif (assay == 'MS') and set(
+				['Sample Name', 'MS Assay Name', 'Date', 'Comment[time]', 'Parameter Value[run order]',
+				 'Parameter Value[sample batch]',
+				 'Parameter Value[instrument]']).issubset(df.columns):
 			return True
 		else:
 			return False
 
-
-	def _matchDatasetToISATAB(self,pathToISATABFile, studyID = 1, assay='MS', assayID=1,filenameSpec=''):
+	def _matchDatasetToISATAB(self, pathToISATABFile, studyID=1, assay='MS', assayID=1, filenameSpec=''):
 		"""
 		Match the Sample IDs in :py:attr:`sampleMetadata` to the subject and assay information in the ISATAB File.
 
@@ -1367,23 +1490,26 @@ class Dataset:
 		:param int assayID: the Assay index in the ISATAB File
 		:param str assay: the assay type 'MS' or 'NMR'
 		"""
-		if not (assay in ['MS','NMR']):
+		if not (assay in ['MS', 'NMR']):
 			raise ValueError('assay should be either \'MS\' or \'NMR\'')
 
 		# Load ISATAB file
-		with open(os.path.join(pathToISATABFile,'i_Investigation.txt')) as fp:
+		with open(os.path.join(pathToISATABFile, 'i_Investigation.txt')) as fp:
 			isa_tab_record = isatab.load(fp)
 
 		# subject info === study
 		# limsFile info === assay
-		study1 = isa_tab_record.studies[studyID - 1]#get the 1st study
+		study1 = isa_tab_record.studies[studyID - 1]  # get the 1st study
 		study_filename = study1.filename
-		subjectInfo = pandas.read_csv(os.path.join(pathToISATABFile,study_filename),sep='\t')
-		#We're only interested in these fields so keep them
-		subjectInfo = subjectInfo[['Source Name','Characteristics[age]','Characteristics[gender]','Date','Comment[study name]','Characteristics[organism]','Characteristics[material role]','Characteristics[material type]','Sample Name']]
-		#rename Characteristics[material role] to Status
+		subjectInfo = pandas.read_csv(os.path.join(pathToISATABFile, study_filename), sep='\t')
+		# We're only interested in these fields so keep them
+		subjectInfo = subjectInfo[
+			['Source Name', 'Characteristics[age]', 'Characteristics[gender]', 'Date', 'Comment[study name]',
+			 'Characteristics[organism]', 'Characteristics[material role]', 'Characteristics[material type]',
+			 'Sample Name']]
+		# rename Characteristics[material role] to Status
 		subjectInfo.rename(columns={'Characteristics[material role]': 'Status'}, inplace=True)
-		#rename these fields to something similar to excel sheet
+		# rename these fields to something similar to excel sheet
 		subjectInfo.rename(columns={'Source Name': 'Subject ID'}, inplace=True)
 		subjectInfo.rename(columns={'Characteristics[age]': 'Age'}, inplace=True)
 		subjectInfo.rename(columns={'Characteristics[gender]': 'Gender'}, inplace=True)
@@ -1391,115 +1517,137 @@ class Dataset:
 		subjectInfo.rename(columns={'Characteristics[organism]': 'Organism'}, inplace=True)
 		subjectInfo.rename(columns={'Characteristics[material type]': 'Material Type'}, inplace=True)
 		subjectInfo.rename(columns={'Comment[study name]': 'Study'}, inplace=True)
-		#subjectInfo.rename(columns={'Characteristics[dilution factor]': 'Dilution'}, inplace=True)
+		# subjectInfo.rename(columns={'Characteristics[dilution factor]': 'Dilution'}, inplace=True)
 		# Enforce string type on Subject ID and Sampling ID columns
 		subjectInfo['Subject ID'] = subjectInfo['Subject ID'].astype('str')
 		subjectInfo['Sample Name'] = subjectInfo['Sample Name'].astype('str')
 
-		assay1 = study1.assays[assayID - 1]#get the assay
+		assay1 = study1.assays[assayID - 1]  # get the assay
 		assay_filename = assay1.filename
 		# Read in ISATAB file
 		# The reason it's called limsFile is because this object is used in other modules such as reports
-		limsFile = pandas.read_csv(os.path.join(pathToISATABFile,assay_filename),sep='\t')
+		limsFile = pandas.read_csv(os.path.join(pathToISATABFile, assay_filename), sep='\t')
 
-		if not self.__validateColumns(limsFile,assay):
+		if not self.__validateColumns(limsFile, assay):
 			warnings.warn("One or more required fields are missing in your Assay table, results maybe unreliable!")
 
-		#rename Sample Name column to Sampling ID
+		# rename Sample Name column to Sampling ID
 		if any(limsFile.columns.str.match('Sample Name')):
 			limsFile.rename(columns={'Sample Name': 'Sampling ID'}, inplace=True)
 
-
-		#rename fields according to assay type
+		# rename fields according to assay type
 		if assay == 'NMR':
-			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings','NMRFields.json')) as data_file:
+			with open(
+					os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings', 'NMRFields.json')) as data_file:
 				nmrFieldDict = json.load(data_file)
-				limsFile.rename(columns = nmrFieldDict, inplace=True)
-				self.Attributes['Log'].append([datetime.now(), 'NMR Assay field names have been mapped into NPC field names' ])
+				limsFile.rename(columns=nmrFieldDict, inplace=True)
+				self.Attributes['Log'].append(
+					[datetime.now(), 'NMR Assay field names have been mapped into NPC field names'])
 		else:
-			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings','MSFields.json')) as data_file:
+			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings', 'MSFields.json')) as data_file:
 				msFieldDict = json.load(data_file)
 				limsFile.rename(columns=msFieldDict, inplace=True)
-				self.Attributes['Log'].append([datetime.now(), 'MS Assay field names have been mapped into NPC field names' ])
+				self.Attributes['Log'].append(
+					[datetime.now(), 'MS Assay field names have been mapped into NPC field names'])
 
-		#remove fields inserted by ISATAB and only keep the fields we're interested in
+		# remove fields inserted by ISATAB and only keep the fields we're interested in
 		if assay == 'MS':
-			limsFile = limsFile[['Sampling ID','Assay data name','Dilution','Run Order','Acquisition Date','Acquisition Time','Instrument','Chromatography','Ionisation','Batch','Sample batch','Plate','Well','Correction Batch','Detector']]
+			limsFile = limsFile[
+				['Sampling ID', 'Assay data name', 'Dilution', 'Run Order', 'Acquisition Date', 'Acquisition Time',
+				 'Instrument', 'Chromatography', 'Ionisation', 'Batch', 'Sample batch', 'Plate', 'Well',
+				 'Correction Batch', 'Detector']]
 		else:
-			limsFile = limsFile[['Sampling ID','Assay data name','Run Order','Acquisition Date','Acquisition Time','Instrument','Batch','Sample batch']]
+			limsFile = limsFile[
+				['Sampling ID', 'Assay data name', 'Run Order', 'Acquisition Date', 'Acquisition Time', 'Instrument',
+				 'Batch', 'Sample batch']]
 
-
-		#merge the two fields 'Acquisition Date','Acquisition Time' into one field 'Acquired Time'
-		#a few lines down we make sure 'Acquired Time' is a proper date/time field that pandas is happy with!
-		limsFile['Acquired Time'] = limsFile[['Acquisition Date', 'Acquisition Time']].apply(lambda x: ' '.join(x), axis=1)
+		# merge the two fields 'Acquisition Date','Acquisition Time' into one field 'Acquired Time'
+		# a few lines down we make sure 'Acquired Time' is a proper date/time field that pandas is happy with!
+		limsFile['Acquired Time'] = limsFile[['Acquisition Date', 'Acquisition Time']].apply(lambda x: ' '.join(x),
+																							 axis=1)
 		limsFile.drop(['Acquisition Date', 'Acquisition Time'], axis=1, inplace=True)
-		self.Attributes['Log'].append([datetime.now(), '\'Acquisition Date\', \'Acquisition Time\' read from ISATAB have been merged into \'Acquired Time\' and removed' ])
+		self.Attributes['Log'].append([datetime.now(),
+									   '\'Acquisition Date\', \'Acquisition Time\' read from ISATAB have been merged into \'Acquired Time\' and removed'])
 
-
-		#retrieve the material role or Sample Type or Status of each sample in the assay
-		#one way to do this is by merging the assay and study based on sample name!
+		# retrieve the material role or Sample Type or Status of each sample in the assay
+		# one way to do this is by merging the assay and study based on sample name!
 		self.limsFile = pandas.merge(limsFile, subjectInfo, left_on='Sampling ID', right_on='Sample Name')
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.limsFile = removeDuplicateColumns(self.limsFile)
 
-		#this is becuase when NMR metadata is read from raw data, it already contains a field 'Acquired Time'
-		#remove this field so we don't confuse it with the one read from isatab
-		#Log it!
+		# this is becuase when NMR metadata is read from raw data, it already contains a field 'Acquired Time'
+		# remove this field so we don't confuse it with the one read from isatab
+		# Log it!
 		if any(self.sampleMetadata.columns.str.match('Acquired Time')):
 			self.sampleMetadata.drop('Acquired Time', axis=1, inplace=True)
-			self.Attributes['Log'].append([datetime.now(), 'Acquired Time has been read from ISATAB instead of raw data' ])
+			self.Attributes['Log'].append(
+				[datetime.now(), 'Acquired Time has been read from ISATAB instead of raw data'])
 
-		#this is becuase when NMR metadata is read from raw data, it already contains a field 'Run Order'
-		#remove this field so we don't confuse it with the one read from isatab
+		# this is becuase when NMR metadata is read from raw data, it already contains a field 'Run Order'
+		# remove this field so we don't confuse it with the one read from isatab
 		if any(self.sampleMetadata.columns.str.match('Run Order')):
 			self.sampleMetadata.drop('Run Order', axis=1, inplace=True)
-			self.Attributes['Log'].append([datetime.now(), 'Run Order has been read from ISATAB instead of raw data' ])
-
+			self.Attributes['Log'].append([datetime.now(), 'Run Order has been read from ISATAB instead of raw data'])
 
 		# Prepare data
-		self.sampleMetadata.loc[:,'Sample Base Name'] = self.sampleMetadata['Sample File Name']
-		self.sampleMetadata.loc[:,'Sample Base Name Normalised'] = self.sampleMetadata['Sample Base Name'].str.lower()
+		self.sampleMetadata.loc[:, 'Sample Base Name'] = self.sampleMetadata['Sample File Name']
+		self.sampleMetadata.loc[:, 'Sample Base Name Normalised'] = self.sampleMetadata['Sample Base Name'].str.lower()
 
 		# Enforce string type on 'Sampling ID'
 		sampleIDmask = pandas.isnull(self.limsFile['Sampling ID']) == False
-		self.limsFile.loc[sampleIDmask,'Sampling ID'] = self.limsFile.loc[sampleIDmask,'Sampling ID'].astype('str')
-		self.limsFile.loc[:,'Assay data name Normalised'] = self.limsFile['Assay data name'].str.lower()
-
+		self.limsFile.loc[sampleIDmask, 'Sampling ID'] = self.limsFile.loc[sampleIDmask, 'Sampling ID'].astype('str')
+		self.limsFile.loc[:, 'Assay data name Normalised'] = self.limsFile['Assay data name'].str.lower()
 
 		# Match limsFile to sampleMetdata for samples with data PRESENT
-		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.limsFile, left_on='Sample Base Name Normalised', right_on='Assay data name Normalised', how='left', sort=False)
+		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.limsFile, left_on='Sample Base Name Normalised',
+										   right_on='Assay data name Normalised', how='left', sort=False)
 		self.sampleMetadata = removeDuplicateColumns(self.sampleMetadata)
-		#check with Jake/Caroline
+		# check with Jake/Caroline
 		self.sampleMetadata['Exclusion Details'] = None
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
-		#self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Sampling ID'].notnull().astype(bool)
-		self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Status'].str.match('Sample', na=False).astype(bool)
-		self.sampleMetadata.loc[:,'Long-Term Reference'] = self.sampleMetadata['Status'].str.match('Long Term Reference', na=False).astype(bool)
-		self.sampleMetadata.loc[:,'Study Reference'] = self.sampleMetadata['Status'].str.match('Study Reference', na=False).astype(bool)
-		self.sampleMetadata.loc[:,'Method Reference'] = self.sampleMetadata['Status'].str.match('Method Reference', na=False).astype(bool)
-		self.sampleMetadata.loc[:,'Dilution Series'] = self.sampleMetadata['Status'].str.match('Dilution Series', na=False).astype(bool)
-		#why is this repeated?
-		#self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Study Sample'].where((self.sampleMetadata['Long-Term Reference'] | self.sampleMetadata['Study Reference']) == False, other=False)
-		self.sampleMetadata.loc[:,'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing', na=False).astype(bool)
+		# self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Sampling ID'].notnull().astype(bool)
+		self.sampleMetadata.loc[:, 'Study Sample'] = self.sampleMetadata['Status'].str.match('Sample', na=False).astype(
+			bool)
+		self.sampleMetadata.loc[:, 'Long-Term Reference'] = self.sampleMetadata['Status'].str.match(
+			'Long Term Reference', na=False).astype(bool)
+		self.sampleMetadata.loc[:, 'Study Reference'] = self.sampleMetadata['Status'].str.match('Study Reference',
+																								na=False).astype(bool)
+		self.sampleMetadata.loc[:, 'Method Reference'] = self.sampleMetadata['Status'].str.match('Method Reference',
+																								 na=False).astype(bool)
+		self.sampleMetadata.loc[:, 'Dilution Series'] = self.sampleMetadata['Status'].str.match('Dilution Series',
+																								na=False).astype(bool)
+		# why is this repeated?
+		# self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Study Sample'].where((self.sampleMetadata['Long-Term Reference'] | self.sampleMetadata['Study Reference']) == False, other=False)
+		self.sampleMetadata.loc[:, 'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing',
+																									na=False).astype(
+			bool)
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
-		self.sampleMetadata.loc[:,'Data Present'] = self.sampleMetadata['Sample File Name'].str.match('.+', na=False)
-		self.sampleMetadata.loc[:,'LIMS Present'] = self.sampleMetadata['Assay data name'].str.match('.+', na=False, case=False)
-		self.sampleMetadata.loc[:,'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing', na=False)
-		self.sampleMetadata['Study Sample'].where((self.sampleMetadata['Study Sample'] & (self.sampleMetadata['LIMS Present'] == False)) == False, False, inplace=True)
-		#check with Jake/Caroline
+		self.sampleMetadata.loc[:, 'Data Present'] = self.sampleMetadata['Sample File Name'].str.match('.+', na=False)
+		self.sampleMetadata.loc[:, 'LIMS Present'] = self.sampleMetadata['Assay data name'].str.match('.+', na=False,
+																									  case=False)
+		self.sampleMetadata.loc[:, 'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing', na=False)
+		self.sampleMetadata['Study Sample'].where(
+			(self.sampleMetadata['Study Sample'] & (self.sampleMetadata['LIMS Present'] == False)) == False, False,
+			inplace=True)
+		# check with Jake/Caroline
 		self.sampleMetadata['Skipped'] = None
 
 		# Explicity convert datetime format
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].apply(pandas.to_datetime,dayfirst=True)
+		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].apply(pandas.to_datetime,
+																						  dayfirst=True)
 		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].astype(datetime)
 
-		#automatically mark samples that have no 'Acquired Time' for exclusion
+		# automatically mark samples that have no 'Acquired Time' for exclusion
 		if sum(self.sampleMetadata['Acquired Time'].isnull()) > 0:
-			self.excludeSamples(self.sampleMetadata[self.sampleMetadata['Acquired Time'].notnull()==False]['Sample File Name'], on='Sample File Name', message='Acquired time missing')
-			self.Attributes['Log'].append([datetime.now(), 'One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing'])
-			warnings.warn('One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing!')
+			self.excludeSamples(
+				self.sampleMetadata[self.sampleMetadata['Acquired Time'].notnull() == False]['Sample File Name'],
+				on='Sample File Name', message='Acquired time missing')
+			self.Attributes['Log'].append([datetime.now(),
+										   'One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing'])
+			warnings.warn(
+				'One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing!')
 
 		##
 		# If AssayRole or SampleType columns are present parse strings into enums
@@ -1516,18 +1664,23 @@ class Dataset:
 				self.sampleMetadata.loc[self.sampleMetadata['SampleType'].values == stype.name, 'SampleType'] = stype
 		"""
 		self.sampleMetadata['AssayRole'] = AssayRole.Assay
-		self.sampleMetadata.loc[self.sampleMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleMetadata.loc[self.sampleMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleMetadata.loc[self.sampleMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleMetadata.loc[self.sampleMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
-
+		self.sampleMetadata.loc[
+			self.sampleMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		# self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleMetadata.loc[
+			self.sampleMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleMetadata.loc[
+			self.sampleMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleMetadata.loc[
+			self.sampleMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
 
 		self.sampleMetadata['SampleType'] = SampleType.StudySample
 		self.sampleMetadata.loc[self.sampleMetadata['Study Reference'].values, 'SampleType'] = SampleType.StudyPool
-		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
-		self.sampleMetadata.loc[self.sampleMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
-		self.sampleMetadata.loc[self.sampleMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
+		# self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
+		self.sampleMetadata.loc[
+			self.sampleMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
+		self.sampleMetadata.loc[
+			self.sampleMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
 		self.sampleMetadata.loc[self.sampleMetadata['Dilution Series'].values, 'SampleType'] = SampleType.StudyPool
 
 		# Remove duplicate columns (these will be appended with _x or _y)
@@ -1535,35 +1688,50 @@ class Dataset:
 
 		# Find samples present in LIMS but not acquired - replace the deepcopy from python with pandas, to avoid error
 		# when the dataframe is empty
-		lims_butnotacq = self.limsFile.loc[self.limsFile['Assay data name Normalised'].isin(self.sampleMetadata['Sample Base Name Normalised'])==False,:]
+		lims_butnotacq = self.limsFile.loc[self.limsFile['Assay data name Normalised'].isin(
+			self.sampleMetadata['Sample Base Name Normalised']) == False, :]
 		self.sampleAbsentMetadata = lims_butnotacq.copy(deep=True)
 
 		# Complete/create set of boolean columns describing the data in each row for sampleAbsentMetadata
-		self.sampleAbsentMetadata.loc[:,'Study Sample'] = self.sampleAbsentMetadata['Status'].str.match('Sample', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'Long-Term Reference'] = self.sampleAbsentMetadata['Status'].str.match('Long Term Reference', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'Study Reference'] = self.sampleAbsentMetadata['Status'].str.match('Study Reference', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'Method Reference'] = self.sampleAbsentMetadata['Status'].str.match('Method Reference', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'Dilution Series'] = self.sampleAbsentMetadata['Status'].str.match('Dilution Series', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'LIMS Marked Missing'] = self.sampleAbsentMetadata['Status'].str.match('Missing', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:, 'Study Sample'] = self.sampleAbsentMetadata['Status'].str.match('Sample',
+																										 na=False).astype(
+			bool)
+		self.sampleAbsentMetadata.loc[:, 'Long-Term Reference'] = self.sampleAbsentMetadata['Status'].str.match(
+			'Long Term Reference', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:, 'Study Reference'] = self.sampleAbsentMetadata['Status'].str.match(
+			'Study Reference', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:, 'Method Reference'] = self.sampleAbsentMetadata['Status'].str.match(
+			'Method Reference', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:, 'Dilution Series'] = self.sampleAbsentMetadata['Status'].str.match(
+			'Dilution Series', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:, 'LIMS Marked Missing'] = self.sampleAbsentMetadata['Status'].str.match(
+			'Missing', na=False).astype(bool)
 
 		# Remove duplicate columns (these will be appended with _x or _y)
-		#self.sampleAbsentMetadata = removeDuplicateColumns(self.sampleAbsentMetadata)
+		# self.sampleAbsentMetadata = removeDuplicateColumns(self.sampleAbsentMetadata)
 
-		#This should be done in a better way
+		# This should be done in a better way
 		self.sampleAbsentMetadata['AssayRole'] = AssayRole.Assay
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
-
+		self.sampleAbsentMetadata.loc[
+			self.sampleAbsentMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		# self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleAbsentMetadata.loc[
+			self.sampleAbsentMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleAbsentMetadata.loc[
+			self.sampleAbsentMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleAbsentMetadata.loc[
+			self.sampleAbsentMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
 
 		self.sampleAbsentMetadata['SampleType'] = SampleType.StudySample
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Study Reference'].values, 'SampleType'] = SampleType.StudyPool
-		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Dilution Series'].values, 'SampleType'] = SampleType.StudyPool
+		self.sampleAbsentMetadata.loc[
+			self.sampleAbsentMetadata['Study Reference'].values, 'SampleType'] = SampleType.StudyPool
+		# self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
+		self.sampleAbsentMetadata.loc[
+			self.sampleAbsentMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
+		self.sampleAbsentMetadata.loc[
+			self.sampleAbsentMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
+		self.sampleAbsentMetadata.loc[
+			self.sampleAbsentMetadata['Dilution Series'].values, 'SampleType'] = SampleType.StudyPool
 
 		# Save biological parameters (for multivariate QC)
 		self.Attributes['Analytical Measurements'] = self.sampleMetadata.columns
@@ -1573,7 +1741,8 @@ class Dataset:
 		# limsFile info === assay
 
 		# Create one overall samplingInfo sheet - combine subjectInfo and samplingEvents for samples present in samplingEvents
-		self.samplingInfo = pandas.merge(self.limsFile, subjectInfo, left_on='Sampling ID', right_on='Sample Name', how='left', sort=False)
+		self.samplingInfo = pandas.merge(self.limsFile, subjectInfo, left_on='Sampling ID', right_on='Sample Name',
+										 how='left', sort=False)
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
@@ -1584,7 +1753,6 @@ class Dataset:
 
 		self.sampleAbsentMetadata['SubjectInfoData'] = False
 		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
-
 
 		self.sampleMetadata['SubjectInfoData'] = False
 		self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
@@ -1603,8 +1771,8 @@ class Dataset:
 		self.Attributes['Biological Measurements'] = self.samplingInfo.columns.drop('inLIMS')
 		"""
 		self.Attributes['Biological Measurements'] = self.samplingInfo.columns
-		self.Attributes['Log'].append([datetime.now(), 'Subject information matched from ISATAB %s' % (pathToISATABFile)])
-
+		self.Attributes['Log'].append(
+			[datetime.now(), 'Subject information matched from ISATAB %s' % (pathToISATABFile)])
 
 	def excludeSamples(self, sampleList, on='Sample File Name', message='User Excluded'):
 		"""
@@ -1633,14 +1801,14 @@ class Dataset:
 				if (self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'].isnull()).any():
 					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] = message
 				else:
-					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] = self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] + ' AND ' + message
+					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] = \
+					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] + ' AND ' + message
 			else:
 				# AMtched must be unique.
 				notFound.append(sample)
 
 		if any(notFound):
 			return notFound
-
 
 	def excludeFeatures(self, featureList, on='Feature Name', message='User Excluded'):
 		"""
@@ -1670,15 +1838,17 @@ class Dataset:
 				if (self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'].isnull()).any():
 					self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = message
 				else:
-					self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] + ' AND ' + message
+					self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = \
+					self.featureMetadata.loc[
+						self.featureMetadata[on] == feature, 'Exclusion Details'] + ' AND ' + message
 			else:
 				# AMtched must be unique.
 				notFound.append(feature)
 
 		return notFound
 
-
-	def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False, filterMetadata=True):
+	def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False,
+					  filterMetadata=True):
 		"""
 		Export dataset object in a variety of formats for import in other software, the export is named according to the :py:attr:`name` attribute of the Dataset object.
 
@@ -1717,10 +1887,12 @@ class Dataset:
 
 		if filterMetadata:
 			# sampleMetadata not exported
-			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(exportDataset.Attributes['sampleMetadataNotExported']))
+			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(
+				exportDataset.Attributes['sampleMetadataNotExported']))
 			exportDataset.sampleMetadata.drop(sampleMetaColToRemove, axis=1, inplace=True)
 			# sampleMetadata not exported
-			featureMetaColToRemove = list(set(exportDataset.featureMetadata.columns.tolist()) & set(exportDataset.Attributes['featureMetadataNotExported']))
+			featureMetaColToRemove = list(set(exportDataset.featureMetadata.columns.tolist()) & set(
+				exportDataset.Attributes['featureMetadataNotExported']))
 			exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1, inplace=True)
 
 		destinationPath = os.path.join(destinationPath, exportDataset.name)
@@ -1748,9 +1920,8 @@ class Dataset:
 		:raises IOError: If writing one of the files fails
 		"""
 
-		sampleMetadata  = self.sampleMetadata.copy(deep=True)
+		sampleMetadata = self.sampleMetadata.copy(deep=True)
 		featureMetadata = self.featureMetadata.copy(deep=True)
-
 
 		if escapeDelimiters:
 			# Remove any commas from metadata/feature tables - for subsequent import of resulting csv files to other software packages
@@ -1771,16 +1942,15 @@ class Dataset:
 
 		# Export sample metadata
 		sampleMetadata.to_csv(destinationPath + '_sampleMetadata.csv',
-			encoding='utf-8', date_format=self._timestampFormat)
+							  encoding='utf-8', date_format=self._timestampFormat)
 
 		# Export feature metadata
 		featureMetadata.to_csv(destinationPath + '_featureMetadata.csv',
-			encoding='utf-8')
+							   encoding='utf-8')
 
 		# Export intensity data
 		numpy.savetxt(destinationPath + '_intensityData.csv',
-			self.intensityData, delimiter=",")
-
+					  self.intensityData, delimiter=",")
 
 	def _exportISATAB(self, destinationPath, escapeDelimiters=True, assay='MS'):
 		"""
@@ -1791,7 +1961,6 @@ class Dataset:
 		:raises IOError: If writing one of the files fails
 		"""
 		raise NotImplementedError
-
 
 	def _exportUnifiedCSV(self, destinationPath, escapeDelimiters=True):
 		"""
@@ -1825,7 +1994,7 @@ class Dataset:
 
 		# Export combined data in single file
 		tmpXCombined = pandas.concat([featureMetadata.transpose(),
-			pandas.DataFrame(self.intensityData)], axis=0)
+									  pandas.DataFrame(self.intensityData)], axis=0)
 
 		with warnings.catch_warnings():
 			# Seems no way to avoid pandas complaining here (v0.18.1)
@@ -1837,10 +2006,9 @@ class Dataset:
 
 		# Save
 		tmpCombined.to_csv(os.path.join(destinationPath + '_combinedData.csv'),
-			encoding='utf-8', date_format=self._timestampFormat)
+						   encoding='utf-8', date_format=self._timestampFormat)
 
-
-	def getFeatures(self, featureIDs, by=None):
+	def getFeatures(self, featureIDs, by=None, useMasks=True):
 		"""
 		Get a feature or list of features by name or ranges.
 
@@ -1858,7 +2026,7 @@ class Dataset:
 			featureIDs = [featureIDs]
 
 		if by is None:
-			by = self.Attributes['Feature Name']
+			by = self.Attributes['Feature Names']
 
 		if by not in self.featureMetadata.keys():
 			raise KeyError('"by": %s is not a key in featureMetadata' % (by))
@@ -1868,6 +2036,10 @@ class Dataset:
 			for feature in featureIDs:
 				indexes.append(self.featureMetadata.loc[self.featureMetadata[by] == feature].index[0])
 
+			if useMasks:
+				indexes = [x for x in indexes if self.featureMask[x]]
+				#indexes.remove(maskedVar)
+
 			return self.featureMetadata.iloc[indexes], self.intensityData[:, indexes]
 
 		elif self.VariableType == VariableType.Spectral:
@@ -1876,7 +2048,11 @@ class Dataset:
 				if featureRange[0] > featureRange[1]:
 					featureRange = tuple(reversed(featureRange))
 
-				rangeMask[numpy.logical_and(self.featureMetadata[by].values >= featureRange[0], self.featureMetadata[by].values <= featureRange[1])] = True
+				rangeMask[numpy.logical_and(self.featureMetadata[by].values >= featureRange[0],
+											self.featureMetadata[by].values <= featureRange[1])] = True
+
+			if useMasks:
+				rangeMask &= self.featureMask
 
 			return self.featureMetadata.loc[rangeMask], self.intensityData[:, rangeMask]
 		else:
@@ -1890,5 +2066,6 @@ class Dataset:
 def main():
 	print("Implementation of " + os.path.split(os.path.dirname(inspect.getfile(nPYc)))[1])
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
 	pass
