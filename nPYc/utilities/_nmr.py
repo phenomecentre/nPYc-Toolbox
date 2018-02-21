@@ -108,7 +108,7 @@ def qcCheckWaterPeak(spectrum, alpha):
 
 	# check for each point if it outside the percentiles defined by alpha
 	isOutlierPoint = spectrum > criticalThresholdUpper
-	isOutlierPoint |= spectrum < criticalThresholdLower
+	#isOutlierPoint |= spectrum < criticalThresholdLower
 
 	# Check proportion of points out per sample
 	sumOut = numpy.sum(isOutlierPoint, 1) / spectrum.shape[1]
