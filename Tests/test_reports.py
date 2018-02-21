@@ -314,7 +314,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'test_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'oie_transparent.png', 'test_RSDdistributionFigure.png', 'test_TICinLR.png', 'test_acquisitionStructure.png',
+			testFiles = ['npc-main.css', 'toolbox_logo.png', 'test_RSDdistributionFigure.png', 'test_TICinLR.png', 'test_acquisitionStructure.png',
 						 'test_correlationByPerc.png', 'test_ionMap.png', 'test_meanIntesityFeature.png', 'test_meanIntesitySample.png',
 						 'test_peakWidth.png', 'test_rsdByPerc.png', 'test_rsdVsCorrelation.png']
 
@@ -343,7 +343,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 						 'Batch 1.0, series 1.0 LR Sample TIC (coloured by dilution).png', 'Batch 1.0, series 2.0 Histogram of Correlation To Dilution.png',
 						 'Batch 1.0, series 2.0 LR Sample TIC (coloured by change in detector voltage).png', 'Batch 1.0, series 2.0 LR Sample TIC (coloured by dilution).png',
 						 'MeanAllSubsets Histogram of Correlation To Dilution.png', 'MeanAllSubsets LR Sample TIC (coloured by change in detector voltage).png',
-						 'MeanAllSubsets LR Sample TIC (coloured by dilution).png', 'UnitTest1_PCSOP.069_QI_satFeaturesHeatmap.png', 'npc-main.css', 'oie_transparent.png']
+						 'MeanAllSubsets LR Sample TIC (coloured by dilution).png', 'UnitTest1_PCSOP.069_QI_satFeaturesHeatmap.png', 'npc-main.css', 'toolbox_logo.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_correlationToDilution', testFile)
@@ -364,7 +364,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionAssessment.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'oie_transparent.png', 'UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_145.0686m-z.png', 
+			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_145.0686m-z.png', 
 						'UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_262.0378m-z.png', 'UnitTest1_PCSOP.069_QI_TICdetectorBatches.png']
 
 			for testFile in testFiles:
@@ -387,7 +387,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'oie_transparent.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePRE.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePOST.png',
+			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePRE.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePOST.png',
 						'UnitTest1_PCSOP.069_QI_BCS2_TicPRE.png', 'UnitTest1_PCSOP.069_QI_BCS2_TicPOST.png',
 						'UnitTest1_PCSOP.069_QI_BCS3_rsdByPercPRE.png', 'UnitTest1_PCSOP.069_QI_BCS3_rsdByPercPOST.png',
 						'UnitTest1_PCSOP.069_QI_BCS4_RSDdistributionFigurePRE.png', 'UnitTest1_PCSOP.069_QI_BCS4_RSDdistributionFigurePOST.png']
@@ -411,7 +411,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_featureSelection.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'oie_transparent.png', 'UnitTest1_PCSOP.069_QI_noFeatures.png']
+			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_noFeatures.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSelection', testFile)
@@ -432,7 +432,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_finalReport.html')			
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'oie_transparent.png', 'UnitTest1_PCSOP.069_QI_finalFeatureIntensityHist.png', 'UnitTest1_PCSOP.069_QI_finalIonMap.png',
+			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_finalFeatureIntensityHist.png', 'UnitTest1_PCSOP.069_QI_finalIonMap.png',
 						 'UnitTest1_PCSOP.069_QI_finalRSDdistributionFigure.png', 'UnitTest1_PCSOP.069_QI_finalTIC.png', 'UnitTest1_PCSOP.069_QI_finalTICbatches.png']
 
 			for testFile in testFiles:
@@ -710,7 +710,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'oie_transparent.png', 'unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A.png', 'unittest_FeatureConcentrationDistribution-B.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
+			testFiles = ['npc-main.css', 'toolbox_logo.png', 'unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A.png', 'unittest_FeatureConcentrationDistribution-B.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', testFile)
@@ -726,7 +726,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_mergeLoqAssessment.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'oie_transparent.png', 'unittest_ConcentrationPrePostMergeLOQ.png']
+			testFiles = ['npc-main.css', 'toolbox_logo.png', 'unittest_ConcentrationPrePostMergeLOQ.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_mergeLoqAssessment', testFile)
@@ -751,7 +751,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalReport.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'oie_transparent.png', 'unittest_AcquisitionStructure.png',
+			testFiles = ['npc-main.css', 'toolbox_logo.png', 'unittest_AcquisitionStructure.png',
 						 'unittest_FeatureAccuracy-A.png',
 						 'unittest_FeatureAccuracy-B.png',
 						 'unittest_FeatureConcentrationDistribution-A.png',
@@ -942,7 +942,7 @@ class test_reports_multivariate(unittest.TestCase):
 				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleTypePC1vsPC2.png',
 							 'Dataset_PCAscreePlot.png', 'Dataset_metadataPlot_metadataDistribution_categorical0.png', 'Dataset_metadataPlot_metadataDistribution_continuous0.png',
 							 'Dataset_metadataPlot_metadataDistribution_date0.png', 'Dataset_modOutliersPlot.png', 'Dataset_sigCorHeatmap.png', 'Dataset_sigKruHeatmap.png',
-							 'Dataset_strongOutliersPlot.png', 'npc-main.css', 'oie_transparent.png']
+							 'Dataset_strongOutliersPlot.png', 'npc-main.css', 'toolbox_logo.png']
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAll', testFile)
@@ -975,7 +975,7 @@ class test_reports_multivariate(unittest.TestCase):
 				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleTypePC1vsPC2.png',
 							 'Dataset_PCAscreePlot.png', 'Dataset_metadataPlot_metadataDistribution_categorical0.png', 'Dataset_metadataPlot_metadataDistribution_continuous0.png',
 							 'Dataset_metadataPlot_metadataDistribution_date0.png', 'Dataset_modOutliersPlot.png', 'Dataset_sigCorHeatmap.png', 'Dataset_sigKruHeatmap.png',
-							 'Dataset_strongOutliersPlot.png', 'npc-main.css', 'oie_transparent.png']
+							 'Dataset_strongOutliersPlot.png', 'npc-main.css', 'toolbox_logo.png']
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAnalytical', testFile)

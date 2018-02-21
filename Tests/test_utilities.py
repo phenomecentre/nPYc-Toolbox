@@ -90,7 +90,7 @@ class test_utilities_internal(unittest.TestCase):
 		Check files are copied to the location specified (we trust the shutil.copy call to preserve contents).
 		"""
 
-		expectedFiles = ['npc-main.css', 'oie_transparent.png']
+		expectedFiles = ['npc-main.css', 'toolbox_logo.png']
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
@@ -108,7 +108,7 @@ class test_utilities_internal(unittest.TestCase):
 		Check files are copied to the location specified (we trust the shutil.copy call to preserve contents), when graphics alread exists.
 		"""
 
-		expectedFiles = ['npc-main.css', 'oie_transparent.png']
+		expectedFiles = ['npc-main.css', 'toolbox_logo.png']
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
