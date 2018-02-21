@@ -243,11 +243,80 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			self.dataset.Attributes['exclusionRegions'] = None
 			self.assertRaises(ValueError, self.dataset.updateMasks, filterFeatures=True, filterSamples=False, exclusionRegions=None)
 
+
 	def test_updateMasks_warns(self):
 
 		with self.subTest(msg='Range low == high'):
 			self.dataset.Attributes['exclusionRegions'] = None
 			self.assertWarnsRegex(UserWarning, 'Low \(1\.10\) and high \(1\.10\) bounds are identical, skipping region', self.dataset.updateMasks, filterFeatures=True, filterSamples=False, exclusionRegions=(1.1,1.1))
+
+
+	def test_nmrQCchecks(self):
+
+		self.dataset.Attributes.pop('PWFailThreshold', None)
+		self.dataset.Attributes.pop('baselineCheckRegion', None)
+		self.dataset.Attributes.pop('waterPeakCheckRegion', None)
+
+		with self.subTest('Calibration'):
+			bounds = numpy.std(self.dataset.sampleMetadata['Delta PPM']) * 3
+			self.dataset.sampleMetadata.loc[0::30, 'Delta PPM'] = bounds * 15
+
+			self.dataset._nmrQCChecks()
+
+			# Check mask
+			expected = numpy.zeros_like(self.dataset.sampleMask, dtype=bool)
+			expected[0::30] = True
+			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['CalibrationFail'].values)
+
+			# Check other tests have not happend
+			for skipedCheck in ['LineWidthFail', 'BaselineFail', 'WaterPeakFail']:
+				self.assertFalse(skipedCheck in self.dataset.sampleMetadata.columns)
+
+		with self.subTest('Line Width'):
+			self.dataset.Attributes['PWFailThreshold'] = 2
+
+			self.dataset.sampleMetadata['Line Width (Hz)'] = 1.5
+			self.dataset.sampleMetadata.loc[0::5, 'Line Width (Hz)'] = 3
+
+			self.dataset._nmrQCChecks()
+
+			expected = numpy.zeros_like(self.dataset.sampleMask, dtype=bool)
+			expected[0::5] = True
+
+			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['LineWidthFail'].values)
+
+			# Check other tests have not happend
+			for skipedCheck in ['BaselineFail', 'WaterPeakFail']:
+				self.assertFalse(skipedCheck in self.dataset.sampleMetadata.columns)
+
+		with self.subTest('Baseline'):
+			self.dataset.Attributes['baselineCheckRegion'] = [(-2, -0.5), (9.5, 12.5)]
+
+			self.dataset.intensityData[0,:] = 100
+			self.dataset.intensityData[2,:] = -100
+
+			self.dataset._nmrQCChecks()
+
+			expected = numpy.zeros_like(self.dataset.sampleMask, dtype=bool)
+			expected[0] = True
+			expected[2] = True
+
+			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['BaselineFail'].values)
+
+			# Check other tests have not happend
+			self.assertFalse('WaterPeakFail' in self.dataset.sampleMetadata.columns)
+
+		with self.subTest('Water Peak'):
+			self.dataset.Attributes['waterPeakCheckRegion'] = [(-2, -0.5), (9.5, 12.5)]
+
+			self.dataset._nmrQCChecks()
+
+			expected = numpy.zeros_like(self.dataset.sampleMask, dtype=bool)
+			expected[0] = True
+			expected[2] = True
+
+			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['WaterPeakFail'].values)
+
 
 ##
 #unit test for Bruker data
