@@ -22,7 +22,7 @@ setup(name='nPYc',
 		'isatools>=0.9.2',
 		'lmfit>=0.9.7',
 		'cycler>=0.10.0',
-		'pyChemometrics>0.11'
+		'pyChemometrics>0.1'
 	],
 	classifiers = [
 		"Programming Language :: Python",
