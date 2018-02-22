@@ -802,6 +802,14 @@ class test_plotting(unittest.TestCase):
 		pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
+
+			with self.subTest(msg='Basic'):
+				outputPath = os.path.join(tmpdirname, 'basic')
+
+				nPYc.plotting.plotScores(pcaModel, figureFormat='png', savePath=outputPath)
+
+				self.assertTrue(os.path.exists(outputPath + '.png'))
+
 			with self.subTest(msg='Continuous varaible'):
 				outputPath = os.path.join(tmpdirname, 'continuous')
 
@@ -829,6 +837,18 @@ class test_plotting(unittest.TestCase):
 				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], classType='continuous', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
+
+
+	def test_plotScores_raises(self):
+
+		self.assertRaises(TypeError, nPYc.plotting.plotScores, 'not a pca model')
+
+		noSamp = 10
+		noFeat = 10
+		dataset = generateTestDataset(noSamp, noFeat, dtype='MSDataset')
+		pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
+
+		self.assertRaises(ValueError, nPYc.plotting.plotScores, pcaModel, classes=dataset.sampleMetadata['Detector'], classType=None)
 
 
 	def test_plotPW(self):
