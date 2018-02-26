@@ -1,6 +1,7 @@
 {% macro basicPCAReport(item) -%}
 	<!--PCA scores plots coloured by sample type.-->
 	<div class="content">
+		<h2>PCA Analysis</h2>
 		<div class='figure'>
 			<p class="caption"><span class="heading">Figure&nbsp;{{ item.PCAcount }}.</span> PCA scores plots coloured by sample type.</p>
 			{% for key, value in item['QCscores'].items() %}

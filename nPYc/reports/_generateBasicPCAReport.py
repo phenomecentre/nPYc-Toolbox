@@ -79,4 +79,7 @@ def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, output=None, file
 
 	returnDict['loadings'] = figuresLoadings
 
-	return returnDict
+	if output:
+		return returnDict
+	else:
+		return None

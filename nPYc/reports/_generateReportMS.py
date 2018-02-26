@@ -6,7 +6,12 @@ from collections import OrderedDict
 import matplotlib.pyplot as plt
 import seaborn as sns
 import copy
+from IPython.display import display 
+import warnings
+import re
+import shutil
 from matplotlib import gridspec
+
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
@@ -16,10 +21,8 @@ from ..utilities import generateLRmask, rsd
 from ..utilities._internal import _vcorrcoef
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..enumerations import AssayRole, SampleType
-from IPython.display import display 
-import warnings
-import re
-import shutil
+from ._generateBasicPCAReport import generateBasicPCAReport
+
 from ..__init__ import __version__ as version
 
 def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifactualFiltering=None, output=None, msDataCorrected=None, pcaModel=None, batch_correction_window=11):
@@ -119,8 +122,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 	item['SPcount'] = str(sum(SPmask))
 	item['ERcount'] = str(sum(ERmask))
 	item['corrMethod'] = msData.Attributes['corrMethod']
-    
-    
+
 	# Feature summary report
 	if reportType == 'feature summary':
 		"""
@@ -469,7 +471,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		"""
 
 		# Pre-correction report (report is example of results when batch correction applied)
-            
+
 		# Check inputs
 		if not hasattr(msData.sampleMetadata, 'Correction Batch'):
 			raise ValueError("Correction Batch information missing, run addSampleInfo(descriptionFormat=\'Batches\')")
@@ -590,7 +592,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 			print('Post-correction.')
 		
 		plotTIC(msDataCorrected,
-			addViolin=True,																				
+			addViolin=True,
 			title='TIC Post Batch-Correction',
 			savePath=saveAs,
 			figureFormat=msData.Attributes['figureFormat'],
@@ -779,7 +781,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 	if reportType == 'final report':
 		"""
 		Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
-		"""      
+		"""
 
 		# Table 1: Sample summary
 										
@@ -790,7 +792,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		sampleSummaryTable = copy.deepcopy(sampleSummary['Acquired'])
 		
 		# Drop unwanted columns
-		sampleSummaryTable.drop(['Marked for Exclusion'], axis=1, inplace=True)        
+		sampleSummaryTable.drop(['Marked for Exclusion'], axis=1, inplace=True)
 		if 'LIMS marked as missing' in sampleSummaryTable.columns:
 			sampleSummaryTable.drop(['LIMS marked as missing', 'Missing from LIMS'], axis=1, inplace=True) 
 		if 'Missing Subject Information' in sampleSummaryTable.columns:
@@ -946,58 +948,15 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 			figureSize=msData.Attributes['figureSize'])	
 
 		# Figures 6 and 7: (if available) PCA scores and loadings plots by sample type
-		if pcaModel is not None:
-
-			msData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-			msData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-			msData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-			msData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
-
-			figuresQCscores = OrderedDict()
-			temp = dict()
+		##
+		# PCA plots
+		##
+		if pcaModel:
 			if output:
-				temp['PCA_scoresPlotFinal'] = os.path.join(saveDir, item['Name'] + '_PCAscoresPlotFinal_')
-				saveAs = temp['PCA_scoresPlotFinal']
+				pcaPath = saveDir
 			else:
-				print('Figure 6: Principal Component Analysis (PCA) scores plots coloured by sample type.')
-
-			figuresQCscores = plotScores(pcaModel,
-				classes=msData.sampleMetadata['Plot Sample Type'],
-				classType='Plot Sample Type',
-				title='Sample Type',
-				savePath=saveAs,
-				figures=figuresQCscores,
-				figureFormat=msData.Attributes['figureFormat'],
-				dpi=msData.Attributes['dpi'],
-				figureSize=msData.Attributes['figureSize'])
-
-			for key in figuresQCscores:
-				if os.path.join(output, 'graphics') in str(figuresQCscores[key]):
-					figuresQCscores[key] = re.sub('.*graphics', 'graphics', figuresQCscores[key])
-			
-			item['QCscores'] = figuresQCscores
-
-			figuresQCloadings = OrderedDict()			
-			temp = dict()
-			if output:
-				temp['PCA_loadingsPlotFinal'] = os.path.join(saveDir, item['Name'] + '_PCAloadingsPlotFinal_')
-				saveAs = temp['PCA_loadingsPlotFinal']
-			else:
-				print('Figure 7: PCA loadings plots.')
-					
-			figuresQCloadings = plotLoadings(pcaModel,
-				msData,
-				savePath=saveAs,
-				figures=figuresQCloadings,
-				figureFormat=msData.Attributes['figureFormat'],
-				dpi=msData.Attributes['dpi'],
-				figureSize=msData.Attributes['figureSize'])
-
-			for key in figuresQCloadings:
-				if os.path.join(output, 'graphics') in str(figuresQCloadings[key]):
-					figuresQCloadings[key] = re.sub('.*graphics', 'graphics', figuresQCloadings[key])
-					
-			item['QCloadings'] = figuresQCloadings
+				pcaPath = None
+			pcaModel = generateBasicPCAReport(pcaModel, msData, figureCounter=6, output=pcaPath, fileNamePrefix='')
 
 		# Add final tables of excluded/missing study samples
 		if not output:
@@ -1014,7 +973,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 				if 'SamplesExcludedInfo' in item:
 					print('Samples excluded on analytical criteria (' + item['SamplesExcludedNo'] + ')')
 					display(item['SamplesExcludedInfo'])
-					print('\n')	
+					print('\n')
 
 	# Generate HTML report	
 	if output:
@@ -1032,7 +991,10 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		filename = os.path.join(output, msData.name + '_report_' + reportTypeCase + '.html')
 
 		f = open(filename,'w')
-		f.write(template.render(item=item, version=version, graphicsPath='/report_' + reportTypeCase))
+		f.write(template.render(item=item,
+								version=version,
+								graphicsPath='/report_' + reportTypeCase,
+								pcaPlots=pcaModel))
 		f.close() 
 
 		copyBackingFiles(toolboxPath(), saveDir)

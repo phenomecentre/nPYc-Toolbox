@@ -88,7 +88,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		# Stick info of all previously excluded samples together
 		for i in excludedIX:
 			temp = copy.deepcopy(data.sampleMetadataExcluded[i])
-			sampleMetadataExcluded = sampleMetadataExcluded.append(temp.loc[:,['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Status']], ignore_index=True)
+			sampleMetadataExcluded = sampleMetadataExcluded.append(temp.reindex(['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Status'], axis=1), ignore_index=True)
 
 		excluded = sampleMetadataExcluded.shape[0]
 
@@ -103,7 +103,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		UNDEFmaskEx = pandas.isnull(sampleMetadataExcluded['Sample Base Name'])
 		OTHERmaskEx = (SSmaskEx==False) & (SPmaskEx==False) & (ERmaskEx==False) & (UNDEFmaskEx==False)
 
-		sampleSummary['Excluded Details'] = sampleMetadataExcluded
+		sampleSummary['Excluded Details'] = sampleMetadataExcluded.set_index('Sample File Name')
 
 
 	# Summary table for samples acquired

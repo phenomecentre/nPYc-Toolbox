@@ -227,6 +227,8 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			self.dataset.name = 'TestData'
+			self.dataset._nmrQCChecks()
+
 			nPYc.reports.generateReport(self.dataset, 'Feature Summary', output=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'TestData_report_featureSummary.html')
@@ -239,9 +241,6 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			self.assertTrue(os.path.exists(expectedPath))
 
 			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_finalFeatureBLWPplots3.png')
-			self.assertTrue(os.path.exists(expectedPath))
-
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_finalFeatureIntensityHist.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
 			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_peakWidthBoxplot.png')
@@ -258,19 +257,16 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 
 			nPYc.reports.generateReport(self.dataset, 'Final Report', output=tmpdirname)
 
-			expectedPath = os.path.join(tmpdirname, 'TestData_report_finalReport.html')
+			expectedPath = os.path.join(tmpdirname, 'TestData_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_finalFeatureBLWPplots1.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_finalFeatureBLWPplots1.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_finalFeatureBLWPplots3.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_finalFeatureBLWPplots3.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_finalFeatureIntensityHist.png')
-			self.assertTrue(os.path.exists(expectedPath))
-
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_peakWidthBoxplot.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_peakWidthBoxplot.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -288,7 +284,6 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 		self.assertRaises(ValueError, _generateReportNMR, data, 'Not a vaild plot type')
 		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', withExclusions='Not a bool')
 		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', output=True)
-		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', pcaModel='Not a PCA model')
 
 
 class test_reports_ms_generatereport(unittest.TestCase):

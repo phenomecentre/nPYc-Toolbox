@@ -1,68 +1,56 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Mar 15 10:53:12 2017
-
-@author: aahmed1
-"""
-from .._toolboxPath import toolboxPath
-from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..utilities._nmr import qcCheckBaseline, qcCheckWaterPeak
-from ._generateSampleReport import _generateSampleReport
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from collections import OrderedDict
-from ..plotting import plotScores, plotLoadings, plotWaterResonance, plotWaterResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive, histogram
-from ..enumerations import AssayRole, SampleType
-#copied from qc.py-may not need all
 import os
 import numpy
 import pandas
 import nPYc
-from ..objects import NMRDataset
-import seaborn as sns
 import copy
-import pandas as pd
-from plotly.offline import iplot
-
-from IPython.display import display
+import pandas
 import re
 import warnings
 import shutil
+import seaborn as sns
+from plotly.offline import iplot
+from IPython.display import display, HTML
+
+
+from ..objects import NMRDataset
+from .._toolboxPath import toolboxPath
+from ..utilities._internal import _copyBackingFiles as copyBackingFiles
+from ..utilities._nmr import qcCheckBaseline, qcCheckWaterPeak
+from ._generateSampleReport import _generateSampleReport
+from ..plotting import plotWaterResonance, plotWaterResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive, histogram
+from ._generateBasicPCAReport import generateBasicPCAReport
+from ..enumerations import AssayRole, SampleType
 
 from ..__init__ import __version__ as version
 
-def _generateReportNMR(nmrDataTrue, reportType, withExclusions=True, output=None,  pcaModel=None):
+def _generateReportNMR(nmrData, reportType, withExclusions=True, output=None, pcaModel=None):
 	"""
-	Summarise different aspects of an NMR dataset
-
-	Generate reports for ``feature summary``,  ``feature selection``, or ``final report``
+	Generate reports on NMRdataset objects, possible options are: ``feature summary`` or ``final report``
 	
 	* **'feature summary'** Generates feature summary report/ QC summary report, plots figures including those for feature calibration check against glucose or TSP, linewidth box plot and baseline/water peak plots.
 	* **'final report'** Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition. 
 
-	:param NMRDataset nmrDataTrue: NMRDataset to report on
+	:param NMRDataset nmrData: NMRDataset to report on
 	:param str reportType: Type of report to generate, one of ``feature summary``,  or ``final report``
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
 	:param output: If ``None`` plot interactively, otherwise save report to the path specified
 	:type output: None or str
 	"""
+	acceptableOptions = {'feature summary', 'final report'}
+
 	# Check inputs
-	if not isinstance(nmrDataTrue, NMRDataset):
-		raise TypeError('nmrDataTrue must be an instance of NMRDataset')
+	if not isinstance(nmrData, NMRDataset):
+		raise TypeError('nmrData must be an instance of NMRDataset')
 
-	acceptAllOptions = {'feature summary', 'final report'}
-	if not isinstance(reportType, str) & (reportType in acceptAllOptions):
-		raise ValueError('reportType must be == ' + str(acceptAllOptions))
+	if not isinstance(reportType, str) & (reportType.lower() in acceptableOptions):
+		raise ValueError('reportType must be one of: ' + str(acceptableOptions))
 
-	if not isinstance(withExclusions, bool):		
+	if not isinstance(withExclusions, bool):
 		raise TypeError('withExclusions must be a bool')	
 
 	if output is not None:
 		if not isinstance(output, str):
 			raise TypeError('output must be a string')
-
-	if pcaModel is not None:
-		if not isinstance(pcaModel, ChemometricsPCA):
-			raise TypeError('pcaModel must be a ChemometricsPCA object')
 
 	sns.set_style("whitegrid")
 
@@ -76,7 +64,7 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=True, output=None
 		saveDir = None
 
 	# Apply sample/feature masks if exclusions to be applied
-	nmrData = copy.deepcopy(nmrDataTrue)
+	nmrData = copy.deepcopy(nmrData)
 	if withExclusions:
 		nmrData.applyMasks()
 
@@ -84,480 +72,301 @@ def _generateReportNMR(nmrDataTrue, reportType, withExclusions=True, output=None
 	SSmask = (nmrData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (nmrData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
 	SPmask = (nmrData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (nmrData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
 	ERmask = (nmrData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (nmrData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	[ns, nv] = nmrData.intensityData.shape
 
-	# Set up template item and save required info
-	item = dict() 
-	item['Name'] = nmrData.name
-	item['ReportType'] = reportType
-	item['Nfeatures'] = str(nv)
-	item['Nsamples'] = str(ns)
-	item['SScount'] = str(sum(SSmask))
-	item['SRcount'] = str(sum(SPmask))
-	item['LTRcount'] = str(sum(ERmask))
+	if not 'Plot Sample Type' in nmrData.sampleMetadata.columns:
+		nmrData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+		nmrData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+		nmrData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
+		nmrData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
-	# Feature summary report
-	if reportType == 'feature summary':
-		"""
-		Generates feature summary report, plots figures including those for calibration, peak width and baseline calculations.
+	if reportType.lower() == 'feature summary':
+		_featureReport(nmrData, output)
+	elif reportType.lower() == 'final report':
+		_finalReport(nmrData, output, pcaModel)
 
-		Generate NMR QC summary report.
+
+def _featureReport(dataset, output=None):
+	"""
+	Report on feature quality
+	"""
+	item = dict()
+	item['Name'] = dataset.name
+	item['Nsamples'] = dataset.noSamples
+
+	item['toA_from'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
+	item['toA_to'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
 	
-		   :params: output directory to save report in
-	
-		   :returns: all graphs that are present in final report
-	   
-		"""	
-			
-				# Create directory to save output		
-		if output:
-			reportTypeCase = reportType.title().replace(" ","")
-			reportTypeCase = reportTypeCase[0].lower() + reportTypeCase[1:]
-			saveDir = os.path.join(output, 'graphics', 'report_' + reportTypeCase)
-			
-			# If directory exists delete directory and contents
-			if os.path.exists(saveDir):
-				shutil.rmtree(saveDir)
-			
-			# Create directory to save output
-			os.makedirs(saveDir)
-			
-		else:
-			saveDir = None
+	##
+	# Report stats
+	##
+	if output is not None:
+		if not os.path.exists(output):
+			os.makedirs(output)
+		if not os.path.exists(os.path.join(output, 'graphics')):
+			os.makedirs(os.path.join(output, 'graphics'))
+		graphicsPath = os.path.join(output, 'graphics', 'report_featureSummary')
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
 
-		# To be used latter
-		sampleSummary = []
-
-		# Apply the QC checks just in case
-		nmrData._nmrQCChecks()
-
-		# ISOLATE THIS FUNCTION
-		graphsAndPlots(nmrData, saveDir, item, reportType, SSmask, SPmask, ERmask, pcaModel)
-
-		#convert to 0s and 1s rather than true false
-		fail_summary = nmrData.sampleMetadata.loc[:, ['Sample File Name', 'LineWidthFail',
-													  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
-
-		# Check this step!
-
-		item['failSummary'] = fail_summary[(fail_summary.iloc[:, 1::] == 1).any(axis=1, bool_only=True)]
-
-		if not output: #we dont want to display if we saving output
-			print('Table 1: All samples that failed')
-			display(item['failSummary'])
-
-		if output:
-
-			# Make paths for graphics local not absolute for use in the HTML.
-			for key in item:
-				if os.path.join(output, 'graphics') in str(item[key]):
-					item[key] = re.sub('.*graphics', 'graphics', item[key])
-	
-			# Generate report
-			from jinja2 import Environment, FileSystemLoader
-	
-			env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-			template = env.get_template('NMR_QCSummaryReport.html')
-	
-			filename = os.path.join(output, nmrData.name + '_report_' + reportTypeCase + '.html')
-	
-			f = open(filename,'w')
-			f.write(template.render(item=item, sampleSummary=sampleSummary,  version=version, graphicsPath='/report_' + reportTypeCase))
-			f.close() 
-	
-			copyBackingFiles(toolboxPath(), saveDir)
-
-		# Final summary report
-
-	if reportType == 'final report':
-		"""
-		Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
-		"""
-
-		# Create directory to save output
-		if output:
-			
-			reportTypeCase = reportType.title().replace(" ","")
-			reportTypeCase = reportTypeCase[0].lower() + reportTypeCase[1:]
-			saveDir = os.path.join(output, 'graphics', 'report_' + reportTypeCase)
-			
-			# If directory exists delete directory and contents
-			if os.path.exists(saveDir):
-				shutil.rmtree(saveDir)
-			
-			# Create directory to save output
-			os.makedirs(saveDir)
-			
-		else:
-			saveDir = None
-		
-		#generate the final dataset   
-		generateNMRFinalDataset(nmrData, output, sampleTypeOutput=False)
-		
-		# Table 1: Sample summary
-										
-		# Generate sample summary
-		sampleSummary = _generateSampleReport(nmrData, withExclusions=True, output=None, returnOutput=True)
-		
-		# Extract summary table for samples acquired
-		sampleSummaryTable = copy.deepcopy(sampleSummary['Acquired'])
-		# Drop unwanted columns
-		sampleSummaryTable.drop(['Marked for Exclusion'], axis=1, inplace=True)        
-		if 'LIMS marked as missing' in sampleSummaryTable.columns:
-			sampleSummaryTable.drop(['LIMS marked as missing', 'Missing from LIMS'], axis=1, inplace=True) 
-		if 'Missing Subject Information' in sampleSummaryTable.columns:
-			sampleSummaryTable.drop(['Missing Subject Information'], axis=1, inplace=True) 
-		
-		# Rename 'already excluded'
-		sampleSummaryTable.rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
-		
-		# Add 'unavailable' column
-		if 'NotAcquired' in sampleSummary:
-			sampleSummaryTable = sampleSummaryTable.join(pandas.DataFrame(data=sampleSummary['NotAcquired']['Marked as Sample'] - sampleSummary['NotAcquired']['Already Excluded'], columns=['Unavailable']), how='left', sort=False)
-		else:
-			sampleSummaryTable['Unavailable'] = 0
-	
-		# Update 'All', 'Unavailable' to only reflect sample types present in data
-		sampleSummaryTable.loc['All', 'Unavailable'] = sum(sampleSummaryTable['Unavailable'][1:])
-		
-		# Save to item
-		item['SampleSummaryTable'] = sampleSummaryTable
-		#check if there is anything in the samplesummary table if there isnt report wont work as lims file didnt match any data so throw warning
-		if numpy.isnan(sampleSummaryTable.Total.values[0]):
-			warnings.warn("Warning:.The following reports will not generate possibly due to incorrect or incomplete LIMS file loaded/matched; check LIMS file and re-run")
-			# Save details of study samples missing from dataset
-		else:	
-			if sampleSummaryTable['Unavailable']['Study Sample']  != 0:
-				item['SamplesMissingInfo'] = sampleSummary['NotAcquired Details'].loc[sampleSummary['NotAcquired Details']['Sampling ID'].isnull()==False,:]
-				item['SamplesMissingInfo'].drop(['LIMS Marked Missing'], axis=1, inplace=True)
-				item['SamplesMissingNo'] = str(sampleSummaryTable['Unavailable']['Study Sample'] )
-			
-			 #Save details of study samples excluded from dataset
-			if hasattr(sampleSummaryTable, 'Excluded'):
-				if sampleSummaryTable['Excluded']['Study Sample']  != 0:
-					item['SamplesExcludedInfo'] = sampleSummary['Excluded Details'].loc[(sampleSummary['Excluded Details']['SampleType'] == SampleType.StudySample) & (sampleSummary['Excluded Details']['AssayRole'] == AssayRole.Assay),:]
-					item['SamplesExcludedInfo'] = item['SamplesExcludedInfo'].drop(['Sample Base Name', 'SampleType', 'AssayRole'], axis=1)
-					item['SamplesExcludedNo'] = str(sampleSummaryTable['Excluded']['Study Sample'] )
-
-			# Temporarily left like this to avoid disturbing plots
-			# TODO refactor for new nomenclature of attributes
-			item['baselineLow_regionTo'] = nmrData.Attributes['baselineCheckRegion'][0][1]
-			item['baselineHigh_regionFrom'] = nmrData.Attributes['baselineCheckRegion'][1][0]
-			item['baseline_alpha'] = nmrData.Attributes['baseline_alpha']
-			item['baseline_threshold'] = nmrData.Attributes['baseline_threshold']
-			item['PWFailThreshold'] = nmrData.Attributes['PWFailThreshold']
-			item['points'] = nmrData.intensityData.shape[1]
-			item['alignTo'] = nmrData.Attributes['alignTo']
-			item['LWpeakRange'] = nmrData.Attributes['LWpeakRange']
-			#datetime code
-
-			dt = min(nmrData.sampleMetadata['Acquired Time'])
-			dd = dt.day, dt.month, dt.year
-			dd = str(dd).replace(", ", "/")
-			item['toA_from'] = dd
-		
-			dt = max(nmrData.sampleMetadata['Acquired Time'])
-			dd = dt.day, dt.month, dt.year
-			dd = str(dd).replace(", ", "/")
-			item['toA_to'] = dd
-
-			sampleSummary = _generateSampleReport(nmrData, withExclusions=True, output=None, returnOutput=True)
-		
-			item = graphsAndPlots(nmrData,saveDir, item, reportType, SSmask, SPmask, ERmask, pcaModel)#do not actually need SR,SS and LTR for this report
-
-			if output:
-
-				# Make paths for graphics local not absolute for use in the HTML.
-				for key in item:
-					if os.path.join(output, 'graphics') in str(item[key]):
-						item[key] = re.sub('.*graphics', 'graphics', item[key])
-
-				# Generate report
-				from jinja2 import Environment, FileSystemLoader
-		
-				env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-				template = env.get_template('NMR_FinalSummaryReport.html')
-				filename = os.path.join(output, nmrData.name + '_report_' + reportTypeCase + '.html')
-		
-				f = open(filename,'w')
-				f.write(template.render(item=item, sampleSummary=sampleSummary, version=version, graphicsPath='/report_' + reportTypeCase))
-				f.close() 
-		
-				copyBackingFiles(toolboxPath(), saveDir)
-
-
-def graphsAndPlots(nmrData,output, item, reportType, SSmask, SPmask, ERmask, PCAmodel):
-	"""graphsAndPlots
-
-	   :params: output directory to save report in nmrData, item and reportType
-
-	   :returns: all graphs that are present for purpose of nmr report -- this is a separate function as to avoid repeating the code in final report and qcsummary report
-	   
-	"""	
-
-
-		#figure 1 calibration check plot glucose(doublet) TSP singlet---------------------------------------------------------------------------------------------
-	if output and reportType != 'final report':
-		item['calibrationCheck'] = os.path.join(output, nmrData.name + '_calibrationCheck.' + nmrData.Attributes['figureFormat'])#.replace("\\","/")
-		saveAs = item['calibrationCheck']
-		
-	else:
-		if reportType != 'final report':
-			print('Figure 1: Calibration Check Plot, aligned to:', nmrData.Attributes['alignTo'])
-			saveAs = None
-	
-	if reportType != 'final report':
-		if output:
-			plotCalibration(nmrData,
-				savePath=saveAs,
-				figureFormat=nmrData.Attributes['figureFormat'],
-				dpi=nmrData.Attributes['dpi'],
-				figureSize=nmrData.Attributes['figureSize'])
-		else:
-			figure = plotCalibrationInteractive(nmrData)
-			iplot(figure)
-
-		#figure 2 peakwidth boxplot---------------------------------------------------------------------------------------------
+	##
+	# Chemical shift registration plot
+	##
 	if output:
-		
-		item['peakWidthBoxplot'] = os.path.join(output, item['Name'] + '_peakWidthBoxplot.' + nmrData.Attributes['figureFormat'])#.replace("\\","/")
+		item['calibrationCheck'] = os.path.join(graphicsPath, dataset.name + '_calibrationCheck.' + dataset.Attributes['figureFormat'])
+		saveAs = item['calibrationCheck']
+	else:
+		print('Figure 1: Calibration Check Plot, aligned to:', dataset.Attributes['alignTo'])
+		saveAs = None
+	
+	if output:
+		plotCalibration(dataset,
+			savePath=saveAs,
+			figureFormat=dataset.Attributes['figureFormat'],
+			dpi=dataset.Attributes['dpi'],
+			figureSize=dataset.Attributes['figureSize'])
+	else:
+		figure = plotCalibrationInteractive(dataset)
+		iplot(figure)
+	##
+	# LW box plot
+	##
+	if output:
+		item['peakWidthBoxplot'] = os.path.join(graphicsPath,
+					item['Name'] + '_peakWidthBoxplot.' + dataset.Attributes['figureFormat'])
 		saveAs = item['peakWidthBoxplot']
 	else:
-		if reportType == 'final report':
-			print('Figure 1: Peak Width Boxplot (Hz)')
-		else:
-			print('Figure 2: Peak Width Boxplot (Hz)')
+		print('Figure 2: Peak Width Boxplot (Hz)')
 		saveAs = None
 		
-	nPYc.plotting.plotPW(nmrData,
+	nPYc.plotting.plotPW(dataset,
 			savePath=saveAs,
-			figureFormat=nmrData.Attributes['figureFormat'],
-			dpi=nmrData.Attributes['dpi'],
-			figureSize=nmrData.Attributes['figureSize'])
-	
+			figureFormat=dataset.Attributes['figureFormat'],
+			dpi=dataset.Attributes['dpi'],
+			figureSize=dataset.Attributes['figureSize'])
+
+	##
+	# LW shape plot
+	##
 	if not output:
-		figure = plotLineWidthInteractive(nmrData)
+		print('Figure 2a: Peak Width Modeling')
+		figure = plotLineWidthInteractive(dataset)
 		iplot(figure)
 
-	#summary text ie how many failed so can place below plot output
-	if reportType != 'final report':#why? because we have excluded all the failures by the time of final report so the final should not have any failures in 
-		tempNo = sum(nmrData.sampleMetadata['Line Width (Hz)'] > nmrData.Attributes['PWFailThreshold'])
-		item['fig1SummaryText'] = str(tempNo)+' sample(.aept) failed (shown as red dots) based on peakwidth: >'+ str(nmrData.Attributes['PWFailThreshold'])+'Hz'
-		del tempNo
-	else:
-		item['fig1SummaryText'] =''
-	if not output:
-		print(item['fig1SummaryText'])
-		#figure 3
+	##
+	# Baseline plot
+	##
 	if output:
-#		item['finalFeatureBLWPplots1'] = os.path.join(output, 'graphics', item['Name'] + '_finalFeatureBLWPplots1.' + nmrData.Attributes['figureFormat']).replace("\\","/")
-		item['finalFeatureBLWPplots1'] = os.path.join(output, item['Name'] + '_finalFeatureBLWPplots1.' + nmrData.Attributes['figureFormat'])#.replace("\\","/")
+		item['finalFeatureBLWPplots1'] = os.path.join(graphicsPath,
+					item['Name'] + '_finalFeatureBLWPplots1.' + dataset.Attributes['figureFormat'])
 		saveAs = item['finalFeatureBLWPplots1']
 	else:
-		if reportType == 'final report':
-			print('Figure 2: Baseline Low and High')
-		else:
-			print('Figure 3: Baseline Low and High')
+		print('Figure 3: Baseline Low and High')
 
-		saveAs = None	
-	areaToPlot='BL'
-	
+		saveAs = None
+
 	if output:
-		plotBaseline(nmrData,
+		plotBaseline(dataset,
 					savePath=saveAs,
-					figureFormat=nmrData.Attributes['figureFormat'],
-					dpi=nmrData.Attributes['dpi'],
-					figureSize=nmrData.Attributes['figureSize'])
+					figureFormat=dataset.Attributes['figureFormat'],
+					dpi=dataset.Attributes['dpi'],
+					figureSize=dataset.Attributes['figureSize'])
 
 	else:
-		figure = plotBaselineInteractive(nmrData)
+		figure = plotBaselineInteractive(dataset)
 		iplot(figure)
 
-	
-		#figure 5 waterpeak low---------------------------------------------------------------------------------------------
+	##
+	# Water Peak plot
+	##
 	if output:
-		item['finalFeatureBLWPplots3'] = os.path.join(output, item['Name'] + '_finalFeatureBLWPplots3.' + nmrData.Attributes['figureFormat'])#.replace("\\","/")
+		item['finalFeatureBLWPplots3'] = os.path.join(graphicsPath,
+						item['Name'] + '_finalFeatureBLWPplots3.' + dataset.Attributes['figureFormat'])
 		saveAs = item['finalFeatureBLWPplots3']
 		
 	else:
-		if reportType == 'final report':
-			print('Figure 3: Waterpeak Low and High')
-		else:
-			print('Figure 4: Waterpeak Low and High')
+		print('Figure 4: Waterpeak Low and High')
 		saveAs = None
-	if output:
-		plotWaterResonance(nmrData,	savePath=saveAs,
-									figureFormat=nmrData.Attributes['figureFormat'],
-									dpi=nmrData.Attributes['dpi'],
-									figureSize=nmrData.Attributes['figureSize'])
 
+	if output:
+		plotWaterResonance(dataset,	savePath=saveAs,
+									figureFormat=dataset.Attributes['figureFormat'],
+									dpi=dataset.Attributes['dpi'],
+									figureSize=dataset.Attributes['figureSize'])
 	else:
-		figure = plotWaterResonanceInteractive(nmrData)
+		figure = plotWaterResonanceInteractive(dataset)
+		iplot(figure)
+	##
+	# exclusion summary
+	##
+	fail_summary = dataset.sampleMetadata.loc[:, ['Sample File Name', 'LineWidthFail',
+												  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
+	fail_summary = fail_summary[(fail_summary.iloc[:, 1::] == 1).any(axis=1, bool_only=True)]
+
+	if not output:
+		print('Table 1: Summary of samples considered for exclusion')
+		display(fail_summary)
+	##
+	# Write HTML if saving
+	##
+	if output:
+		# Make paths for graphics local not absolute for use in the HTML.
+		for key in item:
+			if os.path.join(output, 'graphics') in str(item[key]):
+				item[key] = re.sub('.*graphics', 'graphics', item[key])
+
+		# Generate report
+		from jinja2 import Environment, FileSystemLoader
+
+		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
+		template = env.get_template('NMR_QCSummaryReport.html')
+		filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
+
+		f = open(filename,'w')
+		f.write(template.render(item=item,
+								attributes=dataset.Attributes,
+								version=version,
+								failSummary=fail_summary,
+								graphicsPath='/report_featureSummary'))
+		f.close()
+
+		copyBackingFiles(toolboxPath(), graphicsPath)
+
+
+def _finalReport(dataset, output=None, pcaModel=None):
+	"""
+	Report on final dataset
+	"""
+	item = dict()
+	item['Name'] = dataset.name
+	item['Nsamples'] = dataset.noSamples
+
+	item['toA_from'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
+	item['toA_to'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
+	
+	##
+	# Report stats
+	##
+	if output is not None:
+		if not os.path.exists(output):
+			os.makedirs(output)
+		if not os.path.exists(os.path.join(output, 'graphics')):
+			os.makedirs(os.path.join(output, 'graphics'))
+		graphicsPath = os.path.join(output, 'graphics', 'report_finalSummary')
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
+
+	##
+	# LW box plot
+	##
+	if output:
+		item['peakWidthBoxplot'] = os.path.join(graphicsPath,
+					item['Name'] + '_peakWidthBoxplot.' + dataset.Attributes['figureFormat'])
+		saveAs = item['peakWidthBoxplot']
+	else:
+		print('Figure 1: Peak Width Boxplot (Hz)')
+		saveAs = None
+		
+	nPYc.plotting.plotPW(dataset,
+			savePath=saveAs,
+			figureFormat=dataset.Attributes['figureFormat'],
+			dpi=dataset.Attributes['dpi'],
+			figureSize=dataset.Attributes['figureSize'])
+
+	##
+	# LW shape plot
+	##
+	if not output:
+		print('Figure 1a: Peak Width Modeling')
+		figure = plotLineWidthInteractive(dataset)
 		iplot(figure)
 
-	#print failed amounts under plots again only if its not the final report as we excluded this data in final anyway
-	if reportType != 'final report':
-		failBaseline = sum(nmrData.sampleMetadata.BaselineFail == True)
-		failWaterPeak = sum(nmrData.sampleMetadata.WaterPeakFail == True)
-
-		item['fig2to3SummaryText'] = (''+str(failBaseline)+' sample(s) failed on baseline QC'+'\n'+
-										''+str(failWaterPeak)+' sample(s) failed on water peak peak QC'+'\n')
-
-	else:
-		item['fig2to3SummaryText']=''
-	if not output:
-		print(item['fig2to3SummaryText'])
-		
-
-	# Final histogram now only sum was previously of log mean abundance (by sample type)
-	intensities = {}
-	temp =numpy.nansum(nmrData.intensityData[SSmask,:], axis=1)
-
-	# Load toolbox wide color scheme
-	if 'sampleTypeColours' in nmrData.Attributes.keys():
-		sTypeColourDict = copy.deepcopy(nmrData.Attributes['sampleTypeColours'])
-		for stype in SampleType:
-			if stype.name in sTypeColourDict.keys():
-				sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-	else:
-		sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-						   SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-
-#	NEED TO CHECK OUTPUT WITH JAKE: changed all axis from 0 to 1
-	intensities['Study Samples'] = temp
-	colour = [sTypeColourDict[SampleType.StudySample]]
-
-	if sum(SPmask) != 0: 
-		temp = numpy.sum(nmrData.intensityData[SPmask,:], axis=1)
-		temp[numpy.isinf(temp)] = numpy.nan
-		intensities['Study Pool'] = temp
-		colour.append(sTypeColourDict[SampleType.StudyPool])
-	if sum(ERmask) != 0: 
-		temp = numpy.sum(nmrData.intensityData[ERmask,:], axis=1)
-		temp[numpy.isinf(temp)] = numpy.nan
-		intensities['External Reference'] = temp
-		colour.append(sTypeColourDict[SampleType.ExternalReference])
+	##
+	# Baseline plot
+	##
 	if output:
-		item['finalFeatureIntensityHist'] = os.path.join(output, item['Name'] + '_finalFeatureIntensityHist.' + nmrData.Attributes['figureFormat'])#.replace("\\","/")
-		saveAs = item['finalFeatureIntensityHist']
+		item['finalFeatureBLWPplots1'] = os.path.join(graphicsPath,
+					item['Name'] + '_finalFeatureBLWPplots1.' + dataset.Attributes['figureFormat'])
+		saveAs = item['finalFeatureBLWPplots1']
 	else:
-		if reportType == 'final report':
-			print('Figure 4: Feature Intensity Histogram for all samples and all features in final dataset (by sample type)')
-		else:
-			print('Figure 5: Feature Intensity Histogram for all samples and all features in final dataset (by sample type)')
-	histogram(intensities, 
-		xlabel='Feature Intensity',
-		title='',
-		color=colour,
-		histBins=nmrData.Attributes['histBins'],
-		savePath=saveAs, 
-		figureFormat=nmrData.Attributes['figureFormat'],
-		dpi=nmrData.Attributes['dpi'],
-		figureSize=nmrData.Attributes['figureSize'])	
+		print('Figure 2: Baseline Low and High')
 
-	#### pCA plot#####
-# Figure 6: (if available) PCA scores plot by sample type
-	if PCAmodel is not None:
+		saveAs = None
 
-		if not 'Plot Sample Type' in nmrData.sampleMetadata.columns:
-			nmrData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-			nmrData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-			nmrData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-			nmrData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+	if output:
+		plotBaseline(dataset,
+					savePath=saveAs,
+					figureFormat=dataset.Attributes['figureFormat'],
+					dpi=dataset.Attributes['dpi'],
+					figureSize=dataset.Attributes['figureSize'])
 
-		figuresQCscores = OrderedDict()
-		temp = dict()
-		if output:
-			temp['PCA_scoresPlotFinal'] =os.path.join(output, item['Name'] + '_PCAscoresPlotFinal_.' + nmrData.Attributes['figureFormat'])#.replace("\\","/")
-			saveAs = temp['PCA_scoresPlotFinal']
-		else:
-			print('Figure 6: PCA scores plots coloured by sample type.')
-
-		figuresQCscores = plotScores(PCAmodel,
-			classes=nmrData.sampleMetadata['Plot Sample Type'],
-			classType = 'Plot Sample Type',
-			title='Sample Type',
-			savePath=saveAs,
-			figures=figuresQCscores,
-			figureFormat=nmrData.Attributes['figureFormat'],
-			dpi=nmrData.Attributes['dpi'],
-			figureSize=nmrData.Attributes['figureSize'])
-
-		for key in figuresQCscores:
-			if os.path.join('graphics', 'report_') in str(figuresQCscores[key]):
-				figuresQCscores[key] = re.sub('.*graphics', 'graphics', figuresQCscores[key])
-				
-		item['QCscores'] = figuresQCscores
-		
-		figuresQCloadings = OrderedDict()			
-		temp = dict()
-		if output:
-			temp['PCA_loadingsPlotFinal'] =os.path.join(output, item['Name'] + '_PCAloadingsPlotFinal_.' + nmrData.Attributes['figureFormat'])#.replace("\\","/")
-			saveAs = temp['PCA_loadingsPlotFinal']
-		else:
-			print('Figure 7: PCA loadings plots.')
-				
-		figuresQCloadings = plotLoadings(PCAmodel,
-			nmrData,
-			savePath=saveAs,
-			figures=figuresQCloadings,
-			figureFormat=nmrData.Attributes['figureFormat'],
-			dpi=nmrData.Attributes['dpi'],
-			figureSize=nmrData.Attributes['figureSize'])
-
-		for key in figuresQCloadings:
-			if os.path.join('graphics', 'report_') in str(figuresQCloadings[key]):
-				figuresQCloadings[key] = re.sub('.*graphics', 'graphics', figuresQCloadings[key])
-				
-		item['QCloadings'] = figuresQCloadings
-
-		if not output:
-
-			if (('SamplesMissingInfo' in item) | ('SamplesExcludedInfo' in item)):
-
-				print('Samples Missing from Acquisition\n')
-
-				if 'SamplesMissingInfo' in item:
-					print('Samples unavailable for acquisition (' + item['SamplesMissingNo'] + ')')
-					display(item['SamplesMissingInfo'])
-					print('\n')			
-
-				if 'SamplesExcludedInfo' in item:
-					print('Samples excluded on analytical criteria (' + item['SamplesExcludedNo'] + ')')
-					display(item['SamplesExcludedInfo'])
-					print('\n')	
-					
-	item['fig2to3SummaryText']=item['fig2to3SummaryText'].replace('\n', '<br />')#make it compatible with html
-	return item
-
-				
-def generateNMRFinalDataset(nmrData, output,sampleTypeOutput=False):
-	"""
-	Produces the final dataset and encompasses the generatenmrfinalsummaryreport code, Export data corresponding to SS and SR and LTR samples only (to output all remove sampleTypeOutput argument) amd gemerate final report,
-	params:
-	input: 
-	nmrData object		 
-	directory to be saved in or set to None if want to display to screen in interactive mode
-	sampletypeoutput ie SS,SR,LTR
-	returns:
-	output:
-	final report as html saved file or on screen if in interactive mode
-	final dataset object	
-	"""
-		# Sample Exclusions
-	if sampleTypeOutput is not False:
-		assert isinstance(sampleTypeOutput, list)
-		
-		sampleMask = numpy.zeros(nmrData.sampleMask.shape).astype(bool)
-		
-		if 'SS' in sampleTypeOutput:
-			sampleMask[nmrData.sampleMetadata['Study Sample'].values==True] = True
-		if 'SR' in sampleTypeOutput:
-			sampleMask[nmrData.sampleMetadata['Study Reference'].values==True] = True			
-		if 'LTR' in sampleTypeOutput:
-			sampleMask[nmrData.sampleMetadata['Long-Term Reference'].values==True] = True				
-			
 	else:
-		sampleMask = numpy.ones(nmrData.sampleMask.shape).astype(bool)
+		figure = plotBaselineInteractive(dataset)
+		iplot(figure)
 
-	nmrData.sampleMask = numpy.asarray((sampleMask & nmrData.sampleMask==True), 'bool')
+	##
+	# Water Peak plot
+	##
+	if output:
+		item['finalFeatureBLWPplots3'] = os.path.join(graphicsPath,
+						item['Name'] + '_finalFeatureBLWPplots3.' + dataset.Attributes['figureFormat'])
+		saveAs = item['finalFeatureBLWPplots3']
+		
+	else:
+		print('Figure 3: Waterpeak Low and High')
+		saveAs = None
+
+	if output:
+		plotWaterResonance(dataset,	savePath=saveAs,
+									figureFormat=dataset.Attributes['figureFormat'],
+									dpi=dataset.Attributes['dpi'],
+									figureSize=dataset.Attributes['figureSize'])
+	else:
+		figure = plotWaterResonanceInteractive(dataset)
+		iplot(figure)
+
+	##
+	# PCA plots
+	##
+	if pcaModel:
+		if output:
+			pcaPath = graphicsPath
+		else:
+			pcaPath = None
+		pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=4, output=pcaPath, fileNamePrefix='')
+
+	##
+	# Sample summary
+	##
+	sampleSummary = _generateSampleReport(dataset, withExclusions=True, output=None, returnOutput=True)
+	if not output:
+		print('Table 1: Summary of samples present')
+		display(sampleSummary['Acquired'])
+		print('Table 2: Summary of samples excuded')
+		display(sampleSummary['Excluded Details'])
+	##
+	# Write HTML if saving
+	##
+	if output:
+		# Make paths for graphics local not absolute for use in the HTML.
+		for key in item:
+			if os.path.join(output, 'graphics') in str(item[key]):
+				item[key] = re.sub('.*graphics', 'graphics', item[key])
+
+		# Generate report
+		from jinja2 import Environment, FileSystemLoader
+
+		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
+		template = env.get_template('NMR_FinalSummaryReport.html')
+		filename = os.path.join(output, dataset.name + '_report_finalSummary.html')
+
+		f = open(filename,'w')
+		f.write(template.render(item=item,
+								attributes=dataset.Attributes,
+								version=version,
+								sampleSummary=sampleSummary,
+								graphicsPath='/report_finalSummary',
+								pcaPlots=pcaModel)
+								)
+		f.close()
+
+		copyBackingFiles(toolboxPath(), graphicsPath)

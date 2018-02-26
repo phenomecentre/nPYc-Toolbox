@@ -1,6 +1,8 @@
 {% extends "base_QC.html" %}
 
-{% block title %}Assay Summary Report For: {{ item.Name}}{% endblock %}
+{% import 'pcaReport.html' as pca %}
+
+{% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
 {% block content %}
 
@@ -73,15 +75,9 @@
 	<img src="{{ item.IonMap}}" alt="Ion map of all features (coloured by log median intensity).">
 </div>
 
-{% if 'QCscores' in item %}
-	<!--Figure 6: PCA scores plots coloured by sample type.-->
-	<p class="caption"><span class="heading">Figure&nbsp;6.</span> PCA scores plots coloured by sample type.</p>
-	{% for key, value in item['QCscores'].items() %}
-    	<p>{{ key|e }}</p>
-		<div class='figure'>
-			<img src="{{ value|e }}" alt="PCA scores plots coloured by sample type.">	
-		</div>
-	{% endfor %}
+<!--Multivariate -->
+{% if pcaPlots %}
+	{{ pca.basicPCAReport(pcaPlots) }}
 {% endif %}
 
 <!--Samples missing from acquisition_______________________________________________________________________________________________-->
