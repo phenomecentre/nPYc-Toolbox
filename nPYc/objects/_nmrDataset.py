@@ -215,7 +215,7 @@ class NMRDataset(Dataset):
 	def updateMasks(self, filterSamples=True, filterFeatures=True,
 					sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
 					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], exclusionRegions=None,
-					sampleQCChecks=['ImportFail','CalibrationFail','LineWidthFail','CalibrationFail','BaselineFail','WaterPeakFail'],**kwargs):
+					sampleQCChecks=['LineWidthFail','CalibrationFail','BaselineFail','WaterPeakFail'],**kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
