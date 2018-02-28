@@ -80,6 +80,11 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 		data.featureMetadata = pandas.DataFrame(numpy.linspace(10, -1, noFeat), columns=('ppm',), dtype=float)
 		data.sampleMetadata['Delta PPM'] = numpy.random.rand(noSamp)
 		data.sampleMetadata['Line Width (Hz)'] = numpy.random.rand(noSamp)
+		data.sampleMetadata['CalibrationFail'] = False
+		data.sampleMetadata['LineWidthFail'] = False
+		data.sampleMetadata['WaterPeakFail'] = False
+		data.sampleMetadata['BaselineFail'] = False
+
 		data.Attributes['Feature Names'] = 'ppm'
 
 	data.VariableType = variableType
