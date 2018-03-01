@@ -269,6 +269,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['CalibrationFail'].values)
 
 			# Check other tests have not happened
+			# Commented out assuming the test nmr dataset obtained with generateTestDataset always has these columns
 			#for skipedCheck in ['LineWidthFail', 'BaselineFail', 'WaterPeakFail']:
 			#	self.assertFalse(skipedCheck in self.dataset.sampleMetadata.columns)
 
@@ -286,8 +287,10 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['LineWidthFail'].values)
 
 			# Check other tests have not happend
+			# Commented out assuming the test nmr dataset obtained with generateTestDataset always has these columns
+
 			#for skipedCheck in ['BaselineFail', 'WaterPeakFail']:
-		#		self.assertFalse(skipedCheck in self.dataset.sampleMetadata.columns)
+			#		self.assertFalse(skipedCheck in self.dataset.sampleMetadata.columns)
 
 		with self.subTest('Baseline'):
 			self.dataset.Attributes['baselineCheckRegion'] = [(-2, -0.5), (9.5, 12.5)]
@@ -304,6 +307,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['BaselineFail'].values)
 
 			# Check other tests have not happend
+			# Commented out assuming the test nmr dataset obtained with generateTestDataset always has these columns
 			#self.assertFalse('WaterPeakFail' in self.dataset.sampleMetadata.columns)
 
 		with self.subTest('Water Peak'):
