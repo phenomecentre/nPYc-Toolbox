@@ -6,6 +6,7 @@ import sys
 import unittest
 import tempfile
 import os
+import io
 import copy
 
 sys.path.append("..")
@@ -859,7 +860,8 @@ class test_reports_modules(unittest.TestCase):
 					self.assertTrue(os.path.exists(report[groupName][plotName]))
 
 
-	def test_reports_generateBasicPCAReport(self):
+	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
+	def test_reports_generateBasicPCAReport(self, mock_stdout):
 
 		from nPYc.reports._generateBasicPCAReport import generateBasicPCAReport
 		from nPYc.multivariate import exploratoryAnalysisPCA
@@ -880,12 +882,14 @@ class test_reports_modules(unittest.TestCase):
 		dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
 		dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
+		pcaModel = exploratoryAnalysisPCA(dataset)
+
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			if not os.path.exists(os.path.join(tmpdirname, 'graphics')):
 				os.makedirs(os.path.join(tmpdirname, 'graphics'))
 
-			report = generateBasicPCAReport(exploratoryAnalysisPCA(dataset), dataset, output=tmpdirname)
+			report = generateBasicPCAReport(pcaModel, dataset, output=tmpdirname)
 
 			for groupName in report['QCscores'].keys():
 				path = os.path.join(tmpdirname, report['QCscores'][groupName])
@@ -894,6 +898,11 @@ class test_reports_modules(unittest.TestCase):
 			for groupName in report['loadings'].keys():
 				path = os.path.join(tmpdirname, report['loadings'][groupName])
 				self.assertTrue(os.path.exists(path))
+
+		with self.subTest(msg='ploting interactivly'):
+
+			report = generateBasicPCAReport(pcaModel, dataset, output=None)
+			self.assertIsNone(report)
 
 
 	def test_reports_generateBasicPCAReport_raises(self):
