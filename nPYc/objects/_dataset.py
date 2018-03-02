@@ -1167,14 +1167,14 @@ class Dataset:
 		if 'Sample File Name' not in csvData.columns:
 			raise KeyError("No 'Sample File Name' column present, unable to join tables.")
 
-		# Check no duplicates in csv file
+		# Check if there are any duplicates in the csv file
 		u_ids, u_counts = numpy.unique(csvData['Sample File Name'], return_counts=True)
 		if any(u_counts > 1):
 			warnings.warn('Check and remove duplicates in CSV file')
 			return
 
 		##
-		# If colums exist in both csv data and samplemetadata remove from samplemetadata
+		# If colums exist in both csv data and dataset.sampleMetadata remove them from sampleMetadata
 		##
 		columnsToRemove = csvData.columns
 		columnsToRemove = columnsToRemove.drop(['Sample File Name'])
@@ -1197,27 +1197,20 @@ class Dataset:
 			csv_datetime = pandas.to_datetime(csvData['Acquired Time'], errors='ignore')
 			# msData.sampleMetadata['Acquired Time'] = z
 			csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype(
-				'O')
+			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype('O')
 
 		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
-		# Preserve information about sample mask alongside merge
+		# Preserve information about sample mask alongside merge even on the case of samples missing from CSV file.
+
+		# Is this required?? Masked field doesn't seem to be used anywhere else
 		self.sampleMetadata['Masked'] = False
 		self.sampleMetadata.loc[(self.sampleMask == False), 'Masked'] = True
+
 		joinedTable = pandas.merge(self.sampleMetadata, csvData, how='left', left_on='Sample File Name',
 								   right_on='Sample File Name', sort=False)
 
-		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
-		# which are used in some plotting functions
-		# if 'Acquired Time' in joinedTable:
-		#		csv_datetime = pandas.to_datetime(joinedTable['Acquired Time'], errors='ignore')
-		# msData.sampleMetadata['Acquired Time'] = z
-		#		csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-		#		joinedTable['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype('O')
-
 		# Samples in the CSV file but not acquired will go for sampleAbsentMetadata, for consistency with NPC Lims import
-		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(self.sampleMetadata['Sample File Name']) == False,
-						:]
+		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(self.sampleMetadata['Sample File Name']) == False, :]
 
 		if csv_butnotacq.shape[0] != 0:
 			sampleAbsentMetadata = csv_butnotacq.copy(deep=True)
@@ -1234,8 +1227,6 @@ class Dataset:
 				bool), 'AssayRole'] = AssayRole.PrecisionReference
 			sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'].str.match('LinearityReference', na=False).astype(
 				bool), 'AssayRole'] = AssayRole.LinearityReference
-			# What would be the equivalent of adding Missing here?
-			# sampleAbsentMetadata.loc[:, 'LIMS Marked Missing'] = sampleAbsentMetadata['Status'].str.match('Missing', na=False).astype(bool)
 
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in sampleAbsentMetadata.columns if c[-2:] != '_y']
@@ -1244,11 +1235,17 @@ class Dataset:
 
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
+		# Samples in the folder and processed but not mentioned in the CSV.
+		acquired_butnotcsv = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False, :]
+		if acquired_butnotcsv.shape[0] != 0:
+			self.sampleWithoutMetadata = acquired_butnotcsv
+			# Add the batch covariate here for consistency, although its probably not necessary
+			self.sampleWithoutMetadata['Batch'] = 1
+
 		# 1) ACQ and in "include Sample" - drop and set mask to false
 		# Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
 
-		# Remove acquired samples where Include sample column equals false - remove the rows in intensityData and
-		# elements of sample mask accordingly
+		# Remove acquired samples where Include sample column equals false - does not remove, just masks the sample
 		if 'Include Sample' in csvData.columns:
 			which_to_drop = joinedTable[joinedTable['Include Sample'] == False].index
 			# self.intensityData = numpy.delete(self.intensityData, which_to_drop, axis=0)
@@ -1263,8 +1260,11 @@ class Dataset:
 		# Regenerate the dataframe index for joined table
 		joinedTable.reset_index(inplace=True, drop=True)
 		self.sampleMetadata = joinedTable
-		# This should make it work - but its assuming the sample "NAME" is the same as FIle name as in LIMS.
+
+		# Commented out as we shouldn't need this here after removing the LIMS, but lets keep it
+		# This should make it work - but its assuming the sample "NAME" is the same as File name as in LIMS.
 		self.sampleMetadata['Sample Base Name'] = self.sampleMetadata['Sample File Name']
+
 		# Ensure there is a batch column this way we won't need to call
 		if 'Batch' not in self.sampleMetadata:
 			self.sampleMetadata['Batch'] = 1
