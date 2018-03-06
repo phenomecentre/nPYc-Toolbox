@@ -1850,7 +1850,7 @@ class Dataset:
 			exportDataset.applyMasks()
 
 		# do not filter metadata if safe format is ISATAB
-		if filterMetadata and saveFormats in ['CSV', 'UnifiedCSV']:
+		if filterMetadata and saveFormat in ['CSV', 'UnifiedCSV']:
 			# sampleMetadata not exported
 			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['sampleMetadataNotExported']))

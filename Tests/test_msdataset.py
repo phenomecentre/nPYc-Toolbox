@@ -2152,9 +2152,10 @@ class test_msdataset_ISATAB(unittest.TestCase):
 
 		msData = nPYc.MSDataset('', fileType='empty')
 		raw_data = {
-			'Acquired Time': ['09/08/2016  01:36:23', '09/08/2016  01:56:23', '09/08/2016  02:16:23', '09/08/2016  02:36:23', '09/08/2016  02:56:23'],
+			'Acquired Time': ['2016-08-09  01:36:23', '2016-08-09  01:56:23', '2016-08-09  02:16:23', '2016-08-09  02:36:23', '2016-08-09  02:56:23'],
 			'AssayRole': ['AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.Assay', 'AssayRole.Assay'],
-			'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
+			#'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
+			'Status': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
 			'Subject ID': ['', '', '', 'SCANS-120', 'SCANS-130'],
 			'Sampling ID': ['', '', '', 'T0-7-S', 'T0-9-S'],
 			'Dilution': ['1', '10', '20', '', ''],
@@ -2176,7 +2177,7 @@ class test_msdataset_ISATAB(unittest.TestCase):
 			'Assay data name': ['', '', '', 'SS_LNEG_ToF02_S1W4', 'SS_LNEG_ToF02_S1W5']
 		}
 
-		msData.sampleMetadata = pandas.DataFrame(raw_data, columns = ['Acquired Time', 'AssayRole', 'SampleType','Subject ID','Sampling ID','Dilution','Study',
+		msData.sampleMetadata = pandas.DataFrame(raw_data, columns = ['Acquired Time', 'AssayRole', 'Status','Subject ID','Sampling ID','Dilution','Study',
 																'Gender','Age','Sampling Date','Detector','Sample batch','Well',
 																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name'])
 
@@ -2199,6 +2200,7 @@ class test_msdataset_ISATAB(unittest.TestCase):
 			    'study_public_release_date' : "2016-11-03",
 			    'assay_filename' : "my_ms_assay"
 			}
+			msData.initialiseMasks()
 			msData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
 
 			a = os.path.join(tmpdirname,'a_my_ms_assay.txt')
