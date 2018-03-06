@@ -1202,7 +1202,7 @@ class Dataset:
 		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
 		# Preserve information about sample mask alongside merge even on the case of samples missing from CSV file.
 
-		# Is this required?? Masked field doesn't seem to be used anywhere else
+	    # Is this required?? Masked field doesn't seem to be used anywhere else
 		self.sampleMetadata['Masked'] = False
 		self.sampleMetadata.loc[(self.sampleMask == False), 'Masked'] = True
 
@@ -1236,11 +1236,12 @@ class Dataset:
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
 		# Samples in the folder and processed but not mentioned in the CSV.
+		joinedTable['Metadata Available'] = True
 		acquired_butnotcsv = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False, :]
 		if acquired_butnotcsv.shape[0] != 0:
-			self.sampleWithoutMetadata = acquired_butnotcsv
-			# Add the batch covariate here for consistency, although its probably not necessary
-			self.sampleWithoutMetadata['Batch'] = 1
+			noMetadataIndex = acquired_butnotcsv.index
+			joinedTable.loc[noMetadataIndex, 'Metadata Available'] = False
+			self.sampleMask[noMetadataIndex] = False
 
 		# 1) ACQ and in "include Sample" - drop and set mask to false
 		# Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
