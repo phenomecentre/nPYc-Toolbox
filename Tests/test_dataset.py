@@ -1340,7 +1340,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 												  'UnitTest1_LPOS_ToF02_S1W11_LTR', 'UnitTest1_LPOS_ToF02_S1W12_SR', 'UnitTest1_LPOS_ToF02_ERROR']
 
 		expectedSampleMetadata['Sample Base Name'] = expectedSampleMetadata['Sample File Name']
-
+		expectedSampleMetadata['Metadata Available'] = True
 		expectedSampleMetadata['Batch'] = numpy.nan
 
 		expectedSampleMetadata['Correction Batch'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
