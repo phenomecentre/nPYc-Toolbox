@@ -56,7 +56,8 @@ class test_dataset_synthetic(unittest.TestCase):
 
 	def test_name_raises(self):
 
-		self.assertRaises(TypeError, self.data.name, 5)
+		with self.assertRaises(TypeError):
+			self.data.name = 5
 
 
 	def test_normalisation(self):
@@ -80,7 +81,8 @@ class test_dataset_synthetic(unittest.TestCase):
 
 	def test_normalisation_raises(self):
 
-		self.assertRaises(TypeError, self.data.Normalisation, 'Not a Normaliser')
+		with self.assertRaises(TypeError):
+			self.data.Normalisation = 'Not a Normaliser'
 
 
 	def test_nosamples(self):
@@ -259,6 +261,14 @@ class test_dataset_synthetic(unittest.TestCase):
 			dataset.updateMasks(withArtifactualFiltering=False, filterFeatures=False,
 								sampleTypes=[SampleType.StudyPool], 
 								assayRoles=[AssayRole.LinearityReference])
+
+			numpy.testing.assert_array_equal(expectedSampleMask, dataset.sampleMask)
+
+		with self.subTest(msg='No filtering'):
+			expectedSampleMask = numpy.array([True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True], dtype=bool)
+
+			dataset.initialiseMasks()
+			dataset.updateMasks(withArtifactualFiltering=False, filterFeatures=False, filterSamples=False)
 
 			numpy.testing.assert_array_equal(expectedSampleMask, dataset.sampleMask)
 
@@ -907,7 +917,7 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		self.assertRaises(TypeError, self.data.exportDataset, destinationPath=1)
 
-		self.assertRaises(ValueError, self.data.exportDataset, saveFormat='Not known')
+		self.assertRaises(ValueError, self.data.exportDataset, saveFormat='Not known', withExclusions=False)
 
 		self.assertRaises(TypeError, self.data.exportDataset, withExclusions='no')
 
@@ -1022,6 +1032,7 @@ class test_dataset_synthetic(unittest.TestCase):
 	def test_get_features_discrete(self):
 
 		self.data.VariableType = nPYc.enumerations.VariableType.Discrete
+		self.data.initialiseMasks()
 
 		with self.subTest(msg='List of features'):
 			# Select a random set of features
@@ -1111,11 +1122,11 @@ class test_dataset_synthetic(unittest.TestCase):
 
 
 	def test_get_features_autofeaturename(self):
-
+		self.data.initialiseMasks()
 		featureNames = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(numpy.random.randint(3,15)))
 
 		self.data.VariableType = nPYc.enumerations.VariableType.Discrete
-		self.data.Attributes['Feature Name'] = featureNames
+		self.data.Attributes['Feature Names'] = featureNames
 
 		self.data.featureMetadata.rename(columns={'Feature Name': featureNames}, inplace=True)
 
@@ -1132,8 +1143,10 @@ class test_dataset_synthetic(unittest.TestCase):
 	def test_get_features_raises(self):
 
 		self.data.VariableType = nPYc.enumerations.VariableType.Discrete
-
 		self.assertRaises(KeyError, self.data.getFeatures, 'featureName', by='Banana')
+
+		self.data.VariableType = 'Not an enum'
+		self.assertRaises(TypeError, self.data.getFeatures, 'featureName', by='Feature Name')
 
 
 class test_dataset_loadsop(unittest.TestCase):

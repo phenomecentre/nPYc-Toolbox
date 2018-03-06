@@ -49,6 +49,7 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata['Exclusion Details'] = ''
 
 	data.sampleMetadata['Sample File Name'] = [randomword(10) for x in range(0, noSamp)]
+	data.sampleMetadata['Sampling ID'] = [randomword(10) for x in range(0, noSamp)]
 	data.sampleMetadata['Dilution'] = numpy.random.rand(noSamp)
 
 	noClasses = numpy.random.randint(2, 5)
@@ -70,13 +71,16 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	if dtype == 'MSDataset' or dtype == 'Dataset':
 		data.featureMetadata = pandas.DataFrame(0, index=numpy.arange(noFeat), columns=['m/z'])
 
-		data.featureMetadata['m/z'] = numpy.linspace(50, 800, noFeat)
+		data.featureMetadata['m/z'] = (800 - 40) * numpy.random.rand(noFeat) + 40
 		data.featureMetadata['Retention Time'] = (720 - 50) * numpy.random.rand(noFeat) + 50
 		data.featureMetadata['Feature Name'] = [randomword(10) for x in range(0, noFeat)]
-		data.featureMetadata['ppm'] = numpy.linspace(10, -1, noFeat)
+		data.Attributes['Feature Names'] = 'Feature Name'
 
 	elif dtype == 'NMRDataset':
 		data.featureMetadata = pandas.DataFrame(numpy.linspace(10, -1, noFeat), columns=('ppm',), dtype=float)
+		data.sampleMetadata['Delta PPM'] = numpy.random.rand(noSamp)
+		data.sampleMetadata['Line Width (Hz)'] = numpy.random.rand(noSamp)
+		data.Attributes['Feature Names'] = 'ppm'
 
 	data.VariableType = variableType
 	data.initialiseMasks()

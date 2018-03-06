@@ -3429,15 +3429,10 @@ class test_targeteddataset_mergelimitsofquantification(unittest.TestCase):
 		with self.subTest(msg='Checking Warning if LLOQ or ULOQ already exist'):
 			triggerWarning = copy.deepcopy(self.targetedDataset)
 			triggerWarning.featureMetadata['LLOQ'] = [numpy.nan,numpy.nan,numpy.nan]
-			with warnings.catch_warnings(record=True) as w:
-				# Cause all warnings to always be triggered.
-				warnings.simplefilter("always")
-				# warning
+
+			with self.assertWarnsRegex(UserWarning, 'values will be overwritten'):
+
 				triggerWarning.mergeLimitsOfQuantification(onlyLLOQ=True, keepBatchLOQ=False)
-				# check
-				assert len(w) == 1
-				assert issubclass(w[-1].category, UserWarning)
-				assert "values will be overwritten" in str(w[-1].message)
 
 
 class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.TestCase):

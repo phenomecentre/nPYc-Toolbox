@@ -1645,12 +1645,12 @@ class test_msdataset_import_xcms(unittest.TestCase):
 
 
 		with self.subTest(msg='Checking Retention Time'):
-			rt = pandas.Series([3.17485,
-							3.17485,
-							3.17485,
-							3.17485],
-							name='Retention Time',
-							dtype='float')
+			rt = pandas.Series([3.17485 / 60.0,
+								3.17485 / 60.0,
+								3.17485 / 60.0,
+								3.17485 / 60.0],
+								name='Retention Time',
+								dtype='float')
 
 			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Retention Time'], rt)
 			pandas.util.testing.assert_series_equal(self.msData_PeakTable.featureMetadata['Retention Time'], rt)
@@ -2044,6 +2044,18 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 						msg='_tempArtifactualLinkageMatrix hasnt been reset by deepcopy')
 		self.assertTrue(self.msData2._artifactualLinkageMatrix.empty,
 						msg='_artifactualLinkageMatrix hasnt been reset by deepcopy')
+
+
+	def test_deleter_artifactualFilter(self):
+		"""
+		Ensure variables necessary to artifactual filtering are reset when a deepcopy is employed
+		"""
+
+		del self.msData.artifactualLinkageMatrix
+		self.assertTrue(self.msData._tempArtifactualLinkageMatrix.empty,
+						msg='_tempArtifactualLinkageMatrix hasnt been reset by delete')
+		self.assertTrue(self.msData._artifactualLinkageMatrix.empty,
+						msg='_artifactualLinkageMatrix hasnt been reset by delete')
 
 
 	def test_artifactualFilter_parameterChange(self):

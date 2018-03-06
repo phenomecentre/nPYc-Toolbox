@@ -442,7 +442,7 @@ class MSDataset(Dataset):
 		self.featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
 		self.featureMetadata.insert(0, 'Feature Name', name)
 
-		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float)
+		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float) / 60.0
 		self.featureMetadata['m/z'] = self.featureMetadata['m/z'].astype(float)
 
 		self.initialiseMasks()

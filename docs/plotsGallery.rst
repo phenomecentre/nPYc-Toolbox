@@ -51,7 +51,7 @@ Examples of the outputs from :doc:`plots` implemented in the toolbox.
 	:figwidth: 49%
 	:alt: Visualise the features present in UPLC-MS derived dataset
 	
-	:py:func:`~nPYc.plotting.plotIonMap` - Visualise the features present in an :py:class:`~nPYc.objects.MSDataset` object in terms of the original analytics.
+	:py:func:`~nPYc.plotting.plotIonMap` - Visualise the features present in an :py:class:`~nPYc.objects.MSDataset` object in terms of the original analytics. Also has a plotly-based interactive version :py:func:`~nPYc.plotting.plotIonMapInteractive`.
 
 .. figure:: _static/plotRSDs.svg
 	:figwidth: 49%

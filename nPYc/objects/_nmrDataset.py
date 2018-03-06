@@ -2,22 +2,16 @@ import os
 from datetime import datetime
 import pandas
 import numpy
-import math
 import numbers
-from pathlib import PurePath
 import re
-from ..enumerations import VariableType, AssayRole, SampleType
 import warnings
 
 from ._dataset import Dataset
-from ..utilities.nmr import interpolateSpectrum, baselinePWcalcs
-from ..utilities.extractParams import buildFileList
-from ..utilities._calibratePPMscale import calibratePPM
-from ..utilities._lineWidth import lineWidth
-from ..utilities._fitPeak import integrateResonance
 from ..utilities import removeTrailingColumnNumbering
 from .._toolboxPath import toolboxPath
-from ..enumerations import VariableType, DatasetLevel, AssayRole, SampleType
+from ..enumerations import VariableType, AssayRole, SampleType
+from ..utilities._nmr import qcCheckBaseline, qcCheckWaterPeak
+
 
 class NMRDataset(Dataset):
 	"""
@@ -111,31 +105,19 @@ class NMRDataset(Dataset):
 
 			self.addSampleInfo(descriptionFormat='Filenames')
 
-			##
-			# Do per-dataset QC work here
-			##
-			# TODO - refactor tp seperate these QC checks
-			bounds = numpy.std(self.sampleMetadata['Delta PPM']) * 3
-			meanVal = numpy.mean(self.sampleMetadata['Delta PPM'])
-			self.sampleMetadata['calibrPass'] = numpy.logical_or((self.sampleMetadata['Delta PPM'] > meanVal - bounds),
-																 (self.sampleMetadata['Delta PPM'] < meanVal + bounds))
 			self._scale = self.featureMetadata['ppm'].values
-			self._calcBLWP_PWandMerge()
 			self.featureMask[:] = True
-			self.sampleMask = self.sampleMetadata['overallFail'] == False
-			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
+			# Perform the quaality control checks to populate the class
+			self._nmrQCChecks()
 
-		elif fileType == 'BI-LISA':
-			self._importBILISAData(datapath, pulseProgram)
-			self.VariableType = VariableType.Discrete
-			self.name = self.fileName
+			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
 
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
 			pass
-		else :
+		else:
 			raise NotImplementedError('%s is not a format understood by NMRDataset.' % (fileType))
-
+		
 		# Log init
 		self.Attributes['Log'].append([datetime.now(), '%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
 
@@ -297,7 +279,7 @@ class NMRDataset(Dataset):
 		# Prepare input
 		if 'Sample Base Name' not in self.sampleMetadata.columns:
 			# if 'Sample Base Name' is missing, generate it
-			from ..utilities.nmr import generateBaseName
+			from ..utilities._nmr import generateBaseName
 			self.sampleMetadata.loc[:, 'Sample Base Name'], self.sampleMetadata.loc[:, 'expno'] = generateBaseName(self.sampleMetadata)
 
 		# Merge LIMS file using Dataset method
@@ -345,14 +327,17 @@ class NMRDataset(Dataset):
 		# Only do this if 'Sample Base Name' is not defined already
 		##
 		if 'Sample Base Name' not in self.sampleMetadata.columns:
-			from ..utilities.nmr import generateBaseName
+			from ..utilities._nmr import generateBaseName
 
 			self.sampleMetadata.loc[:,'Sample Base Name'], self.sampleMetadata.loc[:,'expno'] = generateBaseName(self.sampleMetadata)
 
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
 
-	def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool], assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], exclusionRegions=None, **kwargs):
+	def updateMasks(self, filterSamples=True, filterFeatures=True,
+					sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
+					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], exclusionRegions=None,
+					sampleQCChecks=['ImportFail','CalibrationFail','LineWidthFail','CalibrationFail','BaselineFail','WaterPeakFail'],**kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
@@ -366,6 +351,7 @@ class NMRDataset(Dataset):
 		:type sampleTypes: SampleType
 		:param AssayRole sampleRoles: List of assays roles to retain
 		:param exclusionRegions: If ``None`` Exclude ranges defined in :py:attr:`~Dataset.Attributes`['exclusionRegions']
+		:param list sampleQCChecks: Which quality control metrics to use.
 		:type exclusionRegions: list of tuple
 		"""
 
@@ -401,14 +387,28 @@ class NMRDataset(Dataset):
 				self.featureMask = numpy.logical_and(self.featureMask,
 													 regionMask)
 
+			# If features are modified, retrigger
+			self._nmrQCChecks()
+
 		# Sample Exclusions
 		if filterSamples:
+
+			# Retrigger QC checks before checking which samples need to be updated
+			if not filterFeatures:
+				self._nmrQCChecks()
 
 			super().updateMasks(filterSamples=True,
 								filterFeatures=False,
 								sampleTypes=sampleTypes,
 								assayRoles=assayRoles,
 								**kwargs)
+			columnNames = ['Sample File Name']
+			columnNames.extend(sampleQCChecks)
+			fail_summary = self.sampleMetadata.loc[:, columnNames]
+
+			idxToMask = fail_summary[(fail_summary == True).any(1)].index
+
+			self.sampleMask[idxToMask] = False
 
 		self.Attributes['Log'].append([datetime.now(), "Dataset filtered with: filterSamples=%s, filterFeatures=%s, sampleClasses=%s, sampleRoles=%s, %s." % (
 			filterSamples,

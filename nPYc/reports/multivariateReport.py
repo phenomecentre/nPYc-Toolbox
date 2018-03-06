@@ -25,7 +25,7 @@ from IPython.display import display
 
 from ..__init__ import __version__ as version
 
-def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=False, biologicalMeasurements=None, dModX_criticalVal=0.05, dModX_criticalVal_type='Fcrit', scores_criticalVal=0.05, kw_threshold=0.05, r_threshold=0.3, excludeFields=None, output=None):
+def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=False, biologicalMeasurements=None, dModX_criticalVal=None, dModX_criticalVal_type=None, scores_criticalVal=None, kw_threshold=0.05, r_threshold=0.3, hotellings_alpha=0.05, excludeFields=None, output=None):
 	"""
 	PCA based analysis of a dataset. A PCA model is generated for the data object, then potential associations between the scores and any sample metadata determined by correlation (continuous data) or a Kruskal-Wallis test (categorical data).
 
@@ -48,6 +48,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 	:type kw_threshold: None or float
 	:param r_threshold: Fields with a (absolute) correlation coefficient value less than this are not deemed to have a significant association with the PCA score
 	:type r_threshold: None or float
+	:param float hotellings_alpha: Alpha value for plotting the Hotelling's ellipse in scores plots (default = 0.05)
 	:param excludeFields: If not None, list of sample metadata fields to be additionally excluded from analysis
 	:type excludeFields: None or list
 	:param output: If ``None`` plot interactively, otherwise save report to the path specified
@@ -76,7 +77,9 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 
 	if dModX_criticalVal is not None:
 		if not isinstance(dModX_criticalVal, numbers.Number) & ((dModX_criticalVal < 1) & (dModX_criticalVal > 0)):
-			raise ValueError('dModX_criticalVal must be a number in the range 0 to 1')
+			raise ValueError('dModX_criticalVal must be a number in the range 0 to 1')			
+		if dModX_criticalVal_type is None:
+			raise ValueError('If dModX_criticalVal is specfied, specify dModX_criticalVal_type (must be == ' + str({'Fcrit', 'Percentile'}) + ')')
 			
 	if dModX_criticalVal_type is not None:
 		if not isinstance(dModX_criticalVal_type, str) & (dModX_criticalVal_type in {'Fcrit', 'Percentile'}):
@@ -93,6 +96,9 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 	if r_threshold is not None:
 		if not isinstance(r_threshold, numbers.Number) or r_threshold < 0:
 			raise ValueError('r_threshold must be a positive number')
+			
+	if not isinstance(hotellings_alpha, numbers.Number) & ((hotellings_alpha < 1) & (hotellings_alpha > 0)):
+		 raise ValueError('hotellings_alpha must be a number in the range 0 to 1')
 
 	if excludeFields is not None:
 		if not isinstance(excludeFields, list):
@@ -232,10 +238,15 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		if dModX_criticalVal_type == 'Fcrit':
 			item['dModX_criticalVal'] = dModX_criticalVal_type + ' (' + str(dModX_criticalVal) + ')'
 		else:
-			item['dModX_criticalVal'] = 'Q' + str(100-dModX_criticalVal*100)		
+			item['dModX_criticalVal'] = 'Q' + str(100-dModX_criticalVal*100)
+	else:
+		item['dModX_criticalVal'] = 'None'
+		
 	if scores_criticalVal is not None:
 		item['scores_criticalVal'] = 'Q' + str(100-scores_criticalVal*100)	
-
+	else:
+		item['scores_criticalVal'] = 'None'
+		
 	# Add check for if 2nd component added for plotting purposes only
 	if nc==2:
 		if ( (pcaModel.cvParameters['Q2X_Scree'][1] - pcaModel.cvParameters['Q2X_Scree'][0])/pcaModel.cvParameters['Q2X_Scree'][0] < pcaModel.cvParameters['stopping_condition'] ):
@@ -259,7 +270,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		if 'Ncomponents_optimal' in item:
 			print('\t' + '\033[1m' + 'IMPORTANT NOTE: Optimal number of components: 1 (second component added for plotting purposes)' + '\033[0m')
 		
-		print('\tCritical value for flagging outliers in DmodX space:: ' + item['dModX_criticalVal'])
+		print('\tCritical value for flagging outliers in DmodX space: ' + item['dModX_criticalVal'])
 		print('\tCritical value for flagging outliers in scores space: ' + item['scores_criticalVal'])
 		
 		print('\033[1m' + '\nPCA QC Outputs' + '\033[0m')
@@ -296,6 +307,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		classType='Plot Sample Type',
 		title='Sample Type',
 		figures=figuresQCscores,
+		alpha=hotellings_alpha,
 		savePath=saveAs,
 		figureFormat=data.Attributes['figureFormat'],
 		dpi=data.Attributes['dpi'],
@@ -321,27 +333,32 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 	if not 'Run Order' in data.sampleMetadata.columns:
 		data.sampleMetadata['Run Order'] = data.sampleMetadata.index.values
 
+	# Flag potential strong outliers (exceed outliers_criticalVal)
+	if scores_criticalVal is not None:
+		PcritPercentile = 100 - scores_criticalVal*100
+		quantilesVals = numpy.percentile(sumT, [100 - scores_criticalVal*100])
+		which_scores_outlier = (sumT >= quantilesVals)
+		item['Noutliers_strong'] = str(sum(which_scores_outlier))
+
+	else:
+		PcritPercentile = None
+		which_scores_outlier = numpy.zeros(sumT.shape, dtype=bool)
+
+
 	plotOutliers(sumT,
 		data.sampleMetadata['Run Order'],
 		sampleType=data.sampleMetadata['Plot Sample Type'],
 		addViolin=True,
 		ylabel='Summed distance from origin (all PCs)',
+		PcritPercentile=PcritPercentile,
 		savePath=saveAs,
 		figureFormat=data.Attributes['figureFormat'],
 		dpi=data.Attributes['dpi'],
 		figureSize=data.Attributes['figureSize'])
-
-	# Flag potential strong outliers (exceed outliers_criticalVal)
-	if scores_criticalVal is not None:
-		quantilesVals = numpy.percentile(sumT, [100 - scores_criticalVal*100])
-		which_scores_outlier = (sumT >= quantilesVals)
-		item['Noutliers_strong'] = str(sum(which_scores_outlier))
-
-		if output is None:
-			print('\n' + item['Noutliers_strong'] + ' samples with total distance from origin exceeding the ' + item['scores_criticalVal'] + ' limit.')
-	else:
-		which_scores_outlier = numpy.zeros(sumT.shape, dtype=bool)
-
+	
+	if (scores_criticalVal is not None) & (output is None):
+		print('\nExcluding samples with total distance from origin exceeding the ' + item['scores_criticalVal'] + ' limit would result in ' + item['Noutliers_strong'] + ' exclusions.')
+		
 
 	# Scatter plot of DmodX (moderate outliers in PCA)
 	if output:
@@ -353,27 +370,35 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 
 	sample_dmodx_values = pcaModel.dmodx(data.intensityData)
 	
+	# Define defaults for plotting if no critical values specified by user
+	PcritPercentile = None
+	Fcrit = pcaModel._dmodx_fcrit(data.intensityData, alpha = 0.05)
+	FcritAlpha = 0.05 
+	which_dmodx_outlier = numpy.zeros(sample_dmodx_values.shape, dtype=bool)
+	
 	# Flag potential moderate outliers (exceed critical value) 	
 	if dModX_criticalVal is not None:
 		if dModX_criticalVal_type == 'Fcrit':
 			dModX_threshold = pcaModel._dmodx_fcrit(data.intensityData, alpha = dModX_criticalVal)
+			Fcrit = dModX_threshold
+			FcritAlpha = dModX_criticalVal
+
 		else:
 			dModX_threshold = numpy.percentile(sample_dmodx_values, [100 - dModX_criticalVal*100])
+			PcritPercentile = 100 - dModX_criticalVal*100
+
 		which_dmodx_outlier = (sample_dmodx_values >= dModX_threshold)
 		
 		item['Noutliers_moderate'] = str(sum(which_dmodx_outlier))
-	else:
-		# Generate Fcrit at 0.05 for plot
-		dModX_threshold = pcaModel._dmodx_fcrit(data.intensityData, alpha = 0.05)
-		
-		which_dmodx_outlier = numpy.zeros(sample_dmodx_values.shape, dtype=bool)
 
 	
 	plotOutliers(sample_dmodx_values,
 		data.sampleMetadata['Run Order'],
 		sampleType=data.sampleMetadata['Plot Sample Type'],
 		addViolin=True,
-		Fcrit=dModX_threshold,
+		Fcrit=Fcrit,
+		FcritAlpha=FcritAlpha,
+		PcritPercentile=PcritPercentile,
 		ylabel='DmodX',
 		savePath=saveAs,
 		figureFormat=data.Attributes['figureFormat'],
@@ -381,7 +406,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		figureSize=data.Attributes['figureSize'])
 
 	if (dModX_criticalVal is not None) & (output is None):
-		print('\n' + item['Noutliers_moderate'] + ' samples with DmodX exceeding the ' + item['dModX_criticalVal'] + ' limit.')
+		print('\nExcluding samples with DmodX exceeding the ' + item['dModX_criticalVal'] + ' limit would result in ' + item['Noutliers_moderate'] + ' exclusions.')
 
 	# Total number of outliers		
 	if sum(which_scores_outlier | which_dmodx_outlier) > 0:
@@ -393,7 +418,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		item['Outliers_total_details']['Scores Outlier'] = which_scores_outlier[outliers]
 		
 		if output is None:
-			print('\nExcluding outliers in both scores and DmodX space would result in ' + item['Noutliers_total'] + ' exclusions.')
+			print('\nExcluding outliers (as specified) would result in ' + item['Noutliers_total'] + ' exclusions.')
 			display(item['Outliers_total_details'])
 			print('\n')
 
@@ -609,7 +634,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 				   pcaModel,
 				   'continuous',
 				   data.name,
-				   alpha=scores_criticalVal,
+				   alpha=hotellings_alpha,
 				   plotAssociation=sigCor,
 				   r_threshold=r_threshold,
 				   saveDir=saveAs,
@@ -645,7 +670,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 				  pcaModel,
 				  'categorical',
 				  data.name,
-				  alpha=scores_criticalVal,
+				  alpha=hotellings_alpha,
 				  plotAssociation=sigKru,
 				  kw_threshold=kw_threshold,
 				  saveDir=saveAs,
@@ -684,6 +709,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 			pcaModel,
 			'categorical',
 			data.name,
+			alpha=hotellings_alpha,
 			plotAssociation=sigNone,
 			saveDir=saveAs,
 			figures=figuresOTHERscores,

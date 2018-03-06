@@ -159,7 +159,7 @@ class test_utilities_importBruker(unittest.TestCase):
 		numpy.testing.assert_allclose(metadata.loc[0, 'Line Width (Hz)'], expectedLW)
 
 		expectedERETIC = 181331824.09952235
-		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Intergral'], expectedERETIC)
+		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Integral'], expectedERETIC)
 
 
 	def test_importBrukerSpectra_pdata(self):
@@ -212,7 +212,7 @@ class test_utilities_importBruker(unittest.TestCase):
 		numpy.testing.assert_allclose(metadata.loc[0, 'Line Width (Hz)'], expectedLW, atol=0.01)
 
 		expectedERETIC = 152106691.42761227
-		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Intergral'], expectedERETIC)
+		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Integral'], expectedERETIC)
 
 
 	def test_importBrukerSpectra_malformederetic(self):
@@ -237,11 +237,11 @@ class test_utilities_importBruker(unittest.TestCase):
 																			'UnitTest1_Urine_Rack1_SLL_270814', '10'),
 																			'noesypr1d', 1, Attributes)
 
-		expectedWarningText = 'Error calculating ERETIC intergral'
+		expectedWarningText = 'Error calculating ERETIC integral'
 		self.assertEqual(metadata.loc[0, 'Warnings'], expectedWarningText)
 		
 		expectedERETIC = numpy.nan
-		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Intergral'], expectedERETIC)
+		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Integral'], expectedERETIC)
 
 
 	def test_parseQuantFactorSample(self):

@@ -1,0 +1,6 @@
+include COPYING.txt
+
+include nPYc/Templates/toolbox_logo.png
+include nPYc/Templates/npc-main.css
+
+recursive-include nPYc *.html *.json *.csv *.txt 

@@ -13,6 +13,7 @@
 /docs/_build
 /.idea
 /dist/
+/build/
 /*.egg-info
 /Tests/htmlcov/
 *.xml
