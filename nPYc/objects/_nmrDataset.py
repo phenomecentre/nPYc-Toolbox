@@ -445,14 +445,9 @@ class NMRDataset(Dataset):
 		:param dict detailsDict: Contains several key, value pairs required to for ISATAB
 		:raises IOError: If writing one of the files fails
 		"""
-		import pandas as pd
 		from isatools.model import Investigation, Study, Assay, OntologyAnnotation, OntologySource, Person,Publication,Protocol, Source
 		from isatools.model import  Comment, Sample, Characteristic, Process, Material, DataFile, ParameterValue, plink
-
-
 		from isatools import isatab
-		import datetime
-		#import numpy as np
 
 		investigation = Investigation()
 
@@ -502,7 +497,7 @@ class NMRDataset(Dataset):
 		    source.comments.append(Comment(name='Study Name', value=row['Study']))
 		    study.sources.append(source)
 
-		    sample_name = row['Sampling ID'] if not pd.isnull(row['Sampling ID']) else row['Subject ID']
+		    sample_name = row['Sampling ID'] if not pandas.isnull(row['Sampling ID']) else row['Subject ID']
 		    sample = Sample(name=sample_name, derives_from=[source])
 
 		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=detailsDict['study_material_type'])
@@ -577,7 +572,7 @@ class NMRDataset(Dataset):
 		    extraction_process.outputs.append(material)
 
 		    # create a ms process that executes the nmr protocol
-		    nmr_process = Process(executes_protocol=nmr_protocol,date_=datetime.datetime.isoformat(datetime.datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
+		    nmr_process = Process(executes_protocol=nmr_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
 
 		    nmr_process.name = "assay-name-{}".format(index)
 		    nmr_process.inputs.append(extraction_process.outputs[0])

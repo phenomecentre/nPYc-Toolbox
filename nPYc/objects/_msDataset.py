@@ -968,13 +968,9 @@ class MSDataset(Dataset):
 		:raises IOError: If writing one of the files fails
 		"""
 
-		import pandas as pd
 		from isatools.model import Investigation, Study, Assay, OntologyAnnotation, OntologySource, Person,Publication,Protocol, Source
 		from isatools.model import  Comment, Sample, Characteristic, Process, Material, DataFile, ParameterValue, plink
-
-
 		from isatools import isatab
-		import datetime
 
 		investigation = Investigation()
 
@@ -1020,9 +1016,9 @@ class MSDataset(Dataset):
 		    sub_id = row['Subject ID']
 		    sam_id = row['Sampling ID']
 		    status = row['Status']
-		    if not pd.isnull(sub_id):
+		    if not pandas.isnull(sub_id):
 		        src_name = str(sub_id)
-		    elif not pd.isnull(sam_id):
+		    elif not pandas.isnull(sam_id):
 		        src_name = str(sam_id)
 		    else:
 		        src_name = status
@@ -1113,7 +1109,7 @@ class MSDataset(Dataset):
 		    # create a ms process that executes the nmr protocol
 		    #print(sample.name)
 		    #print(row['Acquired Full Time String'])
-		    ms_process = Process(executes_protocol=ms_protocol,date_=datetime.datetime.isoformat(datetime.datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
+		    ms_process = Process(executes_protocol=ms_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
 
 		    ms_process.name = "assay-name-{}".format(index)
 		    ms_process.inputs.append(extraction_process.outputs[0])
