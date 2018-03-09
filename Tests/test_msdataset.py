@@ -14,6 +14,8 @@ from nPYc.enumerations import SampleType
 from nPYc.enumerations import AssayRole
 from nPYc.enumerations import VariableType
 from generateTestDataset import generateTestDataset
+import tempfile
+from isatools import isatab
 
 
 class test_msdataset_synthetic(unittest.TestCase):
@@ -2148,7 +2150,6 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 class test_msdataset_ISATAB(unittest.TestCase):
 
 	def test_exportISATAB(self):
-		import tempfile
 
 		msData = nPYc.MSDataset('', fileType='empty')
 		raw_data = {
@@ -2203,8 +2204,19 @@ class test_msdataset_ISATAB(unittest.TestCase):
 			msData.initialiseMasks()
 			msData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
 
-			a = os.path.join(tmpdirname,'a_my_ms_assay.txt')
-			self.assertTrue(os.path.exists(a))
+			investigatio_file = os.path.join(tmpdirname,'i_investigation.txt')
+			print(investigatio_file)
+			numerrors = 0
+			with open(investigatio_file) as fp:
+				report = isatab.validate(fp)
+				numerrors = len(report['errors'])
+
+
+			#self.assertTrue(os.path.exists(a))
+			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))
+
+			#a = os.path.join(tmpdirname,'a_my_ms_assay.txt')
+			#self.assertTrue(os.path.exists(a))
 
 
 if __name__ == '__main__':

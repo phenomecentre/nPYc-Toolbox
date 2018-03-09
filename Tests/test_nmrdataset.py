@@ -6,7 +6,7 @@ import os
 import copy
 import warnings
 import tempfile
-
+from isatools import isatab
 
 sys.path.append("..")
 import nPYc
@@ -96,7 +96,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 	def test_updateMasks_samples(self):
 
-		from nPYc.enumerations import VariableType, DatasetLevel, AssayRole, SampleType
+#		from nPYc.enumerations import VariableType, DatasetLevel, AssayRole, SampleType
 
 		dataset = generateTestDataset(18, 5, dtype='NMRDataset',
 											  variableType=nPYc.enumerations.VariableType.Spectral,
@@ -355,9 +355,9 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 ##
 #unit test for Bruker data
 ##
-from nPYc.utilities._nmr import interpolateSpectrum
-from nPYc.reports._generateReportNMR import _generateReportNMR
-from math import ceil
+#from nPYc.utilities._nmr import interpolateSpectrum
+#from nPYc.reports._generateReportNMR import _generateReportNMR
+#from math import ceil
 
 class test_nmrdataset_bruker(unittest.TestCase):
 
@@ -446,7 +446,6 @@ class test_nmrdataset_bruker(unittest.TestCase):
 class test_nmrdataset_ISATAB(unittest.TestCase):
 
 	def test_exportISATAB(self):
-
 		nmrData = nPYc.NMRDataset('', fileType='empty')
 		raw_data = {
 			'Acquired Time': ['2016-08-09  01:36:23', '2016-08-09  01:56:23', '2016-08-09  02:16:23', '2016-08-09  02:36:23', '2016-08-09  02:56:23'],
@@ -494,8 +493,16 @@ class test_nmrdataset_ISATAB(unittest.TestCase):
 
 			nmrData.initialiseMasks()
 			nmrData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
-			a = os.path.join(tmpdirname,'a_my_nmr_assay.txt')
-			self.assertTrue(os.path.exists(a))
+			investigatio_file = os.path.join(tmpdirname,'i_investigation.txt')
+			print(investigatio_file)
+			numerrors = 0
+			with open(investigatio_file) as fp:
+				report = isatab.validate(fp)
+				numerrors = len(report['errors'])
+
+
+			#self.assertTrue(os.path.exists(a))
+			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))
 
 
 if __name__ == '__main__':

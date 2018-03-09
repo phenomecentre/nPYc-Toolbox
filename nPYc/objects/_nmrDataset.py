@@ -538,11 +538,11 @@ class NMRDataset(Dataset):
 		study.protocols.append(aliquoting_protocol)
 
 		### Add NMR Assay ###
-		nmr_assay = Assay(filename='a_'+detailsDict['assay_filename']+'.txt',measurement_type=OntologyAnnotation(term="metabolite profiling"),technology_type=OntologyAnnotation(term="nmr spectroscopy"))
+		nmr_assay = Assay(filename='a_'+detailsDict['assay_filename']+'.txt',measurement_type=OntologyAnnotation(term="metabolite profiling"),technology_type=OntologyAnnotation(term="NMR spectroscopy"))
 		extraction_protocol = Protocol(name='extraction', protocol_type=OntologyAnnotation(term="material extraction"))
 
 		study.protocols.append(extraction_protocol)
-		nmr_protocol = Protocol(name='nmr spectroscopy', protocol_type=OntologyAnnotation(term="NMR Assay"))
+		nmr_protocol = Protocol(name='NMR spectroscopy', protocol_type=OntologyAnnotation(term="NMR Assay"))
 		nmr_protocol.add_param('Run Order')
 		nmr_protocol.add_param('Instrument')
 		nmr_protocol.add_param('Sample Batch')
@@ -595,7 +595,7 @@ class NMRDataset(Dataset):
 		    nmr_assay.process_sequence.append(extraction_process)
 		    nmr_assay.process_sequence.append(nmr_process)
 		    nmr_assay.measurement_type = OntologyAnnotation(term="metabolite profiling")
-		    nmr_assay.technology_type = OntologyAnnotation(term="nmr spectroscopy")
+		    nmr_assay.technology_type = OntologyAnnotation(term="NMR spectroscopy")
 
 		# attach the assay to the study
 		study.assays.append(nmr_assay)
