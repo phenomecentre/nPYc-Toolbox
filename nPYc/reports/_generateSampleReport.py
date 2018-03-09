@@ -80,7 +80,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 	# Determine if samples have been excluded
 	try:
 		excludedIX = [i for i, x in enumerate(data.excludedFlag) if x == 'Samples']
-		sampleMetadataExcluded = pandas.DataFrame(columns=['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details'])
+		sampleMetadataExcluded = pandas.DataFrame(columns=['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available'])
 		excluded = len(excludedIX)
 	except:
 		excluded = 0
@@ -90,7 +90,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		# Stick info of all previously excluded samples together
 		for i in excludedIX:
 			temp = copy.deepcopy(data.sampleMetadataExcluded[i])
-			sampleMetadataExcluded = sampleMetadataExcluded.append(temp.reindex(['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details'], axis=1), ignore_index=True)
+			sampleMetadataExcluded = sampleMetadataExcluded.append(temp.reindex(['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available'], axis=1), ignore_index=True)
 
 		excluded = sampleMetadataExcluded.shape[0]
 
@@ -115,12 +115,16 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 
 	# Convert to dataframe
 	sampleSummary['Acquired'] = pandas.DataFrame(data = temp,
-		index = ['All', 'Study Sample', 'Study Pool', 'External Reference', 'Other', 'Unknown'],
+		index = ['All', 'Study Sample', 'Study Pool', 'External Reference', 'No Metadata Available', 'Unspecified Sample Type or Assay Role'],
 		columns = ['Total', 'Marked for Exclusion'])
 
 	# Marked for exclusion - details
 	if (sum(markedToExclude) != 0):
 		sampleSummary['MarkedToExclude Details'] = data.sampleMetadata[['Sample File Name','Exclusion Details']][markedToExclude]
+
+	# Save details of samples of unknown type
+	if (sum(NotInCSVmask) != 0):
+		sampleSummary['NoMetadata Details'] = data.sampleMetadata[['Sample File Name']][NotInCSVmask]
 
 	# Save details of samples of unknown type
 	if (sum(UnclearRolemask) != 0):
@@ -170,9 +174,9 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 			display(sampleSummary['NotAcquired'])
 			print('\n')
 
-		if 'MarkedToExclude Details' in sampleSummary:
-			print('Details of Samples Marked for Exclusion')
-			display(sampleSummary['MarkedToExclude Details'])
+		if 'NoMetadata Details' in sampleSummary:
+			print('Details of Samples for which no Metadata was provided')
+			display(sampleSummary['NoMetadata Details'])
 			print('\n')
 
 		if 'UnknownType Details' in sampleSummary:
@@ -184,3 +188,9 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 			print('Details of Samples Missing from Acquisition/Import (and not already excluded)')
 			display(sampleSummary['NotAcquired Details'])
 			print('\n')
+
+		if 'MarkedToExclude Details' in sampleSummary:
+			print('Details of Samples Marked for Exclusion')
+			display(sampleSummary['MarkedToExclude Details'])
+			print('\n')
+

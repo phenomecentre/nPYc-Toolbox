@@ -1243,6 +1243,7 @@ class Dataset:
 			noMetadataIndex = acquired_butnotcsv.index
 			joinedTable.loc[noMetadataIndex, 'Metadata Available'] = False
 			self.sampleMask[noMetadataIndex] = False
+			joinedTable.loc[noMetadataIndex, 'Exclusion Details'] = 'No Metadata in CSV'
 
 		# 1) ACQ and in "include Sample" - drop and set mask to false
 		# Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
