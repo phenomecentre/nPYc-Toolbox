@@ -95,6 +95,7 @@ class NMRDataset(Dataset):
 			self.sampleMetadata['Run Order'] = numpy.argsort(runOrder)
 			self.sampleMetadata['Sampling ID'] = numpy.nan
 			self.sampleMetadata['Exclusion Details'] = self.sampleMetadata['Warnings']
+			self.sampleMetadata['Metadata Available'] = False
 			self.sampleMetadata.drop('Warnings', inplace=True, axis=1)
 
 			self.initialiseMasks()
@@ -424,7 +425,8 @@ class NMRDataset(Dataset):
 	def _nmrQCChecks(self):
 		"""
 
-		Apply the quality control checks to the current dataset and apply the sampleMetadata dataframe.
+		Apply the quality control checks to the current dataset and update the sampleMetadata dataframe columns
+		related to sample quality control.
 
 		:return None:
 		"""

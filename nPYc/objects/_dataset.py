@@ -53,26 +53,27 @@ class Dataset:
 		self.sampleMetadata = pandas.DataFrame(None,
 											   columns=['Sampling ID', 'AssayRole', 'SampleType', 'Sample File Name',
 														'Sample Base Name', 'Dilution', 'Batch', 'Correction Batch',
-														'Acquired Time', 'Run Order', 'Exclusion Details'])
+														'Acquired Time', 'Run Order', 'Exclusion Details', 'Metadata Available'])
 		"""
 		:math:`n` × :math:`p` dataframe of sample identifiers and metadata.
 
 		The sampleMetadata table can included any datatype that can be placed in a pandas cell, However the toolbox assumes certain prerequisites on the following columns in order to function:
 
-		================= ========================================= ============
-		Column            dtype                                     Usage
-		================= ========================================= ============
-		Sampling ID       str                                       ID of the :term:`sampling event` generating this sample
-		AssayRole         :py:class:`~nPYc.enumerations.AssayRole`  Defines the role of this assay
-		SampleType        :py:class:`~nPYc.enumerations.SampleType` Defines the type of sample acquired
-		Sample File Name  str                                       :term:`Unique file name<Sample File Name>` for the analytical data
-		Sample Base Name  str                                       :term:`Common identifier<Sample Base Name>` that links analytical data to the *Sampling ID*
-		Dilution          float                                     Where *AssayRole* is :py:attr:`~nPYc.enumerations.AssayRole.LinearityReference`, the expected abundance is indicated here
-		Batch             int                                       Acquisition batch
-		Correction Batch  int                                       When detecting and correcting for :term:`batch<Batch Effects>` and :term:`Run-Order<Run-Order Effects>` effects, run-order effects are characterised within samples sharing the same *Correction Batch*, while batch effects are detected between distinct values
-		Acquired Time     datetime.datetime                         Date and time of acquisition of raw data
-		Run order         int                                       Order of sample acquisition
-		Exclusion Details str                                       Details of reasoning if marked for exclusion
+		=================  ========================================= ============
+		Column             dtype                                     Usage
+		=================  ========================================= ============
+		Sampling ID        str                                       ID of the :term:`sampling event` generating this sample
+		AssayRole          :py:class:`~nPYc.enumerations.AssayRole`  Defines the role of this assay
+		SampleType         :py:class:`~nPYc.enumerations.SampleType` Defines the type of sample acquired
+		Sample File Name   str                                       :term:`Unique file name<Sample File Name>` for the analytical data
+		Sample Base Name   str                                       :term:`Common identifier<Sample Base Name>` that links analytical data to the *Sampling ID*
+		Dilution           float                                     Where *AssayRole* is :py:attr:`~nPYc.enumerations.AssayRole.LinearityReference`, the expected abundance is indicated here
+		Batch              int                                       Acquisition batch
+		Correction Batch   int                                       When detecting and correcting for :term:`batch<Batch Effects>` and :term:`Run-Order<Run-Order Effects>` effects, run-order effects are characterised within samples sharing the same *Correction Batch*, while batch effects are detected between distinct values
+		Acquired Time      datetime.datetime                         Date and time of acquisition of raw data
+		Run order          int                                       Order of sample acquisition
+		Exclusion Details  str                                       Details of reasoning if marked for exclusion
+		Metadata Available bool                                      Records which samples were included in the metadata provided with the .addSampleInfo() method
 		================= ========================================= ============
 		"""
 		self.featureMask = numpy.array(None, dtype=bool)

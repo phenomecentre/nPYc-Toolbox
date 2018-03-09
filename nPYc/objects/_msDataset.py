@@ -387,6 +387,8 @@ class MSDataset(Dataset):
 
 		self.initialiseMasks()
 
+		self.sampleMetadata['Metadata Available'] = False
+
 		self.Attributes['Log'].append([datetime.now(), 'Progenesis QI dataset loaded from %s' % (path)])
 
 
@@ -444,6 +446,7 @@ class MSDataset(Dataset):
 
 		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float) / 60.0
 		self.featureMetadata['m/z'] = self.featureMetadata['m/z'].astype(float)
+		self.sampleMetadata['Metadata Available'] = False
 
 		self.initialiseMasks()
 
@@ -510,6 +513,7 @@ class MSDataset(Dataset):
 		self.featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
 		self.featureMetadata.insert(0, 'Feature Name', names)
 
+		self.sampleMetadata['Metadata Available'] = False
 		self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'Biocrates dataset loaded from %s' % (path)])
