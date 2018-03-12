@@ -87,7 +87,7 @@ Examples of the outputs from :doc:`plots` implemented in the toolbox.
 	:figwidth: 49%
 	:alt: Plot of median profile with variance across all samples visualised
 	
-	:py:func:`~nPYc.plotting.plotSpectralVariance` - Plot of median profile with variance across all samples visualised in :py:class:`~nPYc.enumerations.VariableType.Spectral` datasets.
+	:py:func:`~nPYc.plotting.plotSpectralVariance` - Plot of median profile with variance across all samples visualised in :py:class:`~nPYc.enumerations.VariableType.Spectral` datasets. Also has a plotly-based interactive version :py:func:`~nPYc.plotting.plotSpectralVarianceInteractive`.
 
 .. figure:: _static/plotScoresInteractive.png
 	:figwidth: 49%
