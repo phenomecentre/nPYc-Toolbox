@@ -494,7 +494,6 @@ class test_nmrdataset_ISATAB(unittest.TestCase):
 			nmrData.initialiseMasks()
 			nmrData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
 			investigatio_file = os.path.join(tmpdirname,'i_investigation.txt')
-			print(investigatio_file)
 			numerrors = 0
 			with open(investigatio_file) as fp:
 				report = isatab.validate(fp)

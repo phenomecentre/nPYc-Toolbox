@@ -346,7 +346,7 @@ class MSDataset(Dataset):
 		elif descriptionFormat == 'Batches':
 			self._fillBatches()
 		else:
-			super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, filenameSpec=filenameSpec, **kwargs)
+			super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, **kwargs)
 
 
 	def _loadQIDataset(self, path):
@@ -1138,7 +1138,7 @@ class MSDataset(Dataset):
 		study.assays.append(ms_assay)
 
 
-		_ = isatab.dump(isa_obj=investigation, output_path=destinationPath)
+		isatab.dump(isa_obj=investigation, output_path=destinationPath)
 
 
 

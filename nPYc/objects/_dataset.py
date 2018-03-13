@@ -1480,7 +1480,7 @@ class Dataset:
 			return False
 
 
-	def _matchDatasetToISATAB(self,pathToISATABFile, studyID = 1, assay='MS', assayID=1,filenameSpec='', dataType = 'QI'):
+	def _matchDatasetToISATAB(self,pathToISATABFile, studyID = 1, assay='MS', assayID=1):
 		"""
 		Match the Sample IDs in :py:attr:`sampleMetadata` to the subject and assay information in the ISATAB File.
 
@@ -1601,7 +1601,7 @@ class Dataset:
 		# Match limsFile to sampleMetdata for samples with data PRESENT
 		self.sampleMetadata = pandas.merge(self.limsFile,self.sampleMetadata, left_on='Assay data name Normalised', right_on='Sample Base Name Normalised', how='right', sort=False)
 		self.sampleMetadata = removeDuplicateColumns(self.sampleMetadata)
-		#check with Jake/Caroline
+		#
 		if 'Exclusion Details' not in self.sampleMetadata:
 			self.sampleMetadata['Exclusion Details'] = None
 

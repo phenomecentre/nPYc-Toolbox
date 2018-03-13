@@ -601,7 +601,7 @@ class NMRDataset(Dataset):
 		study.assays.append(nmr_assay)
 
 
-		_ = isatab.dump(isa_obj=investigation, output_path=destinationPath)
+		isatab.dump(isa_obj=investigation, output_path=destinationPath)
 
 
 	def _nmrQCChecks(self):
