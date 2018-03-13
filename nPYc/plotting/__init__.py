@@ -28,7 +28,7 @@ from ._plotTIC import plotTIC
 from ._plotIonMap import plotIonMap
 from ._plotBatchAndROCorrection import plotBatchAndROCorrection
 from ._multivariatePlotting import plotScree, plotScores, plotOutliers, plotLoadings, plotScoresInteractive, plotLoadingsInteractive, plotMetadataDistribution
-from ._plotSpectralVariance import plotSpectralVariance
+from ._plotSpectralVariance import plotSpectralVariance, plotSpectralVarianceInteractive
 from ._plotDiscreteLoadings import plotDiscreteLoadings
 from ._plotFeatureRanges import plotFeatureRanges
 from ._plotLOQRunOrder import plotLOQRunOrder
@@ -41,4 +41,5 @@ __all__ = ['histogram', 'plotBatchAndROCorrection', 'plotTIC', 'plotTICinteracti
 		   'plotIonMap', 'plotRSDs', 'plotRSDsInteractive', 'plotScree', 'plotOutliers', 'plotSpectralVariance', 'plotScores', 'plotScoresInteractive',
 		   'plotLoadings', 'plotLoadingsInteractive', 'plotDiscreteLoadings', 'plotFeatureRanges', 'plotMetadataDistribution', 'plotLOQRunOrder', 
 		   'plotFeatureLOQ', 'plotVariableScatter', 'plotAccuracyPrecision', 'plotCalibrationInteractive', 'plotLineWidth', 'plotLineWidthInteractive',
-		   'plotBaseline', 'plotBaselineInteractive', 'plotWaterResonance', 'plotWaterResonanceInteractive', 'plotSpectraInteractive', 'plotIonMapInteractive']
+		   'plotBaseline', 'plotBaselineInteractive', 'plotWaterResonance', 'plotWaterResonanceInteractive', 'plotSpectraInteractive', 'plotIonMapInteractive',
+		   'plotSpectralVarianceInteractive']

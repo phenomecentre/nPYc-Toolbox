@@ -10,7 +10,6 @@ from nPYc.enumerations import SampleType
 import copy
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import plotly.plotly as py
 import plotly.graph_objs as go
 
 
