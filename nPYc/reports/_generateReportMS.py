@@ -787,54 +787,14 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 										
 		# Generate sample summary
 		sampleSummary = _generateSampleReport(msData, withExclusions=True, output=None, returnOutput=True)
-		
-		# Extract summary table for samples acquired
-		sampleSummaryTable = copy.deepcopy(sampleSummary['Acquired'])
-		
-		# Drop unwanted columns
-		sampleSummaryTable.drop(['Marked for Exclusion'], axis=1, inplace=True)
-		if 'LIMS marked as missing' in sampleSummaryTable.columns:
-			sampleSummaryTable.drop(['LIMS marked as missing', 'Missing from LIMS'], axis=1, inplace=True) 
-		if 'Missing Subject Information' in sampleSummaryTable.columns:
-			sampleSummaryTable.drop(['Missing Subject Information'], axis=1, inplace=True) 
-		
-		# Rename 'already excluded'
-		sampleSummaryTable.rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
-		
-		# Add 'unavailable' column
-		if 'NotAcquired' in sampleSummary:
-			sampleSummaryTable = sampleSummaryTable.join(pandas.DataFrame(data=sampleSummary['NotAcquired']['Marked as Sample'] - sampleSummary['NotAcquired']['Already Excluded'], columns=['Unavailable']), how='left', sort=False)
-		else:
-			sampleSummaryTable['Unavailable'] = 0
-	
-		# Update 'All', 'Unavailable' to only reflect sample types present in data
-		sampleSummaryTable.loc['All', 'Unavailable'] = sum(sampleSummaryTable['Unavailable'][1:])
-		
-		# Save to item
-		item['SampleSummaryTable'] = sampleSummaryTable
-		
-		# Save details of study samples missing from dataset
-		if sampleSummaryTable['Unavailable']['Study Sample'] != 0:
-			item['SamplesMissingInfo'] = sampleSummary['NotAcquired Details'].loc[sampleSummary['NotAcquired Details']['Sampling ID'].isnull()==False,:]
-			item['SamplesMissingInfo'] = item['SamplesMissingInfo'].drop(['LIMS Marked Missing'], axis=1)
-			item['SamplesMissingNo'] = str(sampleSummaryTable['Unavailable']['Study Sample'])
-		
-		# Save details of study samples excluded from dataset
-		if hasattr(sampleSummaryTable, 'Excluded'):
-			if sampleSummaryTable['Excluded']['Study Sample'] != 0:
-				item['SamplesExcludedInfo'] = sampleSummary['Excluded Details'].loc[(sampleSummary['Excluded Details']['SampleType'] == SampleType.StudySample) & (sampleSummary['Excluded Details']['AssayRole'] == AssayRole.Assay),:]
-				item['SamplesExcludedInfo'] = item['SamplesExcludedInfo'].drop(['Sample Base Name', 'SampleType', 'AssayRole'], axis=1)
-				item['SamplesExcludedNo'] = str(sampleSummaryTable['Excluded']['Study Sample'])
-		
-		if not output:
-			print('Final Dataset for: ' + item['Name'])
-			print('\n\t' + item['Nsamples'] + ' samples\n\t' + item['Nfeatures'] + ' features\n')
-			
-			print('Sample Summary')
-			display(item['SampleSummaryTable'])
-			print('\n')
 
-	
+		if not output:
+			print('Table 1: Summary of samples present')
+			display(sampleSummary['Acquired'])
+			if 'Excluded Details' in sampleSummary:
+				print('Table 2: Summary of samples excuded')
+				display(sampleSummary['Excluded Details'])
+
 		# Figure 1: Acquisition Structure, TIC by sample and batch
 		nBatchCollect = len((numpy.unique(msData.sampleMetadata['Batch'].values[~numpy.isnan(msData.sampleMetadata['Batch'].values)])).astype(int))	
 		if nBatchCollect == 1:
@@ -960,20 +920,9 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 
 		# Add final tables of excluded/missing study samples
 		if not output:
-
-			if (('SamplesMissingInfo' in item) | ('SamplesExcludedInfo' in item)):
-
-				print('Samples Missing from Acquisition\n')
-
-				if 'SamplesMissingInfo' in item:
-					print('Samples unavailable for acquisition (' + item['SamplesMissingNo'] + ')')
-					display(item['SamplesMissingInfo'])
-					print('\n')			
-
-				if 'SamplesExcludedInfo' in item:
-					print('Samples excluded on analytical criteria (' + item['SamplesExcludedNo'] + ')')
-					display(item['SamplesExcludedInfo'])
-					print('\n')
+			if 'Excluded Details' in sampleSummary:
+				print('Table 2: Summary of samples excuded')
+				display(sampleSummary['Excluded Details'])
 
 	# Generate HTML report	
 	if output:
