@@ -397,7 +397,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 				'\nCorrelation method: ' + item['corrMethod'] +
 				'\nCorrelation exclusions: ' + item['corrExclusions'] +
 				'\nCorrelation threshold: ' + item['corrThreshold'])
-	
+
 
 		# Assessment of potential saturation
 
@@ -690,7 +690,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		rsdSS = rsd(msData.intensityData[SSmask,:])
 		item['rsdSPvsSSvarianceRatio'] = str(msData.Attributes['varianceRatio'])
 		item['rsdSPvsSSPassed'] = sum((msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS)
-		
+
 		# Correlation to dilution
 		item['corrMethod'] = msData.Attributes['corrMethod']
 		item['corrThreshold'] = msData.Attributes['corrThreshold']
@@ -723,7 +723,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		if withArtifactualFiltering:
 			item['artifactualPassed'] = sum(passMask)
 		item['featuresPassed'] = sum(passMask)
-		
+
 		# Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds
 		rsdVals = numpy.arange(5,55,5)
 		rVals = numpy.arange(0.5,1.01,0.05)
@@ -754,16 +754,16 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		fig, ax = plt.subplots(1, figsize=msData.Attributes['figureSize'], dpi=msData.Attributes['dpi'])
 		sns.heatmap(test, annot=True, fmt='g', cbar=False)
 		plt.tight_layout()
-		
+
 		if output:
 			item['NoFeaturesHeatmap'] = os.path.join(saveDir, item['Name'] + '_noFeatures.' + msData.Attributes['figureFormat'])
 			plt.savefig(item['NoFeaturesHeatmap'], format=msData.Attributes['figureFormat'], dpi=msData.Attributes['dpi'])
 			plt.close()
-		
+
 		else:
 			print('Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds')
 			plt.show()
-			
+
 			print('Summary of current feature filtering parameters and number of features passing at each stage\n')
 			print('Number of features in original dataset: ' + str(item['Nfeatures']) + '\n\n' +
 				'Features filtered on:\n' + 
@@ -775,7 +775,6 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 			if withArtifactualFiltering:
 				print('Artifactual features filtering: ' + str(item['artifactualPassed']) + ' passed selection')
 			print('\nTotal number of features after filtering: ' + str(item['featuresPassed']))
-	
 
 	# Final summary report
 	if reportType == 'final report':
@@ -784,7 +783,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		"""
 
 		# Table 1: Sample summary
-										
+
 		# Generate sample summary
 		sampleSummary = _generateSampleReport(msData, withExclusions=True, output=None, returnOutput=True)
 
@@ -905,7 +904,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 			savePath=saveAs, 
 			figureFormat=msData.Attributes['figureFormat'],
 			dpi=msData.Attributes['dpi'],
-			figureSize=msData.Attributes['figureSize'])	
+			figureSize=msData.Attributes['figureSize'])
 
 		# Figures 6 and 7: (if available) PCA scores and loadings plots by sample type
 		##

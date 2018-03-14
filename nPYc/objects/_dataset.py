@@ -1164,6 +1164,7 @@ class Dataset:
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
 		csvData = pandas.read_csv(filePath)
+		currentMetadata = pandas.copy(self.sampleMetadata)
 
 		if 'Sample File Name' not in csvData.columns:
 			raise KeyError("No 'Sample File Name' column present, unable to join tables.")
@@ -1181,8 +1182,8 @@ class Dataset:
 		columnsToRemove = columnsToRemove.drop(['Sample File Name'])
 
 		for column in columnsToRemove:
-			if column in self.sampleMetadata.columns:
-				self.sampleMetadata.drop(column, axis=1, inplace=True)
+			if column in currentMetadata.columns:
+				currentMetadata.drop(column, axis=1, inplace=True)
 
 		# If AssayRole or SampleType columns are present parse strings into enums
 		if 'AssayRole' in csvData.columns:
@@ -1204,14 +1205,14 @@ class Dataset:
 		# Preserve information about sample mask alongside merge even on the case of samples missing from CSV file.
 
 	    # Is this required?? Masked field doesn't seem to be used anywhere else
-		self.sampleMetadata['Masked'] = False
-		self.sampleMetadata.loc[(self.sampleMask == False), 'Masked'] = True
+		currentMetadata['Masked'] = False
+		currentMetadata.loc[(self.sampleMask == False), 'Masked'] = True
 
-		joinedTable = pandas.merge(self.sampleMetadata, csvData, how='left', left_on='Sample File Name',
+		joinedTable = pandas.merge(currentMetadata, csvData, how='left', left_on='Sample File Name',
 								   right_on='Sample File Name', sort=False)
 
 		# Samples in the CSV file but not acquired will go for sampleAbsentMetadata, for consistency with NPC Lims import
-		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(self.sampleMetadata['Sample File Name']) == False, :]
+		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(currentMetadata['Sample File Name']) == False, :]
 
 		if csv_butnotacq.shape[0] != 0:
 			sampleAbsentMetadata = csv_butnotacq.copy(deep=True)
@@ -1238,7 +1239,10 @@ class Dataset:
 
 		# Samples in the folder and processed but not mentioned in the CSV.
 		joinedTable['Metadata Available'] = True
-		acquired_butnotcsv = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False, :]
+		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False)
+													 & (currentMetadata['AssayRole'] != ([Assay])), :]
+		# Ensure that acquired but no csv only counts samples which 1 are not in CSV and 2 - also have no other kind of
+		# AssayRole information provided
 		if acquired_butnotcsv.shape[0] != 0:
 			noMetadataIndex = acquired_butnotcsv.index
 			joinedTable.loc[noMetadataIndex, 'Metadata Available'] = False
@@ -1246,7 +1250,7 @@ class Dataset:
 			joinedTable.loc[noMetadataIndex, 'Exclusion Details'] = 'No Metadata in CSV'
 
 		# 1) ACQ and in "include Sample" - drop and set mask to false
-		# Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
+		#  Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
 
 		# Remove acquired samples where Include sample column equals false - does not remove, just masks the sample
 		if 'Include Sample' in csvData.columns:
@@ -1268,7 +1272,7 @@ class Dataset:
 		# This should make it work - but its assuming the sample "NAME" is the same as File name as in LIMS.
 		self.sampleMetadata['Sample Base Name'] = self.sampleMetadata['Sample File Name']
 
-		# Ensure there is a batch column this way we won't need to call
+		# Ensure there is a batch column
 		if 'Batch' not in self.sampleMetadata:
 			self.sampleMetadata['Batch'] = 1
 
