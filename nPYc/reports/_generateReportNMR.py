@@ -341,8 +341,9 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	if not output:
 		print('Table 1: Summary of samples present')
 		display(sampleSummary['Acquired'])
-		print('Table 2: Summary of samples excuded')
-		display(sampleSummary['Excluded Details'])
+		if 'Excluded Details' in sampleSummary:
+			print('Table 2: Summary of samples excuded')
+			display(sampleSummary['Excluded Details'])
 	##
 	# Write HTML if saving
 	##
