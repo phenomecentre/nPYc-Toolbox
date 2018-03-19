@@ -2040,8 +2040,9 @@ class TargetedDataset(Dataset):
         # handle the dilution due to method... These lines are left here commented - as hopefully this will be handled more
         # elegantly through the intensityData getter
         # Export dataset...
-        #self.intensityData = self.intensityData * (100/self.sampleMetadata['Dilution']).values[:, numpy.newaxis]
-        super().exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
+        tmpData = copy.deepcopy(self)
+        tmpData._intensityData = tmpData._intensityData * (100/tmpData.sampleMetadata['Dilution']).values[:, numpy.newaxis]
+        super(TargetedDataset, tmpData).exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
 
 
     def _exportCSV(self, destinationPath, escapeDelimiters=False):
