@@ -650,7 +650,7 @@ class MSDataset(Dataset):
 		# Drop unwanted columns
 		fileNameParts.drop(['exclusion', 'reference', 'groupingKind', 'injectionNo', 'injectionKind', 'groupingNo'], axis=1, inplace=True)
 
-		# Swap in user freindly file names
+		# Swap in user friendly file names
 		fileNameParts.rename(columns={'chromatography': 'Chromatography'}, inplace=True)
 		fileNameParts.rename(columns={'instrument': 'Instrument'}, inplace=True)
 		fileNameParts.rename(columns={'study': 'Study'}, inplace=True)
@@ -674,7 +674,7 @@ class MSDataset(Dataset):
 
 		# Add 'Exclusion Details' column
 		self.sampleMetadata['Exclusion Details'] = ''
-		
+		self.sampleMetadata['Metadata Available'] = True
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
 
