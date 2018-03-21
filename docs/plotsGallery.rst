@@ -106,3 +106,9 @@ Examples of the outputs from :doc:`plots` implemented in the toolbox.
 	:alt: Visualise the loading of a PCA model
 	
 	:py:func:`~nPYc.plotting.plotDiscreteLoadings` - Visualise loadings of a :class:`ChemometricsPCA` model.
+
+.. figure:: _static/blandAltman.svg
+	:figwidth: 49%
+	:alt: Bland-Altman plot comparing two measurement methods
+	
+	:py:func:`~nPYc.plotting.blandAltman` - Bland-Altman plot for the comparision of two assays of the same value.
