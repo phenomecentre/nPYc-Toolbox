@@ -61,13 +61,18 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		SSmask = (data.sampleMetadata['SampleType'] == SampleType.StudySample) & (data.sampleMetadata['AssayRole'] == AssayRole.Assay)
 		SPmask = (data.sampleMetadata['SampleType'] == SampleType.StudyPool) & (data.sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
 		ERmask = (data.sampleMetadata['SampleType'] == SampleType.ExternalReference) & (data.sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
+		SRDmask = (data.sampleMetadata['AssayRole'] == AssayRole.LinearityReference) & (data.sampleMetadata['SampleType'] == SampleType.StudyPool)
+		Blankmask = data.sampleMetadata['SampleType'] == SampleType.ProceduralBlank
+
 	except:
 		SSmask = numpy.zeros(len(data.sampleMask)).astype(bool)
 		SPmask = numpy.zeros(len(data.sampleMask)).astype(bool)
 		ERmask = numpy.zeros(len(data.sampleMask)).astype(bool)
+		SRDmask = numpy.zeros(len(data.sampleMask)).astype(bool)
+		Blankmask = numpy.zeros(len(data.sampleMask)).astype(bool)
 
 	NotInCSVmask = data.sampleMetadata['Metadata Available'] == False
-	UnclearRolemask = (SSmask==False) & (SPmask==False) & (ERmask==False) & (NotInCSVmask==False)
+	UnclearRolemask = (SSmask==False) & (SPmask==False) & (ERmask==False) & (NotInCSVmask==False) & (SRDmask == False) & (Blankmask==False)
 	# Samples marked for exclusion (either as marked as skipped or as False in sampleMask)
 
 	try:
@@ -98,24 +103,26 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		SSmaskEx = (sampleMetadataExcluded['SampleType'] == SampleType.StudySample) & (sampleMetadataExcluded['AssayRole'] == AssayRole.Assay)
 		SPmaskEx = (sampleMetadataExcluded['SampleType'] == SampleType.StudyPool) & (sampleMetadataExcluded['AssayRole'] == AssayRole.PrecisionReference)
 		ERmaskEx = (sampleMetadataExcluded['SampleType'] == SampleType.ExternalReference) & (sampleMetadataExcluded['AssayRole'] == AssayRole.PrecisionReference)
+		SRDmaskEx = (sampleMetadataExcluded['AssayRole'] == AssayRole.LinearityReference) & (sampleMetadataExcluded['SampleType'] == SampleType.StudyPool)
+		BlankmaskEx = sampleMetadataExcluded['SampleType'] == SampleType.ProceduralBlank
 
 		NotInCSVmaskEx = sampleMetadataExcluded['Metadata Available'] == False
-		UnclearRolemaskEx = (SSmaskEx==False) & (SPmaskEx==False) & (ERmaskEx==False) & (NotInCSVmaskEx==False)
+		UnclearRolemaskEx = (SSmaskEx==False) & (SPmaskEx==False) & (ERmaskEx==False) & (NotInCSVmaskEx==False) & (BlankmaskEx == False) & (SRDmaskEx == False)
 
 		sampleSummary['Excluded Details'] = sampleMetadataExcluded.set_index('Sample File Name')
 
 
 	# Summary table for samples acquired
-	temp = numpy.zeros([6,2], dtype=numpy.int)
+	temp = numpy.zeros([8,2], dtype=numpy.int)
 	# Total numbers
-	temp[:,0] = [data.sampleMetadata.shape[0], sum(SSmask), sum(SPmask), sum(ERmask), sum(NotInCSVmask), sum(UnclearRolemask)]
+	temp[:,0] = [data.sampleMetadata.shape[0], sum(SSmask), sum(SPmask), sum(ERmask), sum(SRDmask), sum(Blankmask), sum(NotInCSVmask), sum(UnclearRolemask)]
 	# Numbers marked for exclusion (either skipped or in sampleMask)
 	temp[:,1] = [sum(markedToExclude), sum(markedToExclude & SSmask), sum(markedToExclude & SPmask),
-		sum(markedToExclude & ERmask), sum(markedToExclude & NotInCSVmask), sum(markedToExclude & UnclearRolemask)]
+		sum(markedToExclude & ERmask), sum(markedToExclude & SRDmask), sum(markedToExclude & Blankmask), sum(markedToExclude & NotInCSVmask), sum(markedToExclude & UnclearRolemask)]
 
 	# Convert to dataframe
 	sampleSummary['Acquired'] = pandas.DataFrame(data = temp,
-		index = ['All', 'Study Sample', 'Study Pool', 'External Reference', 'No Metadata Available', 'Unspecified Sample Type or Assay Role'],
+		index = ['All', 'Study Sample', 'Study Pool', 'External Reference', 'Serial Dilution', 'Blank Sample', 'No Metadata Available', 'Unspecified Sample Type or Assay Role'],
 		columns = ['Total', 'Marked for Exclusion'])
 
 	# Marked for exclusion - details
@@ -132,7 +139,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 
 	# Finally - add column of samples already excluded to sampleSummary
 	if excluded != 0:
-		sampleSummary['Acquired']['Already Excluded'] = [excluded, sum(SSmaskEx), sum(SPmaskEx), sum(ERmaskEx), sum(NotInCSVmaskEx), sum(UnclearRolemaskEx)]
+		sampleSummary['Acquired']['Already Excluded'] = [excluded, sum(SSmaskEx), sum(SPmaskEx), sum(ERmaskEx),
+														 sum(SRDmaskEx), sum(BlankmaskEx), sum(NotInCSVmaskEx), sum(UnclearRolemaskEx)]
 	# Drop rows where no samples present for that datatype
 	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
 

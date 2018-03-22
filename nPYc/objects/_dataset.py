@@ -1164,7 +1164,7 @@ class Dataset:
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
 		csvData = pandas.read_csv(filePath)
-		currentMetadata = pandas.copy(self.sampleMetadata)
+		currentMetadata = self.sampleMetadata.copy()
 
 		if 'Sample File Name' not in csvData.columns:
 			raise KeyError("No 'Sample File Name' column present, unable to join tables.")
