@@ -1179,6 +1179,7 @@ class Dataset:
 		#
 		oldAssayRole = currentMetadata['AssayRole']
 		oldSampleType = currentMetadata['SampleType']
+		oldDilution = currentMetadata['Dilution']
 		##
 		# If colums exist in both csv data and dataset.sampleMetadata remove them from sampleMetadata
 		##
@@ -1208,7 +1209,7 @@ class Dataset:
 		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
 		# Preserve information about sample mask alongside merge even on the case of samples missing from CSV file.
 
-	    # Is this required?? Masked field doesn't seem to be used anywhere else
+		# Is this required?? Masked field doesn't seem to be used anywhere else
 		currentMetadata['Masked'] = False
 		currentMetadata.loc[(self.sampleMask == False), 'Masked'] = True
 
@@ -1261,6 +1262,8 @@ class Dataset:
 			# available
 			joinedTable.loc[previousMetadataAvailable, 'AssayRole'] = oldAssayRole
 			joinedTable.loc[previousMetadataAvailable, 'SampleType'] = oldSampleType
+			joinedTable.loc[previousMetadataAvailable, 'Dilution'] = oldDilution
+
 			#  If not in the new CSV, but previously there, keep it and don't mask
 			if len(metadataNotAvailable) > 0:
 				joinedTable.loc[metadataNotAvailable, 'Metadata Available'] = False
