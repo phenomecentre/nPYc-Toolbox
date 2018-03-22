@@ -1260,10 +1260,10 @@ class Dataset:
 			metadataNotAvailable = [x for x in noMetadataIndex if x not in previousMetadataAvailable]
 			# Keep old AssayRoles and SampleTypes for cases not mentioned in CSV for which this information was previously
 			# available
-			joinedTable.loc[previousMetadataAvailable, 'AssayRole'] = oldAssayRole
-			joinedTable.loc[previousMetadataAvailable, 'SampleType'] = oldSampleType
-			joinedTable.loc[previousMetadataAvailable, 'Dilution'] = oldDilution
-
+			joinedTable.loc[previousMetadataAvailable, 'AssayRole'] = oldAssayRole[previousMetadataAvailable]
+			joinedTable.loc[previousMetadataAvailable, 'SampleType'] = oldSampleType[previousMetadataAvailable]
+			joinedTable.loc[previousMetadataAvailable, 'Dilution'] = oldDilution[previousMetadataAvailable]
+			
 			#  If not in the new CSV, but previously there, keep it and don't mask
 			if len(metadataNotAvailable) > 0:
 				joinedTable.loc[metadataNotAvailable, 'Metadata Available'] = False
