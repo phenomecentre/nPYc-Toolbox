@@ -87,7 +87,7 @@ Examples of the outputs from :doc:`plots` implemented in the toolbox.
 	:figwidth: 49%
 	:alt: Plot of median profile with variance across all samples visualised
 	
-	:py:func:`~nPYc.plotting.plotSpectralVariance` - Plot of median profile with variance across all samples visualised in :py:class:`~nPYc.enumerations.VariableType.Spectral` datasets.
+	:py:func:`~nPYc.plotting.plotSpectralVariance` - Plot of median profile with variance across all samples visualised in :py:class:`~nPYc.enumerations.VariableType.Spectral` datasets. Also has a plotly-based interactive version :py:func:`~nPYc.plotting.plotSpectralVarianceInteractive`.
 
 .. figure:: _static/plotScoresInteractive.png
 	:figwidth: 49%
@@ -106,3 +106,9 @@ Examples of the outputs from :doc:`plots` implemented in the toolbox.
 	:alt: Visualise the loading of a PCA model
 	
 	:py:func:`~nPYc.plotting.plotDiscreteLoadings` - Visualise loadings of a :class:`ChemometricsPCA` model.
+
+.. figure:: _static/blandAltman.svg
+	:figwidth: 49%
+	:alt: Bland-Altman plot comparing two measurement methods
+	
+	:py:func:`~nPYc.plotting.blandAltman` - Bland-Altman plot for the comparision of two assays of the same value.

@@ -864,6 +864,19 @@ class test_plotting(unittest.TestCase):
 			self.assertTrue(os.path.exists(outputPath))
 
 
+	def test_blandAtlman(self):
+
+		noSamp = numpy.random.randint(100, high=500, size=None)
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			outputPath = os.path.join(tmpdirname, 'plot')
+			nPYc.plotting.blandAltman(numpy.random.rand(noSamp)*100+100,
+									  numpy.random.rand(noSamp)*50+100,
+									  savePath=outputPath)
+
+			self.assertTrue(os.path.exists(outputPath))
+
+
 class test_plotting_interactive(unittest.TestCase):
 
 	def setUp(self):
@@ -1107,6 +1120,61 @@ class test_plotting_interactive(unittest.TestCase):
 		self.assertRaises(KeyError, nPYc.plotting.plotSpectraInteractive, dataset, sampleLabels='not present')
 
 
+	def test_plotspectralvarianceInteractive(self):
+
+		noSamp = numpy.random.randint(50, high=100, size=None)
+		noFeat = numpy.random.randint(200, high=400, size=None)
+
+		dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=nPYc.enumerations.VariableType.Spectral)
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			##
+			# Basic output
+			##
+			outputPath = os.path.join(tmpdirname, 'default')
+			figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset)
+
+			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			
+			##
+			# Classes
+			##
+			outputPath = os.path.join(tmpdirname, 'classesAndXlim')
+			figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset, classes='Classes', xlim=(1,9), average='mean')
+
+			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+
+			##
+			# Loq Y + title + NMR
+			##
+			outputPath = os.path.join(tmpdirname, 'with title')
+			figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset, title='Figure Name')
+
+			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+
+
+	def test_plotspectralvariance_raises(self):
+
+		with self.subTest(msg='Wrong Type'):
+			self.assertRaises(TypeError, nPYc.plotting.plotSpectralVarianceInteractive, 1)
+
+		with self.subTest(msg='Discrete Data'):
+			dataset = nPYc.Dataset()
+			dataset.VariableType = nPYc.enumerations.VariableType.Discrete
+			self.assertRaises(ValueError, nPYc.plotting.plotSpectralVarianceInteractive, dataset)
+
+		with self.subTest(msg='Wrong length quantiles'):
+			dataset = nPYc.Dataset()
+			dataset.VariableType = nPYc.enumerations.VariableType.Continuum
+			self.assertRaises(ValueError, nPYc.plotting.plotSpectralVarianceInteractive, dataset, quantiles=(1,2,3))
+
+		with self.subTest(msg='Classes not found'):
+			dataset = nPYc.Dataset()
+			dataset.VariableType = nPYc.enumerations.VariableType.Continuum
+			dataset.sampleMetadata = pandas.DataFrame(0, index=numpy.arange(5), columns=['Classes'])
+			self.assertRaises(ValueError, nPYc.plotting.plotSpectralVarianceInteractive, dataset, classes='Not present')
+
+
 class test_plotting_helpers(unittest.TestCase):
 
 	def test_plotRSDsHelper_raises(self):
@@ -1146,3 +1214,23 @@ class test_plotting_helpers(unittest.TestCase):
 			rsdTable = _plotRSDsHelper(dataset)
 
 			self.assertEqual(len(rsdTable), sum(dataset.featureMask))
+
+
+	def test_rangeFrameLocator(self):
+
+		from nPYc.plotting._rangeFrameLocator import rangeFrameLocator
+
+		obtained = rangeFrameLocator([1,2,3,4,5,6,7,8,9,10], (2,9))
+		expected = [2, 3, 4, 5, 6, 7, 8, 9]
+
+		self.assertEqual(obtained, expected)
+
+		obtained = rangeFrameLocator([1,4,6,8,10,12,14,16], (2,9))
+		expected = [2, 4, 6, 9]
+
+		self.assertEqual(obtained, expected)
+
+		obtained = rangeFrameLocator([2,4,6,8,10,12,14,16], (1.1,13.5))
+		expected = [1.1, 4, 6, 8, 10, 12, 13.5]
+
+		self.assertEqual(obtained, expected)
