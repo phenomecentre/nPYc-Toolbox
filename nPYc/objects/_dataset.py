@@ -1175,6 +1175,10 @@ class Dataset:
 			warnings.warn('Check and remove duplicates in CSV file')
 			return
 
+		# Store previous AssayRole and SampleType in case they were parsed using from filename:
+		#
+		oldAssayRole = currentMetadata['AssayRole']
+		oldSampleType = currentMetadata['SampleType']
 		##
 		# If colums exist in both csv data and dataset.sampleMetadata remove them from sampleMetadata
 		##
@@ -1239,8 +1243,10 @@ class Dataset:
 
 		# Samples in the folder and processed but not mentioned in the CSV.
 		joinedTable['Metadata Available'] = True
+
+
 		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False)
-													 & (currentMetadata['AssayRole'] != ([Assay])), :]
+													 & (oldAssayRole != ([Assay])), :]
 		# Ensure that acquired but no csv only counts samples which 1 are not in CSV and 2 - also have no other kind of
 		# AssayRole information provided
 		if acquired_butnotcsv.shape[0] != 0:
