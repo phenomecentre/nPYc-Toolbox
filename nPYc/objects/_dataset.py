@@ -1241,19 +1241,31 @@ class Dataset:
 
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
-		# Samples in the folder and processed but not mentioned in the CSV.
+		# By default everything in the CSV has metadata available and samples mentioned there will not be masked
+		# unless Include Sample field was == False
 		joinedTable['Metadata Available'] = True
 
+		# Samples in the folder and processed but not mentioned in the CSV.
+		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False), :]
 
-		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False)
-													 & (oldAssayRole != ([Assay])), :]
 		# Ensure that acquired but no csv only counts samples which 1 are not in CSV and 2 - also have no other kind of
-		# AssayRole information provided
+		# AssayRole information provided (from parsing filenames for example)
 		if acquired_butnotcsv.shape[0] != 0:
+
 			noMetadataIndex = acquired_butnotcsv.index
-			joinedTable.loc[noMetadataIndex, 'Metadata Available'] = False
-			self.sampleMask[noMetadataIndex] = False
-			joinedTable.loc[noMetadataIndex, 'Exclusion Details'] = 'No Metadata in CSV'
+			# Find samples where metadata was there previously and is not on the new CSV
+			previousMetadataAvailable = currentMetadata.loc[(~oldSampleType.isnull()) & (~oldAssayRole.isnull())
+															& ((currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False)), :].index
+			metadataNotAvailable = [x for x in noMetadataIndex if x not in previousMetadataAvailable]
+			# Keep old AssayRoles and SampleTypes for cases not mentioned in CSV for which this information was previously
+			# available
+			joinedTable.loc[previousMetadataAvailable, 'AssayRole'] = oldAssayRole
+			joinedTable.loc[previousMetadataAvailable, 'SampleType'] = oldSampleType
+			#  If not in the new CSV, but previously there, keep it and don't mask
+			if len(metadataNotAvailable) > 0:
+				joinedTable.loc[metadataNotAvailable, 'Metadata Available'] = False
+				self.sampleMask[metadataNotAvailable] = False
+				joinedTable.loc[metadataNotAvailable, 'Exclusion Details'] = 'No Metadata in CSV'
 
 		# 1) ACQ and in "include Sample" - drop and set mask to false
 		#  Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
@@ -1261,10 +1273,10 @@ class Dataset:
 		# Remove acquired samples where Include sample column equals false - does not remove, just masks the sample
 		if 'Include Sample' in csvData.columns:
 			which_to_drop = joinedTable[joinedTable['Include Sample'] == False].index
-			# self.intensityData = numpy.delete(self.intensityData, which_to_drop, axis=0)
-			# self.sampleMask = numpy.delete(self.sampleMask, which_to_drop)
+			self.intensityData = numpy.delete(self.intensityData, which_to_drop, axis=0)
+			self.sampleMask = numpy.delete(self.sampleMask, which_to_drop)
 			self.sampleMask[which_to_drop] = False
-			# joinedTable.drop(which_to_drop, axis=0, inplace=True)
+			joinedTable.drop(which_to_drop, axis=0, inplace=True)
 			joinedTable.drop('Include Sample', inplace=True, axis=1)
 
 		previously_masked = joinedTable[joinedTable['Masked'] == True].index
