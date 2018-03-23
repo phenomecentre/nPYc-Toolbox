@@ -32,9 +32,9 @@ class NMRDataset(Dataset):
 	:param str pulseprogram: When loading raw data, only import spectra aquired with *pulseprogram*
 	"""
 
-	__importTypes = ['Bruker'] # Raw data types we understand
+	__importTypes = ['Bruker', 'BI-LISA'] # Raw data types we understand
 
-	def __init__(self, datapath, fileType='Bruker', pulseProgram='noesygppr1d', sop='GenericNMRurine', pdata=1, **kwargs):
+	def __init__(self, datapath, fileType='Bruker', pulseProgram='noesygppr1d', sop='GenericNMRurine', dataType = 'Bruker', xmlFileName=r'.*?results\.xml$', pdata=1, **kwargs):
 		"""
 		NMRDataset(datapath, fileType='Bruker', sop='GenericNMRurine', pulseprogram='noesygpp1d', **kwargs)
 
@@ -44,6 +44,9 @@ class NMRDataset(Dataset):
 
 		* Bruker
 			When loading Bruker format raw spectra (1r files), all directores below :file:`datapath` will be scanned for valid raw data, and those matching *pulseprogram* loaded and aligned onto a common scale as defined in *sop*.
+
+		* BI-LISA
+			BI-LISA data can be read from Excel workbooks, the name of the sheet containing the data to be loaded should be passed in the *pulseProgram* argument. Feature descriptors will be loaded from the 'Analytes' sheet, and file names converted back to the `ExperimentName/expno` format from `ExperimentName_EXPNO_expno`.
 
 		:param str fileType: Type of data to be loaded
 		:param str sheetname: Load data from the specifed sheet of the Excel workbook
@@ -81,7 +84,7 @@ class NMRDataset(Dataset):
 																				  pdata,
 																				  self.Attributes)
 			self.featureMetadata = pandas.DataFrame(ppm, columns=['ppm'])
-			
+
 			##
 			# Set up additional metadata columns
 			##
@@ -114,9 +117,128 @@ class NMRDataset(Dataset):
 			pass
 		else:
 			raise NotImplementedError('%s is not a format understood by NMRDataset.' % (fileType))
-		
+
 		# Log init
 		self.Attributes['Log'].append([datetime.now(), '%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
+
+
+	def _importBILISAData(self, datapath, sheetname):
+		"""
+		find and load all the BILISA format data
+
+		"""
+		##
+		# Load excel sheet
+		##
+		dataT = pandas.read_excel(datapath, sheet_name=sheetname)
+		featureMappings = pandas.read_excel(datapath, sheet_name='Analytes')
+
+		# Extract data
+		self._intensityData = dataT.iloc[:,1:].as_matrix()
+
+		##
+		# Parse feature names into name + unit
+		##
+		varSpec = r"""
+					^
+					(?P<componentName>\w+?)
+					\s
+					in
+					\s
+					(?P<unit>.+)
+					$
+					"""
+		# Get column headers and transpose
+		varParser = re.compile(varSpec, re.VERBOSE)
+		features = dataT.transpose().reset_index()['index']
+		features.drop(0, axis=0, inplace=True)
+
+		# Seperate unit and variable type
+		featureMetadata = features.str.extract(varParser, expand=False)
+		featureMetadata.reset_index(inplace=True)
+		featureMetadata.drop('index', axis=1, inplace=True)
+
+		# Rename Columns
+		featureMetadata = featureMetadata.merge(featureMappings, on=None, left_on='componentName', right_on='Name', how='left')
+		featureMetadata.drop('unit', axis=1, inplace=True)
+		featureMetadata.drop('componentName', axis=1, inplace=True)
+		featureMetadata.rename(columns={'Matrix': 'Component'}, inplace=True)
+		featureMetadata.rename(columns={'Name': 'Feature Name'}, inplace=True)
+
+		self.featureMetadata = featureMetadata
+
+		##
+		# Convert sample IDs back to folder/expno
+		##
+		filenameSpec = r"""
+						^
+						(?P<Rack>\w+?)
+						_EXPNO_
+						(?P<expno>.+)
+						$
+						"""
+		fileNameParser = re.compile(filenameSpec, re.VERBOSE)
+		sampleMetadata = dataT['SampleID'].str.extract(fileNameParser, expand=False)
+		sampleMetadata['Sample File Name'] = sampleMetadata['Rack'].str.cat(sampleMetadata['expno'], sep='/')
+
+		sampleMetadata['expno'] = pandas.to_numeric(sampleMetadata['expno'])
+
+		sampleMetadata['Sample Base Name'] = sampleMetadata['Sample File Name']
+		sampleMetadata['Exclusion Details'] = None
+		sampleMetadata['AssayRole'] = numpy.nan
+		sampleMetadata['SampleType'] = numpy.nan
+		sampleMetadata['Dilution'] = numpy.nan
+		sampleMetadata['Batch'] = numpy.nan
+		sampleMetadata['Correction Batch'] = numpy.nan
+		sampleMetadata['Run Order'] = numpy.nan
+		sampleMetadata['Sampling ID'] = numpy.nan
+		sampleMetadata['Acquired Time'] = numpy.nan
+
+		self.sampleMetadata = sampleMetadata
+
+		self.initialiseMasks()
+
+		self.Attributes['Log'].append([datetime.now(), 'BI-LISA data loaded from %s' % (datapath)])
+
+
+	def _calcBLWP_PWandMerge(self):#,scalePPM, intenData, start, stop, sampleType, filePathList, sf):
+
+		"""
+		calls the baselinePWcalcs function and works out fails and merges the dataframes saves as part of thenmrData object
+		params:
+			Input: nmrData object
+
+		"""
+		self.sampleMetadata['ImportFail'] = False
+		if self.Attributes['pulseProgram'] in ['cpmgpr1d', 'noesygppr1d', 'noesypr1d']:#only for 1D data
+			[rawDataDf, featureMask,  BL_lowRegionFrom, BL_highRegionTo, WP_lowRegionFrom, WP_highRegionTo] = baselinePWcalcs(self._scale,self._intensityData, -0.2, 0.2, None, self.sampleMetadata['File Path'], max(self.sampleMetadata['SF']),self.Attributes['pulseProgram'], self.Attributes['baseline_alpha'], self.Attributes['baseline_threshold'], self.Attributes['baselineLow_regionTo'], self.Attributes['baselineHigh_regionFrom'], self.Attributes['waterPeakCutRegionA'], self.Attributes['waterPeakCutRegionB'], self.Attributes['LWpeakRange'][0], self.Attributes['LWpeakRange'][1], self.featureMask)
+
+#			stick these in as attributes
+			self.Attributes['BL_lowRegionFrom']= BL_lowRegionFrom
+			self.Attributes['BL_highRegionTo']= BL_highRegionTo
+			self.Attributes['WP_lowRegionFrom']= WP_lowRegionFrom
+			self.Attributes['WP_highRegionTo']= WP_highRegionTo
+
+#			 merge
+			self.sampleMetadata = pandas.merge(self.sampleMetadata, rawDataDf, on='File Path', how='left', sort=False)
+
+			#create new column and mark as failed
+			self.sampleMetadata['overallFail'] = True
+			for i in range (len(self.sampleMetadata)):
+				if self.sampleMetadata.ImportFail[i] ==False and self.sampleMetadata.loc[i, 'Line Width (Hz)'] >0 and self.sampleMetadata.loc[i, 'Line Width (Hz)']<self.Attributes['PWFailThreshold'] and self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False and self.sampleMetadata.calibrPass[i] == True:
+					self.sampleMetadata.loc[i,('overallFail')] = False
+				else:
+					self.sampleMetadata.loc[i,('overallFail')] = True
+			self.Attributes['Log'].append([datetime.now(), 'data merged Total samples %s, Failed samples %s' % (str(len(self.sampleMetadata)), str(len(self.sampleMetadata[self.sampleMetadata.overallFail ==True])))])
+		else:
+			self.Attributes['Log'].append([datetime.now(), 'Total samples %s', 'Failed samples %s' % (str(len(self.sampleMetadata)),(str(len(self.sampleMetadata[self.sampleMetadata.ImportFail ==False]))))])
+
+		self.sampleMetadata['exceed90critical'] = False#create new df column
+		for i in range (len(self.sampleMetadata)):
+			if self.sampleMetadata.BL_low_outliersFailArea[i] == False and self.sampleMetadata.BL_low_outliersFailNeg[i] == False and self.sampleMetadata.BL_high_outliersFailArea[i] == False and self.sampleMetadata.BL_high_outliersFailNeg[i] == False and self.sampleMetadata.WP_low_outliersFailArea[i] == False and self.sampleMetadata.WP_low_outliersFailNeg[i] == False and self.sampleMetadata.WP_high_outliersFailArea[i] == False and self.sampleMetadata.WP_high_outliersFailNeg[i] == False:
+				self.sampleMetadata.loc[i,('exceed90critical')] = False
+			else:
+				self.sampleMetadata.loc[i,('exceed90critical')] = True
 
 
 	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, **kwargs):
@@ -143,6 +265,8 @@ class NMRDataset(Dataset):
 			if filenameSpec is None: # Use spec from SOP
 				filenameSpec = self.Attributes['filenameSpec']
 			self._getSampleMetadataFromFilename(filenameSpec)
+		elif descriptionFormat == 'ISATAB':
+			super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, **kwargs)
 		else:
 			super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, filenameSpec=filenameSpec, **kwargs)
 
@@ -295,121 +419,195 @@ class NMRDataset(Dataset):
 			assayRoles,
 			', '.join("{!s}={!r}".format(key,val) for (key,val) in kwargs.items()))])
 
-	def _exportISATAB(self, destinationPath, escapeDelimiters=False):
+
+	def _exportISATAB(self, destinationPath, detailsDict):
 		"""
 		Export the dataset's metadata to the directory *destinationPath* as ISATAB
+		detailsDict should have the format:
+		detailsDict = {
+		    'investigation_identifier' : "i1",
+		    'investigation_title' : "Give it a title",
+		    'investigation_description' : "Add a description",
+		    'investigation_submission_date' : "2016-11-03",
+		    'investigation_public_release_date' : "2016-11-03",
+		    'first_name' : "Noureddin",
+		    'last_name' : "Sadawi",
+		    'affiliation' : "University",
+		    'study_filename' : "my_ms_study",
+		    'study_material_type' : "Serum",
+		    'study_identifier' : "s1",
+		    'study_title' : "Give the study a title",
+		    'study_description' : "Add study description",
+		    'study_submission_date' : "2016-11-03",
+		    'study_public_release_date' : "2016-11-03",
+		    'assay_filename' : "my_ms_assay"
+		}
 
 		:param str destinationPath: Path to a directory in which the output will be saved
-		:param bool escapeDelimiters: Remove characters commonly used as delimiters in csv files from metadata
+		:param dict detailsDict: Contains several key, value pairs required to for ISATAB
 		:raises IOError: If writing one of the files fails
 		"""
 
-		from distutils.dir_util import copy_tree
-		#import re
+		from isatools.model import Investigation, Study, Assay, OntologyAnnotation, OntologySource, Person,Publication,Protocol, Source
+		from isatools.model import  Comment, Sample, Characteristic, Process, Material, DataFile, ParameterValue, plink
+		from isatools import isatab
+		import isaExplorer as ie
 
-		#copy the blank ISATAB to destinationPath so we can populate it
-		copy_tree(os.path.join(toolboxPath(),'StudyDesigns','BlankISATAB','blank-nmr'), destinationPath)
+		investigation = Investigation()
 
-		sampleMetadata = self.sampleMetadata.copy(deep=True)
-		#featureMetadata = self.featureMetadata.copy(deep=True)
+		investigation.identifier = detailsDict['investigation_identifier']
+		investigation.title = detailsDict['investigation_title']
+		investigation.description = detailsDict['investigation_description']
+		investigation.submission_date = detailsDict['investigation_submission_date']#use today if not specified
+		investigation.public_release_date = detailsDict['investigation_public_release_date']
+		study = Study(filename='s_'+detailsDict['study_filename']+'.txt')
+		study.identifier = detailsDict['study_identifier']
+		study.title = detailsDict['study_title']
+		study.description = detailsDict['study_description']
+		study.submission_date = detailsDict['study_submission_date']
+		study.public_release_date = detailsDict['study_public_release_date']
+		investigation.studies.append(study)
+		obi = OntologySource(name='OBI', description="Ontology for Biomedical Investigations")
+		investigation.ontology_source_references.append(obi)
+		intervention_design = OntologyAnnotation(term_source=obi)
+		intervention_design.term = "intervention design"
+		intervention_design.term_accession = "http://purl.obolibrary.org/obo/OBI_0000115"
+		study.design_descriptors.append(intervention_design)
 
-		#make sure this field is of type string
-		#otherwise the escapeDelimters causes it to become empty
-		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].astype(str)
-		sampleMetadata['SampleType'] = sampleMetadata['SampleType'].astype(str)
-		sampleMetadata['AssayRole'] = sampleMetadata['AssayRole'].astype(str)
+		# Other instance variables common to both Investigation and Study objects include 'contacts' and 'publications',
+		# each with lists of corresponding Person and Publication objects.
 
-		# Columns required in ISATAB
-		if 'Organism' not in sampleMetadata.columns:
-			sampleMetadata['Organism'] = 'N/A'
-		if 'Material Type' not in sampleMetadata.columns:
-			sampleMetadata['Material Type'] = 'N/A'
-		#if 'Detector Unit' not in sampleMetadata.columns:
-		#	sampleMetadata['Detector Unit'] = 'Volt'
-		#if 'Age Unit' not in sampleMetadata.columns:
-		#	sampleMetadata['Age Unit'] = 'Year'
+		contact = Person(first_name=detailsDict['first_name'], last_name=detailsDict['last_name'], affiliation=detailsDict['affiliation'], roles=[OntologyAnnotation(term='submitter')])
+		study.contacts.append(contact)
+		publication = Publication(title="Experiments with Data", author_list="Auther 1, Author 2")
+		publication.pubmed_id = "12345678"
+		publication.status = OntologyAnnotation(term="published")
+		study.publications.append(publication)
 
-		sampleMetadata.to_csv(os.path.join(destinationPath + 'sampleMetadata.csv'), encoding='utf-8',index=False)
+		# To create the study graph that corresponds to the contents of the study table file (the s_*.txt file), we need
+		# to create a process sequence. To do this we use the Process class and attach it to the Study object's
+		# 'process_sequence' list instance variable. Each process must be linked with a Protocol object that is attached to
+		# a Study object's 'protocols' list instance variable. The sample collection Process object usually has as input
+		# a Source material and as output a Sample material.
 
-		if escapeDelimiters:
-			# Remove any commas from metadata/feature tables - for subsequent import of resulting csv files to other software packages
+		sample_collection_protocol = Protocol(id_="sample collection",name="sample collection",protocol_type=OntologyAnnotation(term="sample collection"))
+		aliquoting_protocol = Protocol(id_="aliquoting",name="aliquoting",protocol_type=OntologyAnnotation(term="aliquoting"))
 
-			for column in sampleMetadata.columns:
-				try:
-					sampleMetadata[column] = sampleMetadata[column].str.replace(',', ';')
-				except:
-					pass
 
-		studyPath = os.path.join(destinationPath,'s_NPC-Test-Study.txt')
-		studyDF = pandas.read_csv(studyPath, sep='\t')
-		#remove all rows in case the file is not empty
-		studyDF.drop(studyDF.index, inplace=True)
+		for index, row in self.sampleMetadata.iterrows():
+		    src_name = row['Subject ID'] if row['Subject ID'] is not '' else row['Sampling ID']
+		    source = Source(name=src_name)
 
-		#populate study using sampleMetadata
-		sampleMetadata['Source Name'] = sampleMetadata['Subject ID'].fillna(sampleMetadata['Sampling ID'])
-		studyDF['Source Name'] = sampleMetadata['Source Name']
+		    source.comments.append(Comment(name='Study Name', value=row['Study']))
+		    study.sources.append(source)
 
-		studyDF['Characteristics[material role]'] = sampleMetadata['SampleType'].apply(lambda x: x.split('.')[1])
-		studyDF['Comment[study name]'] = sampleMetadata['Study']
-		studyDF['Characteristics[organism]'] = sampleMetadata['Organism']
-		studyDF['Characteristics[material type]'] = sampleMetadata['Material Type']
-		studyDF['Characteristics[gender]'] = sampleMetadata['Gender']
-		studyDF['Characteristics[age]'] = sampleMetadata['Age']
-		studyDF['Unit'] = 'Year' #sampleMetadata['Age Unit']
+		    sample_name = row['Sampling ID'] if not pandas.isnull(row['Sampling ID']) else row['Subject ID']
+		    sample = Sample(name=sample_name, derives_from=[source])
 
-		studyDF['Protocol REF'] = 'sample collection'
-		studyDF['Date'] = sampleMetadata['Sampling Date']
-		studyDF['Comment[sample name]'] = ''
+		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=detailsDict['study_material_type'])
+		    sample.characteristics.append(characteristic_material_type)
 
-		studyDF['Protocol REF.1'] = 'aliquoting'
+		    characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
+		    sample.characteristics.append(characteristic_material_role)
 
-		sampleMetadata['Sample Name'] = sampleMetadata['Sampling ID'].fillna(sampleMetadata['Subject ID'])
-		studyDF['Sample Name'] = sampleMetadata['Sample Name']
+		    # perhaps check if field exists first
+		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=row['Age'],unit='Year')
+		    sample.characteristics.append(characteristic_age)
+		    # perhaps check if field exists first
+		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=row['Gender'])
+		    sample.characteristics.append(characteristic_gender)
 
-		#because ISATAB has several columns with the same name, pandas auto numbers them
-		#here we remove the numbering at the end of field names
-		studyDF.columns = removeTrailingColumnNumbering(studyDF.columns)
+		    ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
+		    characteristic_organism = Characteristic(category=OntologyAnnotation(term="Organism"),value=OntologyAnnotation(term="Homo Sapiens", term_source=ncbitaxon,term_accession="http://purl.bioontology.org/ontology/NCBITAXON/9606"))
+		    sample.characteristics.append(characteristic_organism)
 
-		#now we remove duplicate rows from study as we don't want the same sample to be declared more than once
-		#removal is based on Source Name and Sample Name to preserve aliquoting
-		studyDF.drop_duplicates(subset=['Source Name', 'Sample Name'], inplace=True)
+		    study.samples.append(sample)
 
-		studyDF.to_csv(studyPath,sep='\t', encoding='utf-8',index=False)
 
-		nmrAssayPath = os.path.join(destinationPath,'a_npc-test-study_metabolite_profiling_NMR_spectroscopy.txt')
-		nmrAssay = pandas.read_csv(nmrAssayPath, sep='\t')
+		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=row['Sampling Date'])
 
-		#remove all rows in case the file is not empty
-		nmrAssay.drop(nmrAssay.index, inplace=True)
+		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=row['Sampling Date'])
 
-		nmrAssay['Sample Name'] = sampleMetadata['Sample Name']
+		    sample_collection_process.inputs = [source]
+		    aliquoting_process.outputs = [sample]
 
-		nmrAssay['Protocol REF'] = 'extraction'
-		nmrAssay['Protocol REF.1'] = 'labeling'
-		nmrAssay['Protocol REF.2'] = 'NMR spectrometry'
-		nmrAssay['Parameter Value[instrument]'] = sampleMetadata['Instrument']
-		#nmrAssay['Parameter Value[detector voltage]'] = sampleMetadata['Detector']
-		#nmrAssay['Unit.1'] = 'Volt'
-		nmrAssay['Protocol REF.3'] = 'nmr assay'
-		nmrAssay['Date'], nmrAssay['Comment[time]'] = sampleMetadata['Acquired Time'].str.split(' ', 1).str
-		nmrAssay['Parameter Value[run order]'] = sampleMetadata['Run Order']
+		    # links processes
+		    plink(sample_collection_process, aliquoting_process)
 
-		nmrAssay['Parameter Value[sample batch]'] = sampleMetadata['Sample batch']
+		    study.process_sequence.append(sample_collection_process)
+		    study.process_sequence.append(aliquoting_process)
 
-		if 'Acquisition batch' in sampleMetadata.columns:#rename field if necessary
-			sampleMetadata.rename(columns={'Acquisition batch': 'Batch'}, inplace=True)
 
-		nmrAssay['Parameter Value[acquisition batch]'] = sampleMetadata['Batch']
+		study.protocols.append(sample_collection_protocol)
+		study.protocols.append(aliquoting_protocol)
 
-		nmrAssay['NMR Assay Name'] = sampleMetadata['Assay data name']
+		### Add NMR Assay ###
+		nmr_assay = Assay(filename='a_'+detailsDict['assay_filename']+'.txt',measurement_type=OntologyAnnotation(term="metabolite profiling"),technology_type=OntologyAnnotation(term="NMR spectroscopy"))
+		extraction_protocol = Protocol(name='extraction', protocol_type=OntologyAnnotation(term="material extraction"))
 
-		nmrAssay['Protocol REF.4'] = 'data normalization'
-		nmrAssay['Protocol REF.5'] = 'data transformation'
+		study.protocols.append(extraction_protocol)
+		nmr_protocol = Protocol(name='NMR spectroscopy', protocol_type=OntologyAnnotation(term="NMR Assay"))
+		nmr_protocol.add_param('Run Order')
+		nmr_protocol.add_param('Instrument')
+		nmr_protocol.add_param('Sample Batch')
+		nmr_protocol.add_param('Acquisition Batch')
 
-		nmrAssay.columns = removeTrailingColumnNumbering(nmrAssay.columns)
-		#print(msAssay.columns)
 
-		nmrAssay.to_csv(nmrAssayPath,sep='\t', encoding='utf-8',index=False)
+		study.protocols.append(nmr_protocol)
+
+		#for index, row in sampleMetadata.iterrows():
+		for index, sample in enumerate(study.samples):
+		    #print(sample.name)
+		    row = self.sampleMetadata.loc[self.sampleMetadata['Sampling ID'].astype(str) == sample.name]
+		    if row.empty:
+		        row = self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].astype(str) == sample.name]
+
+		    # create an extraction process that executes the extraction protocol
+		    extraction_process = Process(executes_protocol=extraction_protocol)
+
+		    # extraction process takes as input a sample, and produces an extract material as output
+		    sample_name = sample.name
+		    sample = Sample(name=sample_name, derives_from=[source])
+		    #print(row['Acquired Time'].values[0])
+
+		    extraction_process.inputs.append(sample)
+		    material = Material(name="extract-{}".format(index))
+		    material.type = "Extract Name"
+		    extraction_process.outputs.append(material)
+
+		    # create a ms process that executes the nmr protocol
+		    nmr_process = Process(executes_protocol=nmr_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
+
+		    nmr_process.name = "assay-name-{}".format(index)
+		    nmr_process.inputs.append(extraction_process.outputs[0])
+		    # nmr process usually has an output data file
+		    datafile = DataFile(filename=row['Assay data name'].values[0], label="NMR Assay Name", generated_from=[sample])
+		    nmr_process.outputs.append(datafile)
+
+		    #nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
+		    nmr_process.parameter_values = [ParameterValue(category=nmr_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
+		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=row['Instrument'].values[0]))
+		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=row['Sample batch'].values[0]))
+		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
+
+		    # ensure Processes are linked forward and backward
+		    plink(extraction_process, nmr_process)
+		    # make sure the extract, data file, and the processes are attached to the assay
+		    nmr_assay.samples.append(sample)
+		    nmr_assay.data_files.append(datafile)
+		    nmr_assay.other_material.append(material)
+		    nmr_assay.process_sequence.append(extraction_process)
+		    nmr_assay.process_sequence.append(nmr_process)
+		    nmr_assay.measurement_type = OntologyAnnotation(term="metabolite profiling")
+		    nmr_assay.technology_type = OntologyAnnotation(term="NMR spectroscopy")
+
+		# attach the assay to the study
+		study.assays.append(nmr_assay)
+
+		if os.path.file(os.path.join(destinationPath,'i_Investigation.txt')):
+			ie.appendStudytoISA(study, destinationPath)
+		else:
+			isatab.dump(isa_obj=investigation, output_path=destinationPath)
 
 
 	def _nmrQCChecks(self):
@@ -462,6 +660,7 @@ class NMRDataset(Dataset):
 			self.sampleMetadata['WaterPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
 
 		return None
+
 
 def main():
 	pass
