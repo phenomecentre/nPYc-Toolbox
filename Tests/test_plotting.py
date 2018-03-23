@@ -864,6 +864,19 @@ class test_plotting(unittest.TestCase):
 			self.assertTrue(os.path.exists(outputPath))
 
 
+	def test_blandAtlman(self):
+
+		noSamp = numpy.random.randint(100, high=500, size=None)
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			outputPath = os.path.join(tmpdirname, 'plot')
+			nPYc.plotting.blandAltman(numpy.random.rand(noSamp)*100+100,
+									  numpy.random.rand(noSamp)*50+100,
+									  savePath=outputPath)
+
+			self.assertTrue(os.path.exists(outputPath))
+
+
 class test_plotting_interactive(unittest.TestCase):
 
 	def setUp(self):
@@ -1201,3 +1214,23 @@ class test_plotting_helpers(unittest.TestCase):
 			rsdTable = _plotRSDsHelper(dataset)
 
 			self.assertEqual(len(rsdTable), sum(dataset.featureMask))
+
+
+	def test_rangeFrameLocator(self):
+
+		from nPYc.plotting._rangeFrameLocator import rangeFrameLocator
+
+		obtained = rangeFrameLocator([1,2,3,4,5,6,7,8,9,10], (2,9))
+		expected = [2, 3, 4, 5, 6, 7, 8, 9]
+
+		self.assertEqual(obtained, expected)
+
+		obtained = rangeFrameLocator([1,4,6,8,10,12,14,16], (2,9))
+		expected = [2, 4, 6, 9]
+
+		self.assertEqual(obtained, expected)
+
+		obtained = rangeFrameLocator([2,4,6,8,10,12,14,16], (1.1,13.5))
+		expected = [1.1, 4, 6, 8, 10, 12, 13.5]
+
+		self.assertEqual(obtained, expected)
