@@ -971,6 +971,7 @@ class MSDataset(Dataset):
 		from isatools.model import Investigation, Study, Assay, OntologyAnnotation, OntologySource, Person,Publication,Protocol, Source
 		from isatools.model import  Comment, Sample, Characteristic, Process, Material, DataFile, ParameterValue, plink
 		from isatools import isatab
+		import isaExplorer as ie
 
 		investigation = Investigation()
 
@@ -1137,10 +1138,10 @@ class MSDataset(Dataset):
 		# attach the assay to the study
 		study.assays.append(ms_assay)
 
-
-		isatab.dump(isa_obj=investigation, output_path=destinationPath)
-
-
+		if os.path.file(os.path.join(destinationPath,'i_Investigation.txt')):
+			ie.appendStudytoISA(study, destinationPath)
+		else:
+			isatab.dump(isa_obj=investigation, output_path=destinationPath)
 
 
 	def validateObject(self, verbose=True, raiseError=False, raiseWarning=True):

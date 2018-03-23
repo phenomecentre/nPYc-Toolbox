@@ -265,6 +265,8 @@ class NMRDataset(Dataset):
 			if filenameSpec is None: # Use spec from SOP
 				filenameSpec = self.Attributes['filenameSpec']
 			self._getSampleMetadataFromFilename(filenameSpec)
+		elif descriptionFormat == 'ISATAB':
+			super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, **kwargs)
 		else:
 			super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, filenameSpec=filenameSpec, **kwargs)
 
@@ -445,9 +447,11 @@ class NMRDataset(Dataset):
 		:param dict detailsDict: Contains several key, value pairs required to for ISATAB
 		:raises IOError: If writing one of the files fails
 		"""
+
 		from isatools.model import Investigation, Study, Assay, OntologyAnnotation, OntologySource, Person,Publication,Protocol, Source
 		from isatools.model import  Comment, Sample, Characteristic, Process, Material, DataFile, ParameterValue, plink
 		from isatools import isatab
+		import isaExplorer as ie
 
 		investigation = Investigation()
 
@@ -600,8 +604,10 @@ class NMRDataset(Dataset):
 		# attach the assay to the study
 		study.assays.append(nmr_assay)
 
-
-		isatab.dump(isa_obj=investigation, output_path=destinationPath)
+		if os.path.file(os.path.join(destinationPath,'i_Investigation.txt')):
+			ie.appendStudytoISA(study, destinationPath)
+		else:
+			isatab.dump(isa_obj=investigation, output_path=destinationPath)
 
 
 	def _nmrQCChecks(self):
