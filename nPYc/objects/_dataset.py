@@ -1276,10 +1276,10 @@ class Dataset:
 		# Remove acquired samples where Include sample column equals false - does not remove, just masks the sample
 		if 'Include Sample' in csvData.columns:
 			which_to_drop = joinedTable[joinedTable['Include Sample'] == False].index
-			self.intensityData = numpy.delete(self.intensityData, which_to_drop, axis=0)
-			self.sampleMask = numpy.delete(self.sampleMask, which_to_drop)
+			#self.intensityData = numpy.delete(self.intensityData, which_to_drop, axis=0)
+			#self.sampleMask = numpy.delete(self.sampleMask, which_to_drop)
 			self.sampleMask[which_to_drop] = False
-			joinedTable.drop(which_to_drop, axis=0, inplace=True)
+			#joinedTable.drop(which_to_drop, axis=0, inplace=True)
 			joinedTable.drop('Include Sample', inplace=True, axis=1)
 
 		previously_masked = joinedTable[joinedTable['Masked'] == True].index

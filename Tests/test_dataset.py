@@ -1307,7 +1307,8 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 										  True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True,
 										  True, True, True, True, True, True, True, False], dtype=bool)
 
-		expectedSampleMetadata = pandas.DataFrame(0, index=numpy.arange(115), columns=['Sample File Name', 'Sample Base Name', 'Batch', 'Correction Batch', 'Acquired Time', 'Run Order', 'Exclusion Details', 'Sampling ID', 'AssayRole', 'SampleType', 'Dilution'])
+		expectedSampleMetadata = pandas.DataFrame(0, index=numpy.arange(115), columns=['Sample File Name', 'Sample Base Name', 'Batch', 'Correction Batch', 'Acquired Time', 'Run Order',
+																					   'Exclusion Details', 'Metadata Available', 'Sampling ID', 'AssayRole', 'SampleType', 'Dilution'])
 
 		expectedSampleMetadata['Sample File Name'] = ['UnitTest1_LPOS_ToF02_B1SRD01', 'UnitTest1_LPOS_ToF02_B1SRD02', 'UnitTest1_LPOS_ToF02_B1SRD03', 'UnitTest1_LPOS_ToF02_B1SRD04',
 												  'UnitTest1_LPOS_ToF02_B1SRD05', 'UnitTest1_LPOS_ToF02_B1SRD06', 'UnitTest1_LPOS_ToF02_B1SRD07', 'UnitTest1_LPOS_ToF02_B1SRD08',
