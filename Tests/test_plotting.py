@@ -872,9 +872,20 @@ class test_plotting(unittest.TestCase):
 			outputPath = os.path.join(tmpdirname, 'plot')
 			nPYc.plotting.blandAltman(numpy.random.rand(noSamp)*100+100,
 									  numpy.random.rand(noSamp)*50+100,
+									  confidenceInterval=50,
 									  savePath=outputPath)
 
 			self.assertTrue(os.path.exists(outputPath))
+
+
+	def test_blandAtlman_raises(self):
+
+		noSamp = numpy.random.randint(100, high=500, size=None)
+		values = numpy.random.rand(noSamp)
+
+		self.assertRaises(ValueError, nPYc.plotting.blandAltman, values, values, limitOfAgreement=-2)
+		self.assertRaises(ValueError, nPYc.plotting.blandAltman, values, values, confidenceInterval=-2)
+		self.assertRaises(ValueError, nPYc.plotting.blandAltman, values, values, confidenceInterval=100)
 
 
 class test_plotting_interactive(unittest.TestCase):

@@ -2,24 +2,32 @@ import numpy
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
 import matplotlib.ticker as ticker
+from scipy import stats
 
 from ._rangeFrameLocator import rangeFrameLocator
 
 
-def blandAltman(data1, data2, interval=1.96, figureSize=(10,7), dpi=72, savePath=None, figureFormat='png'):
+def blandAltman(data1, data2, limitOfAgreement=1.96, confidenceInterval=None, figureSize=(10,7), dpi=72, savePath=None, figureFormat='png'):
 	"""
-	blandAltman(data1, data2, interval=1.96, **kwargs)
+	blandAltman(data1, data2, limitOfAgreement=1.96, confidenceInterval=None, **kwargs)
 
-	Generate a Bland-Altman [#]_ plot to compare two sets of measurements of the same value.
+	Generate a Bland-Altman [#]_ [#]_ plot to compare two sets of measurements of the same value.
 
 	:param data1: First measurement
 	:type data1: list like
 	:param data1: Second measurement
 	:type data1: list like
-	:param float interval: Multiple of the standard deviation to plot bounds at (defualt 1.96)
+	:param float limitOfAgreement: Multiple of the standard deviation to plot limit of agreement bounds at (defaults to 1.96)
+	:param confidenceInterval: If not ``None``, plot the specified percentage confidence interval on the mean and limits of agreement 
+	:type confidenceInterval: None or float
 
-	.. [#] Altman, D. G., and J. M. Bland. “Measurement in Medicine: The Analysis of Method Comparison Studies.” Journal of the Royal Statistical Society. Series D (The Statistician), vol. 32, no. 3, 1983, pp. 307–317. `JSTOR <www.jstor.org/stable/2987937>`.
+	.. [#] Altman, D. G., and Bland, J. M. “Measurement in Medicine: The Analysis of Method Comparison Studies” Journal of the Royal Statistical Society. Series D (The Statistician), vol. 32, no. 3, 1983, pp. 307–317. `JSTOR <https://www.jstor.org/stable/2987937>`_.
+	.. [#] Altman, D. G., and Bland, J. M. “Measuring agreement in method comparison studies” Statistical Methods in Medical Research, vol. 8, no. 2, 1999, pp. 135–160. `DOI <https://doi.org/10.1177/096228029900800204>`_.
 	"""
+
+	if not limitOfAgreement > 0:
+		raise ValueError('"limitOfAgreement" must be a number greater than zero.') 
+
 	fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
 
 	mean = numpy.mean([data1, data2], axis=0)
@@ -27,26 +35,49 @@ def blandAltman(data1, data2, interval=1.96, figureSize=(10,7), dpi=72, savePath
 	md = numpy.mean(diff)
 	sd = numpy.std(diff, axis=0)
 
+	if confidenceInterval:
+
+		if (confidenceInterval > 99.9) | (confidenceInterval < 1):
+			raise ValueError('"confidenceInterval" must be a number in the range 1 to 99.')
+
+		n = len(diff)
+
+		confidenceInterval = confidenceInterval / 100.
+		confidenceInterval = stats.norm.interval(confidenceInterval, loc=md, scale=sd/numpy.sqrt(n))
+
+		ax.axhspan(confidenceInterval[0],
+				   confidenceInterval[1],
+				   facecolor='#6495ED', alpha=0.2)
+
+		ciLA = (1/n + ((limitOfAgreement**2 / (2 * (n -1))))) * sd**2
+
+		ax.axhspan((md + limitOfAgreement*sd) - ciLA,
+				   (md + limitOfAgreement*sd) + ciLA,
+				   facecolor='coral', alpha=0.2)
+
+		ax.axhspan((md - limitOfAgreement*sd) - ciLA,
+				   (md - limitOfAgreement*sd) + ciLA,
+				   facecolor='coral', alpha=0.2)
+
 	ax.scatter(mean, diff)
 	ax.axhline(md, color='#6495ED', linestyle='--')
-	ax.axhline(md + interval*sd, color='coral', linestyle='--')
-	ax.axhline(md - interval*sd, color='coral', linestyle='--')
+	ax.axhline(md + limitOfAgreement*sd, color='coral', linestyle='--')
+	ax.axhline(md - limitOfAgreement*sd, color='coral', linestyle='--')
 
 	trans = transforms.blended_transform_factory(
 		ax.transAxes, ax.transData)
 
-	intervalRange = (md + (interval * sd)) - (md - interval*sd)
-	offset = (intervalRange / 100.0) * 1.5
+	limitOfAgreementRange = (md + (limitOfAgreement * sd)) - (md - limitOfAgreement*sd)
+	offset = (limitOfAgreementRange / 100.0) * 1.5
 
 	ax.text(0.98, md + offset, 'Mean', ha="right", va="bottom", transform=trans)
-	ax.text(0.98, md - offset, '%.2f' % (interval), ha="right", va="top", transform=trans)
+	ax.text(0.98, md - offset, '%.2f' % (limitOfAgreement), ha="right", va="top", transform=trans)
 
-	ax.text(0.98, md + (interval * sd) + offset, '+%.2f SD' % (interval), ha="right", va="bottom", transform=trans)
-	ax.text(0.98, md + (interval * sd) - offset, '%.2f' % (md + interval*sd), ha="right", va="top", transform=trans)
+	ax.text(0.98, md + (limitOfAgreement * sd) + offset, '+%.2f SD' % (limitOfAgreement), ha="right", va="bottom", transform=trans)
+	ax.text(0.98, md + (limitOfAgreement * sd) - offset, '%.2f' % (md + limitOfAgreement*sd), ha="right", va="top", transform=trans)
 
-	ax.text(0.98, md - (interval * sd) - offset, '-%.2f SD'  % (interval), ha="right", va="top", transform=trans)
-	ax.text(0.98, md - (interval * sd) + offset, '%.2f' % (md - interval*sd), ha="right", va="bottom", transform=trans)
-
+	ax.text(0.98, md - (limitOfAgreement * sd) - offset, '-%.2f SD'  % (limitOfAgreement), ha="right", va="top", transform=trans)
+	ax.text(0.98, md - (limitOfAgreement * sd) + offset, '%.2f' % (md - limitOfAgreement*sd), ha="right", va="bottom", transform=trans)
 
 	# Only draw spine between extent of the data
 	ax.spines['left'].set_bounds(min(diff), max(diff))
