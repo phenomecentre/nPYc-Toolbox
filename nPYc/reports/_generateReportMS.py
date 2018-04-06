@@ -462,7 +462,7 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 				print('\n\nAssessment of potential saturation')
 				print('\nHeatmap/lineplot showing the proportion of features (in different intensity quantiles, low:0-25, medium:25-75, and high:75-100%) where the median intensity at lower dilution factors >= that at higher dilution factors')
 				plt.show()
-			
+
 
 	# Batch correction assessment report
 	if reportType == 'batch correction assessment':
@@ -910,6 +910,13 @@ def _generateReportMS(msDataTrue, reportType, withExclusions=False, withArtifact
 		##
 		# PCA plots
 		##
+
+		if not 'Plot Sample Type' in msData.sampleMetadata.columns:
+			msData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+			msData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+			msData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
+			msData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+
 		if pcaModel:
 			if output:
 				pcaPath = saveDir
