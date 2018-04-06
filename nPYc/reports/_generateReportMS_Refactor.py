@@ -27,106 +27,109 @@ from ..__init__ import __version__ as version
 
 
 def _generateReportMS_New(msData, reportType, withExclusions=False, withArtifactualFiltering=None, output=None,
-                          msDataCorrected=None, pcaModel=None, batch_correction_window=11):
-    """
-    Summarise different aspects of an MS dataset
+						  msDataCorrected=None, pcaModel=None, batch_correction_window=11):
+	"""
+	Summarise different aspects of an MS dataset
 
-    Generate reports for ``feature summary``, ``correlation to dilution``, ``batch correction assessment``, ``batch correction summary``, ``feature selection``, or ``final report``
+	Generate reports for ``feature summary``, ``correlation to dilution``, ``batch correction assessment``, ``batch correction summary``, ``feature selection``, or ``final report``
 
-    * **'feature summary'** Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
-    * **'correlation to dilution'** Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
-    * **'batch correction assessment'** Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
-    * **'batch correction summary'** Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
-    * **'feature selection'** Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
-    * **'final report'** Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
+	* **'feature summary'** Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
+	* **'correlation to dilution'** Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
+	* **'batch correction assessment'** Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
+	* **'batch correction summary'** Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
+	* **'feature selection'** Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
+	* **'final report'** Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
 
-    :param MSDataset msDataTrue: MSDataset to report on
-    :param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection``, or ``final report``
-    :param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
-    :param None or bool withArtifactualFiltering: If ``None`` use the value from ``Attributes['artifactualFilter']``. If ``True`` apply artifactual filtering to the ``feature selection`` report and ``final report``
-    :param output: If ``None`` plot interactively, otherwise save report to the path specified
-    :type output: None or str
-    :param MSDataset msDataCorrected: Only if ``batch correction``, if msDataCorrected included will generate report post correction
-    :param PCAmodel pcaModel: Only if ``final report``, if PCAmodel object is available PCA scores plots coloured by sample type will be added to report
-    """
+	:param MSDataset msDataTrue: MSDataset to report on
+	:param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection``, or ``final report``
+	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
+	:param None or bool withArtifactualFiltering: If ``None`` use the value from ``Attributes['artifactualFilter']``. If ``True`` apply artifactual filtering to the ``feature selection`` report and ``final report``
+	:param output: If ``None`` plot interactively, otherwise save report to the path specified
+	:type output: None or str
+	:param MSDataset msDataCorrected: Only if ``batch correction``, if msDataCorrected included will generate report post correction
+	:param PCAmodel pcaModel: Only if ``final report``, if PCAmodel object is available PCA scores plots coloured by sample type will be added to report
+	"""
 
-    acceptableOptions = {'feature summary', 'correlation to dilution',
-                         'batch correction assessment',
-                         'batch correction summary', 'feature selection', 'final report'}
+	acceptableOptions = {'feature summary', 'correlation to dilution',
+						 'batch correction assessment',
+						 'batch correction summary', 'feature selection', 'final report'}
 
-    # Check inputs
-    if not isinstance(msData, MSDataset):
-        raise TypeError('msData must be an instance of MSDataset')
+	# Check inputs
+	if not isinstance(msData, MSDataset):
+		raise TypeError('msData must be an instance of MSDataset')
 
-    if not isinstance(reportType, str) & (reportType.lower() in acceptableOptions):
-        raise ValueError('reportType must be one of: ' + str(acceptableOptions))
+	if not isinstance(reportType, str) & (reportType.lower() in acceptableOptions):
+		raise ValueError('reportType must be one of: ' + str(acceptableOptions))
 
-    if not isinstance(withExclusions, bool):
-        raise TypeError('withExclusions must be a bool')
+	if not isinstance(withExclusions, bool):
+		raise TypeError('withExclusions must be a bool')
 
-    if withArtifactualFiltering is not None:
-        if not isinstance(withArtifactualFiltering, bool):
-            raise TypeError('withArtifactualFiltering must be a bool')
-    if withArtifactualFiltering is None:
-        withArtifactualFiltering = msData.Attributes['artifactualFilter']
-    # if self.Attributes['artifactualFilter'] is False, can't/shouldn't apply it.
-    # However if self.Attributes['artifactualFilter'] is True, the user can have the choice to not apply it (withArtifactualFilering=False).
-    if (withArtifactualFiltering is True) & (msData.Attributes['artifactualFilter'] is False):
-        warnings.warn("Warning: Attributes['artifactualFilter'] set to \'False\', artifactual filtering cannot be applied.")
-        withArtifactualFiltering = False
+	if withArtifactualFiltering is not None:
+		if not isinstance(withArtifactualFiltering, bool):
+			raise TypeError('withArtifactualFiltering must be a bool')
+	if withArtifactualFiltering is None:
+		withArtifactualFiltering = msData.Attributes['artifactualFilter']
+	# if self.Attributes['artifactualFilter'] is False, can't/shouldn't apply it.
+	# However if self.Attributes['artifactualFilter'] is True, the user can have the choice to not apply it (withArtifactualFilering=False).
+	if (withArtifactualFiltering is True) & (msData.Attributes['artifactualFilter'] is False):
+		warnings.warn("Warning: Attributes['artifactualFilter'] set to \'False\', artifactual filtering cannot be applied.")
+		withArtifactualFiltering = False
 
-    if output is not None:
-        if not isinstance(output, str):
-            raise TypeError('output must be a string')
+	if output is not None:
+		if not isinstance(output, str):
+			raise TypeError('output must be a string')
 
-    if msDataCorrected is not None:
-        if not isinstance(msDataCorrected, MSDataset):
-            raise TypeError('msDataCorrected must be an instance of nPYc.MSDataset')
+	if msDataCorrected is not None:
+		if not isinstance(msDataCorrected, MSDataset):
+			raise TypeError('msDataCorrected must be an instance of nPYc.MSDataset')
 
-    if pcaModel is not None:
-        if not isinstance(pcaModel, ChemometricsPCA):
-            raise TypeError('pcaModel must be a ChemometricsPCA object')
+	if pcaModel is not None:
+		if not isinstance(pcaModel, ChemometricsPCA):
+			raise TypeError('pcaModel must be a ChemometricsPCA object')
 
-    sns.set_style("whitegrid")
+	sns.set_style("whitegrid")
 
-    # Create directory to save output
-    if output:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        if not os.path.exists(os.path.join(output, 'graphics')):
-            os.makedirs(os.path.join(output, 'graphics'))
-    else:
-        saveDir = None
-
-    # Apply sample/feature masks if exclusions to be applied
-    msData = copy.deepcopy(msData)
-    if withExclusions:
-        msData.applyMasks()
-
-    # Define sample masks
-    SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
-                msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-    SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-                msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-                msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-
-    if not 'Plot Sample Type' in msData.sampleMetadata.columns:
-        msData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-        msData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-        msData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-        msData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
-
-    if reportType.lower() == 'feature summary':
-        _featureReport(msData, output)
-    elif reportType.lower() == 'final report':
-        _finalReport(msData, output, pcaModel)
-
+	# Create directory to save output
+	if output:
+		if not os.path.exists(output):
+			os.makedirs(output)
+		if not os.path.exists(os.path.join(output, 'graphics')):
+			os.makedirs(os.path.join(output, 'graphics'))
+	else:
+		saveDir = None
 
 	# Apply sample/feature masks if exclusions to be applied
-	msData = copy.deepcopy(msDataTrue)
+	msData = copy.deepcopy(msData)
 	if withExclusions:
 		msData.applyMasks()
+
+	# Define sample masks
+	SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
+				msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
+	SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
+				msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+	ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
+				msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+
+	if not 'Plot Sample Type' in msData.sampleMetadata.columns:
+		msData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+		msData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+		msData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
+		msData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+
+	if reportType.lower() == 'feature summary':
+		_featureReport(msData, output)
+	elif reportType.lower() == 'correlation to dilution':
+		_featureCorrelationToDilutionReport(msData, output)
+	elif reportType.lower() == 'feature selection':
+		_featureSelectionReport(msData, output)
+	elif reportType.lower() == 'batch correction assessment':
+		_batchCorrectionAssessmentReport(msData, output)
+	elif reportType.lower() == 'batch correction summary':
+		_batchCorrectionSummaryReport(msData, msDataCorrected, output)
+	elif reportType.lower() == 'final report':
+		_finalReport(msData, output, pcaModel)
+
 
 	# Define sample masks
 	SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
@@ -335,7 +338,7 @@ def _generateReportMS_New(msData, reportType, withExclusions=False, withArtifact
 			figureFormat=msData.Attributes['figureFormat'],
 			dpi=msData.Attributes['dpi'],
 			figureSize=msData.Attributes['figureSize'])	
-    
+
 
 	# Correlation to dilution report
 	if reportType == 'correlation to dilution':
@@ -773,7 +776,7 @@ def _generateReportMS_New(msData, reportType, withExclusions=False, withArtifact
 					featureNos[0, rsdNo] = sum((msData.correlationToDilution >= rValsRep[0, rsdNo]) & (msData.rsdSP <= rsdValsRep[0, rsdNo]) & ((msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (msData.featureMask == True))
 		test = pandas.DataFrame(data=numpy.transpose(numpy.concatenate([rValsRep,rsdValsRep,featureNos])), columns=['Correlation to dilution','RSD','nFeatures'])
 		test = test.pivot('Correlation to dilution','RSD','nFeatures')	
- 	
+
 		fig, ax = plt.subplots(1, figsize=msData.Attributes['figureSize'], dpi=msData.Attributes['dpi'])
 		sns.heatmap(test, annot=True, fmt='g', cbar=False)
 		plt.tight_layout()
@@ -1090,7 +1093,6 @@ def batchCorrectionTest(msData, nFeatures=10, window=11):
 	LRmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
 	sampleMask = (SSmask | SPmask | ERmask | LRmask) & (msData.sampleMask==True).astype(bool)
 
-
 	# Select subset of features (passing on correlation to dilution)
 	
 	# Correlation to dilution
@@ -1152,7 +1154,6 @@ def batchCorrectionTest(msData, nFeatures=10, window=11):
 	# Return results
 	return preData, postData, featureList
 
-
 def _finalReport(dataset, output=None, pcaModel=None):
 	"""
 	Report on final dataset
@@ -1171,5 +1172,11 @@ def _featureSelectionReport(dataset, output=None):
 	"""
 	return None
 
-def _batchCorrectionAssessmentReport(, output=None):
+def _batchCorrectionAssessmentReport(dataset, output=None):
+	return None
+
+def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
+	return None
+
+def _featureCorrelationToDilutionReport(dataset, output=None):
 	return None
