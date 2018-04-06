@@ -133,469 +133,6 @@ def _generateReportMS_New(msData, reportType, withExclusions=False, withArtifact
 		_finalReport(msData, output, pcaModel)
 
 
-	# Correlation to dilution report
-	if reportType == 'correlation to dilution':
-		"""
-		Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
-		"""
-		
-		# Check inputs
-		if not hasattr(msData.sampleMetadata, 'Correction Batch'):
-			raise ValueError("Correction Batch information missing, run addSampleInfo(descriptionFormat=\'Batches\')")
-
-		# Generate correlation to dilution for each batch subset - plot TIC and histogram of correlation to dilution
-
-		# generate LRmask
-		LRmask = generateLRmask(msData)
-
-		# instantiate dictionarys
-		corLRbyBatch = {} # to save correlations
-		corLRsummary = {} # summary of number of features with correlation above threshold
-		corLRsummary['TotalOriginal'] = len(msData.featureMask)
-		
-		if output:
-			saveAs = saveDir
-			figuresCorLRbyBatch = OrderedDict() # To save figures
-		else:
-			figuresCorLRbyBatch = None
-
-		for key in sorted(LRmask):
-			corLRbyBatch[key] = _vcorrcoef(msData.intensityData, msData.sampleMetadata['Dilution'].values, method=msData.Attributes['corrMethod'], sampleMask = LRmask[key])
-			corLRsummary[key] = sum(corLRbyBatch[key] >= msData.Attributes['corrThreshold'])
-			figuresCorLRbyBatch = _localLRPlots(msData, 
-				LRmask[key], 
-				corLRbyBatch[key], 
-				key,
-				figures=figuresCorLRbyBatch,
-				savePath=saveAs)
-
-		# Calculate average (mean) correlation across all batch subsets
-		corALL = numpy.zeros([len(corLRbyBatch),len(msData.featureMask)])
-		n = 0
-		for key in corLRbyBatch:
-			corALL[n,:] = corLRbyBatch[key]
-			n=n+1
-
-		corLRbyBatch['MeanAllSubsets'] = numpy.mean(corALL, axis=0)
-		corLRsummary['MeanAllSubsets'] = sum(corLRbyBatch['MeanAllSubsets'] >= msData.Attributes['corrThreshold'])
-		figuresCorLRbyBatch = _localLRPlots(msData,
-			(msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference),
-			corLRbyBatch['MeanAllSubsets'],
-			'MeanAllSubsets',
-			figures=figuresCorLRbyBatch,
-			savePath=saveAs)
-		
-		if figuresCorLRbyBatch is not None:			
-			# Make paths for graphics local not absolute for use in the HTML.
-			for key in figuresCorLRbyBatch:
-				if os.path.join(output, 'graphics') in str(figuresCorLRbyBatch[key]):
-					figuresCorLRbyBatch[key] = re.sub('.*graphics', 'graphics', figuresCorLRbyBatch[key])
-			# Save to item
-			item['figuresCorLRbyBatch'] = figuresCorLRbyBatch
-
-		# Summary table of number of features passing threshold with each subset
-		temp = pandas.DataFrame(corLRsummary, index=range(1))
-		temp['CurrentSettings'] = sum(msData.correlationToDilution>=msData.Attributes['corrThreshold'])
-		temp = temp.T
-		temp.rename(columns = {0 :'N Features'}, inplace = True)
-
-		item['NfeaturesSummary'] = temp
-		item['corrThreshold'] = str(msData.Attributes['corrThreshold'])
-		item['corrMethod'] = msData.Attributes['corrMethod']
-		if sum(msData.corrExclusions) != msData.noSamples:
-			item['corrExclusions'] = str(msData.sampleMetadata.loc[msData.corrExclusions == False, 'Sample File Name'].values)
-		else:
-			item['corrExclusions'] = 'none'
-
-		if not output:
-
-			print('Number of features exceeding correlation to dilution threshold (' + str(item['corrThreshold']) + ') for each LR sample subset/correlation to dilution method')
-			display(temp)
-
-			print('\nCurrent correlation settings:' + 
-				'\nCorrelation method: ' + item['corrMethod'] +
-				'\nCorrelation exclusions: ' + item['corrExclusions'] +
-				'\nCorrelation threshold: ' + item['corrThreshold'])
-
-
-		# Assessment of potential saturation
-
-		# Heatmap showing the proportion of features (across different intensities) where median
-		# intensity at lower dilution factor >= that at higher dilution factor 
-
-		# calculate median feature intensity quantiles and feature masks
-		medI = numpy.nanmedian(msData.intensityData, axis=0)
-		quantiles = numpy.percentile(medI, [25,75])
-		nf = msData.intensityData.shape[1]
-		lowImask = medI <= quantiles[0]
-		midImask = (medI > quantiles[0]) & (medI <= quantiles[1])
-		highImask = medI >= quantiles[1]
-
-		# dilution factors present
-		dilutions = (numpy.unique(msData.sampleMetadata['Dilution'].values[~numpy.isnan(msData.sampleMetadata['Dilution'].values)])).astype(int)
-		dilutions.sort()
-
-		# LR batch subsets
-		LRbatchmask = generateLRmask(msData)
-
-		# median feature intensities for different dilution samples
-		medItable = numpy.full([nf, len(dilutions)*len(LRbatchmask)], numpy.nan)
-		i = 0
-		for key in LRbatchmask:
-			for d in dilutions:
-				mask = (msData.sampleMetadata['Dilution'].values == d) & (LRbatchmask[key])
-				medItable[:,i] = numpy.nanmedian(msData.intensityData[mask,:], axis=0)
-				i = i+1
-		
-		# dataframe for proportion of features with median intensity at lower dilution factor >= that at higher dilution factor
-		i = 0
-		for key in sorted(LRbatchmask):
-			for d in numpy.arange(0, len(dilutions)-1):
-				if 'sat' not in locals():
-					sat = pandas.DataFrame({'Average feature intensity': ['1. low ' + key], 'LR' : [str(d+1) + '. ' + str(dilutions[d+1]) + '<=' + str(dilutions[d])], 'Proportion of features' : [sum(medItable[lowImask, i+1] <= medItable[lowImask, i]) / sum(lowImask) * 100]})
-					sat = sat.append({'Average feature intensity': '2. medium ' + key, 'LR' : str(d+1) + '. ' +str(dilutions[d+1]) + '<=' + str(dilutions[d]), 'Proportion of features' : sum(medItable[midImask, i+1] <= medItable[midImask, i]) / sum(midImask) * 100}, ignore_index=True)
-					sat = sat.append({'Average feature intensity': '3. high ' + key, 'LR' : str(d+1) + '. ' +str(dilutions[d+1]) + '<=' + str(dilutions[d]), 'Proportion of features' : sum(medItable[highImask, i+1] <= medItable[highImask, i]) / sum(highImask) * 100}, ignore_index=True)
-				else:
-					sat = sat.append({'Average feature intensity': '1. low ' + key, 'LR' : str(d+1) + '. ' +str(dilutions[d+1]) + '<=' + str(dilutions[d]), 'Proportion of features' : sum(medItable[lowImask, i+1] <= medItable[lowImask, i]) / sum(lowImask) * 100}, ignore_index=True)
-					sat = sat.append({'Average feature intensity': '2. medium ' + key, 'LR' : str(d+1) + '. ' +str(dilutions[d+1]) + '<=' + str(dilutions[d]), 'Proportion of features' : sum(medItable[midImask, i+1] <= medItable[midImask, i]) / sum(midImask) * 100}, ignore_index=True)
-					sat = sat.append({'Average feature intensity': '3. high ' + key, 'LR' : str(d+1) + '. ' +str(dilutions[d+1]) + '<=' + str(dilutions[d]), 'Proportion of features' : sum(medItable[highImask, i+1] <= medItable[highImask, i]) / sum(highImask) * 100}, ignore_index=True)
-				i = i+1
-			i = i+1
-
-		satHeatmap = sat.pivot('Average feature intensity', 'LR', 'Proportion of features')
-		satLineplot = sat.pivot('LR', 'Average feature intensity', 'Proportion of features')
-
-		# plot heatmap
-		with sns.axes_style("white"):
-			fig = plt.figure(figsize=msData.Attributes['figureSize'], dpi=msData.Attributes['dpi'])
-			gs = gridspec.GridSpec(1, 11)
-			ax1 = plt.subplot(gs[0,:5])
-			ax2 = plt.subplot(gs[0, -5:])
-			ax1 = sns.heatmap(satHeatmap, ax=ax1, annot=True, fmt='.3g', vmin=0, vmax=100, cmap='Reds', cbar=False)
-			ax2 = satLineplot.plot(kind='line', ax=ax2, ylim=[0,100], colormap='jet')
-			if output:
-				item['SatFeaturesHeatmap'] = os.path.join(saveDir, item['Name'] + '_satFeaturesHeatmap.' + msData.Attributes['figureFormat'])
-				plt.savefig(item['SatFeaturesHeatmap'], bbox_inches='tight', format=msData.Attributes['figureFormat'], dpi=msData.Attributes['dpi'])
-				plt.close()
-			else:
-				print('\n\nAssessment of potential saturation')
-				print('\nHeatmap/lineplot showing the proportion of features (in different intensity quantiles, low:0-25, medium:25-75, and high:75-100%) where the median intensity at lower dilution factors >= that at higher dilution factors')
-				plt.show()
-
-
-	# Batch correction assessment report
-	if reportType == 'batch correction assessment':
-		"""
-		Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
-		"""
-
-		# Pre-correction report (report is example of results when batch correction applied)
-
-		# Check inputs
-		if not hasattr(msData.sampleMetadata, 'Correction Batch'):
-			raise ValueError("Correction Batch information missing, run addSampleInfo(descriptionFormat=\'Batches\')")
-
-		# Figure 1: TIC for all samples by sample type and detector voltage change
-		if output:
-			item['TICdetectorBatches'] = os.path.join(saveDir, item['Name'] + '_TICdetectorBatches.' + msData.Attributes['figureFormat'])
-			saveAs = item['TICdetectorBatches']
-		else:
-			print('Overall Total Ion Count (TIC) for all samples and features, coloured by batch.')
-
-		plotTIC(msData,
-			addViolin=True,
-			addBatchShading=True,
-			savePath=saveAs,
-			figureFormat=msData.Attributes['figureFormat'],
-			dpi=msData.Attributes['dpi'],
-			figureSize=msData.Attributes['figureSize'])
-
-		# Remaining figures: Sample of fits for selection of features 
-		(preData, postData, maskNum) = batchCorrectionTest(msData, nFeatures=10, window=batch_correction_window)
-		item['NoBatchPlotFeatures'] = len(maskNum)
-		
-		if output:
-			figuresCorrectionExamples = OrderedDict() # To save figures
-		else:
-			print('Example batch correction plots for a subset of features, results of batch correction with specified batches.')
-			figuresCorrectionExamples = None
-			
-		for feature in range(len(maskNum)):
-			
-			featureName = str(numpy.squeeze(preData.featureMetadata.loc[feature, 'Feature Name'])).replace('/', '-')
-			if output:
-				figuresCorrectionExamples['Feature ' + featureName] = os.path.join(saveDir, item['Name'] + '_batchPlotFeature_' + featureName + '.' + msData.Attributes['figureFormat'])
-				saveAs = figuresCorrectionExamples['Feature ' + featureName]
-			else:
-				print('Feature ' + featureName)
-
-			plotBatchAndROCorrection(preData, 
-				postData,
-				feature,
-				logy=True,
-				savePath=saveAs,
-				figureFormat=msData.Attributes['figureFormat'],
-				dpi=msData.Attributes['dpi'],
-				figureSize=msData.Attributes['figureSize'])
-	
-		if figuresCorrectionExamples is not None:			
-			# Make paths for graphics local not absolute for use in the HTML.
-			for key in figuresCorrectionExamples:
-				if os.path.join(output, 'graphics') in str(figuresCorrectionExamples[key]):
-					figuresCorrectionExamples[key] = re.sub('.*graphics', 'graphics', figuresCorrectionExamples[key])					
-			# Save to item
-			item['figuresCorrectionExamples'] = figuresCorrectionExamples
-				
-		
-	# Post-correction report (TIC pre and post batch correction)
-	if reportType == 'batch correction summary':
-		"""
-		Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
-		"""
-		
-		# Define sample masks
-		SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-		SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		
-		# Mean intensities of Study Pool samples (for future plotting segmented by intensity)
-		meanIntensitiesSP = numpy.log(numpy.nanmean(msData.intensityData[SPmask,:], axis=0))
-		meanIntensitiesSP[numpy.mean(msData.intensityData[SPmask,:], axis=0) == 0] = numpy.nan
-		meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
-				
-		# Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).
-
-		# Pre-correction
-		if output:
-			item['FeatureIntensityFigurePRE'] = os.path.join(saveDir, item['Name'] + '_BCS1_meanIntesityFeaturePRE.' + msData.Attributes['figureFormat'])
-			saveAs = item['FeatureIntensityFigurePRE']
-		else:
-			print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')
-			print('Pre-correction.')
-
-		_plotAbundanceBySampleType(msData.intensityData, SSmask, SPmask, ERmask, saveAs, msData)	
-		
-		# Post-correction
-		if output:
-			item['FeatureIntensityFigurePOST'] = os.path.join(saveDir, item['Name'] + '_BCS1_meanIntesityFeaturePOST.' + msData.Attributes['figureFormat'])
-			saveAs = item['FeatureIntensityFigurePOST']
-		else:
-			print('Post-correction.')  
-
-		_plotAbundanceBySampleType(msDataCorrected.intensityData, SSmask, SPmask, ERmask, saveAs, msDataCorrected)
-
-			
-		# Figure 2: TIC for all samples and features.
-					
-		# Pre-correction
-		if output:
-			item['TicPRE'] = os.path.join(saveDir, item['Name'] + '_BCS2_TicPRE.' + msData.Attributes['figureFormat'])
-			saveAs = item['TicPRE']
-		else:
-			print('Sample Total Ion Count (TIC) and distribtion (coloured by sample type).')
-			print('Pre-correction.')
-		
-		plotTIC(msData,
-			addViolin=True,
-			title='TIC Pre Batch-Correction',
-			savePath=saveAs,
-			figureFormat=msData.Attributes['figureFormat'],
-			dpi=msData.Attributes['dpi'],
-			figureSize=msData.Attributes['figureSize'])
-
-		# Post-correction
-		if output:
-			item['TicPOST'] = os.path.join(saveDir, item['Name'] + '_BCS2_TicPOST.' + msData.Attributes['figureFormat'])
-			saveAs = item['TicPOST']
-		else:
-			print('Post-correction.')
-		
-		plotTIC(msDataCorrected,
-			addViolin=True,
-			title='TIC Post Batch-Correction',
-			savePath=saveAs,
-			figureFormat=msData.Attributes['figureFormat'],
-			dpi=msData.Attributes['dpi'],
-			figureSize=msData.Attributes['figureSize'])
-		
-		
-		# Figure 3: Histogram of RSD in study pool (SP) samples, segmented by abundance percentiles.
-
-		# Pre-correction			
-		if output:
-			item['RsdByPercFigurePRE'] = os.path.join(saveDir, item['Name'] + '_BCS3_rsdByPercPRE.' + msData.Attributes['figureFormat'])
-			saveAs = item['RsdByPercFigurePRE']
-		else:
-			print('Figure 3: Histogram of Residual Standard Deviation (RSD) in study pool (SP) samples, segmented by abundance percentiles.')
-			print('Pre-correction.')
-			
-		histogram(msData.rsdSP, 
-			xlabel='RSD',
-			histBins=msData.Attributes['histBins'],
-			quantiles=msData.Attributes['quantiles'],
-			inclusionVector=numpy.exp(meanIntensitiesSP),
-			logx=False,
-			xlim=(0, 100),
-			savePath=saveAs, 
-			figureFormat=msData.Attributes['figureFormat'],
-			dpi=msData.Attributes['dpi'],
-			figureSize=msData.Attributes['figureSize'])
-
-		# Post-correction			
-		if output:
-			item['RsdByPercFigurePOST'] = os.path.join(saveDir, item['Name'] + '_BCS3_rsdByPercPOST.' + msData.Attributes['figureFormat'])
-			saveAs = item['RsdByPercFigurePOST']
-		else:
-			print('Post-correction.')
-			
-		histogram(msDataCorrected.rsdSP, 
-			xlabel='RSD',
-			histBins=msData.Attributes['histBins'],
-			quantiles=msData.Attributes['quantiles'],
-			inclusionVector=numpy.exp(meanIntensitiesSP),
-			logx=False,
-			xlim=(0, 100),
-			savePath=saveAs, 
-			figureFormat=msData.Attributes['figureFormat'],
-			dpi=msData.Attributes['dpi'],
-			figureSize=msData.Attributes['figureSize'])
-		
-		
-		# Figure 4: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type).
-		
-		# Pre-correction
-		if output:
-			item['RSDdistributionFigurePRE'] = os.path.join(saveDir, item['Name'] + '_BCS4_RSDdistributionFigurePRE.' + msData.Attributes['figureFormat'])
-			saveAs = item['RSDdistributionFigurePRE']
-		else:
-			print('Figure 4: RSD distribution for all samples and all features in dataset (by sample type).')
-			print('Pre-correction.')
-
-		plotRSDs(msData,
-			ratio=False,
-			logx=True,
-			color='matchReport',
-			savePath=saveAs,
-			figureFormat=msData.Attributes['figureFormat'],
-			dpi=msData.Attributes['dpi'],
-			figureSize=msData.Attributes['figureSize'])
-
-		# Post-correction
-		if output:
-			item['RSDdistributionFigurePOST'] = os.path.join(saveDir, item['Name'] + '_BCS4_RSDdistributionFigurePOST.' + msData.Attributes['figureFormat'])
-			saveAs = item['RSDdistributionFigurePOST']
-		else:
-			print('Post-correction.')
-
-		plotRSDs(msDataCorrected,
-			ratio=False,
-			logx=True,
-			color='matchReport',
-			savePath=saveAs,
-			figureFormat=msData.Attributes['figureFormat'],
-			dpi=msData.Attributes['dpi'],
-			figureSize=msData.Attributes['figureSize'])
-			
-	
-	# Feature selection report
-	if reportType == 'feature selection':
-		"""
-		Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
-		"""
-
-		# Feature selection parameters and numbers passing
-
-		# rsdSP <= rsdSS
-		rsdSS = rsd(msData.intensityData[SSmask,:])
-		item['rsdSPvsSSvarianceRatio'] = str(msData.Attributes['varianceRatio'])
-		item['rsdSPvsSSPassed'] = sum((msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS)
-
-		# Correlation to dilution
-		item['corrMethod'] = msData.Attributes['corrMethod']
-		item['corrThreshold'] = msData.Attributes['corrThreshold']
-		if sum(msData.corrExclusions) != msData.noSamples:
-			item['corrExclusions'] = str(msData.sampleMetadata.loc[msData.corrExclusions == False, 'Sample File Name'].values)
-		else:
-			item['corrExclusions'] = 'none'
-		item['corrPassed'] = sum(msData.correlationToDilution >= msData.Attributes['corrThreshold'])
-
-		# rsdSP
-		item['rsdThreshold'] = msData.Attributes['rsdThreshold']
-		item['rsdPassed'] = sum(msData.rsdSP <= msData.Attributes['rsdThreshold'])
-
-		# Artifactual filtering
-		passMask = (msData.correlationToDilution >= msData.Attributes['corrThreshold']) & (msData.rsdSP <= msData.Attributes['rsdThreshold']) & ((msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (msData.featureMask == True)
-		if withArtifactualFiltering:
-			passMask = msData.artifactualFilter(featMask=passMask)
-
-		if 'blankThreshold' in msData.Attributes.keys():
-			from ..utilities._filters import blankFilter
-
-			blankThreshold = msData.Attributes['blankThreshold']
-
-			blankMask = blankFilter(msData)
-
-			passMask = numpy.logical_and(passMask, blankMask)
-
-			item['BlankPassed'] = sum(blankMask)
-
-		if withArtifactualFiltering:
-			item['artifactualPassed'] = sum(passMask)
-		item['featuresPassed'] = sum(passMask)
-
-		# Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds
-		rsdVals = numpy.arange(5,55,5)
-		rVals = numpy.arange(0.5,1.01,0.05)
-		rValsRep = numpy.tile(numpy.arange(0.5,1.01,0.05),[1, len(rsdVals)])
-		rsdValsRep = numpy.reshape(numpy.tile(numpy.arange(5,55,5), [len(rVals),1]), rValsRep.shape, order='F')
-		featureNos = numpy.zeros(rValsRep.shape, dtype=numpy.int)
-		if withArtifactualFiltering:
-			# with blankThreshold in heatmap
-			if 'blankThreshold' in msData.Attributes.keys():
-				for rsdNo in range(rValsRep.shape[1]):
-					featureNos[0, rsdNo] = sum(msData.artifactualFilter(featMask=((msData.correlationToDilution >= rValsRep[0, rsdNo]) & (msData.rsdSP <= rsdValsRep[0, rsdNo]) & ((msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (msData.featureMask == True) & (blankMask == True))))
-			# without blankThreshold
-			else:
-				for rsdNo in range(rValsRep.shape[1]):
-					featureNos[0, rsdNo] = sum(msData.artifactualFilter(featMask=((msData.correlationToDilution >= rValsRep[0, rsdNo]) & (msData.rsdSP <= rsdValsRep[0, rsdNo]) & ((msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (msData.featureMask==True))))
-		else:
-			# with blankThreshold in heatmap
-			if 'blankThreshold' in msData.Attributes.keys():
-				for rsdNo in range(rValsRep.shape[1]):
-					featureNos[0, rsdNo] = sum((msData.correlationToDilution >= rValsRep[0, rsdNo]) & (msData.rsdSP <= rsdValsRep[0, rsdNo]) & ((msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (msData.featureMask == True) & (blankMask == True))
-			# without blankThreshold
-			else:
-				for rsdNo in range(rValsRep.shape[1]):
-					featureNos[0, rsdNo] = sum((msData.correlationToDilution >= rValsRep[0, rsdNo]) & (msData.rsdSP <= rsdValsRep[0, rsdNo]) & ((msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (msData.featureMask == True))
-		test = pandas.DataFrame(data=numpy.transpose(numpy.concatenate([rValsRep,rsdValsRep,featureNos])), columns=['Correlation to dilution','RSD','nFeatures'])
-		test = test.pivot('Correlation to dilution','RSD','nFeatures')	
-
-		fig, ax = plt.subplots(1, figsize=msData.Attributes['figureSize'], dpi=msData.Attributes['dpi'])
-		sns.heatmap(test, annot=True, fmt='g', cbar=False)
-		plt.tight_layout()
-
-		if output:
-			item['NoFeaturesHeatmap'] = os.path.join(saveDir, item['Name'] + '_noFeatures.' + msData.Attributes['figureFormat'])
-			plt.savefig(item['NoFeaturesHeatmap'], format=msData.Attributes['figureFormat'], dpi=msData.Attributes['dpi'])
-			plt.close()
-
-		else:
-			print('Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds')
-			plt.show()
-
-			print('Summary of current feature filtering parameters and number of features passing at each stage\n')
-			print('Number of features in original dataset: ' + str(item['Nfeatures']) + '\n\n' +
-				'Features filtered on:\n' + 
-				'Correlation (' + item['corrMethod'] + ', exclusions: ' + item['corrExclusions'] + ') to dilution greater than ' + str(item['corrThreshold']) + ': ' + str(item['corrPassed']) + ' passed selection\n' +
-				'Relative Standard Deviation (RSD) in study pool (SP) samples below ' + str(item['rsdThreshold']) + ': ' + str(item['rsdPassed']) + ' passed selection\n' +
-				'RSD in study samples (SS) * ' + item['rsdSPvsSSvarianceRatio'] + ' >= RSD in SP samples: ' + str(item['rsdSPvsSSPassed']) + ' passed selection')
-			if blankThreshold:
-				print('%i features above blank threshold.' % (item['BlankPassed']))
-			if withArtifactualFiltering:
-				print('Artifactual features filtering: ' + str(item['artifactualPassed']) + ' passed selection')
-			print('\nTotal number of features after filtering: ' + str(item['featuresPassed']))
-
-
 def _finalReport(dataset, output=None, pcaModel=None, withArtefactualFilterning=True):
 	"""
 	Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
@@ -778,7 +315,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtefactualFilterning=
 		from jinja2 import Environment, FileSystemLoader
 
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-		template = env.get_template('MS_FinalSummaryReportummaryReport.html')
+		template = env.get_template('MS_FinalSummaryReport.html')
 		filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
 
 		f = open(filename,'w')
@@ -1018,18 +555,404 @@ def _featureReport(dataset, output=None):
 			   dpi=dataset.Attributes['dpi'],
 			   figureSize=dataset.Attributes['figureSize'])
 
+	# Write HTML if saving
+	##
+	if output:
+		# Make paths for graphics local not absolute for use in the HTML.
+		for key in item:
+			if os.path.join(output, 'graphics') in str(item[key]):
+				item[key] = re.sub('.*graphics', 'graphics', item[key])
+
+		# Generate report
+		from jinja2 import Environment, FileSystemLoader
+
+		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
+		template = env.get_template('MS_FinalSummaryReport.html')
+		filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
+
+		f = open(filename, 'w')
+		f.write(template.render(item=item,
+								attributes=dataset.Attributes,
+								version=version,
+								graphicsPath='/report_featureSummary'))
+		f.close()
+
+		copyBackingFiles(toolboxPath(), graphicsPath)
+
 	return None
 
 def _featureSelectionReport(dataset, output=None):
 	"""
 	Report on feature quality
 	"""
+	"""
+			Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
+			"""
+
+	# Feature selection parameters and numbers passing
+
+	# rsdSP <= rsdSS
+	rsdSS = rsd(msData.intensityData[SSmask, :])
+	item['rsdSPvsSSvarianceRatio'] = str(msData.Attributes['varianceRatio'])
+	item['rsdSPvsSSPassed'] = sum((msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS)
+
+	# Correlation to dilution
+	item['corrMethod'] = msData.Attributes['corrMethod']
+	item['corrThreshold'] = msData.Attributes['corrThreshold']
+	if sum(msData.corrExclusions) != msData.noSamples:
+		item['corrExclusions'] = str(
+			msData.sampleMetadata.loc[msData.corrExclusions == False, 'Sample File Name'].values)
+	else:
+		item['corrExclusions'] = 'none'
+	item['corrPassed'] = sum(msData.correlationToDilution >= msData.Attributes['corrThreshold'])
+
+	# rsdSP
+	item['rsdThreshold'] = msData.Attributes['rsdThreshold']
+	item['rsdPassed'] = sum(msData.rsdSP <= msData.Attributes['rsdThreshold'])
+
+	# Artifactual filtering
+	passMask = (msData.correlationToDilution >= msData.Attributes['corrThreshold']) & (
+				msData.rsdSP <= msData.Attributes['rsdThreshold']) & (
+						   (msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (msData.featureMask == True)
+	if withArtifactualFiltering:
+		passMask = msData.artifactualFilter(featMask=passMask)
+
+	if 'blankThreshold' in msData.Attributes.keys():
+		from ..utilities._filters import blankFilter
+
+		blankThreshold = msData.Attributes['blankThreshold']
+
+		blankMask = blankFilter(msData)
+
+		passMask = numpy.logical_and(passMask, blankMask)
+
+		item['BlankPassed'] = sum(blankMask)
+
+	if withArtifactualFiltering:
+		item['artifactualPassed'] = sum(passMask)
+	item['featuresPassed'] = sum(passMask)
+
+	# Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds
+	rsdVals = numpy.arange(5, 55, 5)
+	rVals = numpy.arange(0.5, 1.01, 0.05)
+	rValsRep = numpy.tile(numpy.arange(0.5, 1.01, 0.05), [1, len(rsdVals)])
+	rsdValsRep = numpy.reshape(numpy.tile(numpy.arange(5, 55, 5), [len(rVals), 1]), rValsRep.shape, order='F')
+	featureNos = numpy.zeros(rValsRep.shape, dtype=numpy.int)
+	if withArtifactualFiltering:
+		# with blankThreshold in heatmap
+		if 'blankThreshold' in msData.Attributes.keys():
+			for rsdNo in range(rValsRep.shape[1]):
+				featureNos[0, rsdNo] = sum(msData.artifactualFilter(featMask=(
+							(msData.correlationToDilution >= rValsRep[0, rsdNo]) & (
+								msData.rsdSP <= rsdValsRep[0, rsdNo]) & (
+										(msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (
+										msData.featureMask == True) & (blankMask == True))))
+		# without blankThreshold
+		else:
+			for rsdNo in range(rValsRep.shape[1]):
+				featureNos[0, rsdNo] = sum(msData.artifactualFilter(featMask=(
+							(msData.correlationToDilution >= rValsRep[0, rsdNo]) & (
+								msData.rsdSP <= rsdValsRep[0, rsdNo]) & (
+										(msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (
+										msData.featureMask == True))))
+	else:
+		# with blankThreshold in heatmap
+		if 'blankThreshold' in msData.Attributes.keys():
+			for rsdNo in range(rValsRep.shape[1]):
+				featureNos[0, rsdNo] = sum(
+					(msData.correlationToDilution >= rValsRep[0, rsdNo]) & (msData.rsdSP <= rsdValsRep[0, rsdNo]) & (
+								(msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (
+								msData.featureMask == True) & (blankMask == True))
+		# without blankThreshold
+		else:
+			for rsdNo in range(rValsRep.shape[1]):
+				featureNos[0, rsdNo] = sum(
+					(msData.correlationToDilution >= rValsRep[0, rsdNo]) & (msData.rsdSP <= rsdValsRep[0, rsdNo]) & (
+								(msData.rsdSP * msData.Attributes['varianceRatio']) <= rsdSS) & (
+								msData.featureMask == True))
+	test = pandas.DataFrame(data=numpy.transpose(numpy.concatenate([rValsRep, rsdValsRep, featureNos])),
+							columns=['Correlation to dilution', 'RSD', 'nFeatures'])
+	test = test.pivot('Correlation to dilution', 'RSD', 'nFeatures')
+
+	fig, ax = plt.subplots(1, figsize=msData.Attributes['figureSize'], dpi=msData.Attributes['dpi'])
+	sns.heatmap(test, annot=True, fmt='g', cbar=False)
+	plt.tight_layout()
+
+	if output:
+		item['NoFeaturesHeatmap'] = os.path.join(saveDir,
+												 item['Name'] + '_noFeatures.' + msData.Attributes['figureFormat'])
+		plt.savefig(item['NoFeaturesHeatmap'], format=msData.Attributes['figureFormat'], dpi=msData.Attributes['dpi'])
+		plt.close()
+
+	else:
+		print(
+			'Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds')
+		plt.show()
+
+		print('Summary of current feature filtering parameters and number of features passing at each stage\n')
+		print('Number of features in original dataset: ' + str(item['Nfeatures']) + '\n\n' +
+			  'Features filtered on:\n' +
+			  'Correlation (' + item['corrMethod'] + ', exclusions: ' + item[
+				  'corrExclusions'] + ') to dilution greater than ' + str(item['corrThreshold']) + ': ' + str(
+			item['corrPassed']) + ' passed selection\n' +
+			  'Relative Standard Deviation (RSD) in study pool (SP) samples below ' + str(
+			item['rsdThreshold']) + ': ' + str(item['rsdPassed']) + ' passed selection\n' +
+			  'RSD in study samples (SS) * ' + item['rsdSPvsSSvarianceRatio'] + ' >= RSD in SP samples: ' + str(
+			item['rsdSPvsSSPassed']) + ' passed selection')
+		if blankThreshold:
+			print('%i features above blank threshold.' % (item['BlankPassed']))
+		if withArtifactualFiltering:
+			print('Artifactual features filtering: ' + str(item['artifactualPassed']) + ' passed selection')
+		print('\nTotal number of features after filtering: ' + str(item['featuresPassed']))
+
+	# Write HTML if saving
+	##
+	if output:
+		# Make paths for graphics local not absolute for use in the HTML.
+		for key in item:
+			if os.path.join(output, 'graphics') in str(item[key]):
+				item[key] = re.sub('.*graphics', 'graphics', item[key])
+
+		# Generate report
+		from jinja2 import Environment, FileSystemLoader
+
+		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
+		template = env.get_template('MS_FinalSummaryReport.html')
+		filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
+
+		f = open(filename, 'w')
+		f.write(template.render(item=item,
+								attributes=dataset.Attributes,
+								version=version,
+								failSummary=fail_summary,
+								graphicsPath='/report_featureSummary'))
+		f.close()
+
+		copyBackingFiles(toolboxPath(), graphicsPath)
+
 	return None
 
 def _batchCorrectionAssessmentReport(dataset, output=None):
+	"""
+	Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
+	"""
+
+	# Pre-correction report (report is example of results when batch correction applied)
+
+	# Check inputs
+	if not hasattr(msData.sampleMetadata, 'Correction Batch'):
+		raise ValueError("Correction Batch information missing, run addSampleInfo(descriptionFormat=\'Batches\')")
+
+	# Figure 1: TIC for all samples by sample type and detector voltage change
+	if output:
+		item['TICdetectorBatches'] = os.path.join(saveDir, item['Name'] + '_TICdetectorBatches.' + msData.Attributes[
+			'figureFormat'])
+		saveAs = item['TICdetectorBatches']
+	else:
+		print('Overall Total Ion Count (TIC) for all samples and features, coloured by batch.')
+
+	plotTIC(msData,
+			addViolin=True,
+			addBatchShading=True,
+			savePath=saveAs,
+			figureFormat=msData.Attributes['figureFormat'],
+			dpi=msData.Attributes['dpi'],
+			figureSize=msData.Attributes['figureSize'])
+
+	# Remaining figures: Sample of fits for selection of features
+	(preData, postData, maskNum) = batchCorrectionTest(msData, nFeatures=10, window=batch_correction_window)
+	item['NoBatchPlotFeatures'] = len(maskNum)
+
+	if output:
+		figuresCorrectionExamples = OrderedDict()  # To save figures
+	else:
+		print(
+			'Example batch correction plots for a subset of features, results of batch correction with specified batches.')
+		figuresCorrectionExamples = None
+
+	for feature in range(len(maskNum)):
+
+		featureName = str(numpy.squeeze(preData.featureMetadata.loc[feature, 'Feature Name'])).replace('/', '-')
+		if output:
+			figuresCorrectionExamples['Feature ' + featureName] = os.path.join(saveDir, item[
+				'Name'] + '_batchPlotFeature_' + featureName + '.' + msData.Attributes['figureFormat'])
+			saveAs = figuresCorrectionExamples['Feature ' + featureName]
+		else:
+			print('Feature ' + featureName)
+
+		plotBatchAndROCorrection(preData,
+								 postData,
+								 feature,
+								 logy=True,
+								 savePath=saveAs,
+								 figureFormat=msData.Attributes['figureFormat'],
+								 dpi=msData.Attributes['dpi'],
+								 figureSize=msData.Attributes['figureSize'])
+
+	if figuresCorrectionExamples is not None:
+		# Make paths for graphics local not absolute for use in the HTML.
+		for key in figuresCorrectionExamples:
+			if os.path.join(output, 'graphics') in str(figuresCorrectionExamples[key]):
+				figuresCorrectionExamples[key] = re.sub('.*graphics', 'graphics', figuresCorrectionExamples[key])
+		# Save to item
+		item['figuresCorrectionExamples'] = figuresCorrectionExamples
 	return None
 
 def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
+	"""
+	Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
+	"""
+
+	# Define sample masks
+	SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
+				msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
+	SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
+				msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+	ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
+				msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+
+	# Mean intensities of Study Pool samples (for future plotting segmented by intensity)
+	meanIntensitiesSP = numpy.log(numpy.nanmean(msData.intensityData[SPmask, :], axis=0))
+	meanIntensitiesSP[numpy.mean(msData.intensityData[SPmask, :], axis=0) == 0] = numpy.nan
+	meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
+
+	# Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).
+
+	# Pre-correction
+	if output:
+		item['FeatureIntensityFigurePRE'] = os.path.join(saveDir, item['Name'] + '_BCS1_meanIntesityFeaturePRE.' +
+														 msData.Attributes['figureFormat'])
+		saveAs = item['FeatureIntensityFigurePRE']
+	else:
+		print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')
+		print('Pre-correction.')
+
+	_plotAbundanceBySampleType(msData.intensityData, SSmask, SPmask, ERmask, saveAs, msData)
+
+	# Post-correction
+	if output:
+		item['FeatureIntensityFigurePOST'] = os.path.join(saveDir, item['Name'] + '_BCS1_meanIntesityFeaturePOST.' +
+														  msData.Attributes['figureFormat'])
+		saveAs = item['FeatureIntensityFigurePOST']
+	else:
+		print('Post-correction.')
+
+	_plotAbundanceBySampleType(msDataCorrected.intensityData, SSmask, SPmask, ERmask, saveAs, msDataCorrected)
+
+	# Figure 2: TIC for all samples and features.
+
+	# Pre-correction
+	if output:
+		item['TicPRE'] = os.path.join(saveDir, item['Name'] + '_BCS2_TicPRE.' + msData.Attributes['figureFormat'])
+		saveAs = item['TicPRE']
+	else:
+		print('Sample Total Ion Count (TIC) and distribtion (coloured by sample type).')
+		print('Pre-correction.')
+
+	plotTIC(msData,
+			addViolin=True,
+			title='TIC Pre Batch-Correction',
+			savePath=saveAs,
+			figureFormat=msData.Attributes['figureFormat'],
+			dpi=msData.Attributes['dpi'],
+			figureSize=msData.Attributes['figureSize'])
+
+	# Post-correction
+	if output:
+		item['TicPOST'] = os.path.join(saveDir, item['Name'] + '_BCS2_TicPOST.' + msData.Attributes['figureFormat'])
+		saveAs = item['TicPOST']
+	else:
+		print('Post-correction.')
+
+	plotTIC(msDataCorrected,
+			addViolin=True,
+			title='TIC Post Batch-Correction',
+			savePath=saveAs,
+			figureFormat=msData.Attributes['figureFormat'],
+			dpi=msData.Attributes['dpi'],
+			figureSize=msData.Attributes['figureSize'])
+
+	# Figure 3: Histogram of RSD in study pool (SP) samples, segmented by abundance percentiles.
+
+	# Pre-correction
+	if output:
+		item['RsdByPercFigurePRE'] = os.path.join(saveDir, item['Name'] + '_BCS3_rsdByPercPRE.' + msData.Attributes[
+			'figureFormat'])
+		saveAs = item['RsdByPercFigurePRE']
+	else:
+		print(
+			'Figure 3: Histogram of Residual Standard Deviation (RSD) in study pool (SP) samples, segmented by abundance percentiles.')
+		print('Pre-correction.')
+
+	histogram(msData.rsdSP,
+			  xlabel='RSD',
+			  histBins=msData.Attributes['histBins'],
+			  quantiles=msData.Attributes['quantiles'],
+			  inclusionVector=numpy.exp(meanIntensitiesSP),
+			  logx=False,
+			  xlim=(0, 100),
+			  savePath=saveAs,
+			  figureFormat=msData.Attributes['figureFormat'],
+			  dpi=msData.Attributes['dpi'],
+			  figureSize=msData.Attributes['figureSize'])
+
+	# Post-correction
+	if output:
+		item['RsdByPercFigurePOST'] = os.path.join(saveDir, item['Name'] + '_BCS3_rsdByPercPOST.' + msData.Attributes[
+			'figureFormat'])
+		saveAs = item['RsdByPercFigurePOST']
+	else:
+		print('Post-correction.')
+
+	histogram(msDataCorrected.rsdSP,
+			  xlabel='RSD',
+			  histBins=msData.Attributes['histBins'],
+			  quantiles=msData.Attributes['quantiles'],
+			  inclusionVector=numpy.exp(meanIntensitiesSP),
+			  logx=False,
+			  xlim=(0, 100),
+			  savePath=saveAs,
+			  figureFormat=msData.Attributes['figureFormat'],
+			  dpi=msData.Attributes['dpi'],
+			  figureSize=msData.Attributes['figureSize'])
+
+	# Figure 4: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type).
+
+	# Pre-correction
+	if output:
+		item['RSDdistributionFigurePRE'] = os.path.join(saveDir, item['Name'] + '_BCS4_RSDdistributionFigurePRE.' +
+														msData.Attributes['figureFormat'])
+		saveAs = item['RSDdistributionFigurePRE']
+	else:
+		print('Figure 4: RSD distribution for all samples and all features in dataset (by sample type).')
+		print('Pre-correction.')
+
+	plotRSDs(msData,
+			 ratio=False,
+			 logx=True,
+			 color='matchReport',
+			 savePath=saveAs,
+			 figureFormat=msData.Attributes['figureFormat'],
+			 dpi=msData.Attributes['dpi'],
+			 figureSize=msData.Attributes['figureSize'])
+
+	# Post-correction
+	if output:
+		item['RSDdistributionFigurePOST'] = os.path.join(saveDir, item['Name'] + '_BCS4_RSDdistributionFigurePOST.' +
+														 msData.Attributes['figureFormat'])
+		saveAs = item['RSDdistributionFigurePOST']
+	else:
+		print('Post-correction.')
+
+	plotRSDs(msDataCorrected,
+			 ratio=False,
+			 logx=True,
+			 color='matchReport',
+			 savePath=saveAs,
+			 figureFormat=msData.Attributes['figureFormat'],
+			 dpi=msData.Attributes['dpi'],
+			 figureSize=msData.Attributes['figureSize'])
+
 	return None
 
 def _featureCorrelationToDilutionReport(dataset, output=None):
@@ -1233,6 +1156,30 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
 			print(
 				'\nHeatmap/lineplot showing the proportion of features (in different intensity quantiles, low:0-25, medium:25-75, and high:75-100%) where the median intensity at lower dilution factors >= that at higher dilution factors')
 			plt.show()
+
+	# Write HTML if saving
+	##
+	if output:
+		# Make paths for graphics local not absolute for use in the HTML.
+		for key in item:
+			if os.path.join(output, 'graphics') in str(item[key]):
+				item[key] = re.sub('.*graphics', 'graphics', item[key])
+
+		# Generate report
+		from jinja2 import Environment, FileSystemLoader
+
+		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
+		template = env.get_template('MS_FinalSummaryReport.html')
+		filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
+
+		f = open(filename, 'w')
+		f.write(template.render(item=item,
+								attributes=dataset.Attributes,
+								version=version,
+								graphicsPath='/report_featureSummary'))
+		f.close()
+
+		copyBackingFiles(toolboxPath(), graphicsPath)
 
 	return None
 
