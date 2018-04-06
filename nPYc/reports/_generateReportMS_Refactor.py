@@ -104,12 +104,14 @@ def _generateReportMS_New(msData, reportType, withExclusions=False, withArtifact
 		msData.applyMasks()
 
 	# Define sample masks
-	SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
-				msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-	SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-				msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-				msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+	SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
+			 (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
+	SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
+			 (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+	ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
+			 (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+	LRmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
+			 (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
 
 	if not 'Plot Sample Type' in msData.sampleMetadata.columns:
 		msData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
@@ -130,12 +132,6 @@ def _generateReportMS_New(msData, reportType, withExclusions=False, withArtifact
 	elif reportType.lower() == 'final report':
 		_finalReport(msData, output, pcaModel)
 
-
-	# Define sample masks
-	SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-	SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	LRmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
 	[ns, nv] = msData.intensityData.shape
 
 	# Set up template item and save required info
@@ -1178,5 +1174,207 @@ def _batchCorrectionAssessmentReport(dataset, output=None):
 def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
 	return None
 
+
 def _featureCorrelationToDilutionReport(dataset, output=None):
+	"""
+	Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
+	"""
+
+	# Check inputs
+	if not hasattr(dataset.sampleMetadata, 'Correction Batch'):
+		raise ValueError("Correction Batch information missing, run addSampleInfo(descriptionFormat=\'Batches\')")
+
+	# Define sample masks
+	SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
+			 (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
+	SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
+			 (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+	ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
+			 (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+	LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
+			 (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+
+	# Set up template item and save required info
+	item = dict()
+	item['Name'] = dataset.name
+	item['ReportType'] = 'correlation to dilution'
+	item['Nfeatures'] = dataset.intensityData.shape[1]
+	item['Nsamples'] = dataset.intensityData.shape[0]
+	item['SScount'] = str(sum(SSmask))
+	item['SPcount'] = str(sum(SPmask))
+	item['ERcount'] = str(sum(ERmask))
+	item['LRcount'] = str(sum(LRmask))
+	item['corrMethod'] = dataset.Attributes['corrMethod']
+
+	# Generate correlation to dilution for each batch subset - plot TIC and histogram of correlation to dilution
+
+	# generate LRmask
+	LRmask = generateLRmask(dataset)
+
+	# instantiate dictionarys
+	corLRbyBatch = {}  # to save correlations
+	corLRsummary = {}  # summary of number of features with correlation above threshold
+	corLRsummary['TotalOriginal'] = len(dataset.featureMask)
+
+	if output:
+		saveAs = output
+		figuresCorLRbyBatch = OrderedDict()  # To save figures
+	else:
+		figuresCorLRbyBatch = None
+
+	for key in sorted(LRmask):
+		corLRbyBatch[key] = _vcorrcoef(dataset.intensityData, dataset.sampleMetadata['Dilution'].values,
+									   method=dataset.Attributes['corrMethod'], sampleMask=LRmask[key])
+		corLRsummary[key] = sum(corLRbyBatch[key] >= dataset.Attributes['corrThreshold'])
+		figuresCorLRbyBatch = _localLRPlots(dataset,
+											LRmask[key],
+											corLRbyBatch[key],
+											key,
+											figures=figuresCorLRbyBatch,
+											savePath=saveAs)
+
+	# Calculate average (mean) correlation across all batch subsets
+	corALL = numpy.zeros([len(corLRbyBatch), len(dataset.featureMask)])
+	n = 0
+	for key in corLRbyBatch:
+		corALL[n, :] = corLRbyBatch[key]
+		n = n + 1
+
+	corLRbyBatch['MeanAllSubsets'] = numpy.mean(corALL, axis=0)
+	corLRsummary['MeanAllSubsets'] = sum(corLRbyBatch['MeanAllSubsets'] >= dataset.Attributes['corrThreshold'])
+	figuresCorLRbyBatch = _localLRPlots(dataset,
+										(dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
+													dataset.sampleMetadata[
+														'AssayRole'].values == AssayRole.LinearityReference),
+										corLRbyBatch['MeanAllSubsets'],
+										'MeanAllSubsets',
+										figures=figuresCorLRbyBatch,
+										savePath=saveAs)
+
+	if figuresCorLRbyBatch is not None:
+		# Make paths for graphics local not absolute for use in the HTML.
+		for key in figuresCorLRbyBatch:
+			if os.path.join(output, 'graphics') in str(figuresCorLRbyBatch[key]):
+				figuresCorLRbyBatch[key] = re.sub('.*graphics', 'graphics', figuresCorLRbyBatch[key])
+		# Save to item
+		item['figuresCorLRbyBatch'] = figuresCorLRbyBatch
+
+	# Summary table of number of features passing threshold with each subset
+	temp = pandas.DataFrame(corLRsummary, index=range(1))
+	temp['CurrentSettings'] = sum(dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
+	temp = temp.T
+	temp.rename(columns={0: 'N Features'}, inplace=True)
+
+	item['NfeaturesSummary'] = temp
+	item['corrThreshold'] = str(dataset.Attributes['corrThreshold'])
+	item['corrMethod'] = dataset.Attributes['corrMethod']
+	if sum(dataset.corrExclusions) != dataset.noSamples:
+		item['corrExclusions'] = str(
+			dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
+	else:
+		item['corrExclusions'] = 'none'
+
+	if not output:
+		print('Number of features exceeding correlation to dilution threshold (' + str(
+			item['corrThreshold']) + ') for each LR sample subset/correlation to dilution method')
+		display(temp)
+
+		print('\nCurrent correlation settings:' +
+			  '\nCorrelation method: ' + item['corrMethod'] +
+			  '\nCorrelation exclusions: ' + item['corrExclusions'] +
+			  '\nCorrelation threshold: ' + item['corrThreshold'])
+
+	# Assessment of potential saturation
+
+	# Heatmap showing the proportion of features (across different intensities) where median
+	# intensity at lower dilution factor >= that at higher dilution factor
+
+	# calculate median feature intensity quantiles and feature masks
+	medI = numpy.nanmedian(dataset.intensityData, axis=0)
+	quantiles = numpy.percentile(medI, [25, 75])
+	nf = dataset.intensityData.shape[1]
+	lowImask = medI <= quantiles[0]
+	midImask = (medI > quantiles[0]) & (medI <= quantiles[1])
+	highImask = medI >= quantiles[1]
+
+	# dilution factors present
+	dilutions = (numpy.unique(
+		dataset.sampleMetadata['Dilution'].values[~numpy.isnan(dataset.sampleMetadata['Dilution'].values)])).astype(int)
+	dilutions.sort()
+
+	# LR batch subsets
+	LRbatchmask = generateLRmask(dataset)
+
+	# median feature intensities for different dilution samples
+	medItable = numpy.full([nf, len(dilutions) * len(LRbatchmask)], numpy.nan)
+	i = 0
+	for key in LRbatchmask:
+		for d in dilutions:
+			mask = (dataset.sampleMetadata['Dilution'].values == d) & (LRbatchmask[key])
+			medItable[:, i] = numpy.nanmedian(dataset.intensityData[mask, :], axis=0)
+			i = i + 1
+
+	# dataframe for proportion of features with median intensity at lower dilution factor >= that at higher dilution factor
+	i = 0
+	for key in sorted(LRbatchmask):
+		for d in numpy.arange(0, len(dilutions) - 1):
+			if 'sat' not in locals():
+				sat = pandas.DataFrame({'Average feature intensity': ['1. low ' + key],
+										'LR': [str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d])],
+										'Proportion of features': [
+											sum(medItable[lowImask, i + 1] <= medItable[lowImask, i]) / sum(
+												lowImask) * 100]})
+				sat = sat.append({'Average feature intensity': '2. medium ' + key,
+								  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
+								  'Proportion of features': sum(
+									  medItable[midImask, i + 1] <= medItable[midImask, i]) / sum(midImask) * 100},
+								 ignore_index=True)
+				sat = sat.append({'Average feature intensity': '3. high ' + key,
+								  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
+								  'Proportion of features': sum(
+									  medItable[highImask, i + 1] <= medItable[highImask, i]) / sum(highImask) * 100},
+								 ignore_index=True)
+			else:
+				sat = sat.append({'Average feature intensity': '1. low ' + key,
+								  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
+								  'Proportion of features': sum(
+									  medItable[lowImask, i + 1] <= medItable[lowImask, i]) / sum(lowImask) * 100},
+								 ignore_index=True)
+				sat = sat.append({'Average feature intensity': '2. medium ' + key,
+								  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
+								  'Proportion of features': sum(
+									  medItable[midImask, i + 1] <= medItable[midImask, i]) / sum(midImask) * 100},
+								 ignore_index=True)
+				sat = sat.append({'Average feature intensity': '3. high ' + key,
+								  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
+								  'Proportion of features': sum(
+									  medItable[highImask, i + 1] <= medItable[highImask, i]) / sum(highImask) * 100},
+								 ignore_index=True)
+			i = i + 1
+		i = i + 1
+
+	satHeatmap = sat.pivot('Average feature intensity', 'LR', 'Proportion of features')
+	satLineplot = sat.pivot('LR', 'Average feature intensity', 'Proportion of features')
+
+	# plot heatmap
+	with sns.axes_style("white"):
+		fig = plt.figure(figsize=dataset.Attributes['figureSize'], dpi=dataset.Attributes['dpi'])
+		gs = gridspec.GridSpec(1, 11)
+		ax1 = plt.subplot(gs[0, :5])
+		ax2 = plt.subplot(gs[0, -5:])
+		ax1 = sns.heatmap(satHeatmap, ax=ax1, annot=True, fmt='.3g', vmin=0, vmax=100, cmap='Reds', cbar=False)
+		ax2 = satLineplot.plot(kind='line', ax=ax2, ylim=[0, 100], colormap='jet')
+		if output:
+			item['SatFeaturesHeatmap'] = os.path.join(output,
+													  item['Name'] + '_satFeaturesHeatmap.' + dataset.Attributes[
+														  'figureFormat'])
+			plt.savefig(item['SatFeaturesHeatmap'], bbox_inches='tight', format=dataset.Attributes['figureFormat'],
+						dpi=dataset.Attributes['dpi'])
+			plt.close()
+		else:
+			print('\n\nAssessment of potential saturation')
+			print(
+				'\nHeatmap/lineplot showing the proportion of features (in different intensity quantiles, low:0-25, medium:25-75, and high:75-100%) where the median intensity at lower dilution factors >= that at higher dilution factors')
+			plt.show()
+
 	return None
