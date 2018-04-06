@@ -255,7 +255,7 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			self.dataset.sampleMetadata['Sample Base Name'] = self.dataset.sampleMetadata['Sample File Name']
 			self.dataset.sampleMetadata['BaselineFail'] = False
 			self.dataset.sampleMetadata['WaterPeakFail'] = False
-
+			self.dataset.sampleMetadata['Metadata Available'] = True
 			nPYc.reports.generateReport(self.dataset, 'Final Report', output=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'TestData_report_finalSummary.html')
@@ -420,7 +420,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
-
+		data.sampleMetadata['Metadata Available'] = True
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			nPYc.reports.generateReport(data, 'final report', output=tmpdirname)
@@ -860,8 +860,8 @@ class test_reports_modules(unittest.TestCase):
 					self.assertTrue(os.path.exists(report[groupName][plotName]))
 
 
-	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
-	def test_reports_generateBasicPCAReport(self, mock_stdout):
+	#@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
+	def test_reports_generateBasicPCAReport(self):#, mock_stdout):
 
 		from nPYc.reports._generateBasicPCAReport import generateBasicPCAReport
 		from nPYc.multivariate import exploratoryAnalysisPCA
