@@ -95,23 +95,11 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
             os.makedirs(output)
         if not os.path.exists(os.path.join(output, 'graphics')):
             os.makedirs(os.path.join(output, 'graphics'))
-    else:
-        saveDir = None
 
     # Apply sample/feature masks if exclusions to be applied
     msData = copy.deepcopy(dataset)
     if withExclusions:
         msData.applyMasks()
-
-    # Define sample masks
-    SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
-             (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-    SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
-             (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
-             (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    LRmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
-             (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
 
     if reportType.lower() == 'feature summary':
         _featureReport(msData, output)
@@ -173,6 +161,9 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
         graphicsPath = os.path.join(output, 'graphics', 'report_SummaryReport')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
+    else:
+        graphicsPath = None
+        saveAs = None
 
     if not output:
         print('Table 1: Summary of samples present')
@@ -399,13 +390,17 @@ def _featureReport(dataset, output=None):
         graphicsPath = os.path.join(output, 'graphics', 'report_featureSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
+    else:
+        graphicsPath = None
+        saveAs = None
 
     # Generate correlation to dilution for each batch subset - plot TIC and histogram of correlation to dilution
 
     # Mean intensities of Study Pool samples (for future plotting segmented by intensity)
-    meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[dataset, :], axis=0))
-    meanIntensitiesSP[numpy.mean(dataset.intensityData[dataset, :], axis=0) == 0] = numpy.nan
+    meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[SPmask, :], axis=0))
+    meanIntensitiesSP[numpy.mean(dataset.intensityData[SPmask, :], axis=0) == 0] = numpy.nan
     meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
+
 
     # Figure 1: Histogram of log mean abundance by sample type
     if output:
@@ -416,7 +411,7 @@ def _featureReport(dataset, output=None):
     else:
         print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')
 
-    _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
+    _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, graphicsPath, dataset)
 
     # Figure 2: Sample intensity TIC and distribution by sample type
     if output:
@@ -612,7 +607,7 @@ def _featureReport(dataset, output=None):
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_FinalSummaryReport.html')
         filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
-
+        
         f = open(filename, 'w')
         f.write(template.render(item=item,
                                 attributes=dataset.Attributes,
@@ -620,7 +615,7 @@ def _featureReport(dataset, output=None):
                                 graphicsPath='/report_featureSummary'))
         f.close()
 
-        copyBackingFiles(toolboxPath(), graphicsPath)
+        copyBackingFiles(toolboxPath(), output)
 
     return None
 
@@ -665,6 +660,9 @@ def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False
         graphicsPath = os.path.join(output, 'graphics', 'report_featureSelectionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
+    else:
+        graphicsPath = None
+        saveAs = None
 
     # Feature selection parameters and numbers passing
     
@@ -847,6 +845,10 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
         graphicsPath = os.path.join(output, 'graphics', 'report_featureSelectionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
+    else:
+        graphicsPath = None
+        saveAs = None
+
 
     # Pre-correction report (report is example of results when batch correction applied)
 
@@ -973,6 +975,10 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
         graphicsPath = os.path.join(output, 'graphics', 'report_featureSelectionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
+    else:
+        graphicsPath = None
+        saveAs = None
+
 
     # Mean intensities of Study Pool samples (for future plotting segmented by intensity)
     meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[SPmask, :], axis=0))
@@ -1142,6 +1148,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
 
     return None
 
+
 def _featureCorrelationToDilutionReport(dataset, output=None):
     """
     Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
@@ -1185,6 +1192,10 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
         graphicsPath = os.path.join(output, 'graphics', 'report_featureSelectionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
+    else:
+        graphicsPath = None
+        saveAs = None
+
 
     # Generate correlation to dilution for each batch subset - plot TIC and histogram of correlation to dilution
 
