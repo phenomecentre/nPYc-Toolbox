@@ -145,11 +145,6 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     item['LRcount'] = str(sum(LRmask))
     item['corrMethod'] = dataset.Attributes['corrMethod']
 
-    if not 'Plot Sample Type' in dataset.sampleMetadata.columns:
-        dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-        dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-        dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-        dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
     ##
     # Report stats
     ##
@@ -158,7 +153,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
             os.makedirs(output)
         if not os.path.exists(os.path.join(output, 'graphics')):
             os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_SummaryReport')
+        graphicsPath = os.path.join(output, 'graphics', 'report_FinalSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -195,7 +190,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     item['end'] = end.strftime('%d/%m/%y')
 
     if output:
-        item['finalTICbatches'] = os.path.join(output,
+        item['finalTICbatches'] = os.path.join(graphicsPath,
                                                item['Name'] + '_finalTICbatches.' + dataset.Attributes['figureFormat'])
         saveAs = item['finalTICbatches']
     else:
@@ -248,7 +243,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
 
     # Figure 2: Final TIC
     if output:
-        item['finalTIC'] = os.path.join(output, item['Name'] + '_finalTIC.' + dataset.Attributes['figureFormat'])
+        item['finalTIC'] = os.path.join(graphicsPath, item['Name'] + '_finalTIC.' + dataset.Attributes['figureFormat'])
         saveAs = item['finalTIC']
     else:
         print('Figure 2: Total Ion Count (TIC) for all samples and all features in final dataset.')
@@ -263,7 +258,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
 
     # Figure 3: Histogram of log mean abundance by sample type
     if output:
-        item['finalFeatureIntensityHist'] = os.path.join(output, item['Name'] + '_finalFeatureIntensityHist.' +
+        item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_finalFeatureIntensityHist.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
     else:
@@ -274,7 +269,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
 
     # Figure 4: Histogram of RSDs in SP and SS
     if output:
-        item['finalRSDdistributionFigure'] = os.path.join(output, item['Name'] + '_finalRSDdistributionFigure.' +
+        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
     else:
@@ -292,7 +287,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
 
     # Figure 5: Ion map
     if output:
-        item['finalIonMap'] = os.path.join(output, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
+        item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
         saveAs = item['finalIonMap']
     else:
         print('Figure 5: Ion map of all features (coloured by log median intensity).')
@@ -308,25 +303,33 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     # PCA plots
     ##
 
-    if not 'Plot Sample Type' in dataset.sampleMetadata.columns:
-        dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-        dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-        dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-        dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
-
     if pcaModel:
         if output:
             pcaPath = output
+
+            if not 'Plot Sample Type' in dataset.sampleMetadata.columns:
+                dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+                dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+                dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
+                dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
         else:
             pcaPath = None
         pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=6, output=pcaPath, fileNamePrefix='')
 
-    # Add final tables of excluded/missing study samples
+
+    ##
+    # Sample summary
+    ##
+    sampleSummary = _generateSampleReport(dataset, withExclusions=True, output=None, returnOutput=True)
     if not output:
+        print('Table 1: Summary of samples present')
+        display(sampleSummary['Acquired'])
         if 'Excluded Details' in sampleSummary:
             print('Table 2: Summary of samples excuded')
             display(sampleSummary['Excluded Details'])
-
+    else:
+        item['SampleSummaryTable'] = sampleSummary
+    ##
     # Write HTML if saving
     ##
     if output:
@@ -340,15 +343,15 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_FinalSummaryReport.html')
-        filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
+        filename = os.path.join(output, dataset.name + '_report_FinalSummary.html')
 
         f = open(filename,'w')
         f.write(template.render(item=item,
                                 attributes=dataset.Attributes,
                                 version=version,
-                                graphicsPath='/report_featureSummary'))
+                                graphicsPath=graphicsPath))
         f.close()
-        copyBackingFiles(toolboxPath(), graphicsPath)
+        copyBackingFiles(toolboxPath(), output)
     return None
 
 
@@ -394,6 +397,7 @@ def _featureReport(dataset, output=None):
         graphicsPath = None
         saveAs = None
 
+
     # Generate correlation to dilution for each batch subset - plot TIC and histogram of correlation to dilution
 
     # Mean intensities of Study Pool samples (for future plotting segmented by intensity)
@@ -401,21 +405,20 @@ def _featureReport(dataset, output=None):
     meanIntensitiesSP[numpy.mean(dataset.intensityData[SPmask, :], axis=0) == 0] = numpy.nan
     meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
 
-
     # Figure 1: Histogram of log mean abundance by sample type
     if output:
-        item['FeatureIntensityFigure'] = os.path.join(output,
-                                                      item['Name'] + '_meanIntesityFeature.' + dataset.Attributes[
+        item['FeatureIntensityFigure'] = os.path.join(graphicsPath,
+                                                      item['Name'] + '_meanIntensityFeature.' + dataset.Attributes[
                                                           'figureFormat'])
         saveAs = item['FeatureIntensityFigure']
     else:
         print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')
 
-    _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, graphicsPath, dataset)
+    _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
 
     # Figure 2: Sample intensity TIC and distribution by sample type
     if output:
-        item['SampleIntensityFigure'] = os.path.join(output, item['Name'] + '_meanIntesitySample.' + dataset.Attributes[
+        item['SampleIntensityFigure'] = os.path.join(graphicsPath, item['Name'] + '_meanIntensitySample.' + dataset.Attributes[
             'figureFormat'])
         saveAs = item['SampleIntensityFigure']
     else:
@@ -432,7 +435,7 @@ def _featureReport(dataset, output=None):
 
     # Figure 3: Acquisition structure and detector voltage
     if output:
-        item['AcquisitionStructureFigure'] = os.path.join(output,
+        item['AcquisitionStructureFigure'] = os.path.join(graphicsPath,
                                                           item['Name'] + '_acquisitionStructure.' + dataset.Attributes[
                                                               'figureFormat'])
         saveAs = item['AcquisitionStructureFigure']
@@ -456,7 +459,7 @@ def _featureReport(dataset, output=None):
 
         # Figure 4: Histogram of correlation to dilution by abundance percentiles
         if output:
-            item['CorrelationByPercFigure'] = os.path.join(output,
+            item['CorrelationByPercFigure'] = os.path.join(graphicsPath,
                                                            item['Name'] + '_correlationByPerc.' + dataset.Attributes[
                                                                'figureFormat'])
             saveAs = item['CorrelationByPercFigure']
@@ -476,7 +479,7 @@ def _featureReport(dataset, output=None):
 
         # Figure 5: TIC of linearity reference samples
         if output:
-            item['TICinLRfigure'] = os.path.join(output,
+            item['TICinLRfigure'] = os.path.join(graphicsPath,
                                                  item['Name'] + '_TICinLR.' + dataset.Attributes['figureFormat'])
             saveAs = item['TICinLRfigure']
         else:
@@ -500,7 +503,7 @@ def _featureReport(dataset, output=None):
 
     # Figure 6: Histogram of RSD in SP samples by abundance percentiles
     if output:
-        item['RsdByPercFigure'] = os.path.join(output,
+        item['RsdByPercFigure'] = os.path.join(graphicsPath,
                                                item['Name'] + '_rsdByPerc.' + dataset.Attributes['figureFormat'])
         saveAs = item['RsdByPercFigure']
     else:
@@ -522,7 +525,7 @@ def _featureReport(dataset, output=None):
     # Figure 7: Scatterplot of RSD vs correlation to dilution
     if sum(LRmask) != 0:
         if output:
-            item['RsdVsCorrelationFigure'] = os.path.join(output,
+            item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
                                                           item['Name'] + '_rsdVsCorrelation.' + dataset.Attributes[
                                                               'figureFormat'])
             saveAs = item['RsdVsCorrelationFigure']
@@ -544,7 +547,7 @@ def _featureReport(dataset, output=None):
     if 'Peak Width' in dataset.featureMetadata.columns:
         # Figure 8: Histogram of chromatographic peak width
         if output:
-            item['PeakWidthFigure'] = os.path.join(output,
+            item['PeakWidthFigure'] = os.path.join(graphicsPath,
                                                    item['Name'] + '_peakWidth.' + dataset.Attributes['figureFormat'])
             saveAs = item['PeakWidthFigure']
         else:
@@ -564,7 +567,7 @@ def _featureReport(dataset, output=None):
 
     # Figure 9: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type)
     if output:
-        item['RSDdistributionFigure'] = os.path.join(output,
+        item['RSDdistributionFigure'] = os.path.join(graphicsPath,
                                                      item['Name'] + '_RSDdistributionFigure.' + dataset.Attributes[
                                                          'figureFormat'])
         saveAs = item['RSDdistributionFigure']
@@ -582,7 +585,7 @@ def _featureReport(dataset, output=None):
 
     # Figure 10: Ion map
     if output:
-        item['IonMap'] = os.path.join(output, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
+        item['IonMap'] = os.path.join(graphicsPath, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
         saveAs = item['IonMap']
     else:
         print('Figure 10: Ion map of all features (coloured by log median intensity).')
@@ -605,14 +608,14 @@ def _featureReport(dataset, output=None):
         from jinja2 import Environment, FileSystemLoader
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-        template = env.get_template('MS_FinalSummaryReport.html')
+        template = env.get_template('MS_FeatureSummaryReport.html')
         filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
-        
+
         f = open(filename, 'w')
         f.write(template.render(item=item,
                                 attributes=dataset.Attributes,
                                 version=version,
-                                graphicsPath='/report_featureSummary'))
+                                graphicsPath=graphicsPath))
         f.close()
 
         copyBackingFiles(toolboxPath(), output)
@@ -1189,7 +1192,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
             os.makedirs(output)
         if not os.path.exists(os.path.join(output, 'graphics')):
             os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_featureSelectionSummary')
+        graphicsPath = os.path.join(output, 'graphics', 'report_CorrelationToDilutionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -1208,7 +1211,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
     corLRsummary['TotalOriginal'] = len(dataset.featureMask)
 
     if output:
-        saveAs = output
+        saveAs = graphicsPath
         figuresCorLRbyBatch = OrderedDict()  # To save figures
     else:
         figuresCorLRbyBatch = None
@@ -1380,17 +1383,17 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
         from jinja2 import Environment, FileSystemLoader
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-        template = env.get_template('MS_FinalSummaryReport.html')
-        filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
+        template = env.get_template('MS_CorrelationToDilutionReport.html')
+        filename = os.path.join(output, dataset.name + '_report_correlationToDilutionSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
                                 attributes=dataset.Attributes,
                                 version=version,
-                                graphicsPath='/report_featureSummary'))
+                                graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), graphicsPath)
+        copyBackingFiles(toolboxPath(), output)
 
     return None
 
