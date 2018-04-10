@@ -19,3 +19,4 @@
 *.xml
 nPYc.iml
 .cache/
+!/Templates/*.html

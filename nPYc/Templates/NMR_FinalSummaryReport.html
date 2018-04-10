@@ -19,7 +19,7 @@
 <h2>Sample Summary</h2>
 {% if 'SampleSummaryTable' in item %}
 	<h3>Sample Summary Table</h3>
-	{{ item['SampleSummaryTable'].to_html() }}
+	{{ item['SampleSummaryTable']['Acquired'].to_html() }}
 {% endif %}
 
 

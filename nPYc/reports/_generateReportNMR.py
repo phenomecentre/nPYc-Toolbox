@@ -365,9 +365,9 @@ def _finalReport(dataset, output=None, pcaModel=None):
 								attributes=dataset.Attributes,
 								version=version,
 								sampleSummary=sampleSummary,
-								graphicsPath='/report_finalSummary',
+								graphicsPath=graphicsPath,
 								pcaPlots=pcaModel)
 								)
 		f.close()
 
-		copyBackingFiles(toolboxPath(), graphicsPath)
+		copyBackingFiles(toolboxPath(),output)
