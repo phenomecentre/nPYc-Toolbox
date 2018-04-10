@@ -665,7 +665,6 @@ def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False
             os.makedirs(graphicsPath)
     else:
         graphicsPath = None
-        saveAs = None
 
     # Feature selection parameters and numbers passing
     
@@ -802,10 +801,10 @@ def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False
         f.write(template.render(item=item,
                                 attributes=dataset.Attributes,
                                 version=version,
-                                graphicsPath='/report_featureSelectionSummary'))
+                                graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), graphicsPath)
+        copyBackingFiles(toolboxPath(), output)
 
     return None
 
@@ -845,7 +844,7 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
             os.makedirs(output)
         if not os.path.exists(os.path.join(output, 'graphics')):
             os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_featureSelectionSummary')
+        graphicsPath = os.path.join(output, 'graphics', 'report_batchCorrectionAssessment')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -926,16 +925,16 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_BatchCorrectionAssessmentReport.html')
-        filename = os.path.join(output, dataset.name + '_report_batchCorrectionAssessmentReport.html')
+        filename = os.path.join(output, dataset.name + '_report_batchCorrectionAssessment.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
                                 attributes=dataset.Attributes,
                                 version=version,
-                                graphicsPath='/report_batchCorrectionAssessmentReport'))
+                                graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), graphicsPath)
+        copyBackingFiles(toolboxPath(), output)
 
     return None
 
@@ -975,7 +974,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
             os.makedirs(output)
         if not os.path.exists(os.path.join(output, 'graphics')):
             os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_featureSelectionSummary')
+        graphicsPath = os.path.join(output, 'graphics', 'report_batchCorrectionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -1138,16 +1137,16 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_BatchCorrectionSummaryReport.html')
-        filename = os.path.join(output, dataset.name + '_report_featureSelectionSummary.html')
+        filename = os.path.join(output, dataset.name + '_report_batchCorrectionSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
                                 attributes=dataset.Attributes,
                                 version=version,
-                                graphicsPath='/report_featureSelectionSummary'))
+                                graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), graphicsPath)
+        copyBackingFiles(toolboxPath(), output)
 
     return None
 
