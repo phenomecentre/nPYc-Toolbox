@@ -20,7 +20,7 @@
 
 <!--Summary of samples in final dataset-->
 <h3>Sample Summary Table</h3>
-{{ item['SampleSummaryTable'].to_html() }}
+{{ item['SampleSummaryTable']['Acquired'].to_html() }}
 
 <div class='content'>
 	<p>*Details of any missing samples given at the end of the report</p>
@@ -88,14 +88,14 @@
 {% endif %}	
 
 <!--Summary of samples missing from acquisition-->
-{% if 'SamplesMissingInfo' in item %}
+{% if 'SamplesMissingInfo' in item['SampleSummaryTable'] %}
 	<h3>Samples unavailable for acquisition</h3>
-	{{ item['SamplesMissingInfo'].to_html() }}
+	{{ item['SampleSummaryTable']['SamplesMissingInfo'].to_html() }}
 {% endif %}	
 
-{% if 'SamplesExcludedInfo' in item %}	
+{% if 'SamplesExcludedInfo' in item['SampleSummaryTable'] %}
 	<h3>Samples excluded on analytical criteria</h3>
-	{{ item['SamplesExcludedInfo'].to_html() }}
+	{{ item['SampleSummaryTable']['SamplesExcludedInfo'].to_html() }}
 {% endif %}	
  
 {% endblock %}
