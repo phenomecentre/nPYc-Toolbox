@@ -1,5 +1,4 @@
 *.mat
-*.html
 *.png
 *.pdf
 *.DS_Store
@@ -19,4 +18,3 @@
 *.xml
 nPYc.iml
 .cache/
-!/Templates/*.html
