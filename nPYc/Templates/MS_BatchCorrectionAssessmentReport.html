@@ -1,0 +1,22 @@
+{% extends "base_QC.html" %}
+
+{% block title %}Batch correction Assessment Report For: {{ item.Name}}{% endblock %}
+
+{% block content %}
+<!-- Batch correction assessment report  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<!--Overall TIC for all samples and features-->
+<h3>Overall TIC for all samples and features, coloured by batch</h3>
+<div class='figure'>
+	<img src="{{ item.TICdetectorBatches}}" alt="Pre-correction TIC for all samples, coloured by batch number.">
+</div>
+
+<!--Example results from batch correction-->
+<h3>Example batch correction plots for a subset of features, results of batch correction with specified batches</h3>
+{% for key, value in item['figuresCorrectionExamples'].items() %}
+	<p>{{ key|e }}</p>
+	<div class='figure'>
+		<img src="{{ value|e }}" alt="Example of batch correction for a subset of features.">
+	</div>
+{% endfor %}
+
+{% endblock %}

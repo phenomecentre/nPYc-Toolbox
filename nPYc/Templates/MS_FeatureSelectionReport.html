@@ -1,0 +1,31 @@
+{% extends "base_QC.html" %}
+
+{% block title %}Feature Selection Report For: {{ item.Name}}{% endblock %}
+
+{% block content %}
+
+<!--Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds-->
+<h3>Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds</h3>
+<div class='figure'>
+	<img src="{{ item.NoFeaturesHeatmap}}" alt="Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds.">
+</div>
+
+<!--Summary of current feature filtering parameters and number of features passing at each stage-->
+<h3>Summary of current feature filtering parameters and number of features passing at each stage</h3>
+<div class="content">
+	<p>
+		<p>Number of features in original dataset: {{ item['No Features'] }}</p>
+		<p>Features filtered on:</p>
+		<ul>
+			<li>Correlation ({{ item.corrMethod }}, {{ item.corrStyle }}, exclusions: {{ item.corrExclusions }}) to dilution greater than {{ item.corrThreshold }}: {{ item.corrPassed }} features passed selection.</li>
+			<li>Relative Standard Deviation (RSD) in study pool (SP) samples below {{ item.rsdThreshold }}: {{ item.rsdPassed }} features passed selection.</li>
+			<li>RSD in study samples (SS) * {{ item.rsdSPvsSSvarianceRatio }} &gt; RSD in SP samples: {{ item.rsdSPvsSSPassed}} features passed selection.</li>
+			{% if 'artifactualPassed' in item %}
+				<li>Artifactual features filtering: {{ item.artifactualPassed }} features passed selection.</li>
+			{% endif %}
+		</ul>
+		<p>Number of features after filtering: {{ item['featuresPassed'] }}</p>
+	</p>
+</div>
+
+{% endblock %}
