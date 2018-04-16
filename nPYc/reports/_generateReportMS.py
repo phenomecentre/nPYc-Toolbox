@@ -144,7 +144,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     item['ERcount'] = str(sum(ERmask))
     item['LRcount'] = str(sum(LRmask))
     item['corrMethod'] = dataset.Attributes['corrMethod']
-
+    item['sampleSummary'] = sampleSummary
     ##
     # Report stats
     ##
