@@ -59,7 +59,8 @@ def blandAltman(data1, data2, limitOfAgreement=1.96, confidenceInterval=None, fi
 				   (md - limitOfAgreement*sd) + ciLA,
 				   facecolor='coral', alpha=0.2)
 
-	ax.scatter(mean, diff)
+	ax.scatter(mean, diff, alpha=0.5)
+
 	ax.axhline(md, color='#6495ED', linestyle='--')
 	ax.axhline(md + limitOfAgreement*sd, color='coral', linestyle='--')
 	ax.axhline(md - limitOfAgreement*sd, color='coral', linestyle='--')
@@ -71,7 +72,7 @@ def blandAltman(data1, data2, limitOfAgreement=1.96, confidenceInterval=None, fi
 	offset = (limitOfAgreementRange / 100.0) * 1.5
 
 	ax.text(0.98, md + offset, 'Mean', ha="right", va="bottom", transform=trans)
-	ax.text(0.98, md - offset, '%.2f' % (limitOfAgreement), ha="right", va="top", transform=trans)
+	ax.text(0.98, md - offset, '%.2f' % (md), ha="right", va="top", transform=trans)
 
 	ax.text(0.98, md + (limitOfAgreement * sd) + offset, '+%.2f SD' % (limitOfAgreement), ha="right", va="bottom", transform=trans)
 	ax.text(0.98, md + (limitOfAgreement * sd) - offset, '%.2f' % (md + limitOfAgreement*sd), ha="right", va="top", transform=trans)
@@ -97,6 +98,8 @@ def blandAltman(data1, data2, limitOfAgreement=1.96, confidenceInterval=None, fi
 	tickLocs = ax.yaxis.get_ticklocs()
 	tickLocs = rangeFrameLocator(tickLocs, (min(diff), max(diff)))
 	ax.yaxis.set_major_locator(ticker.FixedLocator(tickLocs))
+
+	ax.patch.set_alpha(0)
 
 	##
 	# Save or draw
