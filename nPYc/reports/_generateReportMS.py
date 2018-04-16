@@ -163,9 +163,9 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     if not output:
         print('Table 1: Summary of samples present')
         display(sampleSummary['Acquired'])
-        if 'Excluded Details' in sampleSummary:
-            print('Table 2: Summary of samples excuded')
-            display(sampleSummary['Excluded Details'])
+        #if 'Excluded Details' in sampleSummary:
+        #    print('Table 2: Summary of samples excuded')
+        #    display(sampleSummary['Excluded Details'])
 
     # Figure 1: Acquisition Structure, TIC by sample and batch
     nBatchCollect = len((numpy.unique(
@@ -326,8 +326,9 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
         print('Table 1: Summary of samples present')
         display(sampleSummary['Acquired'])
         if 'Excluded Details' in sampleSummary:
-            print('Table 2: Summary of samples excuded')
-            display(sampleSummary['Excluded Details'])
+            print('Table 2: Summary of samples excluded')
+            display(sampleSummary['StudySamples Exclusion Details'])
+
     else:
         item['SampleSummaryTable'] = sampleSummary
     ##
