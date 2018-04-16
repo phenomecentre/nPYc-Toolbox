@@ -1,6 +1,7 @@
 {% extends "base_QC.html" %}
 
 {% import 'pcaReport.html' as pca %}
+{% import 'sampleReportChunk.html' as sampleReport %}
 
 {% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
@@ -80,22 +81,9 @@
 	{{ pca.basicPCAReport(pcaPlots) }}
 {% endif %}
 
-<!--Samples missing from acquisition_______________________________________________________________________________________________-->
-{% if 'SamplesMissingInfo' in item %}
-	<h2>Samples Missing from Acquisition</h2>
-{% elif 'SamplesExcludedInfo' in item %}
-	<h2>Samples Missing from Acquisition</h2>
-{% endif %}	
+<!--Samples -->
+{% if sampleSummary %}
+	{{ sampleReport.sampleReport(sampleSummary) }}
+{% endif %}
 
-<!--Summary of samples missing from acquisition-->
-{% if 'SamplesMissingInfo' in item['SampleSummaryTable'] %}
-	<h3>Samples unavailable for acquisition</h3>
-	{{ item['SampleSummaryTable']['SamplesMissingInfo'].to_html() }}
-{% endif %}	
-
-{% if 'SamplesExcludedInfo' in item['SampleSummaryTable'] %}
-	<h3>Samples excluded on analytical criteria</h3>
-	{{ item['SampleSummaryTable']['SamplesExcludedInfo'].to_html() }}
-{% endif %}	
- 
 {% endblock %}

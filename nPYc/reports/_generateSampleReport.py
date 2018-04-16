@@ -40,13 +40,17 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 
 	# Create directory to save output	
 	if output:
-		
+
 		# If directory exists delete directory and contents
 		if os.path.exists(os.path.join(output, 'graphics', 'report_sampleSummary')):
 			shutil.rmtree(os.path.join(output, 'graphics', 'report_sampleSummary'))
-		
+
 		# Create directory to save output
 		os.makedirs(os.path.join(output, 'graphics', 'report_sampleSummary'))
+		graphicsPath = os.path.join(output, 'graphics', 'report_sampleSummary')
+	else:
+		graphicsPath = None
+		saveAs = None
 
 	# Apply sample/feature masks if exclusions to be applied
 	data = copy.deepcopy(dataTrue)
@@ -151,6 +155,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 
 	# Generate html report
 	if output:
+		# Set up template item and save required info
 
 		from jinja2 import Environment, FileSystemLoader
 
@@ -159,7 +164,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		filename = os.path.join(output, data.name + '_report_sampleSummary.html')
 
 		f = open(filename,'w')
-		f.write(template.render(item=sampleSummary, version=version, graphicsPath='/report_sampleSummary'))
+		f.write(template.render(item=sampleSummary, version=version, graphicsPath=graphicsPath))
 		f.close()
 
 		copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics', 'report_sampleSummary'))

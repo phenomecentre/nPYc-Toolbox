@@ -32,22 +32,18 @@
 
 {% if 'LIMSmissing Details' in item %}
 	<h3>Details of Samples Marked as Missing in LIMS (i.e., not expected)</h3>
-	{{ item['LIMSmissing Details'].to_html() }}
+	{{ item['No Metadata Details'].to_html() }}
 {% endif %}	
 
-{% if 'NoLIMS Details' in item %}
-	<h3>Details of Samples with no Corresponding LIMS Information</h3>
-	{{ item['NoLIMS Details'].to_html() }}
+{% if 'NoMetadata Details' in item %}
+	<h3>Details of Samples with no Corresponding Metadata Information</h3>
+	{{ item['NoMetadata Details'].to_html() }}
 {% endif %}	
 
-{% if 'NoSubjectInfo Details' in item %}
-	<h3>Details of Samples with no Corresponding Subject Information</h3>
-	{{ item['NoSubjectInfo Details'].to_html() }}
-{% endif %}	
-	
 {% if 'NotAcquired Details' in item %}
 	<h3>Details of Samples Missing from Acquisition/Import (and not already excluded)</h3>
 	{{ item['NotAcquired Details'].to_html() }}
 {% endif %}	
+
 </div>
 {%- endmacro %}

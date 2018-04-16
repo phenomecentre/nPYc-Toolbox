@@ -303,15 +303,16 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     # PCA plots
     ##
 
+    if not 'Plot Sample Type' in dataset.sampleMetadata.columns:
+        dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+        dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+        dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
+        dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+
     if pcaModel:
         if output:
             pcaPath = output
 
-            if not 'Plot Sample Type' in dataset.sampleMetadata.columns:
-                dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-                dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-                dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-                dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
         else:
             pcaPath = None
         pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=6, output=pcaPath, fileNamePrefix='')
