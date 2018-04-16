@@ -141,6 +141,10 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 	if (sum(UnclearRolemask) != 0):
 		sampleSummary['UnknownType Details'] = data.sampleMetadata[['Sample File Name']][UnclearRolemask]
 
+	# Save specific field for excluded samples of Study Sample type
+	if (sum(SSmaskEx) != 0):
+		sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name']][SSmaskEx]
+
 	# Finally - add column of samples already excluded to sampleSummary
 	if excluded != 0:
 		sampleSummary['Acquired']['Already Excluded'] = [excluded, sum(SSmaskEx), sum(SPmaskEx), sum(ERmaskEx),
@@ -162,7 +166,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 		template = env.get_template('generateSampleReport.html')
 		filename = os.path.join(output, data.name + '_report_sampleSummary.html')
-
+		# the jinja template expects item with sample summary inside so just create a field with everything inside
+		sampleSummary['sampleSummary'] = sampleSummary
 		f = open(filename,'w')
 		f.write(template.render(item=sampleSummary, version=version, graphicsPath=graphicsPath))
 		f.close()
