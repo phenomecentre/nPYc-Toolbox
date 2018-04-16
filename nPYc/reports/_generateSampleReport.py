@@ -141,14 +141,14 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 	if (sum(UnclearRolemask) != 0):
 		sampleSummary['UnknownType Details'] = data.sampleMetadata[['Sample File Name']][UnclearRolemask]
 
-	# Save specific field for excluded samples of Study Sample type
-	if (sum(SSmaskEx) != 0):
-		sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name']][SSmaskEx]
-
 	# Finally - add column of samples already excluded to sampleSummary
 	if excluded != 0:
 		sampleSummary['Acquired']['Already Excluded'] = [excluded, sum(SSmaskEx), sum(SPmaskEx), sum(ERmaskEx),
 														 sum(SRDmaskEx), sum(BlankmaskEx), sum(NotInCSVmaskEx), sum(UnclearRolemaskEx)]
+		# Save field with Study Samples exclusions
+		if (sum(SSmaskEx) != 0):
+			sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name']][SSmaskEx]
+
 	# Drop rows where no samples present for that datatype
 	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
 

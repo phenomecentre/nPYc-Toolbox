@@ -43,7 +43,6 @@
 {% if 'NotAcquired Details' in item %}
 	<h3>Details of Samples Missing from Acquisition/Import (and not already excluded)</h3>
 	{{ item['NotAcquired Details'].to_html() }}
-{% endif %}	
-
+{% endif %}
 </div>
 {%- endmacro %}
