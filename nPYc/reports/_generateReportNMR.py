@@ -242,7 +242,7 @@ def _finalReport(dataset, output=None, pcaModel=None):
 
 	item['toA_from'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
 	item['toA_to'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
-	
+
 	# Generate sample Summary
 	sampleSummary = _generateSampleReport(dataset, withExclusions=True, output=None, returnOutput=True)
 	sampleSummary['isFinalReport'] = True
