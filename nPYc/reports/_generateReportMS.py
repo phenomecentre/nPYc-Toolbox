@@ -123,7 +123,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     # Table 1: Sample summary
     # Generate sample summary
     sampleSummary = _generateSampleReport(dataset, withExclusions=True, output=None, returnOutput=True)
-    
+
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
@@ -146,6 +146,10 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     item['LRcount'] = str(sum(LRmask))
     item['corrMethod'] = dataset.Attributes['corrMethod']
     sampleSummary['isFinalReport'] = True
+    if 'StudySamples Exclusion Details' in sampleSummary:
+        sampleSummary['studySamplesExcluded'] = True
+    else:
+        sampleSummary['studySamplesExcluded'] = False
     item['sampleSummary'] = sampleSummary
     ##
     # Report stats
@@ -165,9 +169,6 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     if not output:
         print('Table 1: Summary of samples present')
         display(sampleSummary['Acquired'])
-        #if 'Excluded Details' in sampleSummary:
-        #    print('Table 2: Summary of samples excuded')
-        #    display(sampleSummary['Excluded Details'])
 
     # Figure 1: Acquisition Structure, TIC by sample and batch
     nBatchCollect = len((numpy.unique(
