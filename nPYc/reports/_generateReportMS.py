@@ -123,6 +123,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     # Table 1: Sample summary
     # Generate sample summary
     sampleSummary = _generateSampleReport(dataset, withExclusions=True, output=None, returnOutput=True)
+    
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
