@@ -243,6 +243,11 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	item['toA_from'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
 	item['toA_to'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
 	
+	# Generate sample Summary
+	sampleSummary = _generateSampleReport(dataset, withExclusions=True, output=None, returnOutput=True)
+	sampleSummary['isFinalReport'] = True
+	item['sampleSummary'] = sampleSummary
+
 	##
 	# Report stats
 	##
@@ -337,13 +342,13 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	##
 	# Sample summary
 	##
-	sampleSummary = _generateSampleReport(dataset, withExclusions=True, output=None, returnOutput=True)
 	if not output:
 		print('Table 1: Summary of samples present')
 		display(sampleSummary['Acquired'])
-		if 'Excluded Details' in sampleSummary:
-			print('Table 2: Summary of samples excuded')
-			display(sampleSummary['Excluded Details'])
+		if 'StudySamples Exclusion Details' in sampleSummary:
+			print('Table 2: Summary of samples excluded')
+			display(sampleSummary['StudySamples Exclusion Details'])
+
 	##
 	# Write HTML if saving
 	##
