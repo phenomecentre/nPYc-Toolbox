@@ -144,7 +144,9 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     item['ERcount'] = str(sum(ERmask))
     item['LRcount'] = str(sum(LRmask))
     item['corrMethod'] = dataset.Attributes['corrMethod']
+    sampleSummary['isFinalReport']=True
     item['sampleSummary'] = sampleSummary
+    #item['isFinalReport'] = True
     ##
     # Report stats
     ##
@@ -325,7 +327,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     if not output:
         print('Table 1: Summary of samples present')
         display(sampleSummary['Acquired'])
-        if 'Excluded Details' in sampleSummary:
+        if 'StudySamples Exclusion Details' in sampleSummary:
             print('Table 2: Summary of samples excluded')
             display(sampleSummary['StudySamples Exclusion Details'])
 

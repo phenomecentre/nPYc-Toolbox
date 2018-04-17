@@ -11,7 +11,7 @@
 {% if 'NotAcquired' in item %}
 	<h3>Summary of Samples Missing from Acquisition/Import (i.e., present in LIMS but not acquired/imported)</h3>
 	{{ item['NotAcquired'].to_html() }}
-{% endif %}	
+{% endif %}
 
 <!--Details of any excluded/missing samples____________________________________________________________________________________________________-->
 
@@ -21,19 +21,21 @@
 {% endif %}
 
 {% if 'Excluded Details' in item %}
-	<h3>Samples excluded on analytical criteria</h3><!--ie those marked with (_x)-->
-	{{ item['Excluded Details'].to_html() }}
+	{% if 'isFinalReport' in item %}
+    	{%if item['isFinalReport'] == True%}
+        	<h3>Study samples excluded on analytical criteria</h3><!--ie those marked with (_x)-->
+			{{ item['StudySamples Exclusion Details'].to_html() }}
+	    {% endif %}
+	{% else %}
+	     <h3>Samples excluded on analytical criteria</h3><!--ie those marked with (_x)-->
+	     {{ item['Excluded Details'].to_html() }}
+	{% endif %}
 {% endif %}
 
 {% if 'UnknownType Details' in item %}
 	<h3>Details of Samples of Unknown Type</h3>
 	{{ item['UnknownType Details'].to_html() }}
 {% endif %}
-
-{% if 'LIMSmissing Details' in item %}
-	<h3>Details of Samples Marked as Missing in LIMS (i.e., not expected)</h3>
-	{{ item['No Metadata Details'].to_html() }}
-{% endif %}	
 
 {% if 'NoMetadata Details' in item %}
 	<h3>Details of Samples with no Corresponding Metadata Information</h3>
