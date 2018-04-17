@@ -25,11 +25,22 @@ def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, output=None, file
 
 	figuresQCscores = OrderedDict()
 
+	if output is not None:
+		if not os.path.exists(output):
+			os.makedirs(output)
+		if not os.path.exists(os.path.join(output, 'graphics')):
+			os.makedirs(os.path.join(output, 'graphics'))
+		graphicsPath = os.path.join(output, 'graphics', 'report_FSummary')
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
+	else:
+		graphicsPath = None
+
 	##
 	# Scores Plot
 	##
 	if output:
-		saveAs = os.path.join(output, dataset.name + '_PCAscoresPlot_')
+		saveAs = os.path.join(graphicsPath, dataset.name + '_PCAscoresPlot_')
 	else:
 		print('Figure %i: PCA scores plots coloured by sample type.' % (figureCounter))
 		saveAs = None
@@ -58,7 +69,7 @@ def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, output=None, file
 	# Loadings plot
 	##
 	if output:
-		saveAs = os.path.join(output, dataset.name + '_PCAloadingsPlot_')
+		saveAs = os.path.join(graphicsPath, dataset.name + '_PCAloadingsPlot_')
 	else:
 		print('\n\nFigure %i: PCA loadings plots.' % (figureCounter + 1))
 		saveAs = None

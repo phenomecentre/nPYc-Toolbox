@@ -145,6 +145,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     item['ERcount'] = str(sum(ERmask))
     item['LRcount'] = str(sum(LRmask))
     item['corrMethod'] = dataset.Attributes['corrMethod']
+
     sampleSummary['isFinalReport'] = True
     if 'StudySamples Exclusion Details' in sampleSummary:
         sampleSummary['studySamplesExcluded'] = True
@@ -351,7 +352,8 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
         f.write(template.render(item=item,
                                 attributes=dataset.Attributes,
                                 version=version,
-                                graphicsPath=graphicsPath))
+                                graphicsPath=graphicsPath,
+                                pcaPlots=pcaModel))
         f.close()
         copyBackingFiles(toolboxPath(), output)
     return None
