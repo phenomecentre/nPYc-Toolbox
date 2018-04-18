@@ -30,7 +30,7 @@ def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, output=None, file
 			os.makedirs(output)
 		if not os.path.exists(os.path.join(output, 'graphics')):
 			os.makedirs(os.path.join(output, 'graphics'))
-		graphicsPath = os.path.join(output, 'graphics', 'report_FSummary')
+		graphicsPath = os.path.join(output, 'graphics', 'report_FinalSummary')
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
 	else:

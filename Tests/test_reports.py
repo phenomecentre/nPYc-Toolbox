@@ -83,82 +83,30 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		sampleSummary = nPYc.reports._generateSampleReport(self.data, output=None, returnOutput=True)
 	
 		# Check returns against expected
-	
+
 		# Acquired - Totals
 		assert sampleSummary['Acquired'].loc['All', 'Total'] == 115
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Total'] == 8
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Total'] == 11
 		assert sampleSummary['Acquired'].loc['External Reference', 'Total'] == 1
-		assert sampleSummary['Acquired'].loc['Other', 'Total'] == 94
-		assert sampleSummary['Acquired'].loc['Unknown', 'Total'] == 1
-	
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Total'] == 92
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Total'] == 2
+		assert sampleSummary['Acquired'].loc['Unspecified Sample Type or Assay Role', 'Total'] == 1
+
 		# Acquired - Marked for exclusion
 		assert sampleSummary['Acquired'].loc['All', 'Marked for Exclusion'] == 1
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Marked for Exclusion'] == 1
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['External Reference', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Other', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Unknown', 'Marked for Exclusion'] == 0
-	
-		# Acquired - LIMS marked as missing
-		assert sampleSummary['Acquired'].loc['All', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'LIMS marked as missing'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Unknown', 'LIMS marked as missing'] == '-'
-	
-		# Acquired - Missing from LIMS
-		assert sampleSummary['Acquired'].loc['All', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'Missing from LIMS'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Unknown', 'Missing from LIMS'] == '-'
-	
-		# Acquired - Missing Subject Information
-		assert sampleSummary['Acquired'].loc['All', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'Missing Subject Information'] == 2
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Unknown', 'Missing Subject Information'] == '-'
-	
-	
-		# NotAcquired - Totals
-		assert sampleSummary['NotAcquired'].loc['All', 'Total'] == 2
-		assert sampleSummary['NotAcquired'].loc['Study Sample', 'Total'] == 2
-		assert sampleSummary['NotAcquired'].loc['Study Pool', 'Total'] == 0
-		assert sampleSummary['NotAcquired'].loc['External Reference', 'Total'] == 0
-	
-		# NotAcquired - Marked as Missing
-		assert sampleSummary['NotAcquired'].loc['All', 'Marked as Missing'] == 1
-		assert sampleSummary['NotAcquired'].loc['Study Sample', 'Marked as Missing'] == 1
-		assert sampleSummary['NotAcquired'].loc['Study Pool', 'Marked as Missing'] == 0
-		assert sampleSummary['NotAcquired'].loc['External Reference', 'Marked as Missing'] == 0
-	
-		# NotAcquired - Marked as Sample
-		assert sampleSummary['NotAcquired'].loc['All', 'Marked as Sample'] == 1
-		assert sampleSummary['NotAcquired'].loc['Study Sample', 'Marked as Sample'] == 1
-		assert sampleSummary['NotAcquired'].loc['Study Pool', 'Marked as Sample'] == 0
-		assert sampleSummary['NotAcquired'].loc['External Reference', 'Marked as Sample'] == 0
-	
-	 	# NotAcquired - Already Excluded
-		assert sampleSummary['NotAcquired'].loc['All', 'Already Excluded'] == 0
-		assert sampleSummary['NotAcquired'].loc['Study Sample', 'Already Excluded'] == 0
-		assert sampleSummary['NotAcquired'].loc['Study Pool', 'Already Excluded'] == 0
-		assert sampleSummary['NotAcquired'].loc['External Reference', 'Already Excluded'] == 0
-	
-		
-	 	# Check details tables
-		assert sampleSummary['LIMSmissing Details'].shape == (1, 4)
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Unspecified Sample Type or Assay Role', 'Marked for Exclusion'] == 0
+
+		# Check details tables
 		assert sampleSummary['MarkedToExclude Details'].shape == (1, 2)
-		assert sampleSummary['UnknownType Details'].shape == (1,1)	
-		assert sampleSummary['NoLIMS Details'].shape == (1, 4)
-		assert sampleSummary['NoSubjectInfo Details'].shape == (2, 4)
-		assert sampleSummary['NotAcquired Details'].shape == (2, 3)	
-	
-	
+		assert sampleSummary['UnknownType Details'].shape == (1,1)
+
+
 	def test_report_samplesummary_postexclusion(self):	
 		
 		# Remove samples marked for exclusion (_x) or of unknown type
@@ -176,44 +124,24 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Total'] == 7
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Total'] == 11
 		assert sampleSummary['Acquired'].loc['External Reference', 'Total'] == 1
-		assert sampleSummary['Acquired'].loc['Other', 'Total'] == 94
-		assert 'Unknown' not in sampleSummary['Acquired'].index
-	
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Total'] == 92
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Total'] == 2
+		assert 'Unspecified Sample Type or Assay Role' not in sampleSummary['Acquired'].index
+
 		# Acquired - Marked for exclusion
 		assert sampleSummary['Acquired'].loc['All', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['External Reference', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Other', 'Marked for Exclusion'] == 0
-	
-		# Acquired - LIMS marked as missing
-		assert sampleSummary['Acquired'].loc['All', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'LIMS marked as missing'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'LIMS marked as missing'] == '-'
-	
-		# Acquired - Missing from LIMS
-		assert sampleSummary['Acquired'].loc['All', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'Missing from LIMS'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'Missing from LIMS'] == '-'
-	
-		# Acquired - Missing Subject Information
-		assert sampleSummary['Acquired'].loc['All', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'Missing Subject Information'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'Missing Subject Information'] == '-'
-		
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Marked for Exclusion'] == 0
 		# Acquired - Already Excluded
 		assert sampleSummary['Acquired'].loc['All', 'Already Excluded'] == 1
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Already Excluded'] == 1
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Already Excluded'] == 0
 		assert sampleSummary['Acquired'].loc['External Reference', 'Already Excluded'] == 0
-		assert sampleSummary['Acquired'].loc['Other', 'Already Excluded'] == 0	
-
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Already Excluded'] == 0
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Already Excluded'] == 0
 
 class test_reports_nmr_generatereport(unittest.TestCase):
 
@@ -741,7 +669,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			nPYc.reports.multivariateReport.multivariateQCreport(inputDataset, pcaModel=pcaModel, reportType='analytical', withExclusions=True, output=tmpdirPCA)
-
+			inputDataset.sampleMetadata['Metadata Available'] = True
 			nPYc.reports.generateReport(inputDataset, 'final report', output=tmpdirname, pcaModel=pcaModel)
 
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalReport.html')
@@ -758,7 +686,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 						 'unittest_PCAscoresPlot_SampleTypePC1vsPC2.png']
 
 			for testFile in testFiles:
-				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', testFile)
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
 
