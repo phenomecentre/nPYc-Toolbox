@@ -65,19 +65,24 @@ class MSDataset(Dataset):
 		self.name = self.fileName
 
 		# Load the QI output file
-		if fileType == 'QI':
+		fileType = fileType.lower()
+		if fileType == 'qi':
 			self._loadQIDataset(datapath)
 			self.Attributes['FeatureExtractionSoftware'] = 'Progenesis QI'
 			self.VariableType = VariableType.Discrete
 		elif fileType == 'csv export':
 			raise NotImplementedError
-		elif fileType == 'XCMS':
+		elif fileType == 'xcms':
 			self._loadXCMSDataset(datapath, **kwargs)
 			self.Attributes['FeatureExtractionSoftware'] = 'XCMS'
 			self.VariableType = VariableType.Discrete
-		elif fileType == 'Biocrates':
+		elif fileType == 'biocrates':
 			self._loadBiocratesDataset(datapath, **kwargs)
 			self.Attributes['FeatureExtractionSoftware'] = 'Biocrates'
+			self.VariableType = VariableType.Discrete
+		elif fileType == 'metaboscape':
+			self._loadMetaboscapeDataset(datapath, **kwargs)
+			self.Attributes['FeatureExtractionSoftware'] = 'Metaboscape'
 			self.VariableType = VariableType.Discrete
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
@@ -515,6 +520,84 @@ class MSDataset(Dataset):
 		self.Attributes['Log'].append([datetime.now(), 'Biocrates dataset loaded from %s' % (path)])
 
 
+	def _loadMetaboscapeDataset(self, path, noFeatureParams=None, sheetName=None):
+
+		dataT = pandas.read_excel(path, sheet_name=sheetName)
+
+		if noFeatureParams is None:
+			if 'RT [min]' in dataT.columns:
+				noFeatureParams = 18
+			else:
+				noFeatureParams = 14
+
+		# Find start of data
+		startIndex = noFeatureParams
+		endIndex = len(dataT.columns)
+
+		dataSize = endIndex - startIndex
+
+		# Now read for real
+		values = dataT.iloc[:,startIndex:]
+		intensityData = values.as_matrix().transpose()
+
+		# Get the sample names as the only metadata we have
+		sampleMetadata = dict()
+		sampleMetadata['Sample File Name'] = [name for name in list(values.columns.values)]
+
+		# Peak info
+		featureMetadata = dict()
+
+		dataT.rename(columns={'m/z meas.': 'm/z',
+							  'M meas.': 'Neutral Mass',
+							  'Δm/z [mDa]': 'm/z Deviation',
+		#					   'mSigma': '',
+		#					   'MS/MS score': '',
+		#					   'Include': '',
+		#					   'Molecular Formula': '',
+		#					   'Annotations': '',
+		#					   'Ions': '',
+		#					   'AQ': '',
+		#					   'Boxplot': '',
+		#					   'Flags': '',
+		#					   'MS/MS': '',
+		#					   'Name': '',
+		#					   'Δm/z [ppm]': '',
+		#					   'Annotation Source':''
+							 }, inplace=True)
+
+		for column in dataT.columns[:noFeatureParams]:
+			featureMetadata[column] = dataT[column].values
+
+		if 'RT [min]' in dataT.columns:
+			featureMetadata['Retention Time'] = dataT['RT [min]'].values
+			featureMetadata['Retention Time Deviation'] = dataT['ΔRT'].values
+
+			featureMetadata['Feature Name'] = [str(round(row['RT [min]'], 2)) + '_' + str(round(row['m/z'], 4)) + 'm/z' for idx,row in dataT.iterrows()]
+			featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float) / 60.0
+
+		else:
+			featureMetadata['Feature Name'] = dataT['m/z'].apply(lambda mz: str(mz) + 'm/z').values
+
+
+		featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T, columns=featureMetadata.keys())
+		sampleMetadata = pandas.DataFrame(numpy.concatenate([sampleMetadata[c] for c in sampleMetadata.keys()], axis=0), columns=sampleMetadata.keys())
+
+		# Put Feature Names first
+		name = featureMetadata['Feature Name']
+		featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
+		featureMetadata.insert(0, 'Feature Name', name)
+
+		featureMetadata['m/z'] = featureMetadata['m/z'].astype(float)
+
+		self._intensityData = intensityData
+		self.sampleMetadata = sampleMetadata
+		self.featureMetadata = featureMetadata
+
+		self.initialiseMasks()
+
+		self.Attributes['Log'].append([datetime.now(), 'Metaboscape dataset loaded from %s' % (path)])
+
+
 	def _getSampleMetadataFromRawData(self, rawDataPath):
 		"""
 		Pull metadata out of raw experiment files.
@@ -804,9 +887,9 @@ class MSDataset(Dataset):
 		""" Identify potentially artifactual features, generate the linkage between similar features
 			input:
 				msDataset
-				deltaMZ                   maximum allowed m/z distance between two grouped features
-				deltaOverlap              minimum peak overlap between two grouped features
-				deltaCorr                 minimum correlation between two grouped features
+				deltaMZ				   maximum allowed m/z distance between two grouped features
+				deltaOverlap			  minimum peak overlap between two grouped features
+				deltaCorr				 minimum correlation between two grouped features
 				corrOnly				  recalculate the correlation but not the overlap
 			output:
 				artifactualLinkageMatrix  feature pairs (row)(feature index), feature1-feature2 (col)
@@ -818,7 +901,7 @@ class MSDataset(Dataset):
 			"""Find 'identical' features based on m/z and peakwidth overlap
 				input:
 					featureMetada   msDataset.featureMetadata
-					deltaMZ         m/z distance to consider two features identical [ <= ] (same unit as m/z)
+					deltaMZ		 m/z distance to consider two features identical [ <= ] (same unit as m/z)
 					delta overlap   minimum peak overlap between two grouped features (0-100%)
 				output:
 					pandas.DataFrame listing matched features based on deltaMZ and deltaOverlap
@@ -828,18 +911,18 @@ class MSDataset(Dataset):
 					output:
 						pandas.DataFrames listing the matching features based overlap of peakwidth
 				"""
-				match = (abs(ds.loc[i,'Retention Time']-ds.loc[:,'Retention Time']) <= (ds.loc[i,'Peak Width']+ds.loc[:,'Peak Width'])/2) & (abs(ds.loc[i,'m/z']-ds.loc[:,'m/z']) <= deltaMZ)     # find match
+				match = (abs(ds.loc[i,'Retention Time']-ds.loc[:,'Retention Time']) <= (ds.loc[i,'Peak Width']+ds.loc[:,'Peak Width'])/2) & (abs(ds.loc[i,'m/z']-ds.loc[:,'m/z']) <= deltaMZ)	 # find match
 				return( pandas.DataFrame(data = {'node1': ds.index[i], 'node2': ds.index[match], 'Peak Overlap': ((((ds.loc[i,'Peak Width']+ds.loc[match,'Peak Width'])/2)-abs(ds.loc[i,'Retention Time']-ds.loc[match,'Retention Time']))/((ds.loc[i,'Peak Width']+ds.loc[match,'Peak Width'])/2))*100 } ) )  # return the matching rows
 
 			# get feature overlap
-			ds      = featureMetadata[['Feature Name','Retention Time','m/z','Peak Width']]
+			ds	  = featureMetadata[['Feature Name','Retention Time','m/z','Peak Width']]
 			# By concatenating all the matches once, save ~22% compared to do it at each loop round
 			matches = [ get_match(i,ds,deltaMZ) for i in range(ds.shape[0]) ] # get a list of matches
-			res     = pandas.concat(matches)
-			res     = res.loc[ res.node1 < res.node2 ]      # keeps feat1-feat2, removes feat1-feat1 and feat2-feat1
+			res	 = pandas.concat(matches)
+			res	 = res.loc[ res.node1 < res.node2 ]	  # keeps feat1-feat2, removes feat1-feat1 and feat2-feat1
 
 			#filter interactions by overlap
-			res     = res.loc[ res.loc[:,'Peak Overlap']>=deltaOverlap, ['node1','node2'] ]
+			res	 = res.loc[ res.loc[:,'Peak Overlap']>=deltaOverlap, ['node1','node2'] ]
 			res.reset_index( drop=True, inplace=True )
 
 			return( res )
@@ -849,8 +932,8 @@ class MSDataset(Dataset):
 			""" Return the overlap match DataFrame with overlap of metabolites correlated < cut-off removed (and correlation added)
 				input:
 					overlappingFeatures pandas.DataFrame as generated by find_similar_peakwidth
-					intensityData       pandas.DataFrame of data value for each sample (row) / feature (column)
-					corrCutoff          minimum percentage of overlap (0-1)
+					intensityData	   pandas.DataFrame of data value for each sample (row) / feature (column)
+					corrCutoff		  minimum percentage of overlap (0-1)
 				output:
 					overlapping features filtered
 			"""
@@ -907,19 +990,19 @@ class MSDataset(Dataset):
 			newFeatureMask = copy.deepcopy(self.featureMask)
 
 		# remove features in LinkageMatrix previously filtered (in newFeatMask)
-		tmpLinkage         = copy.deepcopy(self.artifactualLinkageMatrix)
-		keptPreviousFilter = self.featureMetadata.index[newFeatureMask]     # index of previously kept features
-		tmpLinkage         = tmpLinkage[tmpLinkage.node1.isin(keptPreviousFilter) & tmpLinkage.node2.isin(keptPreviousFilter)]
+		tmpLinkage		 = copy.deepcopy(self.artifactualLinkageMatrix)
+		keptPreviousFilter = self.featureMetadata.index[newFeatureMask]	 # index of previously kept features
+		tmpLinkage		 = tmpLinkage[tmpLinkage.node1.isin(keptPreviousFilter) & tmpLinkage.node2.isin(keptPreviousFilter)]
 
 		meanIntensity = self._intensityData.mean(axis=0)
 
 		# make graphs
-		g      = networkx.from_pandas_edgelist(df=tmpLinkage, source='node1', target='node2', edge_attr=True)
-		graphs = list(networkx.connected_component_subgraphs(g))          # a list of clusters
+		g	  = networkx.from_pandas_edgelist(df=tmpLinkage, source='node1', target='node2', edge_attr=True)
+		graphs = list(networkx.connected_component_subgraphs(g))		  # a list of clusters
 
 		# update FeatureMask with features to remove (all but max intensity)
 		for i in range(0,len(graphs)):
-			newFeatureMask[list(graphs[i].nodes)] = False                                                 # remove  all nodes in a cluster
+			newFeatureMask[list(graphs[i].nodes)] = False												 # remove  all nodes in a cluster
 			newFeatureMask[list(graphs[i].nodes)[meanIntensity[list(graphs[i].nodes)].argmax()]] = True   # keep max intensity
 
 		return(newFeatureMask)
@@ -934,8 +1017,8 @@ class MSDataset(Dataset):
 
 	def initialiseMasks(self):
 		"""
-        Re-initialise :py:attr:`featureMask` and :py:attr:`sampleMask` to match the current dimensions of :py:attr:`intensityData`, and include all samples.
-        """
+		Re-initialise :py:attr:`featureMask` and :py:attr:`sampleMask` to match the current dimensions of :py:attr:`intensityData`, and include all samples.
+		"""
 		super().initialiseMasks()
 		self.corrExclusions = copy.deepcopy(self.sampleMask)
 		self.__corrExclusions = copy.deepcopy(self.corrExclusions)
@@ -1204,7 +1287,7 @@ class MSDataset(Dataset):
 
 		## init
 		failureListBasic = []
-		failureListQC    = []
+		failureListQC	= []
 		failureListMeta  = []
 		# reference number of samples / features, from _intensityData
 		refNumSamples = None
