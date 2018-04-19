@@ -750,7 +750,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
         f.write(template.render(item=item, version=version, graphicsPath='/report_' + reportTypeCases[reportType], pcaPlots=pcaModel))
         f.close()
 
-        copyBackingFiles(toolboxPath(), saveDir)
+        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
 
 
 def _postMergeLOQDataset(tData):
