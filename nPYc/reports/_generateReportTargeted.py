@@ -86,10 +86,10 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
     # Create directory to save output
     if output:
-
-        reportTypeCase = reportType.title().replace(" ", "")
-        reportTypeCase = reportTypeCase[0].lower() + reportTypeCase[1:]
-        saveDir = os.path.join(output, 'graphics', 'report_' + reportTypeCase)
+        reportTypeCases = {'feature summary':'featureSummary', 'merge loq assessment': 'mergeLoqAssessment', 'final report': 'finalSummary'}
+        #reportTypeCase = reportType.title().replace(" ", "")
+        #reportTypeCase = reportTypeCase[0].lower() + reportTypeCase[1:]
+        saveDir = os.path.join(output, 'graphics', 'report_' + reportTypeCases[reportType])
 
         # If directory exists delete directory and contents
         if os.path.exists(saveDir):
@@ -738,10 +738,10 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('generateReportTargeted.html')
-        filename = os.path.join(output, tData.name + '_report_' + reportTypeCase + '.html')
+        filename = os.path.join(output, tData.name + '_report_' + reportTypeCases[reportType] + '.html')
 
         f = open(filename,'w')
-        f.write(template.render(item=item, version=version, graphicsPath='/report_' + reportTypeCase))
+        f.write(template.render(item=item, version=version, graphicsPath='/report_' + reportTypeCases[reportType]))
         f.close()
 
         copyBackingFiles(toolboxPath(), saveDir)

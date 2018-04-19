@@ -160,7 +160,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
             os.makedirs(output)
         if not os.path.exists(os.path.join(output, 'graphics')):
             os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_FinalSummary')
+        graphicsPath = os.path.join(output, 'graphics', 'report_finalSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -346,7 +346,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_FinalSummaryReport.html')
-        filename = os.path.join(output, dataset.name + '_report_FinalSummary.html')
+        filename = os.path.join(output, dataset.name + '_report_finalSummary.html')
 
         f = open(filename,'w')
         f.write(template.render(item=item,
@@ -355,7 +355,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
                                 graphicsPath=graphicsPath,
                                 pcaPlots=pcaModel))
         f.close()
-        copyBackingFiles(toolboxPath(), output)
+        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
     return None
 
 
@@ -622,7 +622,7 @@ def _featureReport(dataset, output=None):
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), output)
+        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
 
     return None
 
@@ -808,7 +808,7 @@ def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), output)
+        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
 
     return None
 
@@ -938,7 +938,7 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), output)
+        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
 
     return None
 
@@ -1150,7 +1150,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), output)
+        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
 
     return None
 
@@ -1195,7 +1195,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
             os.makedirs(output)
         if not os.path.exists(os.path.join(output, 'graphics')):
             os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_CorrelationToDilutionSummary')
+        graphicsPath = os.path.join(output, 'graphics', 'report_correlationToDilutionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -1396,7 +1396,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), output)
+        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
 
     return None
 

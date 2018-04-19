@@ -238,8 +238,8 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'test_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'test_RSDdistributionFigure.png', 'test_TICinLR.png', 'test_acquisitionStructure.png',
-						 'test_correlationByPerc.png', 'test_ionMap.png', 'test_meanIntesityFeature.png', 'test_meanIntesitySample.png',
+			testFiles = ['test_RSDdistributionFigure.png', 'test_TICinLR.png', 'test_acquisitionStructure.png',
+						 'test_correlationByPerc.png', 'test_ionMap.png', 'test_meanIntensityFeature.png', 'test_meanIntensitySample.png',
 						 'test_peakWidth.png', 'test_rsdByPerc.png', 'test_rsdVsCorrelation.png']
 
 			for testFile in testFiles:
@@ -260,17 +260,17 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 			nPYc.reports.generateReport(data, 'correlation to dilution', output=tmpdirname)
 
-			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_correlationToDilution.html')
+			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_correlationToDilutionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
 			testFiles = ['Batch 1.0, series 1.0 Histogram of Correlation To Dilution.png', 'Batch 1.0, series 1.0 LR Sample TIC (coloured by change in detector voltage).png',
 						 'Batch 1.0, series 1.0 LR Sample TIC (coloured by dilution).png', 'Batch 1.0, series 2.0 Histogram of Correlation To Dilution.png',
 						 'Batch 1.0, series 2.0 LR Sample TIC (coloured by change in detector voltage).png', 'Batch 1.0, series 2.0 LR Sample TIC (coloured by dilution).png',
 						 'MeanAllSubsets Histogram of Correlation To Dilution.png', 'MeanAllSubsets LR Sample TIC (coloured by change in detector voltage).png',
-						 'MeanAllSubsets LR Sample TIC (coloured by dilution).png', 'UnitTest1_PCSOP.069_QI_satFeaturesHeatmap.png', 'npc-main.css', 'toolbox_logo.png']
+						 'MeanAllSubsets LR Sample TIC (coloured by dilution).png', 'UnitTest1_PCSOP.069_QI_satFeaturesHeatmap.png']
 
 			for testFile in testFiles:
-				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_correlationToDilution', testFile)
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_correlationToDilutionSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -288,7 +288,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionAssessment.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_145.0686m-z.png', 
+			testFiles = ['UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_145.0686m-z.png',
 						'UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_262.0378m-z.png', 'UnitTest1_PCSOP.069_QI_TICdetectorBatches.png']
 
 			for testFile in testFiles:
@@ -311,7 +311,8 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePRE.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePOST.png',
+			testFiles = ['npc-main.css', 'toolbox_logo.png']
+			testFiles = ['UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePRE.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePOST.png',
 						'UnitTest1_PCSOP.069_QI_BCS2_TicPRE.png', 'UnitTest1_PCSOP.069_QI_BCS2_TicPOST.png',
 						'UnitTest1_PCSOP.069_QI_BCS3_rsdByPercPRE.png', 'UnitTest1_PCSOP.069_QI_BCS3_rsdByPercPOST.png',
 						'UnitTest1_PCSOP.069_QI_BCS4_RSDdistributionFigurePRE.png', 'UnitTest1_PCSOP.069_QI_BCS4_RSDdistributionFigurePOST.png']
@@ -332,13 +333,13 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 			nPYc.reports.generateReport(data, 'feature selection', output=tmpdirname)
 			
-			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_featureSelection.html')
+			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_featureSelectionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_noFeatures.png']
+			testFiles = ['UnitTest1_PCSOP.069_QI_noFeatures.png']
 
 			for testFile in testFiles:
-				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSelection', testFile)
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSelectionSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -353,14 +354,14 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 			nPYc.reports.generateReport(data, 'final report', output=tmpdirname)
 
-			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_finalReport.html')			
+			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_finalFeatureIntensityHist.png', 'UnitTest1_PCSOP.069_QI_finalIonMap.png',
+			testFiles = ['UnitTest1_PCSOP.069_QI_finalFeatureIntensityHist.png', 'UnitTest1_PCSOP.069_QI_finalIonMap.png',
 						 'UnitTest1_PCSOP.069_QI_finalRSDdistributionFigure.png', 'UnitTest1_PCSOP.069_QI_finalTIC.png', 'UnitTest1_PCSOP.069_QI_finalTICbatches.png']
 
 			for testFile in testFiles:
-				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', testFile)
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -672,10 +673,10 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			inputDataset.sampleMetadata['Metadata Available'] = True
 			nPYc.reports.generateReport(inputDataset, 'final report', output=tmpdirname, pcaModel=pcaModel)
 
-			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalReport.html')
+			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'unittest_AcquisitionStructure.png',
+			testFiles = ['unittest_AcquisitionStructure.png',
 						 'unittest_FeatureAccuracy-A.png',
 						 'unittest_FeatureAccuracy-B.png',
 						 'unittest_FeatureConcentrationDistribution-A.png',
