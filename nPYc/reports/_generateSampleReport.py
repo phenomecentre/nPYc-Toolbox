@@ -172,7 +172,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		f.write(template.render(item=sampleSummary, version=version, graphicsPath=graphicsPath))
 		f.close()
 
-		copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics', 'report_sampleSummary'))
+		copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
 
 		data.sampleSummary = sampleSummary
 
