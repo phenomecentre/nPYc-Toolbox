@@ -334,10 +334,10 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	##
 	if pcaModel:
 		if output:
-			pcaPath = graphicsPath
+			pcaPath = output
 		else:
 			pcaPath = None
-		pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=4, output=pcaPath, fileNamePrefix='')
+		pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=6, output=pcaPath, fileNamePrefix='')
 
 	##
 	# Sample summary
