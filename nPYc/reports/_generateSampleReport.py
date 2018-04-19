@@ -157,7 +157,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		# the jinja template expects item with sample summary inside so just create a field with everything inside
 		sampleSummary['sampleSummary'] = sampleSummary
 		f = open(filename,'w')
-		f.write(template.render(item=sampleSummary, version=version, graphicsPath=graphicsPath))
+		f.write(template.render(item=sampleSummary, version=version, graphicsPath=os.path.join(output, 'graphics')))
 		f.close()
 
 		copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
