@@ -246,11 +246,10 @@
 	{% endfor %}
 
 
-	<!--Multivariate -->
-	{% if 'pcaPlots' in item %}
-		{{ pca.basicPCAReport(item['pcaPlots']) }}
-	{% endif %}
-
+    <!--Multivariate -->
+    {% if pcaPlots %}
+	    {{ pca.basicPCAReport(pcaPlots)}}
+    {% endif %}
 
 	<!--Samples missing from acquisition-->
 	{% if 'SamplesMissingInfo' in item %}

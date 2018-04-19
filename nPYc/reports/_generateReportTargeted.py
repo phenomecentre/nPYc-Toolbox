@@ -696,11 +696,17 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
             tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
             tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
-            if output:
-                item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=saveDir)
-            else:
-                item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=output)
+            if pcaModel:
+                if output:
+                    pcaPath = output
+                else:
+                    pcaPath = None
+                pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=6, output=pcaPath, fileNamePrefix='')
 
+            #if output:
+            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=saveAs)
+            #else:
+            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=output)
 
 
         ## Add final tables of excluded/missing study samples
@@ -741,7 +747,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
         filename = os.path.join(output, tData.name + '_report_' + reportTypeCases[reportType] + '.html')
 
         f = open(filename,'w')
-        f.write(template.render(item=item, version=version, graphicsPath='/report_' + reportTypeCases[reportType]))
+        f.write(template.render(item=item, version=version, graphicsPath='/report_' + reportTypeCases[reportType], pcaPlots=pcaModel))
         f.close()
 
         copyBackingFiles(toolboxPath(), saveDir)

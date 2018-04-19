@@ -682,11 +682,16 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 						 'unittest_FeatureConcentrationDistribution-A.png',
 						 'unittest_FeatureConcentrationDistribution-B.png',
 						 'unittest_FeaturePrecision-A.png',
-						 'unittest_FeaturePrecision-B.png',
-						 'unittest_PCAloadingsPlot_PCAloadings.png',
-						 'unittest_PCAscoresPlot_SampleTypePC1vsPC2.png']
+						 'unittest_FeaturePrecision-B.png']
+
+			multivariateTestFiles = ['unittest_PCAloadingsPlot_PCAloadings.png', 'unittest_PCAscoresPlot_SampleTypePC1vsPC2.png']
 
 			for testFile in testFiles:
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
+				self.assertTrue(os.path.exists(expectedPath))
+			# Separete here in case a future refactor splits different folders for PCA as _basicPCAReport is only being used in
+			# final summary reports
+			for testFile in multivariateTestFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 

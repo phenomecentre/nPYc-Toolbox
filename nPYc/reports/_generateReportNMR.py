@@ -229,7 +229,7 @@ def _featureReport(dataset, output=None):
 								graphicsPath='/report_featureSummary'))
 		f.close()
 
-		copyBackingFiles(toolboxPath(), graphicsPath)
+		copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
 
 
 def _finalReport(dataset, output=None, pcaModel=None):
@@ -375,4 +375,4 @@ def _finalReport(dataset, output=None, pcaModel=None):
 								)
 		f.close()
 
-		copyBackingFiles(toolboxPath(),output)
+		copyBackingFiles(toolboxPath(),os.path.join(output, 'graphics'))
