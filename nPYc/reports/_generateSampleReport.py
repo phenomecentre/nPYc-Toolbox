@@ -38,19 +38,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 	if not isinstance(returnOutput, bool):
 		raise TypeError('returnItem must be a bool')
 
-	# Create directory to save output	
-	if output:
-
-		# If directory exists delete directory and contents
-		if os.path.exists(os.path.join(output, 'graphics', 'report_sampleSummary')):
-			shutil.rmtree(os.path.join(output, 'graphics', 'report_sampleSummary'))
-
-		# Create directory to save output
-		os.makedirs(os.path.join(output, 'graphics', 'report_sampleSummary'))
-		graphicsPath = os.path.join(output, 'graphics', 'report_sampleSummary')
-	else:
-		graphicsPath = None
-		saveAs = None
+	# Create directory to save output	 # for now do nothing as sampleReport requires no files
 
 	# Apply sample/feature masks if exclusions to be applied
 	data = copy.deepcopy(dataTrue)
