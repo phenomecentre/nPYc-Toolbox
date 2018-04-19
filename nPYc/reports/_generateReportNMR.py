@@ -226,7 +226,7 @@ def _featureReport(dataset, output=None):
 								attributes=dataset.Attributes,
 								version=version,
 								failSummary=fail_summary,
-								graphicsPath='/report_featureSummary'))
+								graphicsPath=graphicsPath))
 		f.close()
 
 		copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
