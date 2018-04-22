@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='nPYc',
-	version='1.0.2a',
+	version='1.0.3a',
 	description='National Phenome Centre toolbox',
 	url='https://github.com/phenomecentre/npyc-toolbox',
 	author='National Phenome Centre',
@@ -22,7 +22,7 @@ setup(name='nPYc',
 		'isatools>=0.9.2',
 		'lmfit>=0.9.7',
 		'cycler>=0.10.0',
-		'pyChemometrics>0.1'
+		'pyChemometrics>=0.1'
 	],
 	classifiers = [
 		"Programming Language :: Python",
