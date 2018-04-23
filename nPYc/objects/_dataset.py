@@ -53,26 +53,27 @@ class Dataset:
 		self.sampleMetadata = pandas.DataFrame(None,
 											   columns=['Sampling ID', 'AssayRole', 'SampleType', 'Sample File Name',
 														'Sample Base Name', 'Dilution', 'Batch', 'Correction Batch',
-														'Acquired Time', 'Run Order', 'Exclusion Details'])
+														'Acquired Time', 'Run Order', 'Exclusion Details', 'Metadata Available'])
 		"""
 		:math:`n` × :math:`p` dataframe of sample identifiers and metadata.
 
 		The sampleMetadata table can included any datatype that can be placed in a pandas cell, However the toolbox assumes certain prerequisites on the following columns in order to function:
 
-		================= ========================================= ============
-		Column            dtype                                     Usage
-		================= ========================================= ============
-		Sampling ID       str                                       ID of the :term:`sampling event` generating this sample
-		AssayRole         :py:class:`~nPYc.enumerations.AssayRole`  Defines the role of this assay
-		SampleType        :py:class:`~nPYc.enumerations.SampleType` Defines the type of sample acquired
-		Sample File Name  str                                       :term:`Unique file name<Sample File Name>` for the analytical data
-		Sample Base Name  str                                       :term:`Common identifier<Sample Base Name>` that links analytical data to the *Sampling ID*
-		Dilution          float                                     Where *AssayRole* is :py:attr:`~nPYc.enumerations.AssayRole.LinearityReference`, the expected abundance is indicated here
-		Batch             int                                       Acquisition batch
-		Correction Batch  int                                       When detecting and correcting for :term:`batch<Batch Effects>` and :term:`Run-Order<Run-Order Effects>` effects, run-order effects are characterised within samples sharing the same *Correction Batch*, while batch effects are detected between distinct values
-		Acquired Time     datetime.datetime                         Date and time of acquisition of raw data
-		Run order         int                                       Order of sample acquisition
-		Exclusion Details str                                       Details of reasoning if marked for exclusion
+		=================  ========================================= ============
+		Column             dtype                                     Usage
+		=================  ========================================= ============
+		Sampling ID        str                                       ID of the :term:`sampling event` generating this sample
+		AssayRole          :py:class:`~nPYc.enumerations.AssayRole`  Defines the role of this assay
+		SampleType         :py:class:`~nPYc.enumerations.SampleType` Defines the type of sample acquired
+		Sample File Name   str                                       :term:`Unique file name<Sample File Name>` for the analytical data
+		Sample Base Name   str                                       :term:`Common identifier<Sample Base Name>` that links analytical data to the *Sampling ID*
+		Dilution           float                                     Where *AssayRole* is :py:attr:`~nPYc.enumerations.AssayRole.LinearityReference`, the expected abundance is indicated here
+		Batch              int                                       Acquisition batch
+		Correction Batch   int                                       When detecting and correcting for :term:`batch<Batch Effects>` and :term:`Run-Order<Run-Order Effects>` effects, run-order effects are characterised within samples sharing the same *Correction Batch*, while batch effects are detected between distinct values
+		Acquired Time      datetime.datetime                         Date and time of acquisition of raw data
+		Run order          int                                       Order of sample acquisition
+		Exclusion Details  str                                       Details of reasoning if marked for exclusion
+		Metadata Available bool                                      Records which samples were included in the metadata provided with the .addSampleInfo() method
 		================= ========================================= ============
 		"""
 		self.featureMask = numpy.array(None, dtype=bool)
@@ -1163,25 +1164,31 @@ class Dataset:
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
 		csvData = pandas.read_csv(filePath)
+		currentMetadata = self.sampleMetadata.copy()
 
 		if 'Sample File Name' not in csvData.columns:
 			raise KeyError("No 'Sample File Name' column present, unable to join tables.")
 
-		# Check no duplicates in csv file
+		# Check if there are any duplicates in the csv file
 		u_ids, u_counts = numpy.unique(csvData['Sample File Name'], return_counts=True)
 		if any(u_counts > 1):
 			warnings.warn('Check and remove duplicates in CSV file')
 			return
 
+		# Store previous AssayRole and SampleType in case they were parsed using from filename:
+		#
+		oldAssayRole = currentMetadata['AssayRole']
+		oldSampleType = currentMetadata['SampleType']
+		oldDilution = currentMetadata['Dilution']
 		##
-		# If colums exist in both csv data and samplemetadata remove from samplemetadata
+		# If colums exist in both csv data and dataset.sampleMetadata remove them from sampleMetadata
 		##
 		columnsToRemove = csvData.columns
 		columnsToRemove = columnsToRemove.drop(['Sample File Name'])
 
 		for column in columnsToRemove:
-			if column in self.sampleMetadata.columns:
-				self.sampleMetadata.drop(column, axis=1, inplace=True)
+			if column in currentMetadata.columns:
+				currentMetadata.drop(column, axis=1, inplace=True)
 
 		# If AssayRole or SampleType columns are present parse strings into enums
 		if 'AssayRole' in csvData.columns:
@@ -1197,27 +1204,20 @@ class Dataset:
 			csv_datetime = pandas.to_datetime(csvData['Acquired Time'], errors='ignore')
 			# msData.sampleMetadata['Acquired Time'] = z
 			csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype(
-				'O')
+			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype('O')
 
 		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
-		# Preserve information about sample mask alongside merge
-		self.sampleMetadata['Masked'] = False
-		self.sampleMetadata.loc[(self.sampleMask == False), 'Masked'] = True
-		joinedTable = pandas.merge(self.sampleMetadata, csvData, how='left', left_on='Sample File Name',
+		# Preserve information about sample mask alongside merge even on the case of samples missing from CSV file.
+
+		# Is this required?? Masked field doesn't seem to be used anywhere else
+		currentMetadata['Masked'] = False
+		currentMetadata.loc[(self.sampleMask == False), 'Masked'] = True
+
+		joinedTable = pandas.merge(currentMetadata, csvData, how='left', left_on='Sample File Name',
 								   right_on='Sample File Name', sort=False)
 
-		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
-		# which are used in some plotting functions
-		# if 'Acquired Time' in joinedTable:
-		#		csv_datetime = pandas.to_datetime(joinedTable['Acquired Time'], errors='ignore')
-		# msData.sampleMetadata['Acquired Time'] = z
-		#		csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-		#		joinedTable['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype('O')
-
 		# Samples in the CSV file but not acquired will go for sampleAbsentMetadata, for consistency with NPC Lims import
-		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(self.sampleMetadata['Sample File Name']) == False,
-						:]
+		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(currentMetadata['Sample File Name']) == False, :]
 
 		if csv_butnotacq.shape[0] != 0:
 			sampleAbsentMetadata = csv_butnotacq.copy(deep=True)
@@ -1234,8 +1234,6 @@ class Dataset:
 				bool), 'AssayRole'] = AssayRole.PrecisionReference
 			sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'].str.match('LinearityReference', na=False).astype(
 				bool), 'AssayRole'] = AssayRole.LinearityReference
-			# What would be the equivalent of adding Missing here?
-			# sampleAbsentMetadata.loc[:, 'LIMS Marked Missing'] = sampleAbsentMetadata['Status'].str.match('Missing', na=False).astype(bool)
 
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in sampleAbsentMetadata.columns if c[-2:] != '_y']
@@ -1244,17 +1242,44 @@ class Dataset:
 
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
-		# 1) ACQ and in "include Sample" - drop and set mask to false
-		# Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
+		# By default everything in the CSV has metadata available and samples mentioned there will not be masked
+		# unless Include Sample field was == False
+		joinedTable['Metadata Available'] = True
 
-		# Remove acquired samples where Include sample column equals false - remove the rows in intensityData and
-		# elements of sample mask accordingly
+		# Samples in the folder and processed but not mentioned in the CSV.
+		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False), :]
+
+		# Ensure that acquired but no csv only counts samples which 1 are not in CSV and 2 - also have no other kind of
+		# AssayRole information provided (from parsing filenames for example)
+		if acquired_butnotcsv.shape[0] != 0:
+
+			noMetadataIndex = acquired_butnotcsv.index
+			# Find samples where metadata was there previously and is not on the new CSV
+			previousMetadataAvailable = currentMetadata.loc[(~oldSampleType.isnull()) & (~oldAssayRole.isnull())
+															& ((currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False)), :].index
+			metadataNotAvailable = [x for x in noMetadataIndex if x not in previousMetadataAvailable]
+			# Keep old AssayRoles and SampleTypes for cases not mentioned in CSV for which this information was previously
+			# available
+			joinedTable.loc[previousMetadataAvailable, 'AssayRole'] = oldAssayRole[previousMetadataAvailable]
+			joinedTable.loc[previousMetadataAvailable, 'SampleType'] = oldSampleType[previousMetadataAvailable]
+			joinedTable.loc[previousMetadataAvailable, 'Dilution'] = oldDilution[previousMetadataAvailable]
+			
+			#  If not in the new CSV, but previously there, keep it and don't mask
+			if len(metadataNotAvailable) > 0:
+				joinedTable.loc[metadataNotAvailable, 'Metadata Available'] = False
+				self.sampleMask[metadataNotAvailable] = False
+				joinedTable.loc[metadataNotAvailable, 'Exclusion Details'] = 'No Metadata in CSV'
+
+		# 1) ACQ and in "include Sample" - drop and set mask to false
+		#  Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
+
+		# Remove acquired samples where Include sample column equals false - does not remove, just masks the sample
 		if 'Include Sample' in csvData.columns:
 			which_to_drop = joinedTable[joinedTable['Include Sample'] == False].index
-			# self.intensityData = numpy.delete(self.intensityData, which_to_drop, axis=0)
-			# self.sampleMask = numpy.delete(self.sampleMask, which_to_drop)
+			#self.intensityData = numpy.delete(self.intensityData, which_to_drop, axis=0)
+			#self.sampleMask = numpy.delete(self.sampleMask, which_to_drop)
 			self.sampleMask[which_to_drop] = False
-			# joinedTable.drop(which_to_drop, axis=0, inplace=True)
+			#joinedTable.drop(which_to_drop, axis=0, inplace=True)
 			joinedTable.drop('Include Sample', inplace=True, axis=1)
 
 		previously_masked = joinedTable[joinedTable['Masked'] == True].index
@@ -1263,9 +1288,12 @@ class Dataset:
 		# Regenerate the dataframe index for joined table
 		joinedTable.reset_index(inplace=True, drop=True)
 		self.sampleMetadata = joinedTable
-		# This should make it work - but its assuming the sample "NAME" is the same as FIle name as in LIMS.
+
+		# Commented out as we shouldn't need this here after removing the LIMS, but lets keep it
+		# This should make it work - but its assuming the sample "NAME" is the same as File name as in LIMS.
 		self.sampleMetadata['Sample Base Name'] = self.sampleMetadata['Sample File Name']
-		# Ensure there is a batch column this way we won't need to call
+
+		# Ensure there is a batch column
 		if 'Batch' not in self.sampleMetadata:
 			self.sampleMetadata['Batch'] = 1
 

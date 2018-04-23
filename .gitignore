@@ -1,10 +1,10 @@
 *.mat
-*.html
 *.png
 *.pdf
 *.DS_Store
 *.swp
 *.pyc
+*.html
 .spyderproject
 .ipynb_checkpoints
 *Thumbs.db

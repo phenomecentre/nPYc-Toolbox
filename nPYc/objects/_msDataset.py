@@ -392,6 +392,8 @@ class MSDataset(Dataset):
 
 		self.initialiseMasks()
 
+		self.sampleMetadata['Metadata Available'] = False
+
 		self.Attributes['Log'].append([datetime.now(), 'Progenesis QI dataset loaded from %s' % (path)])
 
 
@@ -449,6 +451,7 @@ class MSDataset(Dataset):
 
 		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float) / 60.0
 		self.featureMetadata['m/z'] = self.featureMetadata['m/z'].astype(float)
+		self.sampleMetadata['Metadata Available'] = False
 
 		self.initialiseMasks()
 
@@ -515,6 +518,7 @@ class MSDataset(Dataset):
 		self.featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
 		self.featureMetadata.insert(0, 'Feature Name', names)
 
+		self.sampleMetadata['Metadata Available'] = False
 		self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'Biocrates dataset loaded from %s' % (path)])
@@ -729,7 +733,7 @@ class MSDataset(Dataset):
 		# Drop unwanted columns
 		fileNameParts.drop(['exclusion', 'reference', 'groupingKind', 'injectionNo', 'injectionKind', 'groupingNo'], axis=1, inplace=True)
 
-		# Swap in user freindly file names
+		# Swap in user friendly file names
 		fileNameParts.rename(columns={'chromatography': 'Chromatography'}, inplace=True)
 		fileNameParts.rename(columns={'instrument': 'Instrument'}, inplace=True)
 		fileNameParts.rename(columns={'study': 'Study'}, inplace=True)
@@ -753,7 +757,7 @@ class MSDataset(Dataset):
 
 		# Add 'Exclusion Details' column
 		self.sampleMetadata['Exclusion Details'] = ''
-		
+		self.sampleMetadata['Metadata Available'] = True
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
 

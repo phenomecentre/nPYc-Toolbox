@@ -12,7 +12,7 @@
 	"exclusionRegions": [[-0.2,0.2],[4.7,4.9]],
 	"filenameSpec": "^(?P<fileName>\n\t\t(?P<study>\\w+?)\t\t\t\t\t\t\t\t\t\t# Study\n\t\t_\n\t\t(?P<matrix>\\w+)\t\t\t\t\t\t\t\t\t# matrix\n\t\t_\n\t\t[Rr][Aa][Cc][Kk](?P<rack>\\d+?)\t\t\t\t\t\t\t\t# Instrument\n\t\t_\n\t\t(?P<tech>\\w+?) # Technician\n\t\t_\n\t\t(?P<date>\\d{6})\n\t\t/\n\t\t(?P<expno>\\d\\d+)\n)$",
 	"__comments":"method blood = serum or plasma, alignTo doublet=glucose singlet = TSP none = will not execute calibration code(if you change alignTo important to set calibrateTo accordingly), calibrateTo 0= centre TSP 5.233=mid of 2 glucose peaks, LWpeakRange is [-0.1,0.1]=TSP [5.22,5.25]=glucose [1.322,1.38]=lactate",
-	"analyticalMeasurements": {"PULPROG" : "categorical", "SF" : "continuous", "sampleType" : "categorical",
+	"analyticalMeasurements": {"PULPROG" : "categorical", "SF" : "categorical", "sampleType" : "categorical",
         "assayRole": "categorical",	"p1" : "continuous", "_01value" : "continuous",
         "Acquired Time" : "date", "Study" : "categorical", "Rack" : "categorical", "computer":"categorical",
         "AUNM":"categorical", "Technician" : "categorical", "Run Order" : "continuous", "Exclusion Details" : "categorical",

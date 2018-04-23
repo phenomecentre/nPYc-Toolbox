@@ -1,0 +1,38 @@
+{% extends "base_QC.html" %}
+
+{% block title %}Correlation with Dilution Report For: {{ item.Name}}{% endblock %}
+
+{% block content %}
+
+<!--For each batch subset and mean overall; plot TIC by dilution, TIC by detector voltage and correlation histogram-->
+<h3>For each linearity reference (LR) sample batch subset and mean overall; plots of Total Ion Count (TIC) by dilution, TIC by detector voltage and correlation to dilution histogram</h3>
+{% for key, value in item['figuresCorLRbyBatch'].items() %}
+	<p>{{ key|e }}</p>
+	<div class='figure'>
+		<img src="{{ value|e }}" alt="Linearity reference (LR) plots by batch.">
+	</div>
+{% endfor %}
+
+<!--Summary of the number of features passing correlation to dilution in each each batch subset and mean overall-->
+<h3>Number of features exceeding correlation to dilution threshold ({{ item.corrThreshold }}) for each LR sample subset/correlation to dilution method</h3>
+{{ item['NfeaturesSummary'].to_html() }}
+<div class="content">
+	<p>
+		<p>Current correlation settings:</p>
+		<ul>
+			<li>Correlation Method: {{ item.corrMethod }}</li>
+			<li>Correlation Threshold: {{ item.corrThreshold }}</li>
+			<li>Correlation Style: {{ item.corrStyle }}</li>
+			<li>Correlation Exclusions: {{ item.corrExclusions }}</li>
+		</ul>
+	</p>
+</div>
+
+<!--Summary plots for the assessment of potential saturation-->
+<h3>Assessment of potential saturation</h3>
+<div class='figure'>
+	<p class="caption"> Heatmap showing the proportion of features (in different intensity quantiles, low:0-25, medium:25-75, and high:75-100%) where the median intensity at lower dilution factors is greater than or equal to that of higher dilution factors.</p>
+	<img src="{{ item.SatFeaturesHeatmap}}" alt="Heatmap showing the proportion of features where the median intensity at lower dilution factors exceeds that of higher dilution factors.">
+</div>
+
+{% endblock %}

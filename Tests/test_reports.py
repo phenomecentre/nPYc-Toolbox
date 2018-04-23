@@ -6,6 +6,7 @@ import sys
 import unittest
 import tempfile
 import os
+import io
 import copy
 
 sys.path.append("..")
@@ -82,82 +83,30 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		sampleSummary = nPYc.reports._generateSampleReport(self.data, output=None, returnOutput=True)
 	
 		# Check returns against expected
-	
+
 		# Acquired - Totals
 		assert sampleSummary['Acquired'].loc['All', 'Total'] == 115
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Total'] == 8
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Total'] == 11
 		assert sampleSummary['Acquired'].loc['External Reference', 'Total'] == 1
-		assert sampleSummary['Acquired'].loc['Other', 'Total'] == 94
-		assert sampleSummary['Acquired'].loc['Unknown', 'Total'] == 1
-	
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Total'] == 92
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Total'] == 2
+		assert sampleSummary['Acquired'].loc['Unspecified Sample Type or Assay Role', 'Total'] == 1
+
 		# Acquired - Marked for exclusion
 		assert sampleSummary['Acquired'].loc['All', 'Marked for Exclusion'] == 1
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Marked for Exclusion'] == 1
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['External Reference', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Other', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Unknown', 'Marked for Exclusion'] == 0
-	
-		# Acquired - LIMS marked as missing
-		assert sampleSummary['Acquired'].loc['All', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'LIMS marked as missing'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Unknown', 'LIMS marked as missing'] == '-'
-	
-		# Acquired - Missing from LIMS
-		assert sampleSummary['Acquired'].loc['All', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'Missing from LIMS'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Unknown', 'Missing from LIMS'] == '-'
-	
-		# Acquired - Missing Subject Information
-		assert sampleSummary['Acquired'].loc['All', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'Missing Subject Information'] == 2
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Unknown', 'Missing Subject Information'] == '-'
-	
-	
-		# NotAcquired - Totals
-		assert sampleSummary['NotAcquired'].loc['All', 'Total'] == 2
-		assert sampleSummary['NotAcquired'].loc['Study Sample', 'Total'] == 2
-		assert sampleSummary['NotAcquired'].loc['Study Pool', 'Total'] == 0
-		assert sampleSummary['NotAcquired'].loc['External Reference', 'Total'] == 0
-	
-		# NotAcquired - Marked as Missing
-		assert sampleSummary['NotAcquired'].loc['All', 'Marked as Missing'] == 1
-		assert sampleSummary['NotAcquired'].loc['Study Sample', 'Marked as Missing'] == 1
-		assert sampleSummary['NotAcquired'].loc['Study Pool', 'Marked as Missing'] == 0
-		assert sampleSummary['NotAcquired'].loc['External Reference', 'Marked as Missing'] == 0
-	
-		# NotAcquired - Marked as Sample
-		assert sampleSummary['NotAcquired'].loc['All', 'Marked as Sample'] == 1
-		assert sampleSummary['NotAcquired'].loc['Study Sample', 'Marked as Sample'] == 1
-		assert sampleSummary['NotAcquired'].loc['Study Pool', 'Marked as Sample'] == 0
-		assert sampleSummary['NotAcquired'].loc['External Reference', 'Marked as Sample'] == 0
-	
-	 	# NotAcquired - Already Excluded
-		assert sampleSummary['NotAcquired'].loc['All', 'Already Excluded'] == 0
-		assert sampleSummary['NotAcquired'].loc['Study Sample', 'Already Excluded'] == 0
-		assert sampleSummary['NotAcquired'].loc['Study Pool', 'Already Excluded'] == 0
-		assert sampleSummary['NotAcquired'].loc['External Reference', 'Already Excluded'] == 0
-	
-		
-	 	# Check details tables
-		assert sampleSummary['LIMSmissing Details'].shape == (1, 4)
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Unspecified Sample Type or Assay Role', 'Marked for Exclusion'] == 0
+
+		# Check details tables
 		assert sampleSummary['MarkedToExclude Details'].shape == (1, 2)
-		assert sampleSummary['UnknownType Details'].shape == (1,1)	
-		assert sampleSummary['NoLIMS Details'].shape == (1, 4)
-		assert sampleSummary['NoSubjectInfo Details'].shape == (2, 4)
-		assert sampleSummary['NotAcquired Details'].shape == (2, 3)	
-	
-	
+		assert sampleSummary['UnknownType Details'].shape == (1,1)
+
+
 	def test_report_samplesummary_postexclusion(self):	
 		
 		# Remove samples marked for exclusion (_x) or of unknown type
@@ -175,44 +124,24 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Total'] == 7
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Total'] == 11
 		assert sampleSummary['Acquired'].loc['External Reference', 'Total'] == 1
-		assert sampleSummary['Acquired'].loc['Other', 'Total'] == 94
-		assert 'Unknown' not in sampleSummary['Acquired'].index
-	
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Total'] == 92
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Total'] == 2
+		assert 'Unspecified Sample Type or Assay Role' not in sampleSummary['Acquired'].index
+
 		# Acquired - Marked for exclusion
 		assert sampleSummary['Acquired'].loc['All', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['External Reference', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Other', 'Marked for Exclusion'] == 0
-	
-		# Acquired - LIMS marked as missing
-		assert sampleSummary['Acquired'].loc['All', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'LIMS marked as missing'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'LIMS marked as missing'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'LIMS marked as missing'] == '-'
-	
-		# Acquired - Missing from LIMS
-		assert sampleSummary['Acquired'].loc['All', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'Missing from LIMS'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'Missing from LIMS'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'Missing from LIMS'] == '-'
-	
-		# Acquired - Missing Subject Information
-		assert sampleSummary['Acquired'].loc['All', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Study Sample', 'Missing Subject Information'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['External Reference', 'Missing Subject Information'] == '-'
-		assert sampleSummary['Acquired'].loc['Other', 'Missing Subject Information'] == '-'
-		
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Marked for Exclusion'] == 0
 		# Acquired - Already Excluded
 		assert sampleSummary['Acquired'].loc['All', 'Already Excluded'] == 1
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Already Excluded'] == 1
 		assert sampleSummary['Acquired'].loc['Study Pool', 'Already Excluded'] == 0
 		assert sampleSummary['Acquired'].loc['External Reference', 'Already Excluded'] == 0
-		assert sampleSummary['Acquired'].loc['Other', 'Already Excluded'] == 0	
-
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Already Excluded'] == 0
+		assert sampleSummary['Acquired'].loc['Blank Sample', 'Already Excluded'] == 0
 
 class test_reports_nmr_generatereport(unittest.TestCase):
 
@@ -227,6 +156,8 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			self.dataset.name = 'TestData'
+			self.dataset._nmrQCChecks()
+
 			nPYc.reports.generateReport(self.dataset, 'Feature Summary', output=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'TestData_report_featureSummary.html')
@@ -241,9 +172,6 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_finalFeatureBLWPplots3.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_finalFeatureIntensityHist.png')
-			self.assertTrue(os.path.exists(expectedPath))
-
 			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', 'TestData_peakWidthBoxplot.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
@@ -255,22 +183,19 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			self.dataset.sampleMetadata['Sample Base Name'] = self.dataset.sampleMetadata['Sample File Name']
 			self.dataset.sampleMetadata['BaselineFail'] = False
 			self.dataset.sampleMetadata['WaterPeakFail'] = False
-
+			self.dataset.sampleMetadata['Metadata Available'] = True
 			nPYc.reports.generateReport(self.dataset, 'Final Report', output=tmpdirname)
 
-			expectedPath = os.path.join(tmpdirname, 'TestData_report_finalReport.html')
+			expectedPath = os.path.join(tmpdirname, 'TestData_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_finalFeatureBLWPplots1.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_finalFeatureBLWPplots1.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_finalFeatureBLWPplots3.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_finalFeatureBLWPplots3.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_finalFeatureIntensityHist.png')
-			self.assertTrue(os.path.exists(expectedPath))
-
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', 'TestData_peakWidthBoxplot.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_peakWidthBoxplot.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -288,7 +213,6 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 		self.assertRaises(ValueError, _generateReportNMR, data, 'Not a vaild plot type')
 		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', withExclusions='Not a bool')
 		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', output=True)
-		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', pcaModel='Not a PCA model')
 
 
 class test_reports_ms_generatereport(unittest.TestCase):
@@ -314,8 +238,8 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'test_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'test_RSDdistributionFigure.png', 'test_TICinLR.png', 'test_acquisitionStructure.png',
-						 'test_correlationByPerc.png', 'test_ionMap.png', 'test_meanIntesityFeature.png', 'test_meanIntesitySample.png',
+			testFiles = ['test_RSDdistributionFigure.png', 'test_TICinLR.png', 'test_acquisitionStructure.png',
+						 'test_correlationByPerc.png', 'test_ionMap.png', 'test_meanIntensityFeature.png', 'test_meanIntensitySample.png',
 						 'test_peakWidth.png', 'test_rsdByPerc.png', 'test_rsdVsCorrelation.png']
 
 			for testFile in testFiles:
@@ -336,17 +260,17 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 			nPYc.reports.generateReport(data, 'correlation to dilution', output=tmpdirname)
 
-			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_correlationToDilution.html')
+			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_correlationToDilutionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
 			testFiles = ['Batch 1.0, series 1.0 Histogram of Correlation To Dilution.png', 'Batch 1.0, series 1.0 LR Sample TIC (coloured by change in detector voltage).png',
 						 'Batch 1.0, series 1.0 LR Sample TIC (coloured by dilution).png', 'Batch 1.0, series 2.0 Histogram of Correlation To Dilution.png',
 						 'Batch 1.0, series 2.0 LR Sample TIC (coloured by change in detector voltage).png', 'Batch 1.0, series 2.0 LR Sample TIC (coloured by dilution).png',
 						 'MeanAllSubsets Histogram of Correlation To Dilution.png', 'MeanAllSubsets LR Sample TIC (coloured by change in detector voltage).png',
-						 'MeanAllSubsets LR Sample TIC (coloured by dilution).png', 'UnitTest1_PCSOP.069_QI_satFeaturesHeatmap.png', 'npc-main.css', 'toolbox_logo.png']
+						 'MeanAllSubsets LR Sample TIC (coloured by dilution).png', 'UnitTest1_PCSOP.069_QI_satFeaturesHeatmap.png']
 
 			for testFile in testFiles:
-				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_correlationToDilution', testFile)
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_correlationToDilutionSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -364,7 +288,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionAssessment.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_145.0686m-z.png', 
+			testFiles = ['UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_145.0686m-z.png',
 						'UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_262.0378m-z.png', 'UnitTest1_PCSOP.069_QI_TICdetectorBatches.png']
 
 			for testFile in testFiles:
@@ -387,7 +311,8 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePRE.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePOST.png',
+			testFiles = ['npc-main.css', 'toolbox_logo.png']
+			testFiles = ['UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePRE.png', 'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePOST.png',
 						'UnitTest1_PCSOP.069_QI_BCS2_TicPRE.png', 'UnitTest1_PCSOP.069_QI_BCS2_TicPOST.png',
 						'UnitTest1_PCSOP.069_QI_BCS3_rsdByPercPRE.png', 'UnitTest1_PCSOP.069_QI_BCS3_rsdByPercPOST.png',
 						'UnitTest1_PCSOP.069_QI_BCS4_RSDdistributionFigurePRE.png', 'UnitTest1_PCSOP.069_QI_BCS4_RSDdistributionFigurePOST.png']
@@ -408,13 +333,13 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 			nPYc.reports.generateReport(data, 'feature selection', output=tmpdirname)
 			
-			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_featureSelection.html')
+			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_featureSelectionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_noFeatures.png']
+			testFiles = ['UnitTest1_PCSOP.069_QI_noFeatures.png']
 
 			for testFile in testFiles:
-				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSelection', testFile)
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSelectionSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -424,19 +349,19 @@ class test_reports_ms_generatereport(unittest.TestCase):
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
-
+		data.sampleMetadata['Metadata Available'] = True
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			nPYc.reports.generateReport(data, 'final report', output=tmpdirname)
 
-			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_finalReport.html')			
+			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'UnitTest1_PCSOP.069_QI_finalFeatureIntensityHist.png', 'UnitTest1_PCSOP.069_QI_finalIonMap.png',
+			testFiles = ['UnitTest1_PCSOP.069_QI_finalFeatureIntensityHist.png', 'UnitTest1_PCSOP.069_QI_finalIonMap.png',
 						 'UnitTest1_PCSOP.069_QI_finalRSDdistributionFigure.png', 'UnitTest1_PCSOP.069_QI_finalTIC.png', 'UnitTest1_PCSOP.069_QI_finalTICbatches.png']
 
 			for testFile in testFiles:
-				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', testFile)
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -710,7 +635,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A.png', 'unittest_FeatureConcentrationDistribution-B.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
+			testFiles = ['unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A.png', 'unittest_FeatureConcentrationDistribution-B.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', testFile)
@@ -726,7 +651,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_mergeLoqAssessment.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'unittest_ConcentrationPrePostMergeLOQ.png']
+			testFiles = ['unittest_ConcentrationPrePostMergeLOQ.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_mergeLoqAssessment', testFile)
@@ -745,24 +670,29 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			nPYc.reports.multivariateReport.multivariateQCreport(inputDataset, pcaModel=pcaModel, reportType='analytical', withExclusions=True, output=tmpdirPCA)
-
+			inputDataset.sampleMetadata['Metadata Available'] = True
 			nPYc.reports.generateReport(inputDataset, 'final report', output=tmpdirname, pcaModel=pcaModel)
 
-			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalReport.html')
+			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['npc-main.css', 'toolbox_logo.png', 'unittest_AcquisitionStructure.png',
+			testFiles = ['unittest_AcquisitionStructure.png',
 						 'unittest_FeatureAccuracy-A.png',
 						 'unittest_FeatureAccuracy-B.png',
 						 'unittest_FeatureConcentrationDistribution-A.png',
 						 'unittest_FeatureConcentrationDistribution-B.png',
 						 'unittest_FeaturePrecision-A.png',
-						 'unittest_FeaturePrecision-B.png',
-						 'unittest_PCAloadingsPlot_PCAloadings.png',
-						 'unittest_PCAscoresPlot_SampleTypePC1vsPC2.png']
+						 'unittest_FeaturePrecision-B.png']
+
+			multivariateTestFiles = ['unittest_PCAloadingsPlot_PCAloadings.png', 'unittest_PCAscoresPlot_SampleTypePC1vsPC2.png']
 
 			for testFile in testFiles:
-				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalReport', testFile)
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
+				self.assertTrue(os.path.exists(expectedPath))
+			# Separete here in case a future refactor splits different folders for PCA as _basicPCAReport is only being used in
+			# final summary reports
+			for testFile in multivariateTestFiles:
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -864,7 +794,8 @@ class test_reports_modules(unittest.TestCase):
 					self.assertTrue(os.path.exists(report[groupName][plotName]))
 
 
-	def test_reports_generateBasicPCAReport(self):
+	#@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
+	def test_reports_generateBasicPCAReport(self):#, mock_stdout):
 
 		from nPYc.reports._generateBasicPCAReport import generateBasicPCAReport
 		from nPYc.multivariate import exploratoryAnalysisPCA
@@ -885,12 +816,14 @@ class test_reports_modules(unittest.TestCase):
 		dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
 		dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
+		pcaModel = exploratoryAnalysisPCA(dataset)
+
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			if not os.path.exists(os.path.join(tmpdirname, 'graphics')):
 				os.makedirs(os.path.join(tmpdirname, 'graphics'))
 
-			report = generateBasicPCAReport(exploratoryAnalysisPCA(dataset), dataset, output=tmpdirname)
+			report = generateBasicPCAReport(pcaModel, dataset, output=tmpdirname)
 
 			for groupName in report['QCscores'].keys():
 				path = os.path.join(tmpdirname, report['QCscores'][groupName])
@@ -899,6 +832,11 @@ class test_reports_modules(unittest.TestCase):
 			for groupName in report['loadings'].keys():
 				path = os.path.join(tmpdirname, report['loadings'][groupName])
 				self.assertTrue(os.path.exists(path))
+
+		with self.subTest(msg='ploting interactivly'):
+
+			report = generateBasicPCAReport(pcaModel, dataset, output=None)
+			self.assertIsNone(report)
 
 
 	def test_reports_generateBasicPCAReport_raises(self):
