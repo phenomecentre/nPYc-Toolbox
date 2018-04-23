@@ -1,0 +1,50 @@
+{% macro sampleReport(item) -%}
+
+<div class="content">
+<!--Summary of samples acquired________________________________________________________________________________________________________________-->	
+<h2>Summary of Samples Acquired</h2>
+
+{{ item['Acquired'].to_html() }}
+
+<!--Summary of samples missing from acquisition________________________________________________________________________________________________-->
+
+{% if 'NotAcquired' in item %}
+	<h3>Summary of Samples Missing from Acquisition/Import (i.e., present in LIMS but not acquired/imported)</h3>
+	{{ item['NotAcquired'].to_html() }}
+{% endif %}
+
+<!--Details of any excluded/missing samples____________________________________________________________________________________________________-->
+
+{% if 'MarkedToExclude Details' in item %}
+	<h3>Details of Samples Marked for Exclusion</h3>
+	{{ item['MarkedToExclude Details'].to_html() }}
+{% endif %}
+
+{% if 'Excluded Details' in item %}
+	{% if 'isFinalReport' in item %}
+    	{%if (item['isFinalReport'] == True) and (item['studySamplesExcluded'] == True)%}
+        	<h3>Study samples excluded on analytical criteria</h3><!--ie those marked with (_x)-->
+	    {{ item['StudySamples Exclusion Details'].to_html() }}
+	    {% endif %}
+	{% else %}
+	     <h3>Samples excluded on analytical criteria</h3><!--ie those marked with (_x)-->
+	     {{ item['Excluded Details'].to_html() }}
+	{% endif %}
+{% endif %}
+
+{% if 'UnknownType Details' in item %}
+	<h3>Details of Samples of Unknown Type</h3>
+	{{ item['UnknownType Details'].to_html() }}
+{% endif %}
+
+{% if 'NoMetadata Details' in item %}
+	<h3>Details of Samples with no Corresponding Metadata Information</h3>
+	{{ item['NoMetadata Details'].to_html() }}
+{% endif %}	
+
+{% if 'NotAcquired Details' in item %}
+	<h3>Details of Samples Missing from Acquisition/Import (and not already excluded)</h3>
+	{{ item['NotAcquired Details'].to_html() }}
+{% endif %}
+</div>
+{%- endmacro %}

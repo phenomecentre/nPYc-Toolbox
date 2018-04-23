@@ -16,7 +16,7 @@ from matplotlib.patches import Rectangle
 import os
 import re
 
-def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, colourByDetectorVoltage=False, logy=False, title='', savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, colourByDetectorVoltage=False, logy=False, title='', withExclusions=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	Visualise TIC for all or a subset of features coloured by either dilution value or detector voltage. With the option to shade by batch.
 
@@ -29,6 +29,7 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	:param bool colourByDetectorVoltage: If ``True`` colours points by detector voltage, else colours by dilution
 	:param bool logy: If ``True`` plot y on a log scale
 	:param str title: Title for the plot
+	:param bool withExclusions: If ``False``, discard masked features from the sum
 	:param savePath: If ``None`` plot interactively, otherwise save the figure to the path specified
 	:type savePath: None or str
 	:param str figureFormat: If saving the plot, use this format
@@ -65,6 +66,10 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	tempFeatureMask = numpy.sum(numpy.isfinite(msData.intensityData), axis=0)
 	tempFeatureMask = tempFeatureMask < msData.intensityData.shape[0]
 	tempFeatureMask = (tempFeatureMask==False)
+
+
+	if withExclusions:
+		tempFeatureMask = numpy.logical_and(tempFeatureMask, msData.featureMask)
 
 	# Define sample types
 	SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)

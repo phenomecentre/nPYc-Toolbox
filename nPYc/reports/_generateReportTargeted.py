@@ -86,11 +86,13 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
     # Create directory to save output
     if output:
-
-        reportTypeCase = reportType.title().replace(" ", "")
-        reportTypeCase = reportTypeCase[0].lower() + reportTypeCase[1:]
-        saveDir = os.path.join(output, 'graphics', 'report_' + reportTypeCase)
-
+        reportTypeCases = {'feature summary': 'featureSummary',
+                           'merge loq assessment': 'mergeLoqAssessment',
+                           'final report': 'finalSummary'}
+        #reportTypeCase = reportType.title().replace(" ", "")
+        #reportTypeCase = reportTypeCase[0].lower() + reportTypeCase[1:]
+        graphicsPath = os.path.join(output, 'graphics')
+        saveDir = os.path.join(graphicsPath,  'report_' + reportTypeCases[reportType])
         # If directory exists delete directory and contents
         if os.path.exists(saveDir):
             shutil.rmtree(saveDir)
@@ -696,11 +698,17 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
             tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
             tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
-            if output:
-                item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=saveDir)
-            else:
-                item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=output)
+            if pcaModel:
+                if output:
+                    pcaPath = output
+                else:
+                    pcaPath = None
+                pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=6, output=pcaPath, fileNamePrefix='')
 
+            #if output:
+            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=saveAs)
+            #else:
+            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=output)
 
 
         ## Add final tables of excluded/missing study samples
@@ -738,13 +746,12 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('generateReportTargeted.html')
-        filename = os.path.join(output, tData.name + '_report_' + reportTypeCase + '.html')
-
-        f = open(filename,'w')
-        f.write(template.render(item=item, version=version, graphicsPath='/report_' + reportTypeCase))
+        filename = os.path.join(output, tData.name + '_report_' + reportTypeCases[reportType] + '.html')
+        f = open(filename, 'w')
+        f.write(template.render(item=item, version=version, graphicsPath=graphicsPath, pcaPlots=pcaModel))
         f.close()
 
-        copyBackingFiles(toolboxPath(), saveDir)
+        copyBackingFiles(toolboxPath(), graphicsPath)
 
 
 def _postMergeLOQDataset(tData):

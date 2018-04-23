@@ -248,12 +248,15 @@ def plotLOQRunOrder(targetedData, addCalibration=True, compareBatch=True, title=
         p_ULOQ = ax.bar(batch_data[i]['x'], batch_data[i]['y_ULOQ'], common_width, bottom=height_cumulative, color=color_ULOQ)
         height_cumulative += batch_data[i]['y_ULOQ']
         # SP
-        p_SP = ax.bar(batch_data[i]['x_SP'], batch_data[i]['y_SP'], common_width, fill=False, edgecolor='black', hatch='/')
+        edgecolor_SP = ['black'] * len(batch_data[i]['x_SP'])
+        p_SP = ax.bar(batch_data[i]['x_SP'], batch_data[i]['y_SP'], common_width, fill=False, edgecolor=edgecolor_SP, hatch='/')
         # ER
-        p_ER = ax.bar(batch_data[i]['x_ER'], batch_data[i]['y_ER'], common_width, fill=False, edgecolor='black', hatch='\\')
+        edgecolor_ER = ['black'] * len(batch_data[i]['x_ER'])
+        p_ER = ax.bar(batch_data[i]['x_ER'], batch_data[i]['y_ER'], common_width, fill=False, edgecolor=edgecolor_ER, hatch='\\')
         # Calibration
         if addCalibration:
-            p_calib = ax.bar(batch_data[i]['x_calib'], batch_data[i]['y_calib'], common_width, color=color_calib, edgecolor=color_calib)
+            edgecolor_calib = [color_calib] * len(batch_data[i]['x_calib'])
+            p_calib = ax.bar(batch_data[i]['x_calib'], batch_data[i]['y_calib'], common_width, color=color_calib, edgecolor=edgecolor_calib)
 
         # Annotate Figure
         # Annotate axis

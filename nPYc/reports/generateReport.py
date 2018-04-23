@@ -67,8 +67,8 @@ def generateReport(data, reportType, output=None, **kwargs):
 			os.makedirs(output)
 		if not os.path.exists(os.path.join(output, 'graphics')):
 			os.makedirs(os.path.join(output, 'graphics'))
-			
-			
+
+
 	# Generate sample summary report  
 	if reportType.lower() == 'sample summary':
 		_generateSampleReport(data, output=output, **kwargs)

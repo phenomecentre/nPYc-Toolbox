@@ -1,6 +1,9 @@
 {% extends "base_QC.html" %}
 
-{% block title %}NPC Assay Summary Report For: {{ item.Name}}{% endblock %}
+{% import 'pcaReport.html' as pca %}
+{% import 'sampleReportChunk.html' as sampleReport %}
+
+{% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
 {% block content %}
 
@@ -11,27 +14,23 @@
 	<p>{{ item['Nsamples'] }} samples</p>
 	<p></p>
 </div>
-<div class='content'>
-	<p>{{ item['points'] }} points</p>
-	<p></p>
-</div>
 
 <!--Summary of samples acquired________________________________________________________________________________________________________________-->
 <h2>Sample Summary</h2>
-{% if 'SampleSummaryTable' in item %}    
-    <h3>Sample Summary Table</h3>
-    {{ item['SampleSummaryTable'].to_html() }}
-{% endif %}    
+{% if 'SampleSummaryTable' in item %}
+	<h3>Sample Summary Table</h3>
+	{{ item['SampleSummaryTable']['Acquired'].to_html() }}
+{% endif %}
 
 
 <!--Sample Acquisition Structure_______________________________________________________________________________________________________-->
 <h2>Sample Acquisition Structure</h2>
 <div class='content'>
-	<p>Samples acquired between {{ item['toA_from'] }} and {{ item['toA_to'] }}</p>
+	<p>Samples acquired between {{ item['toA_from'] }} and {{ item['toA_to'] }}.</p>
 	<p></p>
 </div>
 <div class='content'>
-	<p>Samples referenced to following peak: {{ item['alignTo'] }}, aligned and interpolated to {{ item['points'] }} points</p>
+	<p>Samples referenced to: {{ attributes['calibrateTo'] }} ppm, and aligned and interpolated onto a common scale of {{ attributes['variableSize'] }} points</p>
 	<p></p>
 </div>
 
@@ -39,57 +38,55 @@
 
 <!--info on whats been done______________________________________________________________________________________________________________-->
 <h2>Data Structure Summary</h2>
-<p>Data acquired based on the following structure:</p>
+<p>Data processed with the following parameters:</p>
 <div class='table1'>
 	<table>
-	  <tr>
-	    <th></th>
-	    <th>Applied</th>
-	  </tr>
-	  <tr>
-			<td>File Import</td>
-			<td>Yes</td>
-		</tr>
-		<tr>
-			<td>Baseline</td>
-			<td>Yes</td>
-		</tr>
-		<tr>
-			<td>Water peak</td>
-			<td>Yes</td>
-		</tr>
-		<tr>
-			<td>Peak width fail threshold in Hz (>)</td>
-			<td>{{item['PWFailThreshold']}}</td>
-		</tr>
-		<tr>
-			<td>Baseline alpha</td>
-			<td>{{item['baseline_alpha']}}</td>
-		</tr>
-		<tr>
-			<td>Baseline threshold</td>
-			<td>{{item['baseline_threshold']}}</td>
-		</tr>
-		<tr>
-			<td>Baseline low region to</td>
-			<td>{{item['baselineLow_regionTo']}}</td>
-		</tr>
-		<tr>
-			<td>Baseline high region from</td>
-			<td>{{item['baselineHigh_regionFrom']}}</td>
-		</tr>
-		<tr>
-			<td>Water peak cut region A</td>
-			<td>{{item['waterPeakCutRegionA']}}</td>
-		</tr>
-		<tr>
-			<td>Water peak cut region B</td>
-			<td>{{item['waterPeakCutRegionB']}}</td>
-		</tr>
-		<tr>
-			<td>Peak used for line width calculation</td>
-			<td>{{item['LWpeakRange']}}</td>
-		</tr>
+	 <tr>
+		<th></th>
+		<th>Applied</th>
+	</tr>
+	{% if 'baselineCheckRegion' in attributes %}
+	<tr>
+		<td>Baseline checked</td>
+		<td>Yes</td>
+	</tr>
+	<tr>
+		<td>Baseline check regions</td>
+		<td>{{ attributes['baselineCheckRegion'] }}</td>
+	</tr>
+	{% endif %}
+	{% if 'waterPeakCheckRegion' in attributes %}
+	<tr>
+		<td>Water resonance checked</td>
+		<td>Yes</td>
+	</tr>
+	<tr>
+		<td>Water Resonance check regions</td>
+		<td>{{ attributes['waterPeakCheckRegion'] }}</td>
+	</tr>
+	{% endif %}
+	{% if 'PWFailThreshold' in attributes %}
+	<tr>
+		<td>Samples with excesive line width removed</td>
+		<td>Yes</td>
+	</tr>
+	<tr>
+		<td>Line width threshold</td>
+		<td>{{ attributes['PWFailThreshold'] }}</td>
+	</tr>
+	<tr>
+		<td>Peak used for line width calculation</td>
+		<td>{{ attributes['LWpeakRange'] }}</td>
+	</tr>
+	<tr>
+		<td>Multiplicity of line width peak</td>
+		<td>{{ attributes['LWpeakMultiplicity'] }}</td>
+	</tr>
+	{% endif %}
+	<tr>
+		<td>Spectral regions automatically removed</td>
+		<td>{{ attributes['exclusionRegions'] }}</td>
+	</tr>
 	</table>
 </div>
 <!--BL *& PW plots______________________________________________________________________________________________________________-->
@@ -98,7 +95,6 @@
 <div class='figure1'>
 	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Peak Width</p>
 	<img src="{{ item['peakWidthBoxplot'] }}" alt="Peak Width plot.">
-	<h4> {{ item['fig1SummaryText'] }}</h4>
 </div>
 <div class='figure2'>
 	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Baseline low and high</p>
@@ -108,96 +104,16 @@
 <div class='figure3'>
 	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Water peak low and high</p>
 	<img src="{{ item['finalFeatureBLWPplots3']}}" alt="Water peak plot.">
-	<h4> {{ item['fig2to3SummaryText'] }}</h4>
 </div>
-<div class='figure4'>
-	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Feature Intensity Histogram for all samples in final dataset.</p>
-	<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature Intensity Histogram for all samples in final dataset.">
-</div>	
-{% if 'QCscores' in item %}
-	<!--Figure 3: PCA scores plots coloured by sample type.-->
-	<p class="caption"><span class="heading">Figure&nbsp;5.</span> PCA scores plots coloured by sample type.</p>
-	{% for key, value in item['QCscores'].items() %}
-    	<p>{{ key|e }}</p>
-		<div class='figure'>
-			<img src="{{ value|e }}" alt="PCA scores plots coloured by sample type.">	
-		</div>
-	{% endfor %}
+
+<!--Multivariate -->
+{% if pcaPlots %}
+	{{ pca.basicPCAReport(pcaPlots) }}
 {% endif %}
 
-{% if 'QCloadings' in item %}
-	<!--Figure 7: PCA loadings plots.-->
-	<p class="caption"><span class="heading">Figure&nbsp;6.</span> PCA loadings plots.</p>
-	{% for key, value in item['QCloadings'].items() %}
-    	<p>{{ key|e }}</p>
-		<div class=‘figure’>
-			<img src="{{ value|e }}" alt="PCA loadings plots.">	
-		</div>
-	{% endfor %}
+<!--Samples -->
+{% if sampleSummary %}
+	{{ sampleReport.sampleReport(sampleSummary) }}
 {% endif %}
 
-{% if 'Undefined Details' in sampleSummary %}
-	<h3>Details of Samples of Unknown Type</h3>
-	{{ sampleSummary['Undefined Details'].to_html() }}
-{% endif %}	
-
-{% if 'NoParam Details' in sampleSummary %}
-	<h3>Details of Samples Missing Parameters</h3>
-	{{ sampleSummary['NoParam Details'].to_html() }}
-{% endif %}	
-
-{% if 'Excluded Details' in sampleSummary %}
-	<h3>Samples excluded on analytical criteria</h3><!--ie those marked with (_x)-->
-	{{ sampleSummary['Excluded Details'].to_html() }}
-{% endif %}	
-
-{% if 'LIMSmissing Details' in sampleSummary %}
-	<h3>Details of Samples Marked as Missing in LIMS (i.e., not expected)</h3>
-	{{ sampleSummary['LIMSmissing Details'].to_html() }}
-{% endif %}	
-
-{% if 'NoLIMS Details' in sampleSummary %}
-	<h3>Details of Samples with no Corresponding LIMS Information</h3>
-	{{ sampleSummary['NoLIMS Details'].to_html() }}
-{% endif %}	
-
-{% if 'NoSubjectInfo Details' in sampleSummary %}
-	<h3>Details of Samples with no Corresponding Subject Information</h3>
-	{{ sampleSummary['NoSubjectInfo Details'].to_html() }}
-{% endif %}	
-
-
-
-
-
-
-
-
-<!--missing from acquisition but in file-->
-
-{% if 'NotAcquired Details' in sampleSummary %}
-	<h2>Summary of Samples Missing from Acquisition</h2>
-	{{ sampleSummary['NotAcquired Details'].to_html() }}
-{% endif %}	
-
-
-
-<!--THIS IS FROM MS-- CAN DELETE ALL IF NOT NEEDED CHECK!! Samples missing from acquisition_______________________________________________________________________________________________-->
-{% if 'SamplesMissingInfo' in sampleSummary %}
-	<h2>Samples Missing from Acquisition</h2>
-{% elif 'SamplesExcludedInfo' in sampleSummary %}
-	<h2>Samples Missing from Acquisition</h2>
-{% endif %}	
-
-<!--Summary of samples missing from acquisition-->
-{% if 'SamplesMissingInfo' in sampleSummary %}
-	<h3>Samples unavailable for acquisition</h3>
-	{{ item['SamplesMissingInfo'].to_html() }}
-{% endif %}	
-
-{% if 'SamplesExcludedInfo' in sampleSummary %}	
-	<h3>Samples excluded on analytical criteria</h3>
-	{{ item['SamplesExcludedInfo'].to_html() }}
-{% endif %}	
- 
 {% endblock %}

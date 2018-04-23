@@ -1,3 +1,6 @@
 include COPYING.txt
-recursive-include docs *.html *.css *.png *.gif
-recursive-include nPYc *.html *.css *.json *.csv *.txt
+
+include nPYc/Templates/toolbox_logo.png
+include nPYc/Templates/npc-main.css
+
+recursive-include nPYc *.html *.json *.csv *.txt 

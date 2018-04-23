@@ -218,7 +218,9 @@ class TargetedDataset(Dataset):
             if not validDataset['BasicTargetedDataset']:
                 raise ValueError('Import Error: The imported dataset does not satisfy to the Basic TargetedDataset definition')
         self.Attributes['Log'].append([datetime.now(),'%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
-
+        # Check later
+        if 'Metadata Available' not in self.sampleMetadata:
+            self.sampleMetadata['Metadata Available'] = False
 
     @property
     def rsdSP(self):
@@ -541,6 +543,7 @@ class TargetedDataset(Dataset):
         peakArea.columns                   = featureMetadata['Feature Name'].values.tolist()
         peakConcentrationDeviation.columns = featureMetadata['Feature Name'].values.tolist()
         peakRT.columns                     = featureMetadata['Feature Name'].values.tolist()
+        sampleMetadata['Metadata Available'] = False
 
         return sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT
 
@@ -1125,6 +1128,7 @@ class TargetedDataset(Dataset):
         self.sampleMetadata.drop('Order', axis=1, inplace=True)
         # initialise the Batch to 1
         self.sampleMetadata['Batch'] = [1] * self.sampleMetadata.shape[0]
+        self.sampleMetadata['Metadata Available'] = False
 
         ## Initialise expectedConcentration
         self.expectedConcentration = pandas.DataFrame(None, index=list(self.sampleMetadata.index), columns=self.featureMetadata['Feature Name'].tolist())
@@ -1133,6 +1137,7 @@ class TargetedDataset(Dataset):
         self.calibration = dict()
         self.calibration['calibIntensityData'] = numpy.ndarray((0, self.featureMetadata.shape[0]))
         self.calibration['calibSampleMetadata'] = pandas.DataFrame(None, columns=self.sampleMetadata.columns)
+        self.calibration['calibSampleMetadata']['Metadata Available'] = False
         self.calibration['calibFeatureMetadata'] = pandas.DataFrame({'Feature Name': self.featureMetadata['Feature Name'].tolist()})
         self.calibration['calibExpectedConcentration'] = pandas.DataFrame(None, columns=self.featureMetadata['Feature Name'].tolist())
 
@@ -2040,8 +2045,9 @@ class TargetedDataset(Dataset):
         # handle the dilution due to method... These lines are left here commented - as hopefully this will be handled more
         # elegantly through the intensityData getter
         # Export dataset...
-        #self.intensityData = self.intensityData * (100/self.sampleMetadata['Dilution']).values[:, numpy.newaxis]
-        super().exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
+        tmpData = copy.deepcopy(self)
+        tmpData._intensityData = tmpData._intensityData * (100/tmpData.sampleMetadata['Dilution']).values[:, numpy.newaxis]
+        super(TargetedDataset, tmpData).exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
 
 
     def _exportCSV(self, destinationPath, escapeDelimiters=False):
@@ -3179,7 +3185,7 @@ class TargetedDataset(Dataset):
         fileNameParts = self.sampleMetadata['Sample File Name'].str.extract(baseNameParser, expand=False)
 
         # Deal with badly ordered exclusions
-        fileNameParts['exclusion'].loc[fileNameParts['exclusion2'].isnull() == False] =  fileNameParts['exclusion2'].loc[fileNameParts['exclusion2'].isnull() == False]
+        fileNameParts['exclusion'].loc[fileNameParts['exclusion2'].isnull() == False] = fileNameParts['exclusion2'].loc[fileNameParts['exclusion2'].isnull() == False]
         fileNameParts.drop('exclusion2', axis=1, inplace=True)
 
         # Pass masks into enum fields

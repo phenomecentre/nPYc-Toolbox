@@ -32,8 +32,12 @@ def plotCalibration(nmrData, savePath=None, figureFormat='png', dpi=72, figureSi
 	# 	else:
 	# 		ax.plot(localPPM, nmrData.intensityData[i, localPPM], color=(0.05,0.05,0.8))
 
-	ax.axvline(nmrData.Attributes['calibrateTo'], color='k', linestyle='--')
+	for i in range(nmrData.noSamples):
 
+		if nmrData.sampleMetadata.loc[i, 'CalibrationFail']:
+			ax.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.8, 0.05, 0.01, 0.7))
+
+	ax.axvline(nmrData.Attributes['calibrateTo'], color='k', linestyle='--')
 	variance = patches.Patch(color=(0,0.4,.3,0.2), label='Variance about the median')
 	plt.legend(handles=[variance])
 
@@ -59,14 +63,30 @@ def plotCalibrationInteractive(nmrData):
 	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, nmrData.Attributes['ppmSearchRange'], percentiles=(5, 95))
 
 	data = []
-	failedCalculation = []
-	failedCutoff = []
-
+	failed = []
 	##
 	# Plot overall dataset variance
 	##
 	trace = plotlyRangeHelper(localPPM, meanSpectrum, lowerPercentile, upperPercentile)
 	data = data + trace
+
+	for i in range(nmrData.noSamples):
+
+		if nmrData.sampleMetadata.loc[i, 'CalibrationFail']:
+
+			trace = go.Scatter(
+				x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],
+				y = nmrData.intensityData[i, ppmMask],
+				line = dict(
+					color = ('rgb(12, 12, 205)')
+				),
+				text = '%s' % (nmrData.sampleMetadata.loc[i, 'Sample File Name']),
+				hoverinfo = 'text',
+				showlegend = False
+			)
+			failed.append(trace)
+
+	data = data + failed
 
 	trace = go.Scatter(
 		x = [nmrData.Attributes['calibrateTo'], nmrData.Attributes['calibrateTo']],

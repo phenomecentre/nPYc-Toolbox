@@ -1,0 +1,52 @@
+{% extends "base_QC.html" %}
+
+{% block title %}Batch Correction Summary Report For: {{ item.Name}}{% endblock %}
+
+{% block content %}
+
+<!-- Batch correction summary report  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<h3>Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type)</h3>
+<h3>Pre-correction</h3>
+<div class='figure'>
+	<img src="{{ item.FeatureIntensityFigurePRE}}" alt="Pre-correction feature intensity histogram.">
+</div>
+
+<h3>Post-correction</h3>
+<div class='figure'>
+	<img src="{{ item.FeatureIntensityFigurePOST}}" alt="Post-correction feature intensity histogram.">
+</div>
+
+<h3>Figure 2: Sample Total Ion Count (TIC) and distribtion (coloured by sample type)</h3>
+<h3>Pre-correction</h3>
+<div class='figure'>
+	<img src="{{ item.TicPRE}}" alt="Pre-correction TIC for all samples and all features.">
+</div>
+
+<h3>Post-correction</h3>
+<div class='figure'>
+	<img src="{{ item.TicPOST}}" alt="Post-correction TIC for all samples and all features.">
+</div>
+
+<h3>Figure 3: Histogram of Residual Standard Deviation (RSD) in study pool (SP) samples, segmented by abundance percentiles</h3>
+<h3>Pre-correction</h3>
+<div class='figure'>
+	<img src="{{ item.RsdByPercFigurePRE}}" alt="Pre-correction histogram of RSD in study pool (SP) samples.">
+</div>
+
+<h3>Post-correction</h3>
+<div class='figure'>
+	<img src="{{ item.RsdByPercFigurePOST}}" alt="Post-correction histogram of RSD in study pool (SP) samples.">
+</div>
+
+<h3>Figure 4: RSD distribution for all samples and all features in dataset (by sample type)</h3>
+<h3>Pre-correction</h3>
+<div class='figure'>
+	<img src="{{ item.RSDdistributionFigurePRE}}" alt="Pre-correction RSD distribution.">
+</div>
+
+<h3>Post-correction</h3>
+<div class='figure'>
+	<img src="{{ item.RSDdistributionFigurePOST}}" alt="Post-correction RSD distribution.">
+</div>
+
+{% endblock %}

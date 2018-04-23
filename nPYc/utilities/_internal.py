@@ -8,7 +8,7 @@ def _copyBackingFiles(toolboxPath, output):
 
 	# And finaly copy the css over, we're not checking for existance,as we always want the latest moved over.
 	shutil.copy(os.path.join(toolboxPath, 'Templates', 'npc-main.css'), os.path.join(output, 'npc-main.css'))
-	shutil.copy(os.path.join(toolboxPath, 'Templates', 'oie_transparent.png'), os.path.join(output, 'oie_transparent.png'))
+	shutil.copy(os.path.join(toolboxPath, 'Templates', 'toolbox_logo.png'), os.path.join(output, 'toolbox_logo.png'))
 
 
 def _vcorrcoef(X, Y, method='pearson', sampleMask=None, featureMask=None):

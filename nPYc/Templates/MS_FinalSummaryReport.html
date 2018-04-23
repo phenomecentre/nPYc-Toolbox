@@ -1,6 +1,9 @@
 {% extends "base_QC.html" %}
 
-{% block title %}NPC Assay Summary Report For: {{ item.Name}}{% endblock %}
+{% import 'pcaReport.html' as pca %}
+{% import 'sampleReportChunk.html' as sampleReport %}
+
+{% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
 {% block content %}
 
@@ -18,7 +21,7 @@
 
 <!--Summary of samples in final dataset-->
 <h3>Sample Summary Table</h3>
-{{ item['SampleSummaryTable'].to_html() }}
+{{ item.sampleSummary['Acquired'].to_html() }}
 
 <div class='content'>
 	<p>*Details of any missing samples given at the end of the report</p>
@@ -64,42 +67,21 @@
 <!--Figure 4: RSD for all samples and features passing selection-->
 <div class='figure'>
 	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).</p>
-	<img src="{{ item['finalRSDhist'] }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
+	<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
 </div>
 
 <!--Figure 5: Ion map of all features (coloured by log median intensity)-->
 <div class='figure'>
 	<p class="caption"><span class="heading">Figure&nbsp;5.</span> Ion map of all features (coloured by log median intensity).</p>
-	<img src="{{ item.IonMap}}" alt="Ion map of all features (coloured by log median intensity).">
+	<img src="{{ item.finalIonMap}}" alt="Ion map of all features (coloured by log median intensity).">
 </div>
 
-{% if 'QCscores' in item %}
-	<!--Figure 6: PCA scores plots coloured by sample type.-->
-	<p class="caption"><span class="heading">Figure&nbsp;6.</span> PCA scores plots coloured by sample type.</p>
-	{% for key, value in item['QCscores'].items() %}
-    	<p>{{ key|e }}</p>
-		<div class='figure'>
-			<img src="{{ value|e }}" alt="PCA scores plots coloured by sample type.">	
-		</div>
-	{% endfor %}
+<!--Multivariate -->
+{% if pcaPlots %}
+	{{ pca.basicPCAReport(pcaPlots) }}
 {% endif %}
 
-<!--Samples missing from acquisition_______________________________________________________________________________________________-->
-{% if 'SamplesMissingInfo' in item %}
-	<h2>Samples Missing from Acquisition</h2>
-{% elif 'SamplesExcludedInfo' in item %}
-	<h2>Samples Missing from Acquisition</h2>
-{% endif %}	
+<!--Samples -->
+{{ sampleReport.sampleReport(item.sampleSummary) }}
 
-<!--Summary of samples missing from acquisition-->
-{% if 'SamplesMissingInfo' in item %}
-	<h3>Samples unavailable for acquisition</h3>
-	{{ item['SamplesMissingInfo'].to_html() }}
-{% endif %}	
-
-{% if 'SamplesExcludedInfo' in item %}	
-	<h3>Samples excluded on analytical criteria</h3>
-	{{ item['SamplesExcludedInfo'].to_html() }}
-{% endif %}	
- 
 {% endblock %}
