@@ -218,7 +218,9 @@ class TargetedDataset(Dataset):
             if not validDataset['BasicTargetedDataset']:
                 raise ValueError('Import Error: The imported dataset does not satisfy to the Basic TargetedDataset definition')
         self.Attributes['Log'].append([datetime.now(),'%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
-
+        # Check later
+        if 'Metadata Available' not in self.sampleMetadata:
+            self.sampleMetadata['Metadata Available'] = False
 
     @property
     def rsdSP(self):
@@ -3180,7 +3182,7 @@ class TargetedDataset(Dataset):
         fileNameParts = self.sampleMetadata['Sample File Name'].str.extract(baseNameParser, expand=False)
 
         # Deal with badly ordered exclusions
-        fileNameParts['exclusion'].loc[fileNameParts['exclusion2'].isnull() == False] =  fileNameParts['exclusion2'].loc[fileNameParts['exclusion2'].isnull() == False]
+        fileNameParts['exclusion'].loc[fileNameParts['exclusion2'].isnull() == False] = fileNameParts['exclusion2'].loc[fileNameParts['exclusion2'].isnull() == False]
         fileNameParts.drop('exclusion2', axis=1, inplace=True)
 
         # Pass masks into enum fields
