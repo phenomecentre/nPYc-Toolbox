@@ -1814,6 +1814,7 @@ class test_targeteddataset_import_targetlynx_getdatasetfromxml(unittest.TestCase
 		# Feature3 Study sample has analcon = '' to trigger Try/Except ValueError
 		expectedSampleMetadata = pandas.DataFrame({'Sample File Name':['UnitTest4_targeted_file_001','UnitTest4_targeted_file_002'],'TargetLynx Sample ID':[1,2],'MassLynx Row ID':[1,2],'Sample Name':['Calibration 1','Study Sample 1'],'Sample Type':['Standard','Analyte'],'Acqu Date':['11-Sep-16','11-Sep-16'],'Acqu Time':['02:14:32','09:23:02'],'Vial':['1:A,1','1:A,2'],'Instrument':['XEVO-TQS#UnitTest','XEVO-TQS#UnitTest']})
 		expectedSampleMetadata['Sample Base Name'] = expectedSampleMetadata['Sample File Name']
+		expectedSampleMetadata['Metadata Available'] = False
 		expectedFeatureMetadata = pandas.DataFrame({'Feature Name':['Feature1-IS','Feature2','Feature3'],'TargetLynx Feature ID':[1,2,3],'TargetLynx IS ID':['','1','1']})
 		expectedIntensityData = numpy.array([[48.64601435, 48.7244571, 48.76854933],[20.60696312,273.85551508,359.219531]])
 		expectedExpectedConcentration = pandas.DataFrame(numpy.array([[50., 50., 50.],[60.,numpy.nan,numpy.nan]]), columns=expectedFeatureMetadata['Feature Name'].values)
@@ -2854,6 +2855,7 @@ class test_targeteddataset_read_data_from_targetlynx(unittest.TestCase):
 		self.expected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001', 'UnitTest4_targeted_file_002'],'TargetLynx Sample ID': [1, 2], 'MassLynx Row ID': [1, 2],'Sample Name': ['Calibration 1', 'Study Sample 1'], 'Sample Type': ['Standard', 'Analyte'],'Acqu Date': ['11-Sep-16', '11-Sep-16'], 'Acqu Time': ['02:14:32', '09:23:02'], 'Vial': ['1:A,1', '1:A,2'],'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest'], 'Calibrant': [True, False],'Study Sample': [False, True], 'Blank': [False, False], 'QC': [False, False], 'Other': [False, False],'Acquired Time': [datetime(2016, 9, 11, 2, 14, 32),datetime(2016, 9, 11, 9, 23, 2)], 'Run Order': [0, 1],'Batch': [1, 1],'AssayRole': [numpy.nan,numpy.nan],'SampleType': [numpy.nan,numpy.nan],'Dilution': [numpy.nan,numpy.nan],'Correction Batch': [numpy.nan,numpy.nan],'Sampling ID': [numpy.nan,numpy.nan],'Exclusion Details': [numpy.nan,numpy.nan]})
 		self.expected['sampleMetadata']['Sample Base Name'] = self.expected['sampleMetadata']['Sample File Name']
 		self.expected['sampleMetadata']['Acquired Time'] = self.expected['sampleMetadata']['Acquired Time'].astype(datetime)
+		self.expected['sampleMetadata']['Metadata Available'] = False
 		self.expected['featureMetadata'] = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2'], 'TargetLynx Feature ID':[1, 2], 'TargetLynx IS ID': ['', '1'],'IS':[True, False], 'calibrationEquation':['', '((area * responseFactor)-b)/a'],'calibrationMethod': [CalibrationMethod.noIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue], 'unitCorrectionFactor': [1.,1.], 'Unit': ['noUnit','pg/uL'], 'Cpd Info': ['uM','fg/uL'], 'LLOQ': [25., 10.], 'Noise (area)': [38.95, 14.7], 'ULOQ': [1000., 2500.], 'a': [0.997431, 1.04095], 'another column': [numpy.nan, 'something'],'b': [-2.19262, numpy.nan], 'r': [0.997931, 0.999556], 'r2': [0.995866, 0.999113]})
 		self.expected['featureMetadata']['IS'] = numpy.array([True, False], dtype=object)
 		self.expected['intensityData'] = numpy.array([[48.64601435, 48.7244571], [20.60696312, 273.85551508]])
@@ -2867,6 +2869,7 @@ class test_targeteddataset_read_data_from_targetlynx(unittest.TestCase):
 		self.expected['peakRT'] = pandas.DataFrame(numpy.array([[11.4263000488, 11.4921998978], [11.4306001663, 11.5010004044]]), columns=self.expected['featureMetadata']['Feature Name'].values)
 		# Excluded
 		self.expected['sampleMetadataExcluded'] = [self.expected['sampleMetadata'][['Sample File Name', 'Sample Base Name', 'TargetLynx Sample ID', 'MassLynx Row ID', 'Sample Name', 'Sample Type', 'Acqu Date', 'Acqu Time', 'Vial', 'Instrument']]]
+		self.expected['sampleMetadataExcluded'][0]['Metadata Available'] = False
 		featureMetadataExcluded = pandas.DataFrame({'Feature Name': ['Feature3'], 'TargetLynx Feature ID': [3], 'TargetLynx IS ID': ['1'], 'IS': [numpy.nan],'calibrationEquation': [numpy.nan], 'calibrationMethod': [numpy.nan], 'compoundID': [numpy.nan], 'compoundName': [numpy.nan], 'quantificationType': [numpy.nan],'unitCorrectionFactor': [numpy.nan], 'Unit': [numpy.nan], 'Cpd Info': [numpy.nan],'LLOQ': [numpy.nan], 'Noise (area)': [numpy.nan], 'ULOQ': [numpy.nan], 'a': [numpy.nan],'another column': [numpy.nan], 'b': [numpy.nan], 'r': [numpy.nan], 'r2': [numpy.nan]})
 		featureMetadataExcluded.index = [2]
 		featureMetadataExcluded['IS'] = numpy.array([numpy.nan], dtype=object)
@@ -3941,6 +3944,7 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 		# Expected TargetedDataset
 		self.expected = dict()
 		self.expected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_002'],'TargetLynx Sample ID': [2], 'MassLynx Row ID': [2],'Sample Name': ['Study Sample 1'], 'Sample Type': ['Analyte'],'Acqu Date': ['11-Sep-16'], 'Acqu Time': ['09:23:02'], 'Vial': ['1:A,2'],'Instrument': ['XEVO-TQS#UnitTest'], 'Acquired Time': [datetime(2016, 9, 11, 9, 23, 2)], 'Run Order': [1],'Batch': [1],'AssayRole': [numpy.nan],'SampleType': [numpy.nan],'Dilution': [numpy.nan],'Correction Batch': [numpy.nan],'Sampling ID': [numpy.nan],'Exclusion Details': [numpy.nan]})
+		self.expected['sampleMetadata']['Metadata Available'] = False
 		self.expected['sampleMetadata']['Sample Base Name'] = self.expected['sampleMetadata']['Sample File Name']
 		self.expected['sampleMetadata']['Acquired Time'] = self.expected['sampleMetadata']['Acquired Time'].astype(datetime)
 		self.expected['featureMetadata'] = pandas.DataFrame({'Feature Name': ['Feature2','Feature3'], 'TargetLynx Feature ID':[2, 3], 'calibrationEquation':['((area * responseFactor)-b)/a', '((area * responseFactor)-b)/a'],'calibrationMethod': [CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantOwnLabeledAnalogue], 'unitCorrectionFactor': [1.,1.], 'Unit': ['pg/uL','pg/uL'], 'Cpd Info': ['fg/uL','fg/uL'], 'LLOQ': [300., 25.], 'Noise (area)': [14.7, 25.6], 'ULOQ': [2500., 350.], 'a': [1.04095, 1.19658], 'another column': ['something', 'something else'],'b': [-1.78935, -1.5875], 'r': [0.999556, 0.999], 'r2': [0.999113, 0.98995], 'extID1': ['F2','F3'],'extID2': ['ID2','ID3']})
@@ -3951,6 +3955,7 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 		self.expected['calibSampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001'], 'TargetLynx Sample ID': [1], 'MassLynx Row ID': [1], 'Sample Name': ['Calibration 1'], 'Sample Type': ['Standard'], 'Acqu Date': ['11-Sep-16'], 'Acqu Time': ['02:14:32'], 'Vial': ['1:A,1'], 'Instrument': ['XEVO-TQS#UnitTest'], 'Calibrant': [True], 'Study Sample': [False], 'Blank': [False], 'QC': [False], 'Other': [False], 'Acquired Time': [datetime(2016, 9, 11, 2, 14, 32)], 'Run Order': [0], 'Batch': [1], 'AssayRole': [numpy.nan], 'SampleType': [numpy.nan], 'Dilution': [numpy.nan], 'Correction Batch': [numpy.nan], 'Sampling ID': [numpy.nan], 'Exclusion Details': [numpy.nan]})
 		self.expected['calibSampleMetadata']['Sample Base Name'] = self.expected['calibSampleMetadata']['Sample File Name']
 		self.expected['calibSampleMetadata']['Acquired Time'] = self.expected['calibSampleMetadata']['Acquired Time'].astype(datetime)
+		self.expected['calibSampleMetadata']['Metadata Available'] = False
 		self.expected['calibFeatureMetadata'] = copy.deepcopy(self.expected['featureMetadata'])
 		self.expected['calibFeatureMetadata']['IS'] = numpy.array([False, False])
 		self.expected['calibFeatureMetadata']['TargetLynx IS ID'] = ['1','1']
@@ -3963,6 +3968,7 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 		self.expected['calibPeakRT'] = pandas.DataFrame(numpy.array([[11.4921998978, 11.63409996]]), columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
 		# Excluded
 		self.expected['sampleMetadataExcluded'] = [copy.deepcopy(self.expected['sampleMetadata'])]#[['Sample File Name', 'Sample Base Name', 'TargetLynx Sample ID', 'MassLynx Row ID', 'Sample Name', 'Sample Type', 'Acqu Date', 'Acqu Time', 'Vial', 'Instrument', ]]]
+		#self.expected['sampleMetadataExcluded'][0]['Metadata Available'] = False
 		self.expected['featureMetadataExcluded'] = [pandas.DataFrame({'Feature Name': ['Feature1IS'], 'TargetLynx Feature ID':[1], 'TargetLynx IS ID':[''], 'IS': True, 'calibrationEquation':[''],'calibrationMethod': [CalibrationMethod.noIS], 'quantificationType': [QuantificationType.IS], 'unitCorrectionFactor': [1.], 'Unit': ['noUnit'], 'Cpd Info': ['uM'], 'LLOQ': [numpy.nan], 'Noise (area)': [numpy.nan], 'ULOQ': [numpy.nan], 'a': [numpy.nan], 'b': [numpy.nan], 'r': [0.997931], 'r2': [0.995866], 'extID1': ['F1'], 'extID2': ['ID1']})]
 		self.expected['featureMetadataExcluded'][0]['another column'] =  numpy.array([numpy.nan], dtype=object)
 		self.expected['intensityDataExcluded'] = [numpy.array([[20.60696312]])]
@@ -4319,6 +4325,8 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 															'Sampling ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'Exclusion Details': [None, None, None, None, None, None, None, None, None],
 															'Batch': [1, 1, 1, 1, 1, 1, 1, 1, 1]})
+		self.expectedQuantUR['sampleMetadata']['Metadata Available'] = False
+
 		self.expectedQuantUR['featureMetadata'] = pandas.DataFrame({'Feature Name': ['Dimethylamine',
 																			 'Trimethylamine',
 																			 '1-Methylhistidine',
@@ -4526,6 +4534,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		# Calibration
 		self.expectedQuantUR['calibIntensityData'] = numpy.ndarray((0, self.expectedQuantUR['featureMetadata'].shape[0]))
 		self.expectedQuantUR['calibSampleMetadata'] = pandas.DataFrame(None, columns=self.expectedQuantUR['sampleMetadata'].columns)
+		self.expectedQuantUR['calibSampleMetadata']['Metadata Available'] = False
 		self.expectedQuantUR['calibFeatureMetadata'] = pandas.DataFrame({'Feature Name': self.expectedQuantUR['featureMetadata']['Feature Name'].tolist()})
 		self.expectedQuantUR['calibExpectedConcentration'] = pandas.DataFrame(None, columns=self.expectedQuantUR['featureMetadata']['Feature Name'].tolist())
 		# Excluded
@@ -4614,6 +4623,8 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 															'Sampling ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'Exclusion Details': [None, None, None, None, None, None, None, None, None, None],
 															'Batch': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]})
+		self.expectedBILISA['sampleMetadata']['Metadata Available'] = False
+
 
 		self.expectedBILISA['featureMetadata'] = pandas.DataFrame({'Feature Name': ['TPTG', 'TPCH', 'LDCH', 'HDCH', 'TPA1', 'TPA2', 'TPAB', 'LDHD',
 																				   'ABA1', 'TBPN', 'VLPN', 'IDPN', 'LDPN', 'L1PN', 'L2PN', 'L3PN',
@@ -4970,6 +4981,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		# Calibration
 		self.expectedBILISA['calibIntensityData'] = numpy.ndarray((0, self.expectedBILISA['featureMetadata'].shape[0]))
 		self.expectedBILISA['calibSampleMetadata'] = pandas.DataFrame(None, columns=self.expectedBILISA['sampleMetadata'].columns)
+		self.expectedBILISA['calibSampleMetadata']['Metadata Available'] = False
 		self.expectedBILISA['calibFeatureMetadata'] = pandas.DataFrame({'Feature Name': self.expectedBILISA['featureMetadata']['Feature Name'].tolist()})
 		self.expectedBILISA['calibExpectedConcentration'] = pandas.DataFrame(None, columns=self.expectedBILISA['featureMetadata']['Feature Name'].tolist())
 		# Excluded

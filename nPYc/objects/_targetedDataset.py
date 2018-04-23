@@ -543,6 +543,7 @@ class TargetedDataset(Dataset):
         peakArea.columns                   = featureMetadata['Feature Name'].values.tolist()
         peakConcentrationDeviation.columns = featureMetadata['Feature Name'].values.tolist()
         peakRT.columns                     = featureMetadata['Feature Name'].values.tolist()
+        sampleMetadata['Metadata Available'] = False
 
         return sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT
 
@@ -1127,6 +1128,7 @@ class TargetedDataset(Dataset):
         self.sampleMetadata.drop('Order', axis=1, inplace=True)
         # initialise the Batch to 1
         self.sampleMetadata['Batch'] = [1] * self.sampleMetadata.shape[0]
+        self.sampleMetadata['Metadata Available'] = False
 
         ## Initialise expectedConcentration
         self.expectedConcentration = pandas.DataFrame(None, index=list(self.sampleMetadata.index), columns=self.featureMetadata['Feature Name'].tolist())
@@ -1135,6 +1137,7 @@ class TargetedDataset(Dataset):
         self.calibration = dict()
         self.calibration['calibIntensityData'] = numpy.ndarray((0, self.featureMetadata.shape[0]))
         self.calibration['calibSampleMetadata'] = pandas.DataFrame(None, columns=self.sampleMetadata.columns)
+        self.calibration['calibSampleMetadata']['Metadata Available'] = False
         self.calibration['calibFeatureMetadata'] = pandas.DataFrame({'Feature Name': self.featureMetadata['Feature Name'].tolist()})
         self.calibration['calibExpectedConcentration'] = pandas.DataFrame(None, columns=self.featureMetadata['Feature Name'].tolist())
 
