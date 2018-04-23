@@ -35,7 +35,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 	:param quantiles: List of quantile bounds to segment the histogram by
 	:type quantiles: None or List
 	:param str title: Title for the plot
-	:param str xLabel: Label for the X-axis
+	:param str xlabel: Label for the X-axis
 	:param int histBins: Number of bins to break the histgram into
 	:param color: List of specific colours to use for plotting
 	:type color: None or List

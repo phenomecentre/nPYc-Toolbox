@@ -1,7 +1,7 @@
 """
 The `nPYc-Toolbox <https://github.com/phenomecentre/nPYc-Toolbox>`_ defines objects for representing, and implements functions to manipulate and display, metabolic profiling datasets.
 """
-__version__ = '1.0.2a'
+__version__ = '1.0.3a'
 
 from . import enumerations
 from .objects import Dataset, MSDataset, NMRDataset, TargetedDataset
