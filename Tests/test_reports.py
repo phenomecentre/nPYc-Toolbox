@@ -794,8 +794,8 @@ class test_reports_modules(unittest.TestCase):
 					self.assertTrue(os.path.exists(report[groupName][plotName]))
 
 
-	#@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
-	def test_reports_generateBasicPCAReport(self):#, mock_stdout):
+	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
+	def test_reports_generateBasicPCAReport(self, mock_stdout):
 
 		from nPYc.reports._generateBasicPCAReport import generateBasicPCAReport
 		from nPYc.multivariate import exploratoryAnalysisPCA
@@ -833,10 +833,10 @@ class test_reports_modules(unittest.TestCase):
 				path = os.path.join(tmpdirname, report['loadings'][groupName])
 				self.assertTrue(os.path.exists(path))
 
-		with self.subTest(msg='ploting interactivly'):
-
-			report = generateBasicPCAReport(pcaModel, dataset, output=None)
-			self.assertIsNone(report)
+		# with self.subTest(msg='ploting interactivly'):
+		#
+		# 	report = generateBasicPCAReport(pcaModel, dataset, output=None)
+		# 	self.assertIsNone(report)
 
 
 	def test_reports_generateBasicPCAReport_raises(self):

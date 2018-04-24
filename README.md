@@ -1,8 +1,8 @@
 # nPYc Toolbox <img src="nPYc/Templates/toolbox_logo.png" width="200" height="200" align="right" />
 
-[![Build Status](https://travis-ci.org/phenomecentre/nPYc-Toolbox.svg?branch=master)](https://travis-ci.org/phenomecentre/nPYc-Toolbox) [![Documentation Status](https://readthedocs.org/projects/npyc-toolbox/badge/?version=latest)](http://npyc-toolbox.readthedocs.io/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/phenomecentre/nPYc-Toolbox/branch/master/graph/badge.svg)](https://codecov.io/gh/phenomecentre/nPYc-Toolbox) ![Python36](https://img.shields.io/badge/python-3.6-blue.svg)
+[![Build Status](https://travis-ci.org/phenomecentre/nPYc-Toolbox.svg?branch=master)](https://travis-ci.org/phenomecentre/nPYc-Toolbox) [![Documentation Status](https://readthedocs.org/projects/npyc-toolbox/badge/?version=latest)](http://npyc-toolbox.readthedocs.io/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/phenomecentre/nPYc-Toolbox/branch/master/graph/badge.svg)](https://codecov.io/gh/phenomecentre/nPYc-Toolbox) ![Python36](https://img.shields.io/badge/python-3.6-blue.svg) [![PyPI](https://img.shields.io/pypi/v/nPYc.svg)](https://pypi.org/project/nPYc/)
 
-* Version 1.0.3
+* Version 1.0.4
 
 A Python implementation of the [NPC](http://phenomecentre.org) toolchain for the import, quality-control, and preprocessing of metabolic profiling datasets.
 
@@ -24,7 +24,7 @@ Exports:
 
 ## Installation
 
-To install _via_ pip, run:
+To install _via_ [pip](https://pypi.org/project/nPYc/), run:
 
     pip install nPYc 
 
