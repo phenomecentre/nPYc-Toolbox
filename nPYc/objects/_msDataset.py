@@ -43,7 +43,7 @@ class MSDataset(Dataset):
 		Operates on spreadsheets exported from Biocrates MetIDQ. By default loads data from the sheet named 'Data Export', this may be overridden with the ``sheetName=`` argument, If the number of sample metadata columns differes from the default, this can be overridden with the ``noSampleParams=`` argument.
 	"""
 
-	def __init__(self, datapath, fileType='QI', sop='GenericMS', **kwargs):
+	def __init__(self, datapath, fileType='xcms', sop='GenericMS', **kwargs):
 		"""
 		Basic initialisation.
 		"""
@@ -1002,7 +1002,7 @@ class MSDataset(Dataset):
 
 		# make graphs
 		g	  = networkx.from_pandas_edgelist(df=tmpLinkage, source='node1', target='node2', edge_attr=True)
-		graphs = list(networkx.connected_component_subgraphs(g))		  # a list of clusters
+		graphs = list((g.subgraph(c).copy() for c in networkx.connected_components(g)))		  # a list of clusters
 
 		# update FeatureMask with features to remove (all but max intensity)
 		for i in range(0,len(graphs)):

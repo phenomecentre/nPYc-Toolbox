@@ -81,9 +81,10 @@ def _featureLOQViolinPlotHelper(ax, tData, featID, splitByBatch=True, plotBatchL
         # Samples which will be out <LLOQ >ULOQ masks
         new_LLOQ = tData.featureMetadata.loc[featID, 'LLOQ']
         new_ULOQ = tData.featureMetadata.loc[featID, 'ULOQ']
-        new_LLOQMask = (concentrationValues < new_LLOQ) & noInfMask
-        new_ULOQMask = (concentrationValues > new_ULOQ) & noInfMask
-
+        with warnings.catch_warnings(): # Suppress RuntimeWarnings from NaN values
+            warnings.simplefilter('ignore', RuntimeWarning)
+            new_LLOQMask = (concentrationValues < new_LLOQ) & noInfMask
+            new_ULOQMask = (concentrationValues > new_ULOQ) & noInfMask
         # Colour palette and hue_order specific to the samples present in this dataset
         # sTypeColourDict can be plugged directly as a palette, hue_order is still needed
         hue_order = []
