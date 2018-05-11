@@ -586,6 +586,10 @@ class MSDataset(Dataset):
 		featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T, columns=featureMetadata.keys())
 		sampleMetadata = pandas.DataFrame(numpy.concatenate([sampleMetadata[c] for c in sampleMetadata.keys()], axis=0), columns=sampleMetadata.keys())
 
+		sampleMetadata['AssayRole'] = AssayRole.Assay
+		sampleMetadata['SampleType'] = SampleType.StudySample
+		sampleMetadata['Dilution'] = 100
+
 		# Put Feature Names first
 		name = featureMetadata['Feature Name']
 		featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)

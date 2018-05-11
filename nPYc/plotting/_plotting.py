@@ -84,13 +84,17 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 			raise ValueError("Cannot provide an inclusion vector when plotting groups.")
 
 		# Set min and max values
-		minVal = numpy.nan
-		maxVal = numpy.nan
-		for key in values:
-			if (numpy.isnan(minVal)) | (minVal > numpy.nanmin(values[key])):
-				minVal = numpy.nanmin(values[key])
-			if (numpy.isnan(maxVal)) | (maxVal < numpy.nanmax(values[key])):
-				maxVal = numpy.nanmax(values[key])
+		if not xlim is None:
+			minVal = xlim[0]
+			maxVal = xlim[1]
+		else:
+			minVal = numpy.nan
+			maxVal = numpy.nan
+			for key in values:
+				if (numpy.isnan(minVal)) | (minVal > numpy.nanmin(values[key])):
+					minVal = numpy.nanmin(values[key])
+				if (numpy.isnan(maxVal)) | (maxVal < numpy.nanmax(values[key])):
+					maxVal = numpy.nanmax(values[key])
 
 		label = values.keys()
 		
