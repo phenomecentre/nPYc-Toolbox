@@ -577,7 +577,7 @@ class MSDataset(Dataset):
 			featureMetadata['Retention Time Deviation'] = dataT['ΔRT'].values
 
 			featureMetadata['Feature Name'] = [str(round(row['RT [min]'], 2)) + '_' + str(round(row['m/z'], 4)) + 'm/z' for idx,row in dataT.iterrows()]
-			featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float) / 60.0
+			featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float)
 
 		else:
 			featureMetadata['Feature Name'] = dataT['m/z'].apply(lambda mz: str(mz) + 'm/z').values
@@ -596,6 +596,11 @@ class MSDataset(Dataset):
 		featureMetadata.insert(0, 'Feature Name', name)
 
 		featureMetadata['m/z'] = featureMetadata['m/z'].astype(float)
+
+		if 'Retention Time' in featureMetadata.columns:
+			featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float)
+			featureMetadata['Retention Time Deviation'] = featureMetadata['Retention Time Deviation'].astype(float)
+
 
 		self._intensityData = intensityData
 		self.sampleMetadata = sampleMetadata
