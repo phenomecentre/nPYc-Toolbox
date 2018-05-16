@@ -59,9 +59,9 @@ class Dataset:
 
 		The sampleMetadata table can included any datatype that can be placed in a pandas cell, However the toolbox assumes certain prerequisites on the following columns in order to function:
 
-		=================  ========================================= ============
+		================== ========================================= ============
 		Column             dtype                                     Usage
-		=================  ========================================= ============
+		================== ========================================= ============
 		Sampling ID        str                                       ID of the :term:`sampling event` generating this sample
 		AssayRole          :py:class:`~nPYc.enumerations.AssayRole`  Defines the role of this assay
 		SampleType         :py:class:`~nPYc.enumerations.SampleType` Defines the type of sample acquired
@@ -74,7 +74,7 @@ class Dataset:
 		Run order          int                                       Order of sample acquisition
 		Exclusion Details  str                                       Details of reasoning if marked for exclusion
 		Metadata Available bool                                      Records which samples had metadata provided with the .addSampleInfo() method
-		================= ========================================= ============
+		================== ========================================= ============
 		"""
 		self.featureMask = numpy.array(None, dtype=bool)
 		""":math:`m` element vector, with ``True`` representing features to be included in analysis, and ``False`` those to be excluded"""
@@ -1117,7 +1117,7 @@ class Dataset:
 		* **'Raw Data'** Extract analytical parameters from raw data files
 		* **'ISATAB'** ISATAB study designs
 		* **'Filenames'** Parses sample information out of the filenames, based on the named capture groups in the regex passed in *filenamespec*
-		* **'Basic CSV'** Joins the :py:attr:`sampleMetadata` table with the data in the ``csv`` file at *filePath=*, matching on the 'Sample File Name' column in both (see :doc:`SampleMetadata`).
+		* **'Basic CSV'** Joins the :py:attr:`sampleMetadata` table with the data in the ``csv`` file at *filePath=*, matching on the 'Sample File Name' column in both (see :doc:`tutorials/SampleMetadata`).
 
 		:param str descriptionFormat: Format of metadata to be added
 		:param str filePath: Path to the additional data to be added
