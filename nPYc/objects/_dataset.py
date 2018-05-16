@@ -73,7 +73,7 @@ class Dataset:
 		Acquired Time      datetime.datetime                         Date and time of acquisition of raw data
 		Run order          int                                       Order of sample acquisition
 		Exclusion Details  str                                       Details of reasoning if marked for exclusion
-		Metadata Available bool                                      Records which samples were included in the metadata provided with the .addSampleInfo() method
+		Metadata Available bool                                      Records which samples had metadata provided with the .addSampleInfo() method
 		================= ========================================= ============
 		"""
 		self.featureMask = numpy.array(None, dtype=bool)
