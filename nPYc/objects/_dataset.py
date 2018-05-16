@@ -1504,7 +1504,8 @@ class Dataset:
 		else:
 			return False
 
-	def _matchDatasetToISATAB(self, pathToISATABFile, studyID=1, assay='MS', assayID=1, filenameSpec=''):
+
+	def _matchDatasetToISATAB(self, pathToISATABFile, studyID = 1, assayID=1, assay='MS'):
 		"""
 		Match the Sample IDs in :py:attr:`sampleMetadata` to the subject and assay information in the ISATAB File.
 
@@ -1515,11 +1516,16 @@ class Dataset:
 		:param int assayID: the Assay index in the ISATAB File
 		:param str assay: the assay type 'MS' or 'NMR'
 		"""
-		if not (assay in ['MS', 'NMR']):
+
+
+		#if 'Dilution' in self.sampleMetadata.columns:
+		#	self.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
+
+		if not (assay in ['MS','NMR']):
 			raise ValueError('assay should be either \'MS\' or \'NMR\'')
 
 		# Load ISATAB file
-		with open(os.path.join(pathToISATABFile, 'i_Investigation.txt')) as fp:
+		with open(os.path.join(pathToISATABFile,'i_Investigation.txt')) as fp:
 			isa_tab_record = isatab.load(fp)
 
 		# subject info === study
@@ -1560,39 +1566,33 @@ class Dataset:
 		if any(limsFile.columns.str.match('Sample Name')):
 			limsFile.rename(columns={'Sample Name': 'Sampling ID'}, inplace=True)
 
-		# rename fields according to assay type
+
+		#rename fields according to assay type
 		if assay == 'NMR':
-			with open(
-					os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings', 'NMRFields.json')) as data_file:
+			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings','NMRFields.json')) as data_file:
 				nmrFieldDict = json.load(data_file)
-				limsFile.rename(columns=nmrFieldDict, inplace=True)
-				self.Attributes['Log'].append(
-					[datetime.now(), 'NMR Assay field names have been mapped into NPC field names'])
+				limsFile.rename(columns = nmrFieldDict, inplace=True)
+				self.Attributes['Log'].append([datetime.now(), 'NMR Assay field names have been mapped into NPC field names' ])
 		else:
-			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings', 'MSFields.json')) as data_file:
+			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings','MSFields.json')) as data_file:
 				msFieldDict = json.load(data_file)
 				limsFile.rename(columns=msFieldDict, inplace=True)
-				self.Attributes['Log'].append(
-					[datetime.now(), 'MS Assay field names have been mapped into NPC field names'])
+				self.Attributes['Log'].append([datetime.now(), 'MS Assay field names have been mapped into NPC field names' ])
 
-		# remove fields inserted by ISATAB and only keep the fields we're interested in
+		#remove fields inserted by ISATAB and only keep the fields we're interested in
 		if assay == 'MS':
-			limsFile = limsFile[
-				['Sampling ID', 'Assay data name', 'Dilution', 'Run Order', 'Acquisition Date', 'Acquisition Time',
-				 'Instrument', 'Chromatography', 'Ionisation', 'Batch', 'Sample batch', 'Plate', 'Well',
-				 'Correction Batch', 'Detector']]
+			limsFile = limsFile[['Sampling ID','Assay data name','Dilution','Run Order','Acquisition Date','Acquisition Time','Instrument','Chromatography','Ionisation','Batch','Sample batch','Plate','Well','Correction Batch','Detector']]
 		else:
-			limsFile = limsFile[
-				['Sampling ID', 'Assay data name', 'Run Order', 'Acquisition Date', 'Acquisition Time', 'Instrument',
-				 'Batch', 'Sample batch']]
+			limsFile = limsFile[['Sampling ID','Assay data name','Run Order','Acquisition Date','Acquisition Time','Instrument','Batch','Sample batch']]
 
-		# merge the two fields 'Acquisition Date','Acquisition Time' into one field 'Acquired Time'
-		# a few lines down we make sure 'Acquired Time' is a proper date/time field that pandas is happy with!
-		limsFile['Acquired Time'] = limsFile[['Acquisition Date', 'Acquisition Time']].apply(lambda x: ' '.join(x),
-																							 axis=1)
+
+		#self.Attributes['DataPath'] = limsFile['Data Path'][0]
+
+		#merge the two fields 'Acquisition Date','Acquisition Time' into one field 'Acquired Time'
+		#a few lines down we make sure 'Acquired Time' is a proper date/time field that pandas is happy with!
+		limsFile['Acquired Time'] = limsFile[['Acquisition Date', 'Acquisition Time']].apply(lambda x: ' '.join(x), axis=1)
 		limsFile.drop(['Acquisition Date', 'Acquisition Time'], axis=1, inplace=True)
-		self.Attributes['Log'].append([datetime.now(),
-									   '\'Acquisition Date\', \'Acquisition Time\' read from ISATAB have been merged into \'Acquired Time\' and removed'])
+		self.Attributes['Log'].append([datetime.now(), '\'Acquisition Date\', \'Acquisition Time\' read from ISATAB have been merged into \'Acquired Time\' and removed' ])
 
 		# retrieve the material role or Sample Type or Status of each sample in the assay
 		# one way to do this is by merging the assay and study based on sample name!
@@ -1624,55 +1624,40 @@ class Dataset:
 		self.limsFile.loc[:, 'Assay data name Normalised'] = self.limsFile['Assay data name'].str.lower()
 
 		# Match limsFile to sampleMetdata for samples with data PRESENT
-		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.limsFile, left_on='Sample Base Name Normalised',
-										   right_on='Assay data name Normalised', how='left', sort=False)
+		self.sampleMetadata = pandas.merge(self.limsFile,self.sampleMetadata, left_on='Assay data name Normalised', right_on='Sample Base Name Normalised', how='right', sort=False)
 		self.sampleMetadata = removeDuplicateColumns(self.sampleMetadata)
-		# check with Jake/Caroline
-		self.sampleMetadata['Exclusion Details'] = None
+		#
+		if 'Exclusion Details' not in self.sampleMetadata:
+			self.sampleMetadata['Exclusion Details'] = None
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
-		# self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Sampling ID'].notnull().astype(bool)
-		self.sampleMetadata.loc[:, 'Study Sample'] = self.sampleMetadata['Status'].str.match('Sample', na=False).astype(
-			bool)
-		self.sampleMetadata.loc[:, 'Long-Term Reference'] = self.sampleMetadata['Status'].str.match(
-			'Long Term Reference', na=False).astype(bool)
-		self.sampleMetadata.loc[:, 'Study Reference'] = self.sampleMetadata['Status'].str.match('Study Reference',
-																								na=False).astype(bool)
-		self.sampleMetadata.loc[:, 'Method Reference'] = self.sampleMetadata['Status'].str.match('Method Reference',
-																								 na=False).astype(bool)
-		self.sampleMetadata.loc[:, 'Dilution Series'] = self.sampleMetadata['Status'].str.match('Dilution Series',
-																								na=False).astype(bool)
-		# why is this repeated?
-		# self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Study Sample'].where((self.sampleMetadata['Long-Term Reference'] | self.sampleMetadata['Study Reference']) == False, other=False)
-		self.sampleMetadata.loc[:, 'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing',
-																									na=False).astype(
-			bool)
+		#self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Sampling ID'].notnull().astype(bool)
+		self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Status'].str.match('Sample', na=False).astype(bool)
+		self.sampleMetadata.loc[:,'Long-Term Reference'] = self.sampleMetadata['Status'].str.match('Long Term Reference', na=False).astype(bool)
+		self.sampleMetadata.loc[:,'Study Reference'] = self.sampleMetadata['Status'].str.match('Study Reference', na=False).astype(bool)
+		self.sampleMetadata.loc[:,'Method Reference'] = self.sampleMetadata['Status'].str.match('Method Reference', na=False).astype(bool)
+		self.sampleMetadata.loc[:,'Dilution Series'] = self.sampleMetadata['Status'].str.match('Dilution Series', na=False).astype(bool)
+		#why is this repeated?
+		#self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Study Sample'].where((self.sampleMetadata['Long-Term Reference'] | self.sampleMetadata['Study Reference']) == False, other=False)
+		self.sampleMetadata.loc[:,'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing', na=False).astype(bool)
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
-		self.sampleMetadata.loc[:, 'Data Present'] = self.sampleMetadata['Sample File Name'].str.match('.+', na=False)
-		self.sampleMetadata.loc[:, 'LIMS Present'] = self.sampleMetadata['Assay data name'].str.match('.+', na=False,
-																									  case=False)
-		self.sampleMetadata.loc[:, 'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing', na=False)
-		self.sampleMetadata['Study Sample'].where(
-			(self.sampleMetadata['Study Sample'] & (self.sampleMetadata['LIMS Present'] == False)) == False, False,
-			inplace=True)
-		# check with Jake/Caroline
+		self.sampleMetadata.loc[:,'Data Present'] = self.sampleMetadata['Sample File Name'].str.match('.+', na=False)
+		self.sampleMetadata.loc[:,'LIMS Present'] = self.sampleMetadata['Assay data name'].str.match('.+', na=False, case=False)
+		self.sampleMetadata.loc[:,'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing', na=False)
+		self.sampleMetadata['Study Sample'].where((self.sampleMetadata['Study Sample'] & (self.sampleMetadata['LIMS Present'] == False)) == False, False, inplace=True)
+		#check with Jake/Caroline
 		self.sampleMetadata['Skipped'] = None
 
 		# Explicity convert datetime format
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].apply(pandas.to_datetime,
-																						  dayfirst=True)
+		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].apply(pandas.to_datetime,dayfirst=True)
 		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].astype(datetime)
 
-		# automatically mark samples that have no 'Acquired Time' for exclusion
+		#automatically mark samples that have no 'Acquired Time' for exclusion
 		if sum(self.sampleMetadata['Acquired Time'].isnull()) > 0:
-			self.excludeSamples(
-				self.sampleMetadata[self.sampleMetadata['Acquired Time'].notnull() == False]['Sample File Name'],
-				on='Sample File Name', message='Acquired time missing')
-			self.Attributes['Log'].append([datetime.now(),
-										   'One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing'])
-			warnings.warn(
-				'One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing!')
+			self.excludeSamples(self.sampleMetadata[self.sampleMetadata['Acquired Time'].notnull()==False]['Sample File Name'], on='Sample File Name', message='Acquired time missing')
+			self.Attributes['Log'].append([datetime.now(), 'One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing'])
+			warnings.warn('One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing!')
 
 		##
 		# If AssayRole or SampleType columns are present parse strings into enums
@@ -1689,23 +1674,17 @@ class Dataset:
 				self.sampleMetadata.loc[self.sampleMetadata['SampleType'].values == stype.name, 'SampleType'] = stype
 		"""
 		self.sampleMetadata['AssayRole'] = AssayRole.Assay
-		self.sampleMetadata.loc[
-			self.sampleMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		# self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleMetadata.loc[
-			self.sampleMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleMetadata.loc[
-			self.sampleMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleMetadata.loc[
-			self.sampleMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
+		self.sampleMetadata.loc[self.sampleMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleMetadata.loc[self.sampleMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleMetadata.loc[self.sampleMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleMetadata.loc[self.sampleMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
 
 		self.sampleMetadata['SampleType'] = SampleType.StudySample
 		self.sampleMetadata.loc[self.sampleMetadata['Study Reference'].values, 'SampleType'] = SampleType.StudyPool
-		# self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
-		self.sampleMetadata.loc[
-			self.sampleMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
-		self.sampleMetadata.loc[
-			self.sampleMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
+		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
+		self.sampleMetadata.loc[self.sampleMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
+		self.sampleMetadata.loc[self.sampleMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
 		self.sampleMetadata.loc[self.sampleMetadata['Dilution Series'].values, 'SampleType'] = SampleType.StudyPool
 
 		# Remove duplicate columns (these will be appended with _x or _y)
@@ -1713,50 +1692,35 @@ class Dataset:
 
 		# Find samples present in LIMS but not acquired - replace the deepcopy from python with pandas, to avoid error
 		# when the dataframe is empty
-		lims_butnotacq = self.limsFile.loc[self.limsFile['Assay data name Normalised'].isin(
-			self.sampleMetadata['Sample Base Name Normalised']) == False, :]
+		lims_butnotacq = self.limsFile.loc[self.limsFile['Assay data name Normalised'].isin(self.sampleMetadata['Sample Base Name Normalised'])==False,:]
 		self.sampleAbsentMetadata = lims_butnotacq.copy(deep=True)
 
 		# Complete/create set of boolean columns describing the data in each row for sampleAbsentMetadata
-		self.sampleAbsentMetadata.loc[:, 'Study Sample'] = self.sampleAbsentMetadata['Status'].str.match('Sample',
-																										 na=False).astype(
-			bool)
-		self.sampleAbsentMetadata.loc[:, 'Long-Term Reference'] = self.sampleAbsentMetadata['Status'].str.match(
-			'Long Term Reference', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:, 'Study Reference'] = self.sampleAbsentMetadata['Status'].str.match(
-			'Study Reference', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:, 'Method Reference'] = self.sampleAbsentMetadata['Status'].str.match(
-			'Method Reference', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:, 'Dilution Series'] = self.sampleAbsentMetadata['Status'].str.match(
-			'Dilution Series', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:, 'LIMS Marked Missing'] = self.sampleAbsentMetadata['Status'].str.match(
-			'Missing', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:,'Study Sample'] = self.sampleAbsentMetadata['Status'].str.match('Sample', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:,'Long-Term Reference'] = self.sampleAbsentMetadata['Status'].str.match('Long Term Reference', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:,'Study Reference'] = self.sampleAbsentMetadata['Status'].str.match('Study Reference', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:,'Method Reference'] = self.sampleAbsentMetadata['Status'].str.match('Method Reference', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:,'Dilution Series'] = self.sampleAbsentMetadata['Status'].str.match('Dilution Series', na=False).astype(bool)
+		self.sampleAbsentMetadata.loc[:,'LIMS Marked Missing'] = self.sampleAbsentMetadata['Status'].str.match('Missing', na=False).astype(bool)
 
 		# Remove duplicate columns (these will be appended with _x or _y)
-		# self.sampleAbsentMetadata = removeDuplicateColumns(self.sampleAbsentMetadata)
+		#self.sampleAbsentMetadata = removeDuplicateColumns(self.sampleAbsentMetadata)
 
-		# This should be done in a better way
+		#This should be done in a better way
 		self.sampleAbsentMetadata['AssayRole'] = AssayRole.Assay
-		self.sampleAbsentMetadata.loc[
-			self.sampleAbsentMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		# self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleAbsentMetadata.loc[
-			self.sampleAbsentMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleAbsentMetadata.loc[
-			self.sampleAbsentMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleAbsentMetadata.loc[
-			self.sampleAbsentMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
+		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
+		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
+
 
 		self.sampleAbsentMetadata['SampleType'] = SampleType.StudySample
-		self.sampleAbsentMetadata.loc[
-			self.sampleAbsentMetadata['Study Reference'].values, 'SampleType'] = SampleType.StudyPool
-		# self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
-		self.sampleAbsentMetadata.loc[
-			self.sampleAbsentMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
-		self.sampleAbsentMetadata.loc[
-			self.sampleAbsentMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
-		self.sampleAbsentMetadata.loc[
-			self.sampleAbsentMetadata['Dilution Series'].values, 'SampleType'] = SampleType.StudyPool
+		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Study Reference'].values, 'SampleType'] = SampleType.StudyPool
+		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
+		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
+		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
+		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Dilution Series'].values, 'SampleType'] = SampleType.StudyPool
 
 		# Save biological parameters (for multivariate QC)
 		self.Attributes['Analytical Measurements'] = self.sampleMetadata.columns
@@ -1766,8 +1730,7 @@ class Dataset:
 		# limsFile info === assay
 
 		# Create one overall samplingInfo sheet - combine subjectInfo and samplingEvents for samples present in samplingEvents
-		self.samplingInfo = pandas.merge(self.limsFile, subjectInfo, left_on='Sampling ID', right_on='Sample Name',
-										 how='left', sort=False)
+		self.samplingInfo = pandas.merge(self.limsFile, subjectInfo, left_on='Sampling ID', right_on='Sample Name', how='left', sort=False)
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
@@ -1778,6 +1741,7 @@ class Dataset:
 
 		self.sampleAbsentMetadata['SubjectInfoData'] = False
 		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
+
 
 		self.sampleMetadata['SubjectInfoData'] = False
 		self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
@@ -1796,8 +1760,8 @@ class Dataset:
 		self.Attributes['Biological Measurements'] = self.samplingInfo.columns.drop('inLIMS')
 		"""
 		self.Attributes['Biological Measurements'] = self.samplingInfo.columns
-		self.Attributes['Log'].append(
-			[datetime.now(), 'Subject information matched from ISATAB %s' % (pathToISATABFile)])
+		self.Attributes['Log'].append([datetime.now(), 'Subject information matched from ISATAB %s' % (pathToISATABFile)])
+
 
 	def excludeSamples(self, sampleList, on='Sample File Name', message='User Excluded'):
 		"""
@@ -1872,8 +1836,8 @@ class Dataset:
 
 		return notFound
 
-	def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False,
-					  filterMetadata=True):
+
+	def exportDataset(self, destinationPath='.', saveFormat='CSV', isaDetailsDict = {}, withExclusions=True, escapeDelimiters=False, filterMetadata=True):
 		"""
 		Export dataset object in a variety of formats for import in other software, the export is named according to the :py:attr:`name` attribute of the Dataset object.
 
@@ -1910,7 +1874,8 @@ class Dataset:
 		if withExclusions:
 			exportDataset.applyMasks()
 
-		if filterMetadata:
+		# do not filter metadata if safe format is ISATAB
+		if filterMetadata and saveFormat in ['CSV', 'UnifiedCSV']:
 			# sampleMetadata not exported
 			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['sampleMetadataNotExported']))
@@ -1920,13 +1885,15 @@ class Dataset:
 				exportDataset.Attributes['featureMetadataNotExported']))
 			exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1, inplace=True)
 
-		destinationPath = os.path.join(destinationPath, exportDataset.name)
+
 		if saveFormat == 'CSV':
+			destinationPath = os.path.join(destinationPath, exportDataset.name)
 			exportDataset._exportCSV(destinationPath, escapeDelimiters=escapeDelimiters)
 		elif saveFormat == 'UnifiedCSV':
+			destinationPath = os.path.join(destinationPath, exportDataset.name)
 			exportDataset._exportUnifiedCSV(destinationPath, escapeDelimiters=escapeDelimiters)
 		elif saveFormat == 'ISATAB':
-			exportDataset._exportISATAB(destinationPath, escapeDelimiters=escapeDelimiters)
+			exportDataset._exportISATAB(destinationPath, isaDetailsDict)
 		else:
 			raise ValueError('Save format \'%s\' not understood.' % saveFormat)
 
@@ -1977,7 +1944,8 @@ class Dataset:
 		numpy.savetxt(destinationPath + '_intensityData.csv',
 					  self.intensityData, delimiter=",")
 
-	def _exportISATAB(self, destinationPath, escapeDelimiters=True, assay='MS'):
+
+	def _exportISATAB(self, destinationPath, isaDetailsDict,assay='MS'):
 		"""
 		Export the dataset's metadata to the directory *destinationPath* as ISATAB
 
