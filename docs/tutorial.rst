@@ -58,7 +58,7 @@ The 'Basic CSV' file matches based on the entries in the 'Sample File Name' colu
 
 Any additional columns in the basic csv file will be appended to the :py:attr:`~nPYc.objects.Dataset.sampleMetadata` table as additional sample metadata.
 
-Where analytical file names have been generated according to a standard that allows study design parameters to parsed out, this can be accomplished be means of a regular expression that captures paramaters in named groups::
+Where analytical file names have been generated according to a standard that allows study design parameters to be parsed out, this can be accomplished be means of a regular expression that captures paramaters in named groups::
 
 	datasetObject.addSampleInfo(descriptionFormat='Filenames', filenameSpec='regular expression string')
 
@@ -100,7 +100,7 @@ By default the nPYc toolbox assumes an :py:class:`~nPYc.objects.MSDataset` insta
 	In order to characterise RSDs, the dataset must include a sufficient number of precision reference samples, ideally a study reference pool to allow calculation of RSDs for all detected features.
 * Linearity of response
 	By filtering features based on the linearity of their measurement *vs* concentration in the matrix, we ensure that only features that can be meaningfully related to the study design are propagated into the analysis.
-	To asses linearity, features must be assayed across a range of concentrations, again in untargeted assays, using the pooled study reference will ensure all relevant features are represented.
+	To assess linearity, features must be assayed across a range of concentrations, again in untargeted assays, using the pooled study reference will ensure all relevant features are represented.
 
 Beyond feature QC, the toolbox also allows for the detection and reduction of analytical run-order and batch effects.
 
@@ -168,7 +168,7 @@ Report generated interactively by the :py:mod:`~nPYc.reports` module can be save
 Exporting data
 **************
 
-Datasets can be exported in a variety of formats with the :py:meth:`~nPYc.objects.Dataset.exportDataset` method. '*UnifiedCSV*' provides a good default output, exporting the :-:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` concatenated as a single coma-separated text file, with samples in rows, and features in columns. Where the number of features in a dataset might result in a file with too many columns to be opened by certain software packages, the '*CSV*' option allows the :py:attr:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` to each be saved to a separate CSV file.
+Datasets can be exported in a variety of formats with the :py:meth:`~nPYc.objects.Dataset.exportDataset` method. '*UnifiedCSV*' provides a good default output, exporting the :-:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` concatenated as a single coma-separated text file, with samples in rows, and features in columns. Where the number of features in a dataset might result in a file with too many columns to be opened by certain software packages, the '*CSV*' option allows the :py:attr:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` to each be saved to a separate CSV file. The nPYc toolbox currently also supports exporting metadata in ISATAB format.
 
 .. [#] Development and Application of Ultra-Performance Liquid Chromatography-TOF MS for Precision Large Scale Urinary Metabolic Phenotyping, Lewis MR, *et al.*, **Anal. Chem.**, 2016, 88, pp 9004-9013
 

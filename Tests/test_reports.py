@@ -4,10 +4,12 @@ import pandas
 import numpy
 import sys
 import unittest
+import unittest.mock
 import tempfile
 import os
 import io
 import copy
+import warnings
 
 sys.path.append("..")
 import nPYc
@@ -33,7 +35,7 @@ class test_reports_ms_feature_id(unittest.TestCase):
 
 	def setUp(self):
 
-		self.msData = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'))
+		self.msData = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		self.msData.addSampleInfo(descriptionFormat='Filenames')
 
 		self.msData.sampleMetadata['Correction Batch'] = 1
@@ -47,7 +49,9 @@ class test_reports_ms_feature_id(unittest.TestCase):
 	def test_reports_generateMSIDrequests(self):
 	
 		with tempfile.TemporaryDirectory() as tmpdirname:
-			nPYc.reports.generateMSIDrequests(self.msData,['3.17_262.0378m/z'], outputDir=tmpdirname)
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				nPYc.reports.generateMSIDrequests(self.msData,['3.17_262.0378m/z'], outputDir=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'ID Request_3.17_262.0378m-z.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -69,7 +73,7 @@ class test_reports_generateSamplereport(unittest.TestCase):
 
 	def setUp(self):
 		
-		self.data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'))
+		self.data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		self.data.addSampleInfo(descriptionFormat='Filenames')
 		self.data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 
@@ -249,7 +253,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 	def test_reports_ms_correlationtodilution(self):
 
-		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'))
+		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 		data.addSampleInfo(descriptionFormat='Batches')
@@ -276,7 +280,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 	def test_reports_ms_batchcorrectiontest(self):
 
-		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'))
+		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
@@ -298,7 +302,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 	def test_reports_ms_batchcorrectionresults(self):
 
-		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'))
+		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
@@ -324,7 +328,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 	def test_reports_ms_featureselection(self):
 
-		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'))
+		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
@@ -345,7 +349,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 	def test_reports_ms_finalreport(self):
 
-		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'))
+		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
@@ -630,7 +634,9 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		inputDataset = copy.deepcopy(self.tDataAccPrec)
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
-			nPYc.reports.generateReport(inputDataset, 'feature summary', output=tmpdirname)
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				nPYc.reports.generateReport(inputDataset, 'feature summary', output=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -671,7 +677,10 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 
 			nPYc.reports.multivariateReport.multivariateQCreport(inputDataset, pcaModel=pcaModel, reportType='analytical', withExclusions=True, output=tmpdirPCA)
 			inputDataset.sampleMetadata['Metadata Available'] = True
-			nPYc.reports.generateReport(inputDataset, 'final report', output=tmpdirname, pcaModel=pcaModel)
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				warnings.simplefilter('ignore', RuntimeWarning)
+				nPYc.reports.generateReport(inputDataset, 'final report', output=tmpdirname, pcaModel=pcaModel)
 
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='nPYc',
-	version='1.0.4',
+	version='1.0.5a',
 	description='National Phenome Centre toolbox',
 	url='https://github.com/phenomecentre/npyc-toolbox',
 	author='National Phenome Centre',
@@ -38,6 +38,7 @@ setup(name='nPYc',
 
 		.. image:: https://travis-ci.org/phenomecentre/nPYc-Toolbox.svg?branch=master
 		   :target: https://travis-ci.org/phenomecentre/nPYc-Toolbox
+		   :alt: Travis CI build status
 
 		.. image:: https://readthedocs.org/projects/npyc-toolbox/badge/?version=latest
 		   :target: http://npyc-toolbox.readthedocs.io/en/latest/?badge=latest
@@ -45,6 +46,7 @@ setup(name='nPYc',
 
 		.. image:: https://codecov.io/gh/phenomecentre/nPYc-Toolbox/branch/master/graph/badge.svg
 		   :target: https://codecov.io/gh/phenomecentre/nPYc-Toolbox
+		   :alt: Test coverage
 
 		|
 
@@ -53,13 +55,13 @@ setup(name='nPYc',
 		Documentation can be found on `Read the Docs <http://npyc-toolbox.readthedocs.io/en/latest/?badge=latest>`_.
 
 		Imports
-		 - Peak-picked LC-MS data (XCMS, Progenesis QI)
+		 - Peak-picked LC-MS data (XCMS, Progenesis QI, *&* Metaboscape)
 		 - Raw NMR spectra (Bruker format)
-		 - Targeted datasets (TargetLynx, Bruker BI-LISA & BI-Quant-Ur)
+		 - Targeted datasets (TargetLynx, Bruker BI-LISA, *&* BI-Quant-Ur)
 
 		Provides
 		 - Batch *&* drift correction for LC-MS datasets
-		 - Feature filtering by RSD and linearity of response
+		 - Feature filtering by RSD *&* linearity of response
 		 - Calculation of spectral line-width in NMR
 		 - PCA of datasets
 		 - Visualisation of datasets
