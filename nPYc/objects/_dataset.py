@@ -1100,9 +1100,6 @@ class Dataset:
 				self.featureMetadata.reset_index(drop=True, inplace=True)
 				self._intensityData = self._intensityData[:, self.featureMask]
 
-				if hasattr(self, 'fit'):
-					self.fit = self.fit[:, self.featureMask]
-
 			self.Attributes['Log'].append([datetime.now(), '%i samples and %i features removed from dataset.' % (
 			sum(self.sampleMask == False), sum(self.featureMask == False))])
 

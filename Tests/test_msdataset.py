@@ -712,6 +712,21 @@ class test_msdataset_synthetic(unittest.TestCase):
 			self.assertRaises(TypeError, msData.updateMasks, overlapThresholdArtifactual='0.5', blankThreshold=False)
 
 
+	def test_applyMasks(self):
+
+		fit = numpy.random.randn(self.msData.noSamples, self.msData.noFeatures)
+
+		self.msData.fit = copy.deepcopy(fit)
+		deletedFeatures = numpy.random.randint(0, self.msData.noFeatures, size=2)
+
+		self.msData.featureMask[deletedFeatures] = False
+		fit = numpy.delete(fit, deletedFeatures, 1)
+
+		self.msData.applyMasks()
+
+		numpy.testing.assert_array_almost_equal(self.msData.fit, fit)
+
+
 	def test_correlationToDilution(self):
 
 		from nPYc.utilities._internal import _vcorrcoef
@@ -724,11 +739,18 @@ class test_msdataset_synthetic(unittest.TestCase):
 		dataset.sampleMetadata['SampleType'] = nPYc.enumerations.SampleType.StudyPool
 		dataset.sampleMetadata['AssayRole'] = nPYc.enumerations.AssayRole.LinearityReference
 		dataset.sampleMetadata['Well'] = 1
-		dataset.sampleMetadata['Dilution'] = numpy.linspace(1,noSamp, num=noSamp)
+		dataset.sampleMetadata['Dilution'] = numpy.linspace(1, noSamp, num=noSamp)
 
 		correlations = dataset.correlationToDilution
 
-		numpy.testing.assert_array_almost_equal(correlations, _vcorrcoef(dataset.intensityData, dataset.sampleMetadata['Dilution'].values))
+		with self.subTest(msg='Checking default path'):
+
+			numpy.testing.assert_array_almost_equal(correlations, _vcorrcoef(dataset.intensityData, dataset.sampleMetadata['Dilution'].values))
+
+		with self.subTest(msg='Checking corr exclusions'):
+			dataset.corrExclusions = None
+
+			numpy.testing.assert_array_almost_equal(correlations, _vcorrcoef(dataset.intensityData, dataset.sampleMetadata['Dilution'].values))
 
 
 	def test_correlateToDilution_raises(self):
@@ -1845,6 +1867,13 @@ class test_msdataset_import_xcms(unittest.TestCase):
 		self.assertEqual(self.msData_PeakTable.VariableType, nPYc.enumerations.VariableType.Discrete)
 
 
+	def tet_xcms_raises(self):
+
+		path = os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv')
+
+		self.assertRaises(ValueError, nPYc.MSDataset, path, fileType='XCMS', noFeatureParams=9)
+
+
 class test_msdataset_import_metaboscape(unittest.TestCase):
 	"""
 	Test import from metaboscape xlsx outputs
@@ -2247,8 +2276,14 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 
 		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 
-		for series in testSeries:
-			pandas.util.testing.assert_series_equal(self.msData.sampleMetadata[series], expected[series])
+		with self.subTest(msg='Default Path'):
+			for series in testSeries:
+				pandas.util.testing.assert_series_equal(self.msData.sampleMetadata[series], expected[series])
+
+		with self.subTest(msg='No Exclusion details'):
+			self.msData.sampleMetadata.drop(columns='Exclusion Details', inplace=True)
+
+			self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 
 
 	def test_msdataset__getSampleMetadataFromRawData_invalidpath(self):

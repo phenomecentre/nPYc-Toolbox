@@ -186,8 +186,13 @@ class MSDataset(Dataset):
 
 		Resets feature linkage matrix and feature correlations.
 		"""
-		# if a change is made to the features, the whole artifactualLinkageMatrix must be updated (feature IDs change), else only correlation calculation
 		changeFeature = sum(self.featureMask==False) != 0					# True if featuresMask has a feature set to False
+
+		if changeFeature:
+			if hasattr(self, 'fit'):
+				self.fit = self.fit[:, self.featureMask]
+
+		# if a change is made to the features, the whole artifactualLinkageMatrix must be updated (feature IDs change), else only correlation calculation
 		super().applyMasks()																			# applyMasks
 		if self.Attributes['artifactualFilter'] == True:
 			if not self._artifactualLinkageMatrix.empty:
@@ -431,7 +436,7 @@ class MSDataset(Dataset):
 				# rename mz to mzmed like in diffreport
 				dataT.rename(columns={'mz': 'mzmed', 'rt': 'rtmed'}, inplace=True)
 			except:
-				raise Exception('XCMS data frame should be obtained with either peakTable or diffreport methods')
+				raise ValueError('XCMS data frame should be obtained with either peakTable or diffreport methods')
 
 		featureMetadata['Feature Name'] = dataT['name'].values
 		featureMetadata['m/z'] = dataT['mzmed'].values
