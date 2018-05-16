@@ -1065,7 +1065,7 @@ class MSDataset(Dataset):
 		}
 
 		:param str destinationPath: Path to a directory in which the output will be saved
-		:param dict detailsDict: Contains several key, value pairs required to for ISATAB
+		:param dict detailsDict: Contains several key: value pairs required to for ISATAB
 		:raises IOError: If writing one of the files fails
 		"""
 

@@ -941,6 +941,11 @@ class Dataset:
 		Load assay parameters from JSON SOP files located in sopPath.
 
 		SOP names should be unique (obviously), but this is not enforced. Duplicate SOP files may cause undefined behaviour.
+		
+		:param sop: the SOP name
+		:type sop: string
+		:param sopPath: the path to sop
+		:type sopPath: string
 		"""
 		import json
 		from collections import ChainMap
@@ -1845,7 +1850,7 @@ class Dataset:
 
 		* **CSV** Basic CSV output, :py:attr:`featureMetadata`, :py:attr:`sampleMetadata` and :py:attr:`intensityData` are written to three separate CSV files in *desitinationPath*
 		* **UnifiedCSV** Exports :py:attr:`featureMetadata`, :py:attr:`sampleMetadata` and :py:attr:`intensityData` concatenated into a single CSV file
-		* **ISATAB** Exports the object in the `ISATAB <http://isa-tools.org>`_ format
+		* **ISATAB** Exports the sampleMetadata in the `ISATAB <http://isa-tools.org>`_ format
 
 		:param str destinationPath: Save data into the directory specified here
 		:param str format: File format for saved data, defaults to CSV.
