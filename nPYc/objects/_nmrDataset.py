@@ -492,7 +492,7 @@ class NMRDataset(Dataset):
 		# attach the assay to the study
 		study.assays.append(nmr_assay)
 
-		if os.path.file(os.path.join(destinationPath,'i_Investigation.txt')):
+		if os.path.exists(os.path.join(destinationPath,'i_Investigation.txt')):
 			ie.appendStudytoISA(study, destinationPath)
 		else:
 			isatab.dump(isa_obj=investigation, output_path=destinationPath)

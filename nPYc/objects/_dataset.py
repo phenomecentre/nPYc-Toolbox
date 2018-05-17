@@ -1510,7 +1510,7 @@ class Dataset:
 			return False
 
 
-	def _matchDatasetToISATAB(self, pathToISATABFile, studyID = 1, assayID=1, assay='MS'):
+	def _matchDatasetToISATAB(self, pathToISATABFile, filenameSpec=None, studyID = 1, assayID=1, assay='MS'):
 		"""
 		Match the Sample IDs in :py:attr:`sampleMetadata` to the subject and assay information in the ISATAB File.
 

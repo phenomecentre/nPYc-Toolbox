@@ -6,6 +6,7 @@ import os
 import copy
 import warnings
 import tempfile
+from isatools import isatab
 
 
 sys.path.append("..")
@@ -450,15 +451,13 @@ class test_nmrdataset_bruker(unittest.TestCase):
 class test_nmrdataset_ISATAB(unittest.TestCase):
 
 	def test_exportISATAB(self):
-
 		nmrData = nPYc.NMRDataset('', fileType='empty')
 		raw_data = {
-			'Acquired Time': ['09/08/2016  01:36:23', '09/08/2016  01:56:23', '09/08/2016  02:16:23',
-							  '09/08/2016  02:36:23', '09/08/2016  02:56:23'],
+			'Acquired Time': ['2016-08-09  01:36:23', '2016-08-09  01:56:23', '2016-08-09  02:16:23', '2016-08-09  02:36:23', '2016-08-09  02:56:23'],
 			'AssayRole': ['AssayRole.LinearityReference', 'AssayRole.LinearityReference',
 						  'AssayRole.LinearityReference', 'AssayRole.Assay', 'AssayRole.Assay'],
-			'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool',
-						   'SampleType.StudySample', 'SampleType.StudySample'],
+			#'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool','SampleType.StudySample', 'SampleType.StudySample'],
+			'Status': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool','SampleType.StudySample', 'SampleType.StudySample'],
 			'Subject ID': ['', '', '', 'SCANS-120', 'SCANS-130'],
 			'Sampling ID': ['', '', '', 'T0-7-S', 'T0-9-S'],
 			'Study': ['TestStudy', 'TestStudy', 'TestStudy', 'TestStudy', 'TestStudy'],
@@ -466,21 +465,48 @@ class test_nmrdataset_ISATAB(unittest.TestCase):
 			'Age': ['', '', '', '55', '66'],
 			'Sampling Date': ['', '', '', '27/02/2006', '28/02/2006'],
 			'Sample batch': ['', '', '', 'SB 1', 'SB 2'],
-			'Acquisition batch': ['1', '2', '3', '4', '5'],
+			'Batch': ['1', '2', '3', '4', '5'],
 			'Run Order': ['0', '1', '2', '3', '4'],
 			'Instrument': ['QTOF 2', 'QTOF 2', 'QTOF 2', 'QTOF 2', 'QTOF 2'],
 			'Assay data name': ['', '', '', 'SS_LNEG_ToF02_S1W4', 'SS_LNEG_ToF02_S1W5']
 		}
 		nmrData.sampleMetadata = pandas.DataFrame(raw_data,
-												  columns=['Acquired Time', 'AssayRole', 'SampleType', 'Subject ID',
+												  columns=['Acquired Time', 'AssayRole', 'Status', 'Subject ID',
 														   'Sampling ID', 'Study', 'Gender', 'Age', 'Sampling Date',
-														   'Sample batch', 'Acquisition batch',
+														   'Sample batch', 'Batch',
 														   'Run Order', 'Instrument', 'Assay data name'])
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
-			nmrData.exportDataset(destinationPath=tmpdirname, saveFormat='ISATAB', withExclusions=False)
-			a = os.path.join(tmpdirname, 'NMRDataset', 'a_npc-test-study_metabolite_profiling_NMR_spectroscopy.txt')
-			self.assertTrue(os.path.exists(a))
+			details = {
+			    'investigation_identifier' : "i1",
+			    'investigation_title' : "Give it a title",
+			    'investigation_description' : "Add a description",
+			    'investigation_submission_date' : "2016-11-03", #use today if not specified
+			    'investigation_public_release_date' : "2016-11-03",
+			    'first_name' : "Noureddin",
+			    'last_name' : "Sadawi",
+			    'affiliation' : "University",
+			    'study_filename' : "my_nmr_study",
+			    'study_material_type' : "Serum",
+			    'study_identifier' : "s1",
+			    'study_title' : "Give the study a title",
+			    'study_description' : "Add study description",
+			    'study_submission_date' : "2016-11-03",
+			    'study_public_release_date' : "2016-11-03",
+			    'assay_filename' : "my_nmr_assay"
+			}
+
+			nmrData.initialiseMasks()
+			nmrData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
+			investigatio_file = os.path.join(tmpdirname,'i_investigation.txt')
+			numerrors = 0
+			with open(investigatio_file) as fp:
+				report = isatab.validate(fp)
+				numerrors = len(report['errors'])
+
+
+			#self.assertTrue(os.path.exists(a))
+			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))
 
 
 if __name__ == '__main__':
