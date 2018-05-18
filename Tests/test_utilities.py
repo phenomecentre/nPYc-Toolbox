@@ -710,7 +710,8 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 		expectedSampleMetadata = pandas.DataFrame([], columns=['Sample File Name', 'Sample Base Name', 'expno', 'Path', 'Acquired Time', 'Run Order'])
 		expectedSampleMetadata['Path'] = [path, path, path]
-		expectedSampleMetadata['Sample File Name'] = ['UnitTest5_expno840.100000.10r', 'UnitTest5_expno840.100000.10r', 'UnitTest5_expno840.100000.10r']
+		#expectedSampleMetadata['Sample File Name'] = ['UnitTest5_expno840.100000.10r', 'UnitTest5_expno840.100000.10r', 'UnitTest5_expno840.100000.10r'] # change to Sample File Name matching Sample Base Name
+		expectedSampleMetadata['Sample File Name'] = ['UnitTest5/840', 'UnitTest5/840', 'UnitTest5/840']
 		expectedSampleMetadata['Sample Base Name'] = ['UnitTest5/840', 'UnitTest5/840', 'UnitTest5/840']
 		expectedSampleMetadata['Acquired Time'] = [pandas.Timestamp('2017-08-15 13:06:45'), pandas.Timestamp('2017-08-15 13:06:45'), pandas.Timestamp('2017-08-15 13:06:45')]
 		expectedSampleMetadata['Run Order'] = [0, 1, 2]
@@ -743,7 +744,8 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 		expectedSampleMetadata = pandas.DataFrame([], columns=['Sample File Name', 'Sample Base Name', 'expno', 'Path', 'Acquired Time', 'Run Order'])
 		expectedSampleMetadata['Path'] = [path, path, path]
-		expectedSampleMetadata['Sample File Name'] = ['UnitTest5_expno840.100000.10r', 'UnitTest5_expno840.100000.10r', 'UnitTest5_expno840.100000.10r']
+		#expectedSampleMetadata['Sample File Name'] = ['UnitTest5_expno840.100000.10r', 'UnitTest5_expno840.100000.10r', 'UnitTest5_expno840.100000.10r'] # change to Sample File Name matching Sample Base Name
+		expectedSampleMetadata['Sample File Name'] = ['UnitTest5/840', 'UnitTest5/840', 'UnitTest5/840']
 		expectedSampleMetadata['Sample Base Name'] = ['UnitTest5/840', 'UnitTest5/840', 'UnitTest5/840']
 		expectedSampleMetadata['Acquired Time'] = [pandas.Timestamp('2017-08-15 13:06:45'), pandas.Timestamp('2017-08-15 13:06:45'), pandas.Timestamp('2017-08-15 13:06:45')]
 		expectedSampleMetadata['Run Order'] = [0, 1, 2]

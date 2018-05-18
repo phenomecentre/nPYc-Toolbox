@@ -371,7 +371,7 @@ class MSDataset(Dataset):
 		# Now read for real
 		dataT = pandas.read_csv(path, header=2)
 		values = dataT.iloc[:,endIndex+1:endIndex+dataSize+1]
-		self._intensityData = values.as_matrix().transpose()
+		self._intensityData = values.values.transpose()
 
 		# Get the sample names as the only metadata we have
 		sampleMetadata = dict()
@@ -415,7 +415,7 @@ class MSDataset(Dataset):
 
 		# Now read for real
 		values = dataT.iloc[:,startIndex:]
-		self._intensityData = values.as_matrix().transpose()
+		self._intensityData = values.values.transpose()
 
 		# Get the sample names as the only metadata we have
 		sampleMetadata = dict()
@@ -475,7 +475,7 @@ class MSDataset(Dataset):
 		endIndex = len(dataT.index)
 
 		# Now read  intensities
-		self._intensityData = dataT.iloc[2:endIndex,noSampleParams+1:].as_matrix()
+		self._intensityData = dataT.iloc[2:endIndex,noSampleParams+1:].values
 
 		##
 		# Feature info
@@ -547,7 +547,7 @@ class MSDataset(Dataset):
 
 		# Now read for real
 		values = dataT.iloc[:,startIndex:]
-		intensityData = values.as_matrix().transpose()
+		intensityData = values.values.transpose()
 
 		# Get the sample names as the only metadata we have
 		sampleMetadata = dict()

@@ -535,8 +535,8 @@ class TargetedDataset(Dataset):
         peakRT = pandas.DataFrame(peak_RT)
 
         # Convert to DataFrames
-        featureMetadata = pandas.concat([pandas.DataFrame(featureMetadata[c], columns=[c]) for c in featureMetadata.keys()], axis=1)
-        sampleMetadata = pandas.concat([pandas.DataFrame(sampleMetadata[c], columns=[c]) for c in sampleMetadata.keys()], axis=1)
+        featureMetadata = pandas.concat([pandas.DataFrame(featureMetadata[c], columns=[c]) for c in featureMetadata.keys()], axis=1, sort=False)
+        sampleMetadata = pandas.concat([pandas.DataFrame(sampleMetadata[c], columns=[c]) for c in sampleMetadata.keys()], axis=1, sort=False)
         expectedConcentration.columns      = featureMetadata['Feature Name'].values.tolist()
         peakIntegrationFlag.columns        = featureMetadata['Feature Name'].values.tolist()
         peakResponse.columns               = featureMetadata['Feature Name'].values.tolist()
@@ -1270,14 +1270,14 @@ class TargetedDataset(Dataset):
 
         ## Add back the untouched monitored features
         if sum(untouched) != 0:
-            featureMetadata = pandas.concat([featureMetadata, untouchedFeatureMetadata], axis=0)
+            featureMetadata = pandas.concat([featureMetadata, untouchedFeatureMetadata], axis=0, sort=False)
             intensityData = numpy.concatenate((intensityData, untouchedIntensityData), axis=1)
-            expectedConcentration = pandas.concat([expectedConcentration, untouchedExpectedConcentration], axis=1)
+            expectedConcentration = pandas.concat([expectedConcentration, untouchedExpectedConcentration], axis=1, sort=False)
             # reorder the calib
             if isinstance(calibration, dict):
-                calibration['calibFeatureMetadata'] = pandas.concat([calibration['calibFeatureMetadata'], untouchedCalibFeatureMetadata], axis=0)
+                calibration['calibFeatureMetadata'] = pandas.concat([calibration['calibFeatureMetadata'], untouchedCalibFeatureMetadata], axis=0, sort=False)
                 calibration['calibIntensityData'] = numpy.concatenate((calibration['calibIntensityData'], untouchedCalibIntensityData), axis=1)
-                calibration['calibExpectedConcentration'] = pandas.concat([calibration['calibExpectedConcentration'], untouchedCalibExpectedConcentration], axis=1)
+                calibration['calibExpectedConcentration'] = pandas.concat([calibration['calibExpectedConcentration'], untouchedCalibExpectedConcentration], axis=1, sort=False)
 
         # Remove excess info
         featureMetadata.reset_index(drop=True, inplace=True)
@@ -1549,18 +1549,18 @@ class TargetedDataset(Dataset):
 
         ## Add back the untouched monitored features
         if sum(untouched) != 0:
-            featureMetadata = pandas.concat([featureMetadata, untouchedFeatureMetadata], axis=0)
+            featureMetadata = pandas.concat([featureMetadata, untouchedFeatureMetadata], axis=0, sort=False)
             intensityData = numpy.concatenate((intensityData, untouchedIntensityData), axis=1)
-            expectedConcentration = pandas.concat([expectedConcentration, untouchedExpectedConcentration], axis=1)
+            expectedConcentration = pandas.concat([expectedConcentration, untouchedExpectedConcentration], axis=1, sort=False)
             # reorder the calib
-            calibration['calibFeatureMetadata'] = pandas.concat([calibration['calibFeatureMetadata'], untouchedCalibFeatureMetadata], axis=0)
+            calibration['calibFeatureMetadata'] = pandas.concat([calibration['calibFeatureMetadata'], untouchedCalibFeatureMetadata], axis=0, sort=False)
             calibration['calibIntensityData'] = numpy.concatenate((calibration['calibIntensityData'], untouchedCalibIntensityData), axis=1)
-            calibration['calibExpectedConcentration'] = pandas.concat([calibration['calibExpectedConcentration'], untouchedCalibExpectedConcentration], axis=1)
-            calibration['calibPeakInfo']['peakArea'] = pandas.concat([calibration['calibPeakInfo']['peakArea'], untouchedCalibPeakArea], axis=1)
-            calibration['calibPeakInfo']['peakResponse'] = pandas.concat([calibration['calibPeakInfo']['peakResponse'], untouchedCalibPeakResponse], axis=1)
-            calibration['calibPeakInfo']['peakConcentrationDeviation'] = pandas.concat([calibration['calibPeakInfo']['peakConcentrationDeviation'], untouchedCalibPeakConcentrationDeviation], axis=1)
-            calibration['calibPeakInfo']['peakIntegrationFlag'] = pandas.concat([calibration['calibPeakInfo']['peakIntegrationFlag'], untouchedCalibPeakIntegrationFlag], axis=1)
-            calibration['calibPeakInfo']['peakRT'] = pandas.concat([calibration['calibPeakInfo']['peakRT'], untouchedCalibPeakRT], axis=1)
+            calibration['calibExpectedConcentration'] = pandas.concat([calibration['calibExpectedConcentration'], untouchedCalibExpectedConcentration], axis=1, sort=False)
+            calibration['calibPeakInfo']['peakArea'] = pandas.concat([calibration['calibPeakInfo']['peakArea'], untouchedCalibPeakArea], axis=1, sort=False)
+            calibration['calibPeakInfo']['peakResponse'] = pandas.concat([calibration['calibPeakInfo']['peakResponse'], untouchedCalibPeakResponse], axis=1, sort=False)
+            calibration['calibPeakInfo']['peakConcentrationDeviation'] = pandas.concat([calibration['calibPeakInfo']['peakConcentrationDeviation'], untouchedCalibPeakConcentrationDeviation], axis=1, sort=False)
+            calibration['calibPeakInfo']['peakIntegrationFlag'] = pandas.concat([calibration['calibPeakInfo']['peakIntegrationFlag'], untouchedCalibPeakIntegrationFlag], axis=1, sort=False)
+            calibration['calibPeakInfo']['peakRT'] = pandas.concat([calibration['calibPeakInfo']['peakRT'], untouchedCalibPeakRT], axis=1, sort=False)
 
         # Remove excess info
         featureMetadata.reset_index(drop=True, inplace=True)
@@ -1744,7 +1744,7 @@ class TargetedDataset(Dataset):
         if not validOtherDataset['BasicTargetedDataset']:
             raise ValueError('other does not satisfy to the Basic TargetedDataset definition, check with other.validateObject(verbose=True, raiseError=False)')
         # Warning if duplicate 'Sample File Name' in sampleMetadata
-        u_ids, u_counts = numpy.unique(pandas.concat([self.sampleMetadata['Sample File Name'], other.sampleMetadata['Sample File Name']],ignore_index=True), return_counts=True)
+        u_ids, u_counts = numpy.unique(pandas.concat([self.sampleMetadata['Sample File Name'], other.sampleMetadata['Sample File Name']],ignore_index=True, sort=False), return_counts=True)
         if any(u_counts > 1):
             warnings.warn('Warning: The following \'Sample File Name\' are present more than once: ' + str(u_ids[u_counts>1].tolist()))
 
@@ -1783,7 +1783,7 @@ class TargetedDataset(Dataset):
         tmpSampleMetadata1['Batch'], batchChangeSelf  = reNumber(tmpSampleMetadata1['Batch'], 1)
         tmpSampleMetadata2['Batch'], batchChangeOther = reNumber(tmpSampleMetadata2['Batch'], tmpSampleMetadata1['Batch'].values.max()+1)
         # Concatenate samples and reinitialise index
-        sampleMetadata = pandas.concat([tmpSampleMetadata1, tmpSampleMetadata2], ignore_index=True)
+        sampleMetadata = pandas.concat([tmpSampleMetadata1, tmpSampleMetadata2], ignore_index=True, sort=False)
         # Update Run Order
         sampleMetadata['Order'] = sampleMetadata.sort_values(by='Acquired Time').index
         sampleMetadata['Run Order'] = sampleMetadata.sort_values(by='Order').index
@@ -1854,7 +1854,7 @@ class TargetedDataset(Dataset):
                 expectedConc1.loc[:,colname] = self.expectedConcentration[colname].ravel()
             if colname in other.expectedConcentration.columns:
                 expectedConc2.loc[:,colname] = other.expectedConcentration[colname].ravel()
-        expectedConcentration = pandas.concat([expectedConc1, expectedConc2], axis=0, ignore_index=True)
+        expectedConcentration = pandas.concat([expectedConc1, expectedConc2], axis=0, ignore_index=True, sort=False)
         expectedConcentration.reset_index(drop=True, inplace=True)
         targetedData.expectedConcentration = copy.deepcopy(expectedConcentration)
 
@@ -2137,12 +2137,12 @@ class TargetedDataset(Dataset):
                     pass
 
         # Export combined data in single file
-        tmpXCombined = pandas.concat([featureMetadata.transpose(), intensityData], axis=0)
+        tmpXCombined = pandas.concat([featureMetadata.transpose(), intensityData], axis=0, sort=False)
 
         with warnings.catch_warnings():
             # Seems no way to avoid pandas complaining here (v0.18.1)
             warnings.simplefilter("ignore")
-            tmpCombined = pandas.concat([sampleMetadata, tmpXCombined], axis=1)
+            tmpCombined = pandas.concat([sampleMetadata, tmpXCombined], axis=1, sort=False)
 
         # reorder rows to put metadata first
         tmpCombined = tmpCombined.reindex(tmpXCombined.index, axis=0)
@@ -2979,7 +2979,7 @@ class TargetedDataset(Dataset):
             """
 
             # init new mask
-            toRemoveFeatMask = calibDict['calibFeatureMetadata']['Feature Name'].isin(featureNameList).as_matrix()  # True for feature to remove
+            toRemoveFeatMask = calibDict['calibFeatureMetadata']['Feature Name'].isin(featureNameList).values  # True for feature to remove
 
             newCalibDict = dict()
             newCalibDict['calibSampleMetadata'] = calibDict['calibSampleMetadata']
