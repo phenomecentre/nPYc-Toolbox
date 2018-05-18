@@ -24,6 +24,7 @@ setup(name='nPYc',
 		'cycler>=0.10.0',
 		'pyChemometrics>=0.1'
 	],
+	dependency_links=['http://github.com/phenomecentre/isaexplorer'],
 	classifiers = [
 		"Programming Language :: Python",
 		"Programming Language :: Python :: 3.6",
