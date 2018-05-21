@@ -14,6 +14,8 @@ from nPYc.enumerations import SampleType
 from nPYc.enumerations import AssayRole
 from nPYc.enumerations import VariableType
 from generateTestDataset import generateTestDataset
+import tempfile
+from isatools import isatab
 
 
 class test_msdataset_synthetic(unittest.TestCase):
@@ -150,7 +152,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Study'], study)
 
 		##
-		# 
+		#
 		##
 		chromatography = pandas.Series(['H',
 										'R',
@@ -606,8 +608,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 		msData = nPYc.MSDataset('', fileType='empty')
 
 		msData.intensityData = numpy.zeros([18, 5],dtype=float)
-		
-		
+
+
 		msData.sampleMetadata['AssayRole'] = pandas.Series([AssayRole.LinearityReference,
 								AssayRole.LinearityReference,
 								AssayRole.LinearityReference,
@@ -649,7 +651,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								SampleType.MethodReference],
 								name='SampleType',
 								dtype=object)
-								
+
 
 		with self.subTest(msg='Default Parameters'):
 			expectedSampleMask = numpy.array([False, False, False, False, False,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, False, False], dtype=bool)
@@ -664,7 +666,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 
 			msData.initialiseMasks()
 			msData.updateMasks(withArtifactualFiltering=False, filterFeatures=False,
-								sampleTypes=[SampleType.StudyPool, SampleType.ExternalReference], 
+								sampleTypes=[SampleType.StudyPool, SampleType.ExternalReference],
 								assayRoles=[AssayRole.PrecisionReference])
 
 			numpy.testing.assert_array_equal(expectedSampleMask, msData.sampleMask)
@@ -674,7 +676,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 
 			msData.initialiseMasks()
 			msData.updateMasks(withArtifactualFiltering=False, filterFeatures=False,
-								sampleTypes=[SampleType.StudyPool], 
+								sampleTypes=[SampleType.StudyPool],
 								assayRoles=[AssayRole.LinearityReference])
 
 			numpy.testing.assert_array_equal(expectedSampleMask, msData.sampleMask)
@@ -1341,7 +1343,7 @@ class test_msdataset_batch_inference(unittest.TestCase):
 
 	def test_amendbatches(self):
 		"""
-		
+
 		"""
 
 		self.msData._fillBatches()
@@ -1673,7 +1675,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 								1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 20., 20., 20., 20., 20.,
 								40., 40., 40., 60., 60., 60., 80., 80., 80., 80., 80., 100., 100., 100., 100., 100., 100., 100., 100., 100., 100.,
 								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan], 
+								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 								name='Dilution',
 								dtype='float')
 
@@ -1829,7 +1831,7 @@ class test_msdataset_import_xcms(unittest.TestCase):
 								1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 20., 20., 20., 20., 20.,
 								40., 40., 40., 60., 60., 60., 80., 80., 80., 80., 80., 100., 100., 100., 100., 100., 100., 100., 100., 100., 100.,
 								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan], 
+								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 								name='Dilution',
 								dtype='float')
 
@@ -2014,7 +2016,7 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 								1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 20., 20., 20., 20., 20.,
 								40., 40., 40., 60., 60., 60., 80., 80., 80., 80., 80., 100., 100., 100., 100., 100., 100., 100., 100., 100., 100.,
 								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan], 
+								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 								name='Dilution',
 								dtype='float')
 
@@ -2210,13 +2212,13 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 	def test_msdataset_load_watersraw_metadata(self):
 		"""
 		Test we read raw data from Waters .raw and concatenate it correctly - currently focusing on parameters of importance to the workflow.
-		
+
 		TODO: Test all paramaters
 		"""
-		
-		# 
 
-		# Expected data starts with the same samples 
+		#
+
+		# Expected data starts with the same samples
 		expected = copy.deepcopy(self.msData.sampleMetadata)
 
 		##
@@ -2294,12 +2296,12 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 class test_msdataset_artifactual_filtering(unittest.TestCase):
 	"""
 	Test calculation and update of artifactual filtering results
-	
+
 	Simulated data design:
 		14 features, 10 samples
 		normal threshold | 0.1mz, 0.9corr, 50% ov
 		advanced threshold | 0.05mz, 0.95 corr, 70% ov
-		
+
 		0 and 1, Nothing (corr=0, 10. mz, ov 0%)
 		1 and 2, corr>0.9, 10. mz, ov 80% | fail default param
 		3 and 4, corr<0.3, 0.005mz, ov 60% | fail default corr, present in ._temp not in ._arti
@@ -2308,7 +2310,7 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		9 and 10, corr 0.97, 0.01mz, ov 55% | ok default, then fail overlap (9 is higher intensity)
 		11 and 12, corr 0.97, 0.01mz, ov 90% | ok default, then still okay (11 is higher intensity)
 		13, 14, 15, 16, all ov > 92.5%, close mz, corr | ok default, then still okay (13 is higher intensity)
-	
+
 	Test:
 		1) compare output .artifactualLinkageMatrix, ._artifactualLinkageMatrix, ._tempArtifactualLinkageMatrix
 			test .artifactualFilter() results with and without a given featureMask
@@ -2360,20 +2362,20 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 			index=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], columns=['node1', 'node2'])
 		assert_frame_equal(self.msData.artifactualLinkageMatrix, result_artifactualLinkageMatrix)
 		assert_frame_equal(self.msData._artifactualLinkageMatrix, result_artifactualLinkageMatrix)
-		
+
 		## _tempArtifactualLinkageMatrix (not filtered by correlation)
 		result_tempArtifactualLinkageMatrix = pandas.DataFrame(
 			[[3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [13, 15], [13, 16], [14, 15], [14, 16], [15, 16]],
 			index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], columns=['node1', 'node2'])
 		assert_frame_equal(self.msData._tempArtifactualLinkageMatrix, result_tempArtifactualLinkageMatrix)
-		
+
 		## artifactualFilter()
 		# default msData.featureMask
 		result_artifactualFilter = numpy.array(
 			[True, True, True, True, True, True, False, True, False, True, False, True, False, True, False, False,
 			 False], dtype=bool)
 		numpy.testing.assert_equal(self.msData.artifactualFilter(), result_artifactualFilter)
-		
+
 		# with featureMask excluding feature 0, 1 and 2
 		result_artifactualFilter_featMask = numpy.array(
 			[False, False, False, True, True, True, False, True, False, True, False, True, False, True, False, False,
@@ -2421,27 +2423,27 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		self.msData3.Attributes['overlapThresholdArtifactual'] = 70
 		self.msData3.Attributes['corrThresholdArtifactual'] = 0.95
 		self.msData3.updateArtifactualLinkageMatrix()
-		
+
 		## _artifactualLinkageMatrix, artifactualLinkageMatrix
 		updatedRes_artifactualLinkageMatrix = pandas.DataFrame(
 			[[11, 12], [13, 14], [13, 15], [13, 16], [14, 15], [14, 16], [15, 16]], index=[1, 2, 3, 4, 5, 6, 7],
 			columns=['node1', 'node2'])
 		assert_frame_equal(self.msData3.artifactualLinkageMatrix, updatedRes_artifactualLinkageMatrix)
 		assert_frame_equal(self.msData3._artifactualLinkageMatrix, updatedRes_artifactualLinkageMatrix)
-		
+
 		## _tempArtifactualLinkageMatrix (not filtered by correlation)
 		updatedRes_tempArtifactualLinkageMatrix = pandas.DataFrame(
 			[[5, 6], [11, 12], [13, 14], [13, 15], [13, 16], [14, 15], [14, 16], [15, 16]],
 			index=[0, 1, 2, 3, 4, 5, 6, 7], columns=['node1', 'node2'])
 		assert_frame_equal(self.msData3._tempArtifactualLinkageMatrix, updatedRes_tempArtifactualLinkageMatrix)
-		
+
 		## artifactualFilter()
 		# default self.featureMask
 		updatedRes_artifactualFilter = numpy.array(
 			[True, True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False],
 			dtype=bool)
 		numpy.testing.assert_equal(self.msData3.artifactualFilter(), updatedRes_artifactualFilter)
-		
+
 		# with featureMask excluding feature 0, 1 and 2
 		updatedRes_artifactualFilter_featMask = numpy.array(
 			[False, False, False, True, True, True, True, True, True, True, True, True, False, True, False, False,
@@ -2463,19 +2465,19 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		self.msData4.sampleMask = numpy.array([False, False, False, False, False, True, True, True, True, True],
 											  dtype=bool)
 		self.msData4.applyMasks()
-		
+
 		# _artifactualLinkageMatrix, artifactualLinkageMatrix are modified
 		sampleMaskRes_artifactualLinkageMatrix = pandas.DataFrame([[14, 15], [14, 16], [15, 16]], index=[8, 9, 10],
 																  columns=['node1', 'node2'])
 		assert_frame_equal(self.msData4.artifactualLinkageMatrix, sampleMaskRes_artifactualLinkageMatrix)
 		assert_frame_equal(self.msData4._artifactualLinkageMatrix, sampleMaskRes_artifactualLinkageMatrix)
-		
+
 		# _tempArtifactualLinkageMatrix (not filtered by correlation) is not changed
 		sampleMaskRes_tempArtifactualLinkageMatrix = pandas.DataFrame(
 			[[3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [13, 15], [13, 16], [14, 15], [14, 16], [15, 16]],
 			index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], columns=['node1', 'node2'])
 		assert_frame_equal(self.msData4._tempArtifactualLinkageMatrix, sampleMaskRes_tempArtifactualLinkageMatrix)
-		
+
 		##
 		# featureMask, remove sample 12 15 16
 		##
@@ -2483,13 +2485,13 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		self.msData5.artifactualLinkageMatrix
 		self.msData5.featureMask = numpy.array([True,True,True,True,True,True,True,True,True,True,True,True,False,True,True,False,False],dtype=bool)
 		self.msData5.applyMasks()
-		
+
 		# _artifactualLinkageMatrix, artifactualLinkageMatrix are modified
 		featMaskRes_artifactualLinkageMatrix = pandas.DataFrame([[5, 6], [7, 8], [9, 10], [12, 13]], index=[1, 2, 3, 4],
 																columns=['node1', 'node2'])
 		assert_frame_equal(self.msData5.artifactualLinkageMatrix, featMaskRes_artifactualLinkageMatrix)
 		assert_frame_equal(self.msData5._artifactualLinkageMatrix, featMaskRes_artifactualLinkageMatrix)
-		
+
 		# _tempArtifactualLinkageMatrix (not filtered by correlation) is changed
 		featMaskRes_tempArtifactualLinkageMatrix = pandas.DataFrame([[3, 4], [5, 6], [7, 8], [9, 10], [12, 13]],
 																	index=[0, 1, 2, 3, 4], columns=['node1', 'node2'])
@@ -2499,13 +2501,13 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 class test_msdataset_ISATAB(unittest.TestCase):
 
 	def test_exportISATAB(self):
-		import tempfile
 
 		msData = nPYc.MSDataset('', fileType='empty')
 		raw_data = {
-			'Acquired Time': ['09/08/2016  01:36:23', '09/08/2016  01:56:23', '09/08/2016  02:16:23', '09/08/2016  02:36:23', '09/08/2016  02:56:23'],
+			'Acquired Time': ['2016-08-09  01:36:23', '2016-08-09  01:56:23', '2016-08-09  02:16:23', '2016-08-09  02:36:23', '2016-08-09  02:56:23'],
 			'AssayRole': ['AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.Assay', 'AssayRole.Assay'],
-			'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
+			#'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
+			'Status': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
 			'Subject ID': ['', '', '', 'SCANS-120', 'SCANS-130'],
 			'Sampling ID': ['', '', '', 'T0-7-S', 'T0-9-S'],
 			'Dilution': ['1', '10', '20', '', ''],
@@ -2527,15 +2529,45 @@ class test_msdataset_ISATAB(unittest.TestCase):
 			'Assay data name': ['', '', '', 'SS_LNEG_ToF02_S1W4', 'SS_LNEG_ToF02_S1W5']
 		}
 
-		msData.sampleMetadata = pandas.DataFrame(raw_data, columns = ['Acquired Time', 'AssayRole', 'SampleType','Subject ID','Sampling ID','Dilution','Study',
+		msData.sampleMetadata = pandas.DataFrame(raw_data, columns = ['Acquired Time', 'AssayRole', 'Status','Subject ID','Sampling ID','Dilution','Study',
 																'Gender','Age','Sampling Date','Detector','Sample batch','Well',
 																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name'])
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
-			msData.exportDataset(destinationPath=tmpdirname, saveFormat='ISATAB',withExclusions=False,filterMetadata=False)
+			details = {
+			    'investigation_identifier' : "i1",
+			    'investigation_title' : "Give it a title",
+			    'investigation_description' : "Add a description",
+			    'investigation_submission_date' : "2016-11-03", #use today if not specified
+			    'investigation_public_release_date' : "2016-11-03",
+			    'first_name' : "Noureddin",
+			    'last_name' : "Sadawi",
+			    'affiliation' : "University",
+			    'study_filename' : "my_ms_study",
+			    'study_material_type' : "Serum",
+			    'study_identifier' : "s1",
+			    'study_title' : "Give the study a title",
+			    'study_description' : "Add study description",
+			    'study_submission_date' : "2016-11-03",
+			    'study_public_release_date' : "2016-11-03",
+			    'assay_filename' : "my_ms_assay"
+			}
+			msData.initialiseMasks()
+			msData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
 
-			a = os.path.join(tmpdirname,'a_npc-test-study_metabolite_profiling_mass_spectrometry.txt')
-			self.assertTrue(os.path.exists(a))
+			investigatio_file = os.path.join(tmpdirname,'i_investigation.txt')
+			print(investigatio_file)
+			numerrors = 0
+			with open(investigatio_file) as fp:
+				report = isatab.validate(fp)
+				numerrors = len(report['errors'])
+
+
+			#self.assertTrue(os.path.exists(a))
+			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))
+
+			#a = os.path.join(tmpdirname,'a_my_ms_assay.txt')
+			#self.assertTrue(os.path.exists(a))
 
 
 if __name__ == '__main__':

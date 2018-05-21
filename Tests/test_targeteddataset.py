@@ -4327,15 +4327,15 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		# Expected TargetedDataset
 		# Do not check sampleMetadata['Path']
 		self.expectedQuantUR = dict()
-		self.expectedQuantUR['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest1_Urine_Rack1_SLL_270814_expno10.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno20.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno30.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno40.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno50.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno60.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno70.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno80.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno90.100000.10r'],
+		self.expectedQuantUR['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest1_Urine_Rack1_SLL_270814/10',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/20',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/30',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/40',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/50',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/60',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/70',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/80',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/90'],
 															'Sample Base Name': ['UnitTest1_Urine_Rack1_SLL_270814/10',
 																				 'UnitTest1_Urine_Rack1_SLL_270814/20',
 																				 'UnitTest1_Urine_Rack1_SLL_270814/30',
@@ -4622,16 +4622,16 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		# Expected TargetedDataset
 		# Do not check sampleMetadata['Path']
 		self.expectedBILISA = dict()
-		self.expectedBILISA['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest3_Serum_Rack01_RCM_190116_expno10.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno100.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno110.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno120.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno130.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno140.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno150.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno160.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno170.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno180.100000.10r'],
+		self.expectedBILISA['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest3_Serum_Rack01_RCM_190116/10',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/100',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/110',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/120',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/130',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/140',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/150',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/160',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/170',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/180'],
 																  'Sample Base Name': ['UnitTest3_Serum_Rack01_RCM_190116/10',
 																					   'UnitTest3_Serum_Rack01_RCM_190116/100',
 																					   'UnitTest3_Serum_Rack01_RCM_190116/110',
@@ -5246,6 +5246,7 @@ class test_targeteddataset_exportdataset(unittest.TestCase):
 	def test_exportdataset_exportunifiedcsv(self):
 		expectedCombined = pandas.DataFrame({'Acqu Date': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16'],'Acqu Time': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, '05:46:40', '06:05:26', '07:26:32', '08:25:53', '09:16:04', '10:50:46'],'Acquired Time': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, '2016-09-10 05:46:40','2016-09-10 06:05:26', '2016-09-10 07:26:32', '2016-09-10 08:25:53', '2016-09-10 09:16:04', '2016-09-10 10:50:46'], 'Batch': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 1.0, 1.0, 1.0, 1.0, 1.0,  1.0], 'Dilution': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 100.0, 100.0, 100.0, 100.0, 100.0,  100.0], 'Instrument': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest'], 'MassLynx Row ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 4., 5., 6., 7.,8., 9.], 'Run Order': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 3., 4., 5., 6., 7., 8.],'Sample File Name': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'UnitTest_targeted_file_004', 'UnitTest_targeted_file_005', 'UnitTest_targeted_file_006', 'UnitTest_targeted_file_007', 'UnitTest_targeted_file_008', 'UnitTest_targeted_file_009'],'Sample Name': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'Sample-LLOQ', 'Sample-Fine', 'Sample-ULOQ', 'Blank', 'QC', 'Other'], 'Sample Type': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'Analyte', 'Analyte','Analyte', 'Blank', 'QC', 'Solvent'],'TargetLynx Sample ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, 4., 5., 6., 7., 8., 9.],'Vial': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,  numpy.nan, numpy.nan, '1:A,4', '1:A,5', '1:A,6', '1:A,7', '1:A,8', '1:A,9'],'0': ['info cpd5', 'Feature5-UnusableNoiseFilled', '100.0', numpy.nan, '5', '1000.0', 'uM', '2.0', 'something 5', '1.0', numpy.nan, 'Backcalculated with Internal Standard',  'Quantified and validated with own labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'1': ['info cpd6', 'Feature6-UnusableNoiseFilled', '100.0', '10.0', '6', '1000.0', 'pg/uL', numpy.nan,'something 6', '1.0', numpy.nan, 'Backcalculated with Internal Standard', 'Quantified and validated with own labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'2': ['info cpd7', 'Feature7-UnusableNoiseFilled', '100.0', '10.0', '7', '1000.0', 'uM', '2.0', 'something 7', numpy.nan, numpy.nan, 'Backcalculated with Internal Standard', 'Quantified and validated with alternative labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'3': ['info cpd8', 'Feature8-axb', '100.0', '10.0', '8', '1000.0', 'pg/uL', '2.0', 'something 8', '1.0','((area * responseFactor)-b)/a', 'Backcalculated with Internal Standard', 'Quantified and validated with own labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'4': ['info cpd9', 'Feature9-logaxb', '100.0', '10.0', '9', '1000.0', 'uM', '2.0', 'something 9', '1.0', '10**((numpy.log10(area * responseFactor)-b)/a)', 'Backcalculated with Internal Standard', 'Quantified and validated with alternative labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'], '5': ['info cpd10', 'Feature10-ax', '100.0', '10.0', '10', '1000.0', 'pg/uL', '2.0', 'something 10', '0.0', 'area/a', 'No Internal Standard', 'Other quantification', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'6': ['info cpd2', 'Feature2-Monitored', numpy.nan, numpy.nan, '2', numpy.nan, 'pg/uL', numpy.nan, 'something 2', numpy.nan, numpy.nan, 'No calibration', 'Monitored for relative information', '0.99', '0.995', '1.0', '50.0', '500.0', '5000.0', '500.0', '500.0', '500.0']})
 		expectedCombined.index = ['Cpd Info', 'Feature Name', 'LLOQ', 'Noise (area)', 'TargetLynx Feature ID', 'ULOQ', 'Unit', 'a', 'another column', 'b', 'calibrationEquation', 'calibrationMethod', 'quantificationType', 'r', 'r2', 'unitCorrectionFactor', '0', '1', '2', '3', '4', '5']
+		expectedCombined = expectedCombined.loc[('Feature Name','TargetLynx Feature ID','calibrationEquation','calibrationMethod','quantificationType','unitCorrectionFactor','Unit','Cpd Info','LLOQ','ULOQ','Noise (area)','a','another column','b','r','r2','0','1','2','3','4','5'),:]
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			targetFolder = os.path.join(tmpdirname)

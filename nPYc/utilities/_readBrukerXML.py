@@ -42,8 +42,9 @@ def importBrukerXML(filelist):
 
 			baseName = nameParser.match(sampleName).groups()
 
-			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample File Name'] = sampleName
 			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample Base Name'] = baseName[0] + '/' + baseName[1]
+			#sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample File Name'] = sampleName  # Sample File Name should match Base Name, instead of the Sample File Name hardcoded in the XML file
+			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample File Name'] = baseName[0] + '/' + baseName[1]
 			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'expno'] = baseName[1]
 			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Acquired Time'] = processingDate
 

@@ -198,6 +198,8 @@ def _featureReport(dataset, output=None):
 	##
 	# exclusion summary
 	##
+	dataset._nmrQCChecks()
+
 	fail_summary = dataset.sampleMetadata.loc[:, ['Sample File Name', 'LineWidthFail',
 												  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
 	fail_summary = fail_summary[(fail_summary.iloc[:, 1::] == 1).any(axis=1, bool_only=True)]
