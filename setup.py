@@ -10,6 +10,7 @@ setup(name='nPYc',
 	packages=find_packages(),
 	install_requires=[
 		'cycler>=0.10.0',
+		'iPython>=6.3.1',
 		'isaExplorer>=0.1',
 		'isatools>=0.9.3',
 		'Jinja2>=2.10',
