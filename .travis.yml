@@ -17,7 +17,7 @@ branches:
 # command to install dependencies
 install:
   - pip install git+git://github.com/PhenomeCentre/pyChemometrics
-  - pip install git+git://github.com/phenomecentre/isaExplorer.git
+  - pip install git+git://github.com/phenomecentre/isaExplorer
   - pip install -r requirements.txt
   - git clone https://github.com/phenomecentre/npc-standard-project.git --single-branch --depth 1 --branch $TRAVIS_BRANCH ../npc-standard-project
   - pip install xlrd

@@ -58,7 +58,7 @@ The 'Basic CSV' file matches based on the entries in the 'Sample File Name' colu
 
 Any additional columns in the basic csv file will be appended to the :py:attr:`~nPYc.objects.Dataset.sampleMetadata` table as additional sample metadata.
 
-Where analytical file names have been generated according to a standard that allows study design parameters to parsed out, this can be accomplished be means of a regular expression that captures paramaters in named groups::
+Where analytical file names have been generated according to a standard that allows study design parameters to be parsed out, this can be accomplished be means of a regular expression that captures paramaters in named groups::
 
 	datasetObject.addSampleInfo(descriptionFormat='Filenames', filenameSpec='regular expression string')
 
@@ -140,7 +140,7 @@ Report generated interactively by the :py:mod:`~nPYc.reports` module can be save
 Exporting data
 **************
 
-Datasets can be exported in a variety of formats with the :py:meth:`~nPYc.objects.Dataset.exportDataset` method. '*UnifiedCSV*' provides a good default output, exporting the :-:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` concatenated as a single coma-separated text file, with samples in rows, and features in columns. Where the number of features in a dataset might result in a file with too many columns to be opened by certain software packages, the '*CSV*' option allows the :py:attr:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` to each be saved to a separate CSV file.
+Datasets can be exported in a variety of formats with the :py:meth:`~nPYc.objects.Dataset.exportDataset` method. '*UnifiedCSV*' provides a good default output, exporting the :-:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` concatenated as a single coma-separated text file, with samples in rows, and features in columns. Where the number of features in a dataset might result in a file with too many columns to be opened by certain software packages, the '*CSV*' option allows the :py:attr:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` to each be saved to a separate CSV file. The nPYc toolbox currently also supports exporting metadata in ISATAB format.
 
 
 .. toctree::
