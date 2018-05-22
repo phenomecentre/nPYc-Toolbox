@@ -227,7 +227,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		dataForPlotting.rename(columns={plotdata: plotdata.translate({ord(c): " " for c in "!@#$%^&*()[]{};:,./<>?\|`~-=+_"}).strip()}, inplace=True)
 		# Correct duplicate column names
 		cols = pandas.Series(dataForPlotting.columns)
-		for dup in dataForPlotting.columns.get_duplicates():
+		for dup in dataForPlotting.columns[dataForPlotting.columns.duplicated()].unique():
 			cols.loc[dataForPlotting.columns.get_loc(dup)] = [dup + '.' + str(d_idx) if d_idx != 0 else dup for d_idx in range(dataForPlotting.columns.get_loc(dup).sum())]
 		dataForPlotting.columns = cols
 

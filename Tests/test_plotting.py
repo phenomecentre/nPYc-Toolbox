@@ -951,14 +951,21 @@ class test_plotting_interactive(unittest.TestCase):
 
 	def test_plotLoadingsInteractive(self):
 
-		with self.subTest(msg='Testing MSDataset'):
+		with self.subTest(msg='Testing MSDataset, 1 component'):
 
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(self.dataset)
 
 			figure = nPYc.plotting.plotLoadingsInteractive(self.dataset, pcaModel)
 			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
 
-		with self.subTest(msg='Testing NMRDataset'):
+		with self.subTest(msg='Testing MSDataset, 2 components'):
+
+			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(self.dataset)
+
+			figure = nPYc.plotting.plotLoadingsInteractive(self.dataset, pcaModel, component=[1, 2])
+			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+
+		with self.subTest(msg='Testing NMRDataset, 1 component'):
 			noSamp = numpy.random.randint(100, high=500, size=None)
 			noFeat = numpy.random.randint(200, high=400, size=None)
 			dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=VariableType.Continuum, sop='Generic')
@@ -967,6 +974,37 @@ class test_plotting_interactive(unittest.TestCase):
 
 			figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel)
 			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+
+		with self.subTest(msg='Testing NMRDataset, 2 components'):
+			noSamp = numpy.random.randint(100, high=500, size=None)
+			noFeat = numpy.random.randint(200, high=400, size=None)
+			dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=VariableType.Continuum, sop='Generic')
+
+			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
+
+			figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel, component=[1, 2])
+			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+
+		with self.subTest(msg='Testing other dataset, 1 component'):
+			noSamp = numpy.random.randint(100, high=500, size=None)
+			noFeat = numpy.random.randint(200, high=400, size=None)
+			dataset = generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableType.Discrete, sop='Generic')
+
+			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
+
+			figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel)
+			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+
+		with self.subTest(msg='Testing other dataset, 2 components'):
+			noSamp = numpy.random.randint(100, high=500, size=None)
+			noFeat = numpy.random.randint(200, high=400, size=None)
+			dataset = generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableType.Discrete, sop='Generic')
+
+			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
+
+			figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel, component=[1, 2])
+			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+
 
 		with self.subTest(msg='Testing all components'):
 			noSamp = numpy.random.randint(100, high=500, size=None)
@@ -992,6 +1030,12 @@ class test_plotting_interactive(unittest.TestCase):
 		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component='not an int')
 
 		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=pcaModel.ncomps + 1)
+
+		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=['not an int', pcaModel.ncomps])
+
+		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.ncomps, pcaModel.ncomps, pcaModel.ncomps])
+
+		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.ncomps, pcaModel.ncomps + 1])
 
 
 	def test_plotScoresInteractive(self):
@@ -1051,7 +1095,7 @@ class test_plotting_interactive(unittest.TestCase):
 			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
 
 
-	def test_plotScoresInteractive_raises(self):
+	def test_plotIonMapInteractive_raises(self):
 
 		self.assertRaises(ValueError, nPYc.plotting.plotIonMapInteractive, self.dataset, featureName='not in the featuremetadata')
 
