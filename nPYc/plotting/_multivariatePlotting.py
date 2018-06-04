@@ -59,7 +59,7 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 	"""
 	Plot PCA scores for each pair of components in PCAmodel, coloured by values defined in classes, and with Hotelling's T2 ellipse (95%)
 
-	:param ChemometricsPCA pcaModel: NPC PCA model object (scikit-learn based)
+	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param pandas.Series classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
 	:param str classType: Type of data in ``classes``, either 'Plot Sample Type', 'categorical' or 'continuous', must be specified if classes is not ``None``. If ``classType`` is 'Plot Sample Type', ``classes`` expects 'Study Sample', 'Study Pool', 'External Reference', 'Linearity Reference' or 'Sample'.
 	:param components: If ``None`` plots all components in model, else plots those specified in components
@@ -415,7 +415,7 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
 	"""
 	Plot PCA loadings for each component in PCAmodel. For NMR data plots the median spectrum coloured by the loading. For MS data plots an ion map (rt vs. mz) coloured by the loading.
 
-	:param ChemometricsPCA pcaModel: NPC PCA model object (scikit-learn based)
+	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param Dataset msData: Dataset object
 	:param str title: Title for the plot
 	:param dict figures: If not ``None``, saves location of each figure for output in html report (see multivariateReport.py)
@@ -539,7 +539,7 @@ def plotScoresInteractive(dataTrue, pcaModel, colourBy, components=[1, 2], alpha
 	Interactively visualise PCA scores (coloured by a given sampleMetadata field, and for a given pair of components) with plotly, provides tooltips to allow identification of samples.
 	
 	:param Dataset dataTrue: Dataset
-	:param PCA object pcaModel: NPC PCA model object (scikit-learn based)
+	:param PCA object pcaModel: PCA model object (scikit-learn based)
 	:param str colourBy: **sampleMetadata** field name to of which values to colour samples by
 	:param list components: List of two integers, components to plot
 	:param float alpha: Significance value for plotting Hotellings ellipse
@@ -695,7 +695,7 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 	For MS data, plots RT vs. mz; for NMR plots ppm vs spectral intensity. Plots are coloured by the weight of the loadings.
 	
 	:param Dataset dataTrue: Dataset
-	:param ChemometricsPCA pcaModel: NPC PCA model object (scikit-learn based)
+	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param int component: Component(s) to plot (one component (int) or list of two integers)
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks; must match between data and pcaModel
 	"""

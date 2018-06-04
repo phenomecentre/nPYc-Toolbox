@@ -8,7 +8,7 @@ Preprocesssing *&* Quality-control of NMR profiling datasets
 * Even baseline
 	The noise in the baseline regions flanking the spectrum are expected to have equal variance across the dataset, and not be predominantly below zero
 * Adequate water-suppression
-	The residual water signal should not affect the spectrum outside of the 4.9 to 4.5 ppm region
+	The residual water signal should not affect the spectrum outside of the 4.9 to 4.5\ ppm region
 
 Before finalising the dataset, typically the wings of the spectrum will be trimmed, and the residual water signal and references resonance removed. Where necessary the chemical shift scale can also referenced to a specified resonance.
 

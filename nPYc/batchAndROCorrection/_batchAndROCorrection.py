@@ -52,7 +52,7 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 		raise TypeError("excludeFailures must be a boolean")
 
 	with warnings.catch_warnings():
-		warnings.simplefilter('module')
+		warnings.simplefilter('once')
 		correctedP = _batchCorrectionHead(data.intensityData,
 									 data.sampleMetadata['Run Order'].values,
 									 (data.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),

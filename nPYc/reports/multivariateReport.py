@@ -34,7 +34,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 	* **'all'** Reports on all qualities of the data (all columns in *sampleMetadata* except those defined as skipped in the SOP).
 
 	:param Dataset dataTrue: Dataset to report on
-	:param ChemometricsPCA pcaModel: NPC PCA model object (scikit-learn based)
+	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param str reportType: Type of sample metadata to report on, one of ``analytical``, ``biological`` or ``all``
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
 	:param dict biologicalMeasurements: Dictionary of type of data contained in each biological sampleMetadata field. Keys are sampleMetadata column names, and values one of 'categorical', 'continuous', 'date'
