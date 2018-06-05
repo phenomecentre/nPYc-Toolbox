@@ -697,9 +697,12 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		
 		# Create a dataframe with null significance values
 		sigNone = numpy.full([nc*countKWfail, 3], numpy.nan)
-		index = [dataForPlotting.columns.get_loc(field) for field in fieldsKWfail]
-		sigNone[:,0] = index[0]
-		sigNone[:,1] = numpy.arange(1,nc+1)
+		index = [dataForPlotting.columns.get_loc(field) for field in fieldsKWfail]	
+		i=0
+		for IX in index:
+			sigNone[i:i+nc,0] = IX
+			sigNone[i:i+nc,1] = numpy.arange(1,nc+1)
+			i=i+nc
 		sigNone = pandas.DataFrame(sigNone, columns=['Field', 'PC', 'Kruskal-Wallis p-value'])
 		sigNone['Field'] = fieldNames[sigNone['Field'].values.astype('int')]
 		sigNone = sigNone.pivot('Field','PC','Kruskal-Wallis p-value')
