@@ -2510,6 +2510,7 @@ class test_msdataset_ISATAB(unittest.TestCase):
 			'Status': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
 			'Subject ID': ['', '', '', 'SCANS-120', 'SCANS-130'],
 			'Sampling ID': ['', '', '', 'T0-7-S', 'T0-9-S'],
+			'Sample File Name': ['sfn1', 'sfn2', 'sfn3', 'sfn4', 'sfn5'],
 			'Dilution': ['1', '10', '20', '', ''],
 			'Study': ['TestStudy', 'TestStudy', 'TestStudy', 'TestStudy', 'TestStudy'],
 			'Gender': ['', '', '', 'Female', 'Male'],
@@ -2531,7 +2532,7 @@ class test_msdataset_ISATAB(unittest.TestCase):
 
 		msData.sampleMetadata = pandas.DataFrame(raw_data, columns = ['Acquired Time', 'AssayRole', 'Status','Subject ID','Sampling ID','Dilution','Study',
 																'Gender','Age','Sampling Date','Detector','Sample batch','Well',
-																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name'])
+																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name','Sample File Name'])
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			details = {
