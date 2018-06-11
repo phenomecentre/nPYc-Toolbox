@@ -6,7 +6,7 @@ from ..reports._generateReportNMR import _generateReportNMR
 from ..reports._generateReportTargeted import _generateReportTargeted
 
 
-def generateReport(data, reportType, output=None, **kwargs):
+def generateReport(data, reportType, destinationPath=None, **kwargs):
 	"""
 	Generates one of a range of reports visualising different qualities of the dataset. Reports can be plotted interactively, or saved to disk.
 	
@@ -36,8 +36,8 @@ def generateReport(data, reportType, output=None, **kwargs):
 
 	:param Dataset data: Dataset object to report on
 	:param str reportType: Type of report to generate. If MSDataset: one of **'sample summary'**, **'feature summary'**, **'correlation to dilution'**, **'batch correction'**, **'feature selection'**, or **'final report`'**. If NMRDataset: one of **'sample summary'**, **'feature summary'**, or **'final summary'**.
-	:param output: If ``None`` plot interactively, otherwise save the figure to the path specified
-	:type output: None or str
+	:param destinationPath: If ``None`` plot interactively, otherwise save the figure to the path specified
+	:type destinationPath: None or str
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
 	:param MSDataset msDataCorrected: Only if **'batch correction'**, if msDataCorrected included will generate report post correction
 	:param PCAmodel pcaModel: Only if **'final report'**, if PCAmodel object is available PCA scores plots coloured by sample type will be added to report
@@ -57,27 +57,27 @@ def generateReport(data, reportType, output=None, **kwargs):
 	if not isinstance(reportType, str) & (reportType.lower() in acceptAllOptions):
 		raise ValueError('reportType must be == ' + str(acceptAllOptions))
 	
-	if output is not None:
-		if not isinstance(output, str):
-			raise TypeError('output must be a string')
+	if destinationPath is not None:
+		if not isinstance(destinationPath, str):
+			raise TypeError('destinationPath must be a string')
 			
-	# Create directory to save output 
-	if output:
-		if not os.path.exists(output):
-			os.makedirs(output)
-		if not os.path.exists(os.path.join(output, 'graphics')):
-			os.makedirs(os.path.join(output, 'graphics'))
+	# Create directory to save destinationPath 
+	if destinationPath:
+		if not os.path.exists(destinationPath):
+			os.makedirs(destinationPath)
+		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+			os.makedirs(os.path.join(destinationPath, 'graphics'))
 
 
 	# Generate sample summary report  
 	if reportType.lower() == 'sample summary':
-		_generateSampleReport(data, output=output, **kwargs)
+		_generateSampleReport(data, destinationPath=destinationPath, **kwargs)
 
 	# Generate method specific summary report 
 	else:
 		if isinstance(data, MSDataset):
-			_generateReportMS(data, reportType.lower(), output=output, **kwargs)
+			_generateReportMS(data, reportType.lower(), destinationPath=destinationPath, **kwargs)
 		if isinstance(data, NMRDataset):
-			_generateReportNMR(data, reportType.lower(), output=output, **kwargs)
+			_generateReportNMR(data, reportType.lower(), destinationPath=destinationPath, **kwargs)
 		if isinstance(data, TargetedDataset):
-			_generateReportTargeted(data, reportType.lower(), output=output, **kwargs)
+			_generateReportTargeted(data, reportType.lower(), destinationPath=destinationPath, **kwargs)

@@ -29,7 +29,7 @@ def datetime_range(start, count, delta):
 
 
 """
-Test report generation functions - at their most basic, simply check output is generated
+Test report generation functions - at their most basic, simply check destinationPath is generated
 """
 class test_reports_ms_feature_id(unittest.TestCase):
 
@@ -83,8 +83,8 @@ class test_reports_generateSamplereport(unittest.TestCase):
 
 	def test_report_samplesummary(self):
 	
-		# Generate output from sampleSummary
-		sampleSummary = nPYc.reports._generateSampleReport(self.data, output=None, returnOutput=True)
+		# Generate destinationPath from sampleSummary
+		sampleSummary = nPYc.reports._generateSampleReport(self.data, destinationPath=None, returnOutput=True)
 	
 		# Check returns against expected
 
@@ -118,8 +118,8 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		self.data.excludeSamples(self.data.sampleMetadata[pandas.isnull(self.data.sampleMetadata['Sample Base Name'])]['Sample File Name'], on='Sample File Name', message='Unknown type')		
 		self.data.applyMasks()
 	
-		# Generate output from sampleSummary
-		sampleSummary = nPYc.reports._generateSampleReport(self.data, output=None, returnOutput=True)
+		# Generate destinationPath from sampleSummary
+		sampleSummary = nPYc.reports._generateSampleReport(self.data, destinationPath=None, returnOutput=True)
 	
 		# Check returns against expected
 	
@@ -162,7 +162,7 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			self.dataset.name = 'TestData'
 			self.dataset._nmrQCChecks()
 
-			nPYc.reports.generateReport(self.dataset, 'Feature Summary', output=tmpdirname)
+			nPYc.reports.generateReport(self.dataset, 'Feature Summary', destinationPath=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'TestData_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -188,7 +188,7 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			self.dataset.sampleMetadata['BaselineFail'] = False
 			self.dataset.sampleMetadata['WaterPeakFail'] = False
 			self.dataset.sampleMetadata['Metadata Available'] = True
-			nPYc.reports.generateReport(self.dataset, 'Final Report', output=tmpdirname)
+			nPYc.reports.generateReport(self.dataset, 'Final Report', destinationPath=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'TestData_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -216,7 +216,7 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 
 		self.assertRaises(ValueError, _generateReportNMR, data, 'Not a vaild plot type')
 		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', withExclusions='Not a bool')
-		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', output=True)
+		self.assertRaises(TypeError, _generateReportNMR, data, 'feature summary', destinationPath=True)
 
 
 class test_reports_ms_generatereport(unittest.TestCase):
@@ -237,7 +237,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
-			nPYc.reports.generateReport(data, 'feature summary', output=tmpdirname)
+			nPYc.reports.generateReport(data, 'feature summary', destinationPath=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'test_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -262,7 +262,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
-			nPYc.reports.generateReport(data, 'correlation to dilution', output=tmpdirname)
+			nPYc.reports.generateReport(data, 'correlation to dilution', destinationPath=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_correlationToDilutionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -287,7 +287,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
-			nPYc.reports.generateReport(data, 'batch correction assessment', output=tmpdirname)
+			nPYc.reports.generateReport(data, 'batch correction assessment', destinationPath=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionAssessment.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -310,7 +310,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 		
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
-			nPYc.reports.generateReport(data, 'batch correction summary', msDataCorrected=datacorrected, output=tmpdirname)
+			nPYc.reports.generateReport(data, 'batch correction summary', msDataCorrected=datacorrected, destinationPath=tmpdirname)
 			
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -335,7 +335,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
-			nPYc.reports.generateReport(data, 'feature selection', output=tmpdirname)
+			nPYc.reports.generateReport(data, 'feature selection', destinationPath=tmpdirname)
 			
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_featureSelectionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -356,7 +356,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 		data.sampleMetadata['Metadata Available'] = True
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
-			nPYc.reports.generateReport(data, 'final report', output=tmpdirname)
+			nPYc.reports.generateReport(data, 'final report', destinationPath=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -379,7 +379,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 		self.assertRaises(TypeError, nPYc.reports.generateReport, None, 'feature summary')
 		self.assertRaises(ValueError, nPYc.reports.generateReport, data, 'Unknown type')
 		self.assertRaises(TypeError, nPYc.reports.generateReport, data, 'feature summary', withExclusions='Not a bool')
-		self.assertRaises(TypeError, nPYc.reports.generateReport, data, 'feature summary', output=1)
+		self.assertRaises(TypeError, nPYc.reports.generateReport, data, 'feature summary', destinationPath=1)
 		self.assertRaises(TypeError, nPYc.reports.generateReport, data, 'batch correction summary', msDataCorrected='Not an object')
 		self.assertRaises(TypeError, nPYc.reports.generateReport, data, 'final report', pcaModel='Not a PCA model')
 
@@ -636,7 +636,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			with warnings.catch_warnings():
 				warnings.simplefilter('ignore', UserWarning)
-				nPYc.reports.generateReport(inputDataset, 'feature summary', output=tmpdirname)
+				nPYc.reports.generateReport(inputDataset, 'feature summary', destinationPath=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -652,7 +652,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		inputDataset = copy.deepcopy(self.targetedDataset)
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
-			nPYc.reports.generateReport(inputDataset, 'merge LOQ assessment', output=tmpdirname)
+			nPYc.reports.generateReport(inputDataset, 'merge LOQ assessment', destinationPath=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_mergeLoqAssessment.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -675,12 +675,12 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
-			nPYc.reports.multivariateReport.multivariateQCreport(inputDataset, pcaModel=pcaModel, reportType='analytical', withExclusions=True, output=tmpdirPCA)
+			nPYc.reports.multivariateReport.multivariateQCreport(inputDataset, pcaModel=pcaModel, reportType='analytical', withExclusions=True, destinationPath=tmpdirPCA)
 			inputDataset.sampleMetadata['Metadata Available'] = True
 			with warnings.catch_warnings():
 				warnings.simplefilter('ignore', UserWarning)
 				warnings.simplefilter('ignore', RuntimeWarning)
-				nPYc.reports.generateReport(inputDataset, 'final report', output=tmpdirname, pcaModel=pcaModel)
+				nPYc.reports.generateReport(inputDataset, 'final report', destinationPath=tmpdirname, pcaModel=pcaModel)
 
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
@@ -718,8 +718,8 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		self.assertRaises(ValueError, nPYc.reports.generateReport, inputDataset, 'Unknown type')
 		# withExclusions is not a bool
 		self.assertRaises(TypeError, nPYc.reports.generateReport, inputDataset, 'feature summary', withExclusions='Not a bool')
-		# output is not str or None
-		self.assertRaises(TypeError, nPYc.reports.generateReport, inputDataset, 'feature summary', output=1)
+		# destinationPath is not str or None
+		self.assertRaises(TypeError, nPYc.reports.generateReport, inputDataset, 'feature summary', destinationPath=1)
 		# numberPlotPerRowLOQ is not an int
 		self.assertRaises(TypeError, nPYc.reports.generateReport, inputDataset, 'feature summary', numberPlotPerRowLOQ='Not an int')
 		# numberPlotPerRowFeature is not an int
@@ -754,7 +754,7 @@ class test_reports_modules(unittest.TestCase):
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			# Build reports
-			report = generateFeatureDistributionReport(dataset, reportingGroups, output=tmpdirname)
+			report = generateFeatureDistributionReport(dataset, reportingGroups, destinationPath=tmpdirname)
 
 			for groupName in report.keys():
 				for plotName in report[groupName].keys():
@@ -796,7 +796,7 @@ class test_reports_modules(unittest.TestCase):
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			# Build reports
-			report = generateFeatureDistributionReport(dataset, reportingGroups, filterUnits='Unit B', output=tmpdirname)
+			report = generateFeatureDistributionReport(dataset, reportingGroups, filterUnits='Unit B', destinationPath=tmpdirname)
 
 			for groupName in report.keys():
 				for plotName in report[groupName].keys():
@@ -832,7 +832,7 @@ class test_reports_modules(unittest.TestCase):
 			if not os.path.exists(os.path.join(tmpdirname, 'graphics')):
 				os.makedirs(os.path.join(tmpdirname, 'graphics'))
 
-			report = generateBasicPCAReport(pcaModel, dataset, output=tmpdirname)
+			report = generateBasicPCAReport(pcaModel, dataset, destinationPath=tmpdirname)
 
 			for groupName in report['QCscores'].keys():
 				path = os.path.join(tmpdirname, report['QCscores'][groupName])
@@ -844,7 +844,7 @@ class test_reports_modules(unittest.TestCase):
 
 		# with self.subTest(msg='ploting interactivly'):
 		#
-		# 	report = generateBasicPCAReport(pcaModel, dataset, output=None)
+		# 	report = generateBasicPCAReport(pcaModel, dataset, destinationPath=None)
 		# 	self.assertIsNone(report)
 
 
@@ -881,7 +881,7 @@ class test_reports_multivariate(unittest.TestCase):
 
 			# Report generation
 			with self.subTest(msg='Report generation'):
-				nPYc.reports.multivariateQCreport(self.dataset, pcaModel=pcaModel, reportType='all', output=tmpdirname)
+				nPYc.reports.multivariateQCreport(self.dataset, pcaModel=pcaModel, reportType='all', destinationPath=tmpdirname)
 
 				expectedPath = os.path.join(tmpdirname, 'Dataset_report_multivariateAll.html')
 				self.assertTrue(os.path.exists(expectedPath))
@@ -914,7 +914,7 @@ class test_reports_multivariate(unittest.TestCase):
 			with self.subTest(msg='Report generation'):
 
 				nPYc.reports.multivariateQCreport(self.dataset, pcaModel=pcaModel, reportType='analytical',
-												  output=tmpdirname)
+												  destinationPath=tmpdirname)
 
 				expectedPath = os.path.join(tmpdirname, 'Dataset_report_multivariateAnalytical.html')
 				self.assertTrue(os.path.exists(expectedPath))
@@ -967,7 +967,7 @@ class test_reports_multivariate(unittest.TestCase):
 
 		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, excludeFields='not a list')
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, output=1)
+		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, destinationPath=1)
 
 		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=0.05)
 

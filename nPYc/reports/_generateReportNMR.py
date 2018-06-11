@@ -23,7 +23,7 @@ from ..enumerations import AssayRole, SampleType
 
 from ..__init__ import __version__ as version
 
-def _generateReportNMR(nmrData, reportType, withExclusions=True, output=None, pcaModel=None):
+def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath=None, pcaModel=None):
 	"""
 	Generate reports on NMRdataset objects, possible options are: ``feature summary`` or ``final report``
 	
@@ -33,8 +33,8 @@ def _generateReportNMR(nmrData, reportType, withExclusions=True, output=None, pc
 	:param NMRDataset nmrData: NMRDataset to report on
 	:param str reportType: Type of report to generate, one of ``feature summary``,  or ``final report``
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
-	:param output: If ``None`` plot interactively, otherwise save report to the path specified
-	:type output: None or str
+	:param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
+	:type destinationPath: None or str
 	"""
 	acceptableOptions = {'feature summary', 'final report'}
 
@@ -48,18 +48,18 @@ def _generateReportNMR(nmrData, reportType, withExclusions=True, output=None, pc
 	if not isinstance(withExclusions, bool):
 		raise TypeError('withExclusions must be a bool')	
 
-	if output is not None:
-		if not isinstance(output, str):
-			raise TypeError('output must be a string')
+	if destinationPath is not None:
+		if not isinstance(destinationPath, str):
+			raise TypeError('destinationPath must be a string')
 
 	sns.set_style("whitegrid")
 
-	# Create directory to save output 
-	if output:
-		if not os.path.exists(output):
-			os.makedirs(output)
-		if not os.path.exists(os.path.join(output, 'graphics')):
-			os.makedirs(os.path.join(output, 'graphics'))
+	# Create directory to save destinationPath 
+	if destinationPath:
+		if not os.path.exists(destinationPath):
+			os.makedirs(destinationPath)
+		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+			os.makedirs(os.path.join(destinationPath, 'graphics'))
 	else:
 		saveDir = None
 
@@ -80,12 +80,12 @@ def _generateReportNMR(nmrData, reportType, withExclusions=True, output=None, pc
 		nmrData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
 	if reportType.lower() == 'feature summary':
-		_featureReport(nmrData, output)
+		_featureReport(nmrData, destinationPath)
 	elif reportType.lower() == 'final report':
-		_finalReport(nmrData, output, pcaModel)
+		_finalReport(nmrData, destinationPath, pcaModel)
 
 
-def _featureReport(dataset, output=None):
+def _featureReport(dataset, destinationPath=None):
 	"""
 	Report on feature quality
 	"""
@@ -99,26 +99,26 @@ def _featureReport(dataset, output=None):
 	##
 	# Report stats
 	##
-	if output is not None:
-		if not os.path.exists(output):
-			os.makedirs(output)
-		if not os.path.exists(os.path.join(output, 'graphics')):
-			os.makedirs(os.path.join(output, 'graphics'))
-		graphicsPath = os.path.join(output, 'graphics', 'report_featureSummary')
+	if destinationPath is not None:
+		if not os.path.exists(destinationPath):
+			os.makedirs(destinationPath)
+		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+			os.makedirs(os.path.join(destinationPath, 'graphics'))
+		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_featureSummary')
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
 
 	##
 	# Chemical shift registration plot
 	##
-	if output:
+	if destinationPath:
 		item['calibrationCheck'] = os.path.join(graphicsPath, dataset.name + '_calibrationCheck.' + dataset.Attributes['figureFormat'])
 		saveAs = item['calibrationCheck']
 	else:
 		print('Figure 1: Calibration Check Plot, aligned to:', dataset.Attributes['alignTo'])
 		saveAs = None
 	
-	if output:
+	if destinationPath:
 		plotCalibration(dataset,
 			savePath=saveAs,
 			figureFormat=dataset.Attributes['figureFormat'],
@@ -130,7 +130,7 @@ def _featureReport(dataset, output=None):
 	##
 	# LW box plot
 	##
-	if output:
+	if destinationPath:
 		item['peakWidthBoxplot'] = os.path.join(graphicsPath,
 					item['Name'] + '_peakWidthBoxplot.' + dataset.Attributes['figureFormat'])
 		saveAs = item['peakWidthBoxplot']
@@ -147,7 +147,7 @@ def _featureReport(dataset, output=None):
 	##
 	# LW shape plot
 	##
-	if not output:
+	if not destinationPath:
 		print('Figure 2a: Peak Width Modeling')
 		figure = plotLineWidthInteractive(dataset)
 		iplot(figure)
@@ -155,7 +155,7 @@ def _featureReport(dataset, output=None):
 	##
 	# Baseline plot
 	##
-	if output:
+	if destinationPath:
 		item['finalFeatureBLWPplots1'] = os.path.join(graphicsPath,
 					item['Name'] + '_finalFeatureBLWPplots1.' + dataset.Attributes['figureFormat'])
 		saveAs = item['finalFeatureBLWPplots1']
@@ -164,7 +164,7 @@ def _featureReport(dataset, output=None):
 
 		saveAs = None
 
-	if output:
+	if destinationPath:
 		plotBaseline(dataset,
 					savePath=saveAs,
 					figureFormat=dataset.Attributes['figureFormat'],
@@ -178,7 +178,7 @@ def _featureReport(dataset, output=None):
 	##
 	# Water Peak plot
 	##
-	if output:
+	if destinationPath:
 		item['finalFeatureBLWPplots3'] = os.path.join(graphicsPath,
 						item['Name'] + '_finalFeatureBLWPplots3.' + dataset.Attributes['figureFormat'])
 		saveAs = item['finalFeatureBLWPplots3']
@@ -187,7 +187,7 @@ def _featureReport(dataset, output=None):
 		print('Figure 4: Waterpeak Low and High')
 		saveAs = None
 
-	if output:
+	if destinationPath:
 		plotWaterResonance(dataset,	savePath=saveAs,
 									figureFormat=dataset.Attributes['figureFormat'],
 									dpi=dataset.Attributes['dpi'],
@@ -204,16 +204,16 @@ def _featureReport(dataset, output=None):
 												  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
 	fail_summary = fail_summary[(fail_summary.iloc[:, 1::] == 1).any(axis=1, bool_only=True)]
 
-	if not output:
+	if not destinationPath:
 		print('Table 1: Summary of samples considered for exclusion')
 		display(fail_summary)
 	##
 	# Write HTML if saving
 	##
-	if output:
+	if destinationPath:
 		# Make paths for graphics local not absolute for use in the HTML.
 		for key in item:
-			if os.path.join(output, 'graphics') in str(item[key]):
+			if os.path.join(destinationPath, 'graphics') in str(item[key]):
 				item[key] = re.sub('.*graphics', 'graphics', item[key])
 
 		# Generate report
@@ -221,7 +221,7 @@ def _featureReport(dataset, output=None):
 
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 		template = env.get_template('NMR_QCSummaryReport.html')
-		filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
+		filename = os.path.join(destinationPath, dataset.name + '_report_featureSummary.html')
 
 		f = open(filename,'w')
 		f.write(template.render(item=item,
@@ -231,10 +231,10 @@ def _featureReport(dataset, output=None):
 								graphicsPath=graphicsPath))
 		f.close()
 
-		copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
+		copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
 
-def _finalReport(dataset, output=None, pcaModel=None):
+def _finalReport(dataset, destinationPath=None, pcaModel=None):
 	"""
 	Report on final dataset
 	"""
@@ -246,26 +246,26 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	item['toA_to'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
 
 	# Generate sample Summary
-	sampleSummary = _generateSampleReport(dataset, withExclusions=True, output=None, returnOutput=True)
+	sampleSummary = _generateSampleReport(dataset, withExclusions=True, destinationPath=None, returnOutput=True)
 	sampleSummary['isFinalReport'] = True
 	item['sampleSummary'] = sampleSummary
 
 	##
 	# Report stats
 	##
-	if output is not None:
-		if not os.path.exists(output):
-			os.makedirs(output)
-		if not os.path.exists(os.path.join(output, 'graphics')):
-			os.makedirs(os.path.join(output, 'graphics'))
-		graphicsPath = os.path.join(output, 'graphics', 'report_finalSummary')
+	if destinationPath is not None:
+		if not os.path.exists(destinationPath):
+			os.makedirs(destinationPath)
+		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+			os.makedirs(os.path.join(destinationPath, 'graphics'))
+		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
 
 	##
 	# LW box plot
 	##
-	if output:
+	if destinationPath:
 		item['peakWidthBoxplot'] = os.path.join(graphicsPath,
 					item['Name'] + '_peakWidthBoxplot.' + dataset.Attributes['figureFormat'])
 		saveAs = item['peakWidthBoxplot']
@@ -282,7 +282,7 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	##
 	# LW shape plot
 	##
-	if not output:
+	if not destinationPath:
 		print('Figure 1a: Peak Width Modeling')
 		figure = plotLineWidthInteractive(dataset)
 		iplot(figure)
@@ -290,7 +290,7 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	##
 	# Baseline plot
 	##
-	if output:
+	if destinationPath:
 		item['finalFeatureBLWPplots1'] = os.path.join(graphicsPath,
 					item['Name'] + '_finalFeatureBLWPplots1.' + dataset.Attributes['figureFormat'])
 		saveAs = item['finalFeatureBLWPplots1']
@@ -299,7 +299,7 @@ def _finalReport(dataset, output=None, pcaModel=None):
 
 		saveAs = None
 
-	if output:
+	if destinationPath:
 		plotBaseline(dataset,
 					savePath=saveAs,
 					figureFormat=dataset.Attributes['figureFormat'],
@@ -313,7 +313,7 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	##
 	# Water Peak plot
 	##
-	if output:
+	if destinationPath:
 		item['finalFeatureBLWPplots3'] = os.path.join(graphicsPath,
 						item['Name'] + '_finalFeatureBLWPplots3.' + dataset.Attributes['figureFormat'])
 		saveAs = item['finalFeatureBLWPplots3']
@@ -322,7 +322,7 @@ def _finalReport(dataset, output=None, pcaModel=None):
 		print('Figure 3: Waterpeak Low and High')
 		saveAs = None
 
-	if output:
+	if destinationPath:
 		plotWaterResonance(dataset,	savePath=saveAs,
 									figureFormat=dataset.Attributes['figureFormat'],
 									dpi=dataset.Attributes['dpi'],
@@ -335,16 +335,16 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	# PCA plots
 	##
 	if pcaModel:
-		if output:
-			pcaPath = output
+		if destinationPath:
+			pcaPath = destinationPath
 		else:
 			pcaPath = None
-		pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=6, output=pcaPath, fileNamePrefix='')
+		pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=6, destinationPath=pcaPath, fileNamePrefix='')
 
 	##
 	# Sample summary
 	##
-	if not output:
+	if not destinationPath:
 		print('Table 1: Summary of samples present')
 		display(sampleSummary['Acquired'])
 		if 'StudySamples Exclusion Details' in sampleSummary:
@@ -354,10 +354,10 @@ def _finalReport(dataset, output=None, pcaModel=None):
 	##
 	# Write HTML if saving
 	##
-	if output:
+	if destinationPath:
 		# Make paths for graphics local not absolute for use in the HTML.
 		for key in item:
-			if os.path.join(output, 'graphics') in str(item[key]):
+			if os.path.join(destinationPath, 'graphics') in str(item[key]):
 				item[key] = re.sub('.*graphics', 'graphics', item[key])
 
 		# Generate report
@@ -365,7 +365,7 @@ def _finalReport(dataset, output=None, pcaModel=None):
 
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 		template = env.get_template('NMR_FinalSummaryReport.html')
-		filename = os.path.join(output, dataset.name + '_report_finalSummary.html')
+		filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
 
 		f = open(filename,'w')
 		f.write(template.render(item=item,
@@ -377,4 +377,4 @@ def _finalReport(dataset, output=None, pcaModel=None):
 								)
 		f.close()
 
-		copyBackingFiles(toolboxPath(),os.path.join(output, 'graphics'))
+		copyBackingFiles(toolboxPath(),os.path.join(destinationPath, 'graphics'))
