@@ -25,7 +25,7 @@ from IPython.display import display
 
 from ..__init__ import __version__ as version
 
-def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=False, biologicalMeasurements=None, dModX_criticalVal=None, dModX_criticalVal_type=None, scores_criticalVal=None, kw_threshold=0.05, r_threshold=0.3, hotellings_alpha=0.05, excludeFields=None, output=None):
+def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=False, biologicalMeasurements=None, dModX_criticalVal=None, dModX_criticalVal_type=None, scores_criticalVal=None, kw_threshold=0.05, r_threshold=0.3, hotellings_alpha=0.05, excludeFields=None, destinationPath=None):
 	"""
 	PCA based analysis of a dataset. A PCA model is generated for the data object, then potential associations between the scores and any sample metadata determined by correlation (continuous data) or a Kruskal-Wallis test (categorical data).
 
@@ -51,8 +51,8 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 	:param float hotellings_alpha: Alpha value for plotting the Hotelling's ellipse in scores plots (default = 0.05)
 	:param excludeFields: If not None, list of sample metadata fields to be additionally excluded from analysis
 	:type excludeFields: None or list
-	:param output: If ``None`` plot interactively, otherwise save report to the path specified
-	:type output: None or str
+	:param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
+	:type destinationPath: None or str
 	"""
 
 	# Check inputs
@@ -104,21 +104,21 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		if not isinstance(excludeFields, list):
 			raise TypeError('excludeFields must be a list of column headers from data.sampleMetadata')
 
-	if output is not None:
-		if not isinstance(output, str):
-			raise TypeError('output must be a string')
+	if destinationPath is not None:
+		if not isinstance(destinationPath, str):
+			raise TypeError('destinationPath must be a string')
 
 
-	# Create directory to save output
-	if output:
+	# Create directory to save destinationPath
+	if destinationPath:
 
-		saveDir = os.path.join(output, 'graphics', 'report_multivariate' + reportType.capitalize())
+		saveDir = os.path.join(destinationPath, 'graphics', 'report_multivariate' + reportType.capitalize())
 
 		# If directory exists delete directory and contents
 		if os.path.exists(saveDir):
 			shutil.rmtree(saveDir)
 
-		# Create directory to save output
+		# Create directory to save destinationPath
 		os.makedirs(saveDir)
 
 	else:
@@ -253,7 +253,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 			item['Ncomponents_optimal'] = '1'
 
 	# Datast summary
-	if output is None:
+	if destinationPath is None:
 		print('\033[1m' + 'Dataset' + '\033[0m')
 		print('\nOriginal data consists of ' + item['Nsamples'] + ' samples and ' + item['Nfeatures'] + ' features')
 		print('\t' + item['SScount'] + ' Study Samples')
@@ -277,7 +277,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 
 
 	# Scree plot
-	if output:
+	if destinationPath:
 		item['PCA_screePlot'] = os.path.join(saveDir, item['Name'] + '_PCAscreePlot.' + data.Attributes['figureFormat'])
 		saveAs = item['PCA_screePlot']
 		item['PCA_var_exp'] = pcaModel.modelParameters['VarExpRatio']
@@ -296,7 +296,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 
 	# Scores plot (coloured by sample type)
 	temp = dict()
-	if output:
+	if destinationPath:
 		temp['PCA_scoresPlot'] = os.path.join(saveDir, item['Name'] + '_PCAscoresPlot_')
 		saveAs = temp['PCA_scoresPlot']
 	else:
@@ -314,7 +314,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		figureSize=data.Attributes['figureSize'])
 
 	for key in figuresQCscores:
-		if os.path.join(output, 'graphics') in str(figuresQCscores[key]):
+		if os.path.join(destinationPath, 'graphics') in str(figuresQCscores[key]):
 			figuresQCscores[key] = re.sub('.*graphics', 'graphics', figuresQCscores[key])
 
 	item['QCscores'] = figuresQCscores
@@ -324,7 +324,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 	sumT = numpy.sum(numpy.absolute(pcaModel.scores), axis=1)
 
 	# Scatter plot of summed scores distance from origin (strong outliers in PCA)
-	if output:
+	if destinationPath:
 		item['PCA_strongOutliersPlot'] = os.path.join(saveDir, item['Name'] + '_strongOutliersPlot.' + data.Attributes['figureFormat'])
 		saveAs = item['PCA_strongOutliersPlot']
 	else:
@@ -356,12 +356,12 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		dpi=data.Attributes['dpi'],
 		figureSize=data.Attributes['figureSize'])
 	
-	if (scores_criticalVal is not None) & (output is None):
+	if (scores_criticalVal is not None) & (destinationPath is None):
 		print('\nExcluding samples with total distance from origin exceeding the ' + item['scores_criticalVal'] + ' limit would result in ' + item['Noutliers_strong'] + ' exclusions.')
 		
 
 	# Scatter plot of DmodX (moderate outliers in PCA)
-	if output:
+	if destinationPath:
 		item['PCA_modOutliersPlot'] = os.path.join(saveDir, item['Name'] + '_modOutliersPlot.' + data.Attributes['figureFormat'])
 		saveAs = item['PCA_modOutliersPlot']
 	else:
@@ -405,7 +405,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		dpi=data.Attributes['dpi'],
 		figureSize=data.Attributes['figureSize'])
 
-	if (dModX_criticalVal is not None) & (output is None):
+	if (dModX_criticalVal is not None) & (destinationPath is None):
 		print('\nExcluding samples with DmodX exceeding the ' + item['dModX_criticalVal'] + ' limit would result in ' + item['Noutliers_moderate'] + ' exclusions.')
 
 	# Total number of outliers		
@@ -417,13 +417,13 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		item['Outliers_total_details']['DModX Outlier'] = which_dmodx_outlier[outliers]
 		item['Outliers_total_details']['Scores Outlier'] = which_scores_outlier[outliers]
 		
-		if output is None:
+		if destinationPath is None:
 			print('\nExcluding outliers (as specified) would result in ' + item['Noutliers_total'] + ' exclusions.')
 			display(item['Outliers_total_details'])
 			print('\n')
 
 	# Loadings plot
-	if output:
+	if destinationPath:
 		temp['PCA_loadingsPlot'] = os.path.join(saveDir, item['Name'] + '_PCAloadingsPlot_')
 		saveAs = temp['PCA_loadingsPlot']
 	else:
@@ -439,7 +439,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		figureSize=data.Attributes['figureSize'])
 
 	for key in figuresLoadings:
-		if os.path.join(output, 'graphics') in str(figuresLoadings[key]):
+		if os.path.join(destinationPath, 'graphics') in str(figuresLoadings[key]):
 			figuresLoadings[key] = re.sub('.*graphics', 'graphics', figuresLoadings[key])
 
 	item['loadings'] = figuresLoadings
@@ -448,7 +448,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 	# Plot metadata and assess potential association with PCA scores
 
 	# Set up:
-	if output:
+	if destinationPath:
 		temp['metadataPlot'] = os.path.join(saveDir, item['Name'] + '_metadataPlot_')
 		saveAs = temp['metadataPlot']
 	else:
@@ -470,7 +470,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 
 			figuresMetadataDist = OrderedDict()
 
-			if output is None:
+			if destinationPath is None:
 				print(eachType.title() + ' data.')
 
 			# Find indices of instances of this type
@@ -486,7 +486,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 				  figureSize=data.Attributes['figureSize'])
 
 			for key in figuresMetadataDist:
-				if os.path.join(output, 'graphics') in str(figuresMetadataDist[key]):
+				if os.path.join(destinationPath, 'graphics') in str(figuresMetadataDist[key]):
 					figuresMetadataDist[key] = re.sub('.*graphics', 'graphics', figuresMetadataDist[key])
 
 			if eachType == 'continuous':
@@ -531,7 +531,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 	item['r_threshold'] = str(r_threshold)
 	item['kw_threshold'] = str(kw_threshold)
 
-	if output is None:
+	if destinationPath is None:
 
 		# Summarise results
 		print('\033[1m' + '\n\nAssociation of PCA Scores with Metadata' + '\033[0m')
@@ -551,7 +551,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 
 
 	# Heatmap of results - correlation
-	if output is None:
+	if destinationPath is None:
 		print('\n\nFigure 7: Heatmap of correlation to PCA scores for suitable metadata fields.')
 	if valueType.count('continuous') > 0:
 		sigCor = numpy.full([nc*valueType.count('continuous'), 3], numpy.nan)
@@ -571,18 +571,18 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		with sns.axes_style("white"):
 			plt.figure(figsize=data.Attributes['figureSize'], dpi=data.Attributes['dpi'])
 			sns.heatmap(sigCor, annot=True, fmt='.3g', vmin=-1, vmax=1, cmap='RdBu_r')
-			if output:
+			if destinationPath:
 				item['sigCorHeatmap'] = os.path.join(saveDir, item['Name'] + '_sigCorHeatmap.' + data.Attributes['figureFormat'])
 				plt.savefig(item['sigCorHeatmap'], bbox_inches='tight', format=data.Attributes['figureFormat'], dpi=data.Attributes['dpi'])
 				plt.close()
 			else:
 				plt.show()
 	else:
-		if output is None:
+		if destinationPath is None:
 			print('\n' + str(valueType.count('correlation')) + ' fields where correlation to PCA scores calculated.')
 
 	# Heatmap of results - Kruskal-Wallis
-	if output is None:
+	if destinationPath is None:
 		print('\n\nFigure 8: Heatmap of Kruskal-Wallis Test against PCA scores for suitable metadata fields.')
 	if countKW > 0:
 		sigKru = numpy.full([nc*countKW, 3], numpy.nan)
@@ -602,30 +602,30 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		with sns.axes_style("white"):
 			plt.figure(figsize=data.Attributes['figureSize'], dpi=data.Attributes['dpi'])
 			sns.heatmap(sigKru, annot=True, fmt='.3g', vmin=0, vmax=1, cmap='OrRd_r')
-			if output:
+			if destinationPath:
 				item['sigKruHeatmap'] = os.path.join(saveDir, item['Name'] + '_sigKruHeatmap.' + data.Attributes['figureFormat'])
 				plt.savefig(item['sigKruHeatmap'], bbox_inches='tight', format=data.Attributes['figureFormat'], dpi=data.Attributes['dpi'])
 				plt.close()
 			else:
 				plt.show()
 	else:
-		if output is None:
+		if destinationPath is None:
 			print('\n'+ str(valueType.count('KW')) + ' fields where Kruskal-Wallis test between groups in PCA scores calculated.')
 
 	# Scores plots coloured by each available metadata, above thresholds if required and sorted by significance
-	if output:
+	if destinationPath:
 		saveAs = saveDir
 
 	# Plots for continuous data fields (passing correlation threshold)
 	item['Ncorr_passing'] = '0'
-	if output is None:
+	if destinationPath is None:
 		print('\n\nFigure 9: PCA scores plots coloured by metadata (significance by correlation).')
 		
 	if valueType.count('continuous') > 0:
 		if r_threshold == 'None':
 			r_threshold = numpy.min(abs(sigCor.values))
 		item['Ncorr_passing'] = str(sum((abs(sigCor.values) >= r_threshold).any(axis=1)==True))
-		if output is None:
+		if destinationPath is None:
 			print('\n' + item['Ncorr_passing'] + ' fields where correlation coefficient to PCA scores exceeded threshold of ' + str(r_threshold))
 		if (abs(sigCor.values) >= r_threshold).any():
 			fields = sigCor.index[(abs(sigCor.values) >= r_threshold).any(axis=1)]
@@ -643,25 +643,25 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 				   dpi=data.Attributes['dpi'],
 				   figureSize=data.Attributes['figureSize'])
 
-			if output is not None:
+			if destinationPath is not None:
 				for key in figuresCORscores:
-					if os.path.join(output, 'graphics') in str(figuresCORscores[key]):
+					if os.path.join(destinationPath, 'graphics') in str(figuresCORscores[key]):
 						figuresCORscores[key] = re.sub('.*graphics', 'graphics', figuresCORscores[key])
 			item['CORscores'] = figuresCORscores
 	else:
-		if output is None:
+		if destinationPath is None:
 			print('\n' + item['Ncorr_passing'] + ' fields where correlation coefficient to PCA scores exceeded threshold of ' + str(r_threshold))
 
 	# Plots for catagorical data fields (passing Kruskal-Wallis threshold)
 	item['Nkw_passing'] = '0'
-	if output is None:
+	if destinationPath is None:
 		print('\n\nFigure 10: PCA scores plots coloured by metadata (significance by Kruskal-Wallis).')
 		
 	if countKW > 0:
 		if kw_threshold == 'None':
 			kw_threshold = numpy.max(abs(sigKru.values))
 		item['Nkw_passing'] = str(sum((sigKru.values <= kw_threshold).any(axis=1)==True))
-		if output is None:
+		if destinationPath is None:
 			print('\n' + item['Nkw_passing'] + ' fields where Kruskal-Wallis p-value against PCA scores exceeded threshold of ' + str(kw_threshold))
 		if (sigKru.values <= kw_threshold).any():
 			fields = sigKru.index[(sigKru.values <= kw_threshold).any(axis=1)]
@@ -679,17 +679,17 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 				  dpi=data.Attributes['dpi'],
 				  figureSize=data.Attributes['figureSize'])
 
-			if output is not None:
+			if destinationPath is not None:
 				for key in figuresKWscores:
-					if os.path.join(output, 'graphics') in str(figuresKWscores[key]):
+					if os.path.join(destinationPath, 'graphics') in str(figuresKWscores[key]):
 						figuresKWscores[key] = re.sub('.*graphics', 'graphics', figuresKWscores[key])
 			item['KWscores'] = figuresKWscores
 	else:
-		if output is None:
+		if destinationPath is None:
 			print('\n' + item['Nkw_passing'] + ' fields where Kruskal-Wallis p-value against PCA scores exceeded threshold of ' + str(kw_threshold))
 
 	# Plots for catagorical data fields (with insufficient numbers to test significance)
-	if output is None:
+	if destinationPath is None:
 		print('\n\nFigure 11: PCA scores plots coloured by metadata (insufficent sample numbers to estimate significance).')
 		print('\n' + item['Ninsuf'] + ' fields where insufficent sample numbers to estimate significance.')
 		
@@ -720,18 +720,18 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 			dpi=data.Attributes['dpi'],
 			figureSize=data.Attributes['figureSize'])
 
-		if output is not None:
+		if destinationPath is not None:
 			for key in figuresOTHERscores:
-				if os.path.join(output, 'graphics') in str(figuresOTHERscores[key]):
+				if os.path.join(destinationPath, 'graphics') in str(figuresOTHERscores[key]):
 					figuresOTHERscores[key] = re.sub('.*graphics', 'graphics', figuresOTHERscores[key])
 		item['OTHERscores'] = figuresOTHERscores
 
 	# Generate html report
-	if output: 
+	if destinationPath: 
 
 		# Make paths for graphics local not absolute for use in the HTML.
 		for key in item:
-			if os.path.join(output, 'graphics') in str(item[key]):
+			if os.path.join(destinationPath, 'graphics') in str(item[key]):
 				item[key] = re.sub('.*graphics', 'graphics', item[key])
 
 		# Generate report
@@ -740,7 +740,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 
 		template = env.get_template('NPC_MultivariateReport.html')
-		filename = os.path.join(output, data.name + '_report_multivariate' + reportType.capitalize() + '.html')
+		filename = os.path.join(destinationPath, data.name + '_report_multivariate' + reportType.capitalize() + '.html')
 		f = open(filename,'w')
 		f.write(template.render(item=item, version=version, graphicsPath='/report_multivariate' + reportType.capitalize()))
 		f.close()

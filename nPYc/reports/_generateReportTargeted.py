@@ -24,7 +24,7 @@ import shutil
 from ..__init__ import __version__ as version
 
 
-def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=None, numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20, pcaModel=None):
+def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinationPath=None, numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20, pcaModel=None):
     """
     Summarise different aspects of a Targeted Dataset
 
@@ -37,8 +37,8 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
     :param TargetedDataset tDataIn: TargetedDataset to report on
     :param str reportType: Type or report to generate, one of ``feature summary``, ``merge loq assessment`` or ``final report``
     :param bool withExclusions: If ``True``, only report on features and samples not masked by sample and feature masks
-    :param output: If ``None`` plot interactively, otherwise save report to the path specified
-    :type output: None or str
+    :param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
+    :type destinationPath: None or str
     :param int numberPlotPerRowLOQ: Only if ``merge loq assessment``, the number of subplots to place on each row
     :param int numberPlotPerRowFeature: Only if ``feature summary`` or ``final report``, the number of subplots to place on each row
     :param percentRange: ``None`` or Float, percentage range for acceptable accuracy [100 - percentRange, 100 + percentRange] and precision [0, percentRange]
@@ -47,7 +47,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
     :raises ValueError: If 'tData' does not satisfy to BasicTargetedDataset definition
     :raises ValueError: If 'reportType' is not ``feature summary``, ``merge LOQ assessment`` or ``final report``
     :raises TypeError: If 'withExclusion' is not a bool
-    :raises TypeError: If 'output' is not None or str
+    :raises TypeError: If 'destinationPath' is not None or str
     :raises TypeError: If 'numberPlotPerRowLOQ' is not int
     :raises TypeError: If 'numberPlotPerRowFeature' is not int
     :raises TypeError: If 'percentRange' is not None or float
@@ -67,9 +67,9 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
     if not isinstance(withExclusions, bool):
         raise TypeError('withExclusions must be a bool')
 
-    if output is not None:
-        if not isinstance(output, str):
-            raise TypeError('output must be a string')
+    if destinationPath is not None:
+        if not isinstance(destinationPath, str):
+            raise TypeError('destinationPath must be a string')
 
     if not isinstance(numberPlotPerRowLOQ, int):
         raise TypeError('numberPlotPerRowLOQ must be an int')
@@ -84,20 +84,20 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
     sns.set_style("whitegrid")
 
-    # Create directory to save output
-    if output:
+    # Create directory to save destinationPath
+    if destinationPath:
         reportTypeCases = {'feature summary': 'featureSummary',
                            'merge loq assessment': 'mergeLoqAssessment',
                            'final report': 'finalSummary'}
         #reportTypeCase = reportType.title().replace(" ", "")
         #reportTypeCase = reportTypeCase[0].lower() + reportTypeCase[1:]
-        graphicsPath = os.path.join(output, 'graphics')
+        graphicsPath = os.path.join(destinationPath, 'graphics')
         saveDir = os.path.join(graphicsPath,  'report_' + reportTypeCases[reportType])
         # If directory exists delete directory and contents
         if os.path.exists(saveDir):
             shutil.rmtree(saveDir)
 
-        # Create directory to save output
+        # Create directory to save destinationPath
         os.makedirs(saveDir)
 
     else:
@@ -219,19 +219,19 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
                     quantParamColumns.append(col)
 
         # Feature Summary
-        if output is None:
+        if destinationPath is None:
             print('\nData consists of ' + item['Nfeatures'] + ' features:')
             for i in range(0, item['NQType']):
                 print('\t' + item['CountQType'][i] + ' features ' + item['TextQType'][i] + '.')
         # Summary table
         item['FeatureQuantParamTableOverall'] = tData.featureMetadata.loc[:, quantParamColumns]
-        if not output:
+        if not destinationPath:
             display(item['FeatureQuantParamTableOverall'])
             print('\n')
 
 
         # Figure 1: Acquisition structure colored by limits of quantification
-        if output:
+        if destinationPath:
             item['AcquisitionStructure'] = os.path.join(saveDir, item['Name'] + '_AcquisitionStructure.' + tData.Attributes['figureFormat'])
             saveAs = item['AcquisitionStructure']
         else:
@@ -257,13 +257,13 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
 
             # Title
-            if output is None:
+            if destinationPath is None:
                 print('\033[1m' + 'Features ' + item['TextQType'][i] + ' (' + item['CountQType'][i] + ')' + '\033[0m')
 
 
             # Table 1: Feature quantification parameters
             item['FeatureQuantParamTable'].append(tmpData.featureMetadata.loc[:, quantParamColumns])
-            if not output:
+            if not destinationPath:
                 print('\nTable ' + item['figTabNumber']['1'][i] + ': Quantification parameters for features ' + item['TextQType'][i] + '.')
                 display(item['FeatureQuantParamTable'][i])
                 print('\n')
@@ -271,7 +271,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
             # Figure 2: Feature Accuracy Plot
             if withAccPrec:
-                if output:
+                if destinationPath:
                     item['FeatureAccuracyPlot'].append(os.path.join(saveDir, item['Name'] + '_FeatureAccuracy' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureAccuracyPlot'][i]
                 else:
@@ -284,14 +284,14 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
                                       dpi=tmpData.Attributes['dpi'],
                                       figureSize=tmpData.Attributes['figureSize'])
             else:
-                if not output:
+                if not destinationPath:
                     print('Figure ' + item['figTabNumber']['2'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
                     print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
 
             # Figure 3: Feature Precision Plot, or RSD Plot
             if withAccPrec:
-                if output:
+                if destinationPath:
                     item['FeaturePrecisionPlot'].append(os.path.join(saveDir, item['Name'] + '_FeaturePrecision' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeaturePrecisionPlot'][i]
                 else:
@@ -304,7 +304,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
                                       dpi=tmpData.Attributes['dpi'],
                                       figureSize=tmpData.Attributes['figureSize'])
             elif withRSD:
-                if output:
+                if destinationPath:
                     item['FeatureRSDPlot'].append(os.path.join(saveDir, item['Name'] + '_FeatureRSD' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureRSDPlot'][i]
                 else:
@@ -319,13 +319,13 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
                          dpi=tmpData.Attributes['dpi'],
                          figureSize=(tmpData.Attributes['figureSize'][0], tmpData.Attributes['figureSize'][1] * (tmpData.noFeatures / 35)))
             else:
-                if not output:
+                if not destinationPath:
                     print('Figure ' + item['figTabNumber']['3'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
                     print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
 
             # Figure 4: Measured concentrations distribution, split by sample types.
-            if output:
+            if destinationPath:
                 item['FeatureConcentrationDistribution'].append(os.path.join(saveDir, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                 saveAs = item['FeatureConcentrationDistribution'][i]
             else:
@@ -346,18 +346,18 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
             # Table 2: Feature Accuracy Precision Table, or RSD Table
             if withAccPrec:
                 item['FeatureAccPreTable'].append(_getAccuracyPrecisionTable(tmpData, table='both'))
-                if not output:
+                if not destinationPath:
                     print('\nTable ' + item['figTabNumber']['2'][i] + ': Measurement accuracy (%) and precision (% RSD) for features ' + item['TextQType'][i] + '.')
                     display(item['FeatureAccPreTable'][i])
                     print('\n')
             elif withRSD:
                 item['FeatureRSDTable'].append(_getRSDTable(tmpData))
-                if not output:
+                if not destinationPath:
                     print('\nTable ' + item['figTabNumber']['2'][i] + ': RSD for features ' + item['TextQType'][i] + '.')
                     display(item['FeatureRSDTable'][i])
                     print('\n')
             else:
-                if not output:
+                if not destinationPath:
                     print('Table ' + item['figTabNumber']['2'][i] + ': Measurement accuracy (%) and precision (% RSD) for features ' + item['TextQType'][i] + '.')
                     print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
@@ -374,14 +374,14 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
         # Save to item
         item['MonitoredFeaturesRatio'] = str(mergeLOQData.noFeatures) + ' out of ' + str(tData.noFeatures)
 
-        if not output:
+        if not destinationPath:
             print('Only quantified features are assessed for the merge of limits of quantification (' + item['MonitoredFeaturesRatio'] + ').\n')
 
         # Table 1: Limits of quantification
         # Save to item
         item['LOQSummaryTable'] = LOQSummaryTable['LOQTable']
 
-        if not output:
+        if not destinationPath:
             print('Table 1: Limits of Quantification pre and post merging to the lowest common denominator.')
             display(item['LOQSummaryTable'])
             print('\n')
@@ -390,7 +390,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
         # Save to item
         item['LLOQSummaryTable'] = LOQSummaryTable['LLOQTable']
 
-        if not output:
+        if not destinationPath:
             print('Table 2: Number of sample measurements lower than the Lowest Limit of Quantification, pre and post merging to the lowest common denominator.')
             display(item['LLOQSummaryTable'])
             print('\n')
@@ -399,13 +399,13 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
         # Save to item
         item['ULOQSummaryTable'] = LOQSummaryTable['ULOQTable']
 
-        if not output:
+        if not destinationPath:
             print('Table 3: Number of sample measurements greater than the Upper Limit of Quantification, pre and post merging to the lowest common denominator.')
             display(item['ULOQSummaryTable'])
             print('\n')
 
         # Figure 1: Measured concentrations pre and post LOQ
-        if output:
+        if destinationPath:
             item['ConcentrationPrePostMergeLOQ'] = os.path.join(saveDir, item['Name'] + '_ConcentrationPrePostMergeLOQ.' + tData.Attributes['figureFormat'])
             saveAs = item['ConcentrationPrePostMergeLOQ']
         else:
@@ -490,7 +490,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
         ## Table 1: Sample summary
 
         # Generate sample summary
-        sampleSummary = _generateSampleReport(tData, withExclusions=True, output=None, returnOutput=True)
+        sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
 
         # Extract summary table for samples acquired
         sampleSummaryTable = copy.deepcopy(sampleSummary['Acquired'])
@@ -530,7 +530,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
                 item['SamplesExcludedInfo'] = item['SamplesExcludedInfo'].drop(['Sample Base Name', 'SampleType', 'AssayRole'], axis=1)
                 item['SamplesExcludedNo'] = str(sampleSummaryTable['Excluded']['Study Sample'])
 
-        if not output:
+        if not destinationPath:
             print('Final Dataset for: ' + item['Name'])
             print('\n\t' + 'Method: ' + item['TargMethod'] + '\n\t' + item['Nsamples'] + ' samples\n\t' + item['Nfeatures'] + ' features')
             ## Feature Summary
@@ -544,7 +544,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
         ## Overall feature quantification parameters
         item['FeatureQuantParamTableOverall'] = tData.featureMetadata.loc[:, quantParamColumns]
-        if not output:
+        if not destinationPath:
             print('Feature Summary')
             display(item['FeatureQuantParamTableOverall'])
             print('\n')
@@ -563,7 +563,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
         item['end'] = end.strftime('%d/%m/%y')
 
 
-        if output:
+        if destinationPath:
             item['AcquisitionStructure'] = os.path.join(saveDir, item['Name'] + '_AcquisitionStructure.' + tData.Attributes['figureFormat'])
             saveAs = item['AcquisitionStructure']
         else:
@@ -589,19 +589,19 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
             tmpData.applyMasks()
 
             # Title
-            if output is None:
+            if destinationPath is None:
                 print('\033[1m' + 'Features ' + item['TextQType'][i] + ' (' + item['CountQType'][i] + ')' + '\033[0m')
 
             ## Table 2: Feature quantification parameters
             item['FeatureQuantParamTable'].append(tmpData.featureMetadata.loc[:, quantParamColumns])
-            if not output:
+            if not destinationPath:
                 print('\nTable ' + item['figTabNumber']['2'][i] + ': Quantification parameters for features ' + item['TextQType'][i] + '.')
                 display(item['FeatureQuantParamTable'][i])
                 print('\n')
 
             ## Figure 2: Feature Accuracy Plot
             if withAccPrec:
-                if output:
+                if destinationPath:
                     item['FeatureAccuracyPlot'].append(os.path.join(saveDir, item['Name'] + '_FeatureAccuracy' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureAccuracyPlot'][i]
                 else:
@@ -614,13 +614,13 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
                                       dpi=tmpData.Attributes['dpi'],
                                       figureSize=tmpData.Attributes['figureSize'])
             else:
-                if not output:
+                if not destinationPath:
                     print('Figure ' + item['figTabNumber']['2'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
                     print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
             ## Figure 3: Feature Precision Plot, or RSD Plot
             if withAccPrec:
-                if output:
+                if destinationPath:
                     item['FeaturePrecisionPlot'].append(os.path.join(saveDir, item['Name'] + '_FeaturePrecision' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeaturePrecisionPlot'][i]
                 else:
@@ -633,7 +633,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
                                       dpi=tmpData.Attributes['dpi'],
                                       figureSize=tmpData.Attributes['figureSize'])
             elif withRSD:
-                if output:
+                if destinationPath:
                     item['FeatureRSDPlot'].append(os.path.join(saveDir, item['Name'] + '_FeatureRSD' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureRSDPlot'][i]
                 else:
@@ -648,12 +648,12 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
                          dpi=tmpData.Attributes['dpi'],
                          figureSize=(tmpData.Attributes['figureSize'][0], tmpData.Attributes['figureSize'][1] * (tmpData.noFeatures / 35)))
             else:
-                if not output:
+                if not destinationPath:
                     print('Figure ' + item['figTabNumber']['3'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
                     print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
             ## Figure 4: Measured concentrations distribution, split by sample types.
-            if output:
+            if destinationPath:
                 item['FeatureConcentrationDistribution'].append(os.path.join(saveDir, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                 saveAs = item['FeatureConcentrationDistribution'][i]
             else:
@@ -673,18 +673,18 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
             ## Table 3: Feature Accuracy Precision Table, or RSD Table
             if withAccPrec:
                 item['FeatureAccPreTable'].append(_getAccuracyPrecisionTable(tmpData, table='both'))
-                if not output:
+                if not destinationPath:
                     print('\nTable ' + item['figTabNumber']['3'][i] + ': Measurement accuracy (%) and precision (% RSD) for features ' + item['TextQType'][i] + '.')
                     display(item['FeatureAccPreTable'][i])
                     print('\n')
             elif withRSD:
                 item['FeatureRSDTable'].append(_getRSDTable(tmpData))
-                if not output:
+                if not destinationPath:
                     print('\nTable ' + item['figTabNumber']['2'][i] + ': RSD for features ' + item['TextQType'][i] + '.')
                     display(item['FeatureRSDTable'][i])
                     print('\n')
             else:
-                if not output:
+                if not destinationPath:
                     print('Table ' + item['figTabNumber']['3'][i] + ': Measurement accuracy (%) and precision (% RSD) for features ' + item['TextQType'][i] + '.')
                     print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
         # End iterate over Quantification Types
@@ -699,20 +699,20 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
             tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
             if pcaModel:
-                if output:
-                    pcaPath = output
+                if destinationPath:
+                    pcaPath = destinationPath
                 else:
                     pcaPath = None
-                pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=6, output=pcaPath, fileNamePrefix='')
+                pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=6, destinationPath=pcaPath, fileNamePrefix='')
 
-            #if output:
-            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=saveAs)
+            #if destinationPath:
+            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, destinationPath=saveAs)
             #else:
-            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, output=output)
+            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, destinationPath=destinationPath)
 
 
         ## Add final tables of excluded/missing study samples
-        if not output:
+        if not destinationPath:
 
             if (('SamplesMissingInfo' in item) | ('SamplesExcludedInfo' in item)):
 
@@ -730,15 +730,15 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
 
     # Generate HTML report
-    if output:
+    if destinationPath:
 
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
             if isinstance(item[key], list):
                 for i in range(0, len(item[key])):
-                    if os.path.join(output, 'graphics') in str(item[key][i]):
+                    if os.path.join(destinationPath, 'graphics') in str(item[key][i]):
                         item[key][i] = re.sub('.*graphics', 'graphics', item[key][i])
-            elif os.path.join(output, 'graphics') in str(item[key]):
+            elif os.path.join(destinationPath, 'graphics') in str(item[key]):
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
 
         # Generate report
@@ -746,7 +746,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, output=No
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('generateReportTargeted.html')
-        filename = os.path.join(output, tData.name + '_report_' + reportTypeCases[reportType] + '.html')
+        filename = os.path.join(destinationPath, tData.name + '_report_' + reportTypeCases[reportType] + '.html')
         f = open(filename, 'w')
         f.write(template.render(item=item, version=version, graphicsPath=graphicsPath, pcaPlots=pcaModel))
         f.close()
@@ -762,7 +762,7 @@ def _postMergeLOQDataset(tData):
     """
     # Prepare a targetedDataset with mergeLOQ
     mergedLOQData = copy.deepcopy(tData)
-    # silence text output
+    # silence text destinationPath
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     mergedLOQData.mergeLimitsOfQuantification(onlyLLOQ=False, keepBatchLOQ=True)
@@ -880,14 +880,14 @@ def _getAccuracyPrecisionTable(tData, table='both'):
 
     def generateTable(statistic):
 
-        ## Prepare data (loop over features, append to an output df, remove all rows with NA, define a y-axis)
+        ## Prepare data (loop over features, append to an destinationPath df, remove all rows with NA, define a y-axis)
         # limit to sample types with existing data
         sType = []
         for skey in statistic.keys():
             if statistic[skey].shape[0] != 0:
                 sType.append(skey)
 
-        # define output df
+        # define destinationPath df
         Conc = statistic['All Samples'].index.tolist()  # [str(i) for i in statistic['All Samples'].index]
         nConc = len(Conc)
         nFeat = tData.noFeatures
