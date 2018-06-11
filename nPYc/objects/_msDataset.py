@@ -891,7 +891,7 @@ class MSDataset(Dataset):
 				lrMask = self.sampleMetadata['Dilution Series'].values == batch
 				lrMask = numpy.logical_and(lrMask,
 										   exclusions)
-	
+
 				correlations[index,:] = _vcorrcoef(self._intensityData,
 												   self.sampleMetadata['Dilution'].values,
 												   method=method,
@@ -1122,21 +1122,11 @@ class MSDataset(Dataset):
 		aliquoting_protocol = Protocol(id_="aliquoting",name="aliquoting",protocol_type=OntologyAnnotation(term="aliquoting"))
 
 		for index, row in self.sampleMetadata.iterrows():
-		    sub_id = row['Subject ID']
-		    sam_id = row['Sampling ID']
-		    status = row['Status']
-		    if not pandas.isnull(sub_id):
-		        src_name = str(sub_id)
-		    elif not pandas.isnull(sam_id):
-		        src_name = str(sam_id)
-		    else:
-		        src_name = status
-		    #src_name = 'source_'+str(index)
+		    src_name = row['Sample File Name']
 		    source = Source(name=src_name)
 
 		    source.comments.append(Comment(name='Study Name', value=row['Study']))
 		    study.sources.append(source)
-		    #print(row['Sampling ID'])
 
 		    sample_name = src_name
 
@@ -1149,11 +1139,13 @@ class MSDataset(Dataset):
 		    #characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['SampleType'])
 		    #sample.characteristics.append(characteristic_material_role)
 
-		    # perhaps check if field exists first
-		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=row['Age'],unit='Year')
+		    # check if field exists first
+		    age = row['Age'] if not pandas.isnull(row['Age']) else 'N/A'
+		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
 		    sample.characteristics.append(characteristic_age)
-		    # perhaps check if field exists first
-		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=row['Gender'])
+		    # check if field exists first
+		    gender = row['Gender'] if not pandas.isnull(row['Gender']) else 'N/A'
+		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
 		    sample.characteristics.append(characteristic_gender)
 
 		    ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
@@ -1166,7 +1158,6 @@ class MSDataset(Dataset):
 		    sample_collection_process.inputs = [source]
 		    aliquoting_process.outputs = [sample]
 
-		    #print(index,sub_id,sam_id,status,row['Study'],row['Sampling Date'],row['Age'],row['Gender'])
 		    # links processes
 		    plink(sample_collection_process, aliquoting_process)
 
@@ -1195,12 +1186,7 @@ class MSDataset(Dataset):
 
 		#for index, row in sampleMetadata.iterrows():
 		for index, sample in enumerate(study.samples):
-		    #print(index,sample.name)
-		    row = self.sampleMetadata.loc[self.sampleMetadata['Sampling ID'].astype(str) == sample.name]
-		    if row.empty:
-		        row = self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].astype(str) == sample.name]
-		        if row.empty:
-		            row = self.sampleMetadata.loc[self.sampleMetadata['Status'].astype(str) == sample.name]
+		    row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
 
 		    # create an extraction process that executes the extraction protocol
 		    extraction_process = Process(executes_protocol=extraction_protocol)
@@ -1208,7 +1194,6 @@ class MSDataset(Dataset):
 		    # extraction process takes as input a sample, and produces an extract material as output
 		    sample_name = sample.name
 		    sample = Sample(name=sample_name, derives_from=[source])
-		    #print(row['Acquired Time'].values[0])
 
 		    extraction_process.inputs.append(sample)
 		    material = Material(name="extract-{}".format(index))
@@ -1216,8 +1201,6 @@ class MSDataset(Dataset):
 		    extraction_process.outputs.append(material)
 
 		    # create a ms process that executes the nmr protocol
-		    #print(sample.name)
-		    #print(row['Acquired Full Time String'])
 		    ms_process = Process(executes_protocol=ms_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
 
 		    ms_process.name = "assay-name-{}".format(index)

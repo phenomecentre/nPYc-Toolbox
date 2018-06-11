@@ -81,7 +81,7 @@ class NMRDataset(Dataset):
 																				  pdata,
 																				  self.Attributes)
 			self.featureMetadata = pandas.DataFrame(ppm, columns=['ppm'])
-			
+
 			##
 			# Set up additional metadata columns
 			##
@@ -115,7 +115,7 @@ class NMRDataset(Dataset):
 			pass
 		else:
 			raise NotImplementedError('%s is not a format understood by NMRDataset.' % (fileType))
-		
+
 		# Log init
 		self.Attributes['Log'].append([datetime.now(), '%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
 
@@ -383,26 +383,28 @@ class NMRDataset(Dataset):
 
 
 		for index, row in self.sampleMetadata.iterrows():
-		    src_name = row['Subject ID'] if row['Subject ID'] is not '' else row['Sampling ID']
+		    src_name = row['Sample File Name']
 		    source = Source(name=src_name)
 
 		    source.comments.append(Comment(name='Study Name', value=row['Study']))
 		    study.sources.append(source)
 
-		    sample_name = row['Sampling ID'] if not pandas.isnull(row['Sampling ID']) else row['Subject ID']
+		    sample_name = src_name
 		    sample = Sample(name=sample_name, derives_from=[source])
 
-		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=detailsDict['study_material_type'])
+		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=row['Status'])
 		    sample.characteristics.append(characteristic_material_type)
 
-		    characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
-		    sample.characteristics.append(characteristic_material_role)
+		    #characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
+		    #sample.characteristics.append(characteristic_material_role)
 
-		    # perhaps check if field exists first
-		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=row['Age'],unit='Year')
+		    # check if field exists first
+		    age = row['Age'] if not pandas.isnull(row['Age']) else 'N/A'
+		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
 		    sample.characteristics.append(characteristic_age)
-		    # perhaps check if field exists first
-		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=row['Gender'])
+		    # check if field exists first
+		    gender = row['Gender'] if not pandas.isnull(row['Gender']) else 'N/A'
+		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
 		    sample.characteristics.append(characteristic_gender)
 
 		    ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
@@ -445,11 +447,7 @@ class NMRDataset(Dataset):
 
 		#for index, row in sampleMetadata.iterrows():
 		for index, sample in enumerate(study.samples):
-		    #print(sample.name)
-		    row = self.sampleMetadata.loc[self.sampleMetadata['Sampling ID'].astype(str) == sample.name]
-		    if row.empty:
-		        row = self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].astype(str) == sample.name]
-
+		    row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
 		    # create an extraction process that executes the extraction protocol
 		    extraction_process = Process(executes_protocol=extraction_protocol)
 
