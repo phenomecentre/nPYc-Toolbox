@@ -44,10 +44,10 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 	:param xlim: Specify upper and lower bounds of the X axis
 	:type xlim: tuple of int
 	"""
-	
+
 	fig = plt.figure(figsize=figureSize, dpi=dpi)
 	ax = plt.subplot(1,1,1)
-	
+
 	# Set the colorpalette
 	if color is not None:
 		sns.set_color_codes(palette='deep')
@@ -55,7 +55,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 	elif quantiles is not None:
 		flatui = ["#16a085", "#3498db", "#707b7c"]#, "#d2b4de", "#aeb6bf"]
 		ax.set_prop_cycle(cycler('color', flatui))
-	
+
 	# Set masks etc if required (not currently possible when values is a dictionary)
 	if not isinstance(values, dict):
 
