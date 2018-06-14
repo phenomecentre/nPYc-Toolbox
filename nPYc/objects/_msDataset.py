@@ -1132,28 +1132,30 @@ class MSDataset(Dataset):
 
 		    #sample_name = 'sample_'+str(index)
 		    sample = Sample(name=sample_name, derives_from=[source])
-
-		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=row['Status'])
+		    # check if field exists first
+		    status = row['Status'].values[0] if not pandas.isnull(row['Status']) else 'N/A'
+		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
 		    sample.characteristics.append(characteristic_material_type)
 
 		    #characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['SampleType'])
 		    #sample.characteristics.append(characteristic_material_role)
 
 		    # check if field exists first
-		    age = row['Age'] if not pandas.isnull(row['Age']) else 'N/A'
+		    age = row['Age'].values[0] if not pandas.isnull(row['Age']) else 'N/A'
 		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
 		    sample.characteristics.append(characteristic_age)
 		    # check if field exists first
-		    gender = row['Gender'] if not pandas.isnull(row['Gender']) else 'N/A'
+		    gender = row['Gender'].values[0] if not pandas.isnull(row['Gender']) else 'N/A'
 		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
 		    sample.characteristics.append(characteristic_gender)
 
 		    ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
 		    characteristic_organism = Characteristic(category=OntologyAnnotation(term="Organism"),value=OntologyAnnotation(term="Homo Sapiens", term_source=ncbitaxon,term_accession="http://purl.bioontology.org/ontology/NCBITAXON/9606"))
 		    sample.characteristics.append(characteristic_organism)
-
-		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=row['Sampling Date'])
-		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=row['Sampling Date'])
+		    # check if field exists first
+		    sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
+		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
+		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
 
 		    sample_collection_process.inputs = [source]
 		    aliquoting_process.outputs = [sample]
@@ -1205,14 +1207,20 @@ class MSDataset(Dataset):
 
 		    ms_process.name = "assay-name-{}".format(index)
 		    ms_process.inputs.append(extraction_process.outputs[0])
-		    # nmr process usually has an output data file
-		    datafile = DataFile(filename=row['Assay data name'].values[0], label="MS Assay Name", generated_from=[sample])
+		    # ms process usually has an output data file
+             # check if field exists first
+		    assay_data_name = row['Assay data name'].values[0] if not pandas.isnull(row['Assay data name']) else 'N/A'
+		    datafile = DataFile(filename=assay_data_name, label="MS Assay Name", generated_from=[sample])
 		    ms_process.outputs.append(datafile)
 
 		    #nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
 		    ms_process.parameter_values = [ParameterValue(category=ms_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
-		    ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Instrument'),value=row['Instrument'].values[0]))
-		    ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Sample Batch'),value=row['Sample batch'].values[0]))
+             # check if field exists first
+		    instrument = row['Instrument'].values[0] if not pandas.isnull(row['Instrument']) else 'N/A'
+		    ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Instrument'),value=instrument))
+             # check if field exists first
+		    sbatch = row['Sample batch'].values[0] if not pandas.isnull(row['Sample batch']) else 'N/A'
+		    ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Sample Batch'),value=sbatch))
 		    ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 
 		    # ensure Processes are linked forward and backward

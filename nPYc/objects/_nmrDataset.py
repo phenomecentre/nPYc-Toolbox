@@ -391,8 +391,9 @@ class NMRDataset(Dataset):
 
 		    sample_name = src_name
 		    sample = Sample(name=sample_name, derives_from=[source])
-
-		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=row['Status'])
+		    # check if field exists first
+		    status = row['Status'].values[0] if not pandas.isnull(row['Status']) else 'N/A'
+		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
 		    sample.characteristics.append(characteristic_material_type)
 
 		    #characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
@@ -413,10 +414,10 @@ class NMRDataset(Dataset):
 
 		    study.samples.append(sample)
 
-
-		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=row['Sampling Date'])
-
-		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=row['Sampling Date'])
+		    # check if field exists first
+		    sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
+		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
+		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
 
 		    sample_collection_process.inputs = [source]
 		    aliquoting_process.outputs = [sample]
@@ -467,13 +468,19 @@ class NMRDataset(Dataset):
 		    nmr_process.name = "assay-name-{}".format(index)
 		    nmr_process.inputs.append(extraction_process.outputs[0])
 		    # nmr process usually has an output data file
-		    datafile = DataFile(filename=row['Assay data name'].values[0], label="NMR Assay Name", generated_from=[sample])
+		    # check if field exists first
+		    assay_data_name = row['Assay data name'].values[0] if not pandas.isnull(row['Assay data name']) else 'N/A'
+		    datafile = DataFile(filename=assay_data_name, label="NMR Assay Name", generated_from=[sample])
 		    nmr_process.outputs.append(datafile)
 
 		    #nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
 		    nmr_process.parameter_values = [ParameterValue(category=nmr_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=row['Instrument'].values[0]))
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=row['Sample batch'].values[0]))
+		    # check if field exists first
+		    instrument = row['Instrument'].values[0] if not pandas.isnull(row['Instrument']) else 'N/A'
+		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=instrument))
+             # check if field exists first
+		    sbatch = row['Sample batch'].values[0] if not pandas.isnull(row['Sample batch']) else 'N/A'
+		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=sbatch))
 		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 
 		    # ensure Processes are linked forward and backward
