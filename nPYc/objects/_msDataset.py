@@ -1142,7 +1142,7 @@ class MSDataset(Dataset):
 		    #sample_name = 'sample_'+str(index)
 		    sample = Sample(name=sample_name, derives_from=[source])
 		    # check if field exists first
-		    status = row['Status'].values[0] if not pandas.isnull(row['Status']) else 'N/A'
+		    status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
 		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
 		    sample.characteristics.append(characteristic_material_type)
 
@@ -1150,11 +1150,11 @@ class MSDataset(Dataset):
 		    #sample.characteristics.append(characteristic_material_role)
 
 		    # check if field exists first
-		    age = row['Age'].values[0] if not pandas.isnull(row['Age']) else 'N/A'
+		    age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
 		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
 		    sample.characteristics.append(characteristic_age)
 		    # check if field exists first
-		    gender = row['Gender'].values[0] if not pandas.isnull(row['Gender']) else 'N/A'
+		    gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
 		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
 		    sample.characteristics.append(characteristic_gender)
 
@@ -1218,18 +1218,18 @@ class MSDataset(Dataset):
 			ms_process.inputs.append(extraction_process.outputs[0])
 			# nmr process usually has an output data file
 			# check if field exists first
-			assay_data_name = row['Assay data name'].values[0] if not pandas.isnull(row['Assay data name']) else 'N/A'
+			assay_data_name = row['Assay data name'].values[0] if 'Assay data name' in self.sampleMetadata.columns else 'N/A'
 			datafile = DataFile(filename=assay_data_name, label="MS Assay Name", generated_from=[sample])
 			ms_process.outputs.append(datafile)
 
 			#nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
 			ms_process.parameter_values = [ParameterValue(category=ms_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
 			# check if field exists first
-			instrument = row['Instrument'].values[0] if not pandas.isnull(row['Instrument']) else 'N/A'
-			ms_process.parameter_values.append(ParameterValue(category=ms_process.get_param('Instrument'),value=instrument))
+			instrument = row['Instrument'].values[0] if 'Instrument' in self.sampleMetadata.columns else 'N/A'
+			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Instrument'),value=instrument))
 			# check if field exists first
-			sbatch = row['Sample batch'].values[0] if not pandas.isnull(row['Sample batch']) else 'N/A'
-			ms_process.parameter_values.append(ParameterValue(category=ms_process.get_param('Sample Batch'),value=sbatch))
+			sbatch = row['Sample batch'].values[0] if 'Sample batch' in self.sampleMetadata.columns else 'N/A'
+			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Sample Batch'),value=sbatch))
 
 			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 

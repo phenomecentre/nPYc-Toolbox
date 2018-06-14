@@ -392,7 +392,7 @@ class NMRDataset(Dataset):
 		    sample_name = src_name
 		    sample = Sample(name=sample_name, derives_from=[source])
 		    # check if field exists first
-		    status = row['Status'].values[0] if not pandas.isnull(row['Status']) else 'N/A'
+		    status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
 		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
 		    sample.characteristics.append(characteristic_material_type)
 
@@ -400,11 +400,11 @@ class NMRDataset(Dataset):
 		    #sample.characteristics.append(characteristic_material_role)
 
 		    # check if field exists first
-		    age = row['Age'] if not pandas.isnull(row['Age']) else 'N/A'
+		    age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
 		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
 		    sample.characteristics.append(characteristic_age)
 		    # check if field exists first
-		    gender = row['Gender'] if not pandas.isnull(row['Gender']) else 'N/A'
+		    gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
 		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
 		    sample.characteristics.append(characteristic_gender)
 
@@ -439,7 +439,9 @@ class NMRDataset(Dataset):
 		study.protocols.append(extraction_protocol)
 		nmr_protocol = Protocol(name='NMR spectroscopy', protocol_type=OntologyAnnotation(term="NMR Assay"))
 		nmr_protocol.add_param('Run Order')
+		#if 'Instrument' in self.sampleMetadata.columns:
 		nmr_protocol.add_param('Instrument')
+		#if 'Sample Batch' in self.sampleMetadata.columns:
 		nmr_protocol.add_param('Sample Batch')
 		nmr_protocol.add_param('Acquisition Batch')
 
@@ -469,17 +471,17 @@ class NMRDataset(Dataset):
 		    nmr_process.inputs.append(extraction_process.outputs[0])
 		    # nmr process usually has an output data file
 		    # check if field exists first
-		    assay_data_name = row['Assay data name'].values[0] if not pandas.isnull(row['Assay data name']) else 'N/A'
+		    assay_data_name = row['Assay data name'].values[0] if 'Assay data name' in self.sampleMetadata.columns else 'N/A'
 		    datafile = DataFile(filename=assay_data_name, label="NMR Assay Name", generated_from=[sample])
 		    nmr_process.outputs.append(datafile)
 
 		    #nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
 		    nmr_process.parameter_values = [ParameterValue(category=nmr_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
 		    # check if field exists first
-		    instrument = row['Instrument'].values[0] if not pandas.isnull(row['Instrument']) else 'N/A'
+		    instrument = row['Instrument'].values[0] if 'Instrument' in self.sampleMetadata.columns else 'N/A'
 		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=instrument))
              # check if field exists first
-		    sbatch = row['Sample batch'].values[0] if not pandas.isnull(row['Sample batch']) else 'N/A'
+		    sbatch = row['Sample batch'].values[0] if 'Sample batch' in self.sampleMetadata.columns else 'N/A'
 		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=sbatch))
 		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 
