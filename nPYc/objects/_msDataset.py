@@ -92,7 +92,6 @@ class MSDataset(Dataset):
 
 		self.Attributes['Log'].append([datetime.now(), '%s instance inited, with %d samples, %d features, from \%s\'' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
 
-
 	# When making a deepcopy, all artifactual linkage are reset
 	def __deepcopy__(self, memo):
 		cls = self.__class__
@@ -465,6 +464,9 @@ class MSDataset(Dataset):
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
 
+		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
+		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
+
 		self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'XCMS dataset loaded from %s' % (path)])
@@ -538,7 +540,14 @@ class MSDataset(Dataset):
 
 	def _loadMetaboscapeDataset(self, path, noFeatureParams=None, sheetName=None):
 
-		dataT = pandas.read_excel(path, sheet_name=sheetName)
+		prefix, fileType = os.path.splitext(path)
+
+		if fileType.lower() in ('.xls', '.xlsx'): 
+			dataT = pandas.read_excel(path, sheet_name=sheetName)
+		elif fileType.lower() == '.csv':
+			dataT = pandas.read_csv(path)
+		else:
+			raise ValueError('"%s" is not a known file type!' % (fileType))
 
 		if noFeatureParams is None:
 			if 'RT [min]' in dataT.columns:
@@ -1053,22 +1062,22 @@ class MSDataset(Dataset):
 		Export the dataset's metadata to the directory *destinationPath* as ISATAB
 		detailsDict should have the format:
 		detailsDict = {
-		    'investigation_identifier' : "i1",
-		    'investigation_title' : "Give it a title",
-		    'investigation_description' : "Add a description",
-		    'investigation_submission_date' : "2016-11-03",
-		    'investigation_public_release_date' : "2016-11-03",
-		    'first_name' : "Noureddin",
-		    'last_name' : "Sadawi",
-		    'affiliation' : "University",
-		    'study_filename' : "my_ms_study",
-		    'study_material_type' : "Serum",
-		    'study_identifier' : "s1",
-		    'study_title' : "Give the study a title",
-		    'study_description' : "Add study description",
-		    'study_submission_date' : "2016-11-03",
-		    'study_public_release_date' : "2016-11-03",
-		    'assay_filename' : "my_ms_assay"
+			'investigation_identifier' : "i1",
+			'investigation_title' : "Give it a title",
+			'investigation_description' : "Add a description",
+			'investigation_submission_date' : "2016-11-03",
+			'investigation_public_release_date' : "2016-11-03",
+			'first_name' : "Noureddin",
+			'last_name' : "Sadawi",
+			'affiliation' : "University",
+			'study_filename' : "my_ms_study",
+			'study_material_type' : "Serum",
+			'study_identifier' : "s1",
+			'study_title' : "Give the study a title",
+			'study_description' : "Add study description",
+			'study_submission_date' : "2016-11-03",
+			'study_public_release_date' : "2016-11-03",
+			'assay_filename' : "my_ms_assay"
 		}
 
 		:param str destinationPath: Path to a directory in which the output will be saved
@@ -1188,51 +1197,45 @@ class MSDataset(Dataset):
 
 		#for index, row in sampleMetadata.iterrows():
 		for index, sample in enumerate(study.samples):
-		    row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
+			row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
 
-		    # create an extraction process that executes the extraction protocol
-		    extraction_process = Process(executes_protocol=extraction_protocol)
+			# create an extraction process that executes the extraction protocol
+			extraction_process = Process(executes_protocol=extraction_protocol)
 
-		    # extraction process takes as input a sample, and produces an extract material as output
-		    sample_name = sample.name
-		    sample = Sample(name=sample_name, derives_from=[source])
+			# extraction process takes as input a sample, and produces an extract material as output
+			sample_name = sample.name
+			sample = Sample(name=sample_name, derives_from=[source])
 
-		    extraction_process.inputs.append(sample)
-		    material = Material(name="extract-{}".format(index))
-		    material.type = "Extract Name"
-		    extraction_process.outputs.append(material)
+			extraction_process.inputs.append(sample)
+			material = Material(name="extract-{}".format(index))
+			material.type = "Extract Name"
+			extraction_process.outputs.append(material)
 
-		    # create a ms process that executes the nmr protocol
-		    ms_process = Process(executes_protocol=ms_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
+			# create a ms process that executes the nmr protocol
+			ms_process = Process(executes_protocol=ms_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
 
-		    ms_process.name = "assay-name-{}".format(index)
-		    ms_process.inputs.append(extraction_process.outputs[0])
-		    # ms process usually has an output data file
-             # check if field exists first
-		    assay_data_name = row['Assay data name'].values[0] if not pandas.isnull(row['Assay data name']) else 'N/A'
-		    datafile = DataFile(filename=assay_data_name, label="MS Assay Name", generated_from=[sample])
-		    ms_process.outputs.append(datafile)
+			ms_process.name = "assay-name-{}".format(index)
+			ms_process.inputs.append(extraction_process.outputs[0])
+			# nmr process usually has an output data file
+			datafile = DataFile(filename=row['Assay data name'].values[0], label="MS Assay Name", generated_from=[sample])
+			ms_process.outputs.append(datafile)
 
-		    #nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
-		    ms_process.parameter_values = [ParameterValue(category=ms_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
-             # check if field exists first
-		    instrument = row['Instrument'].values[0] if not pandas.isnull(row['Instrument']) else 'N/A'
-		    ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Instrument'),value=instrument))
-             # check if field exists first
-		    sbatch = row['Sample batch'].values[0] if not pandas.isnull(row['Sample batch']) else 'N/A'
-		    ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Sample Batch'),value=sbatch))
-		    ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
+			#nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
+			ms_process.parameter_values = [ParameterValue(category=ms_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
+			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Instrument'),value=row['Instrument'].values[0]))
+			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Sample Batch'),value=row['Sample batch'].values[0]))
+			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 
-		    # ensure Processes are linked forward and backward
-		    plink(extraction_process, ms_process)
-		    # make sure the extract, data file, and the processes are attached to the assay
-		    ms_assay.samples.append(sample)
-		    ms_assay.data_files.append(datafile)
-		    ms_assay.other_material.append(material)
-		    ms_assay.process_sequence.append(extraction_process)
-		    ms_assay.process_sequence.append(ms_process)
-		    ms_assay.measurement_type = OntologyAnnotation(term="metabolite profiling")
-		    ms_assay.technology_type = OntologyAnnotation(term="mass spectrometry")
+			# ensure Processes are linked forward and backward
+			plink(extraction_process, ms_process)
+			# make sure the extract, data file, and the processes are attached to the assay
+			ms_assay.samples.append(sample)
+			ms_assay.data_files.append(datafile)
+			ms_assay.other_material.append(material)
+			ms_assay.process_sequence.append(extraction_process)
+			ms_assay.process_sequence.append(ms_process)
+			ms_assay.measurement_type = OntologyAnnotation(term="metabolite profiling")
+			ms_assay.technology_type = OntologyAnnotation(term="mass spectrometry")
 
 		# attach the assay to the study
 		study.assays.append(ms_assay)
@@ -1852,7 +1855,6 @@ class MSDataset(Dataset):
 				if verbose:
 					print('--------')
 					print('No additional attributes in the object')
-
 
 			## Log and final Output
 			# Basic failure might compromise logging, failure of QC compromises sample meta
