@@ -542,7 +542,7 @@ class MSDataset(Dataset):
 
 		prefix, fileType = os.path.splitext(path)
 
-		if fileType.lower() in ('.xls', '.xlsx'): 
+		if fileType.lower() in ('.xls', '.xlsx'):
 			dataT = pandas.read_excel(path, sheet_name=sheetName)
 		elif fileType.lower() == '.csv':
 			dataT = pandas.read_csv(path)
@@ -1217,13 +1217,20 @@ class MSDataset(Dataset):
 			ms_process.name = "assay-name-{}".format(index)
 			ms_process.inputs.append(extraction_process.outputs[0])
 			# nmr process usually has an output data file
-			datafile = DataFile(filename=row['Assay data name'].values[0], label="MS Assay Name", generated_from=[sample])
+			# check if field exists first
+			assay_data_name = row['Assay data name'].values[0] if not pandas.isnull(row['Assay data name']) else 'N/A'
+			datafile = DataFile(filename=assay_data_name, label="MS Assay Name", generated_from=[sample])
 			ms_process.outputs.append(datafile)
 
 			#nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
 			ms_process.parameter_values = [ParameterValue(category=ms_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
-			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Instrument'),value=row['Instrument'].values[0]))
-			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Sample Batch'),value=row['Sample batch'].values[0]))
+			# check if field exists first
+			instrument = row['Instrument'].values[0] if not pandas.isnull(row['Instrument']) else 'N/A'
+			ms_process.parameter_values.append(ParameterValue(category=ms_process.get_param('Instrument'),value=instrument))
+			# check if field exists first
+			sbatch = row['Sample batch'].values[0] if not pandas.isnull(row['Sample batch']) else 'N/A'
+			ms_process.parameter_values.append(ParameterValue(category=ms_process.get_param('Sample Batch'),value=sbatch))
+
 			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 
 			# ensure Processes are linked forward and backward
