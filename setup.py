@@ -34,7 +34,7 @@ setup(name='nPYc',
 		"License :: OSI Approved :: MIT License",
 		"Operating System :: OS Independent",
 		"Topic :: Scientific/Engineering :: Bio-Informatics",
-		],
+	],
 	long_description = """\
 		Toolbox for preprocessing of metabolic profiling datasets
 		---------------------------------------------------------

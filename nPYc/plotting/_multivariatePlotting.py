@@ -59,7 +59,7 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 	"""
 	Plot PCA scores for each pair of components in PCAmodel, coloured by values defined in classes, and with Hotelling's T2 ellipse (95%)
 
-	:param ChemometricsPCA pcaModel: NPC PCA model object (scikit-learn based)
+	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param pandas.Series classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
 	:param str classType: Type of data in ``classes``, either 'Plot Sample Type', 'categorical' or 'continuous', must be specified if classes is not ``None``. If ``classType`` is 'Plot Sample Type', ``classes`` expects 'Study Sample', 'Study Pool', 'External Reference', 'Linearity Reference' or 'Sample'.
 	:param components: If ``None`` plots all components in model, else plots those specified in components
@@ -415,7 +415,7 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
 	"""
 	Plot PCA loadings for each component in PCAmodel. For NMR data plots the median spectrum coloured by the loading. For MS data plots an ion map (rt vs. mz) coloured by the loading.
 
-	:param ChemometricsPCA pcaModel: NPC PCA model object (scikit-learn based)
+	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param Dataset msData: Dataset object
 	:param str title: Title for the plot
 	:param dict figures: If not ``None``, saves location of each figure for output in html report (see multivariateReport.py)
@@ -539,7 +539,7 @@ def plotScoresInteractive(dataTrue, pcaModel, colourBy, components=[1, 2], alpha
 	Interactively visualise PCA scores (coloured by a given sampleMetadata field, and for a given pair of components) with plotly, provides tooltips to allow identification of samples.
 	
 	:param Dataset dataTrue: Dataset
-	:param PCA object pcaModel: NPC PCA model object (scikit-learn based)
+	:param PCA object pcaModel: PCA model object (scikit-learn based)
 	:param str colourBy: **sampleMetadata** field name to of which values to colour samples by
 	:param list components: List of two integers, components to plot
 	:param float alpha: Significance value for plotting Hotellings ellipse
@@ -695,10 +695,16 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 	For MS data, plots RT vs. mz; for NMR plots ppm vs spectral intensity. Plots are coloured by the weight of the loadings.
 	
 	:param Dataset dataTrue: Dataset
-	:param ChemometricsPCA pcaModel: NPC PCA model object (scikit-learn based)
-	:param int components: Component to plot
+	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
+	:param int component: Component(s) to plot (one component (int) or list of two integers)
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks; must match between data and pcaModel
 	"""
+
+	# Separate one or two components plot
+	if isinstance(component, list):
+		multiPC = True
+	else:
+		multiPC = False
 
 	# Check inputs
 	if not isinstance(dataTrue, Dataset):
@@ -707,144 +713,226 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 	if not isinstance(pcaModel, ChemometricsPCA):
 		raise TypeError('PCAmodel must be a ChemometricsPCA object')
 
+	# Preparation
 	nc = pcaModel.scores.shape[1]
 
-	if not isinstance(component, int):
-		raise TypeError('component must be a single integer value')
-
-	component = component - 1 # Reduce components by one (account for python indexing
-
-	if component >= nc:
-		raise ValueError('integer value in component must not exceed the number of components in the model')
-
-	featureMetadata = dataTrue.featureMetadata.copy()
-	
-	# Preparation
 	if withExclusions:
 		dataMasked = copy.deepcopy(dataTrue)
 		dataMasked.applyMasks()
 	else:
 		dataMasked = dataTrue
 
-	featureMetadata = dataMasked.featureMetadata
+	featureMetadata = copy.deepcopy(dataMasked.featureMetadata)
 
 	if hasattr(pcaModel, '_npyc_dataset_shape'):
 		if pcaModel._npyc_dataset_shape['NumberFeatures'] != featureMetadata.shape[0]:
 			raise ValueError('Data dimension mismatch: Number of samples and features in the nPYc Dataset do not match'
 							 'the numbers present when PCA was fitted. Verify if withExclusions argument is matching.')
 	else:
-		raise ValueError('Fit a PCA model beforehand using exploratoryAnalysisPCA.')	
+		raise ValueError('Fit a PCA model beforehand using exploratoryAnalysisPCA.')
+
+
+	# check single PC
+	if not multiPC:
+		if not isinstance(component, int):
+			raise TypeError('component must be a single integer value')
+
+		component = component - 1  # Reduce component by one (account for python indexing
+
+		if component >= nc:
+			raise ValueError('integer value in component must not exceed the number of components in the model')
+
+		# Set up colour and tooltip values
+		cVect = pcaModel.loadings[component, :]
+		W_str = ["%.4f" % i for i in cVect]  # Format text for tooltips
+		maxcol = numpy.max(abs(cVect))
+
+
+	# check multi PC
+	else:
+		if ((not all(isinstance(item, int) for item in component)) | (len(component) > 2)):
+			raise TypeError('component must be a list of two integer values')
+
+		component = [cpt - 1 for i, cpt in enumerate(component)]  # Reduce component by one (account for python indexing)
+
+		if not all(item < nc for item in component):
+			raise ValueError('integer values in component must not exceed the number of components in the model')
+
+		# Set up tooltip values
+		cVectPC1 = pcaModel.loadings[component[0], :]
+		cVectPC2 = pcaModel.loadings[component[1], :]
+		PC1_id = [component[0] + 1] * cVectPC1.shape[0]
+		PC2_id = [component[1] + 1] * cVectPC2.shape[0]
+		WPC1_str = ["%.4f" % i for i in cVectPC1]  # Format text for tooltips first PC
+		WPC2_str = ["%.4f" % i for i in cVectPC2]  # Format text for tooltips second PC
 
 	# Set up
 	data = []
-	cVect = pcaModel.loadings[component, :]
-	W_str = ["%.4f" % i for i in cVect] # Format text for tooltips
-	maxcol = numpy.max(abs(cVect))
-	
 
-	# For MS data
-	if hasattr(featureMetadata, 'Retention Time'):
 
-		hovertext = ["Feature: %s; W: %s" % i for i in zip(featureMetadata['Feature Name'], W_str)] # Text for tooltips
+	# Plot single PC
+	if not multiPC:
 
-		# Convert cVect to a value between 0.1 and 1 - to set the alpha of each point relative to loading weight
-		alphas = (((abs(cVect) - numpy.min(abs(cVect))) * (1 - 0.2)) / (maxcol - numpy.min(abs(cVect)))) + 0.2
+		# For MS data
+		if hasattr(featureMetadata, 'Retention Time'):
+
+			hovertext = ["Feature: %s; W: %s" % i for i in zip(featureMetadata['Feature Name'], W_str)] # Text for tooltips
+
+			# Convert cVect to a value between 0.1 and 1 - to set the alpha of each point relative to loading weight
+			alphas = (((abs(cVect) - numpy.min(abs(cVect))) * (1 - 0.2)) / (maxcol - numpy.min(abs(cVect)))) + 0.2
+
+			LOADSplot = go.Scatter(
+				x = featureMetadata['Retention Time'],
+				y = featureMetadata['m/z'],
+				mode = 'markers',
+				marker = dict(
+					colorscale = 'RdBu',
+					cmin = -maxcol,
+					cmax = maxcol,
+					color = cVect,
+					opacity = alphas,
+					showscale = True,
+					),
+				text = hovertext,
+				hoverinfo = 'x, y, text',
+				showlegend = False
+				)
+
+			data.append(LOADSplot)
+			xReverse = True
+			Xlabel = 'Retention Time'
+			Ylabel = 'm/z'
+
+
+		# For NMR data
+		elif hasattr(featureMetadata, 'ppm'):
+
+			Xvals = featureMetadata['ppm']
+			hovertext = ["ppm: %.4f; W: %s" % i for i in zip(featureMetadata['ppm'], W_str)] # Text for tooltips
+
+			# Bar starts at minimum spectral intensity
+			LOADSmin = go.Bar(
+				x = Xvals,
+				y = numpy.min(dataMasked.intensityData, axis=0),
+	#			y = numpy.percentile(PCAmodel.intensityData, 1, axis=0),
+				marker = dict(
+					color = 'white'
+					),
+				hoverinfo = 'skip',
+				showlegend = False
+				)
+
+			# Bar ends at maximum spectral intensity, bar for each feature coloured by loadings weight
+			LOADSmax = go.Bar(
+				x = Xvals,
+				y = numpy.max(dataMasked.intensityData, axis=0),
+	#			y = numpy.percentile(PCAmodel.intensityData, 99, axis=0),
+				marker = dict(
+					colorscale = 'RdBu',
+					cmin = -maxcol,
+					cmax = maxcol,
+					color = cVect,
+					showscale = True,
+					),
+				text = hovertext,
+				hoverinfo = 'text',
+				showlegend = False
+				)
+
+			# Add line for median spectral intensity
+			LOADSline = go.Scatter(
+				x = Xvals,
+				y = numpy.median(dataMasked.intensityData, axis=0),
+				mode = 'line',
+				line = dict(
+					color = 'black',
+					width = 1
+					),
+				hoverinfo = 'skip',
+				showlegend = False
+			)
+
+			data.append(LOADSmin)
+			data.append(LOADSmax)
+			data.append(LOADSline)
+			xReverse = 'reversed'
+			Xlabel = chr(948)+ '1H'
+			Ylabel = 'Intensity'
+
+
+		# Other data
+		else:
+			# X axis is PC loading, Y axis is ordered features
+			sortOrder = numpy.argsort(pcaModel.loadings[component, :])
+			Yvals     = list(range(pcaModel.loadings.shape[1], 0, -1))
+			hovertext = ["Feature: %s; W: %s" % i for i in zip(featureMetadata['Feature Name'], W_str)]  # Text for tooltips
+
+			LOADSplot = go.Scatter(
+				x=pcaModel.loadings[component, sortOrder],
+				y=Yvals,
+				mode='markers',
+				text=hovertext,
+				hoverinfo='text',
+				showlegend=False
+			)
+
+			data.append(LOADSplot)
+			xReverse = True
+			Xlabel = 'Principal Component ' + str(component + 1)
+			Ylabel = 'Feature'
+
+
+		# Add annotation
+		layout = {
+			'xaxis': dict(
+				title=Xlabel,
+				autorange=xReverse
+			),
+			'yaxis': dict(
+				title=Ylabel
+			),
+			'title': 'Loadings for PC ' + str(component + 1),
+			'hovermode': 'closest',
+			'bargap': 0,
+			'barmode': 'stack'
+		}
+
+
+	# Plot multi PC
+	else:
+
+		# NMR doesn't have Feature Name
+		if hasattr(featureMetadata, 'ppm'):
+			featureMetadata['Feature Name'] = ["%.4f" % i for i in featureMetadata['ppm']]
+
+		hovertext = ["Feature: %s; W PC%s: %s; W PC%s: %s" % i for i in zip(featureMetadata['Feature Name'], PC1_id, WPC1_str, PC2_id, WPC2_str)]  # Text for tooltips
 
 		LOADSplot = go.Scatter(
-			x = featureMetadata['Retention Time'],
-			y = featureMetadata['m/z'],
-			mode = 'markers',
-			marker = dict(
-				colorscale = 'RdBu',
-				cmin = -maxcol,
-				cmax = maxcol,
-				color = cVect,
-				opacity = alphas,
-				showscale = True,
-				),
-			text = hovertext,
-			hoverinfo = 'x, y, text',
-			showlegend = False
-			)
+			x=pcaModel.loadings[component[0], :],
+			y=pcaModel.loadings[component[1], :],
+			mode='markers',
+			text=hovertext,
+			hoverinfo='text',
+			showlegend=False
+		)
 
 		data.append(LOADSplot)
-		xReverse = True
-		Xlabel = 'Retention Time'
-		Ylabel = 'm/z'
+		Xlabel = 'Principal Component ' + str(component[0] + 1)
+		Ylabel = 'Principal Component ' + str(component[1] + 1)
 
-	# For NMR data
-	elif hasattr(featureMetadata, 'ppm'):
-
-		Xvals = featureMetadata['ppm']
-		hovertext = ["ppm: %.4f; W: %s" % i for i in zip(featureMetadata['ppm'], W_str)] # Text for tooltips
-
-		# Bar starts at minimum spectral intensity
-		LOADSmin = go.Bar(
-			x = Xvals,
-			y = numpy.min(dataMasked.intensityData, axis=0),
-#			y = numpy.percentile(PCAmodel.intensityData, 1, axis=0),
-			marker = dict(
-				color = 'white'
-				),
-			hoverinfo = 'skip',
-			showlegend = False
-			)
-
-		# Bar ends at maximum spectral intensity, bar for each feature coloured by loadings weight
-		LOADSmax = go.Bar(
-			x = Xvals,
-			y = numpy.max(dataMasked.intensityData, axis=0),
-#			y = numpy.percentile(PCAmodel.intensityData, 99, axis=0),
-			marker = dict(
-				colorscale = 'RdBu',
-				cmin = -maxcol,
-				cmax = maxcol,
-				color = cVect,
-				showscale = True,
-				),
-			text = hovertext,
-			hoverinfo = 'text',
-			showlegend = False
-			)
-
-		# Add line for median spectral intensity
-		LOADSline = go.Scatter(
-			x = Xvals,
-			y = numpy.median(dataMasked.intensityData, axis=0),
-			mode = 'line',
-			line = dict(
-				color = 'black',
-				width = 1
-				),
-			hoverinfo = 'skip',
-			showlegend = False
-			)
-
-		data.append(LOADSmin)
-		data.append(LOADSmax)
-		data.append(LOADSline)
-		xReverse = 'reversed'
-		Xlabel = chr(948)+ '1H'
-		Ylabel = 'Intensity'
-
-	else:
-		print('add this functionality!!!')
-		return
-
-	# Add annotation
-	layout = {
-		'xaxis' : dict(
-			title = Xlabel,
-			autorange = xReverse
+		# Add annotation
+		layout = {
+			'xaxis': dict(
+				title=Xlabel
 			),
-		'yaxis' : dict(
-			title = Ylabel
+			'yaxis': dict(
+				title=Ylabel
 			),
-		'title' : 'Loadings for PC ' + str(component + 1),
-		'hovermode' : 'closest',
-		'bargap' : 0,
-		'barmode' : 'stack'
-	}
+			'title': 'Loadings for PC ' + str(component[0] + 1) + ' and ' + str(component[1] + 1),
+			'hovermode': 'closest',
+			'bargap': 0,
+			'barmode': 'stack'
+		}
 
 
 	figure = go.Figure(data=data, layout=layout)

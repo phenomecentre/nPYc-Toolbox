@@ -13,7 +13,7 @@ from ..enumerations import AssayRole, SampleType
 from ..__init__ import __version__ as version
 
 
-def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOutput=False):
+def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, returnOutput=False):
 	"""
 	Summarise samples in the dataset.
 
@@ -21,8 +21,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 
 	:param Dataset dataTrue: Dataset to report on
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
-	:param output: If ``None``, run interactivly, else a str specifying the directory to save report into
-	:type output: None or str
+	:param destinationPath: If ``None``, run interactivly, else a str specifying the directory to save report into
+	:type destinationPath: None or str
 	:param bool returnOutput: If ``True``, returns a dictionary of all tables generated during run
 	:return: Optional, dictionary of all tables generated during run
 	"""
@@ -32,13 +32,13 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 		raise TypeError('dataTrue must be an instance of nPYc.Dataset')
 	if not isinstance(withExclusions, bool):
 		raise TypeError('withExclusions must be a bool')
-	if output is not None:
-		if not isinstance(output, str):
-			raise TypeError('output must be a string')
+	if destinationPath is not None:
+		if not isinstance(destinationPath, str):
+			raise TypeError('destinationPath must be a string')
 	if not isinstance(returnOutput, bool):
 		raise TypeError('returnItem must be a bool')
 
-	# Create directory to save output	 # for now do nothing as sampleReport requires no files
+	# Create directory to save destinationPath	 # for now do nothing as sampleReport requires no files
 
 	# Apply sample/feature masks if exclusions to be applied
 	data = copy.deepcopy(dataTrue)
@@ -146,21 +146,21 @@ def _generateSampleReport(dataTrue, withExclusions=False, output=None, returnOut
 
 
 	# Generate html report
-	if output:
+	if destinationPath:
 		# Set up template item and save required info
 
 		from jinja2 import Environment, FileSystemLoader
 
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 		template = env.get_template('generateSampleReport.html')
-		filename = os.path.join(output, data.name + '_report_sampleSummary.html')
+		filename = os.path.join(destinationPath, data.name + '_report_sampleSummary.html')
 		# the jinja template expects item with sample summary inside so just create a field with everything inside
 		sampleSummary['sampleSummary'] = sampleSummary
 		f = open(filename,'w')
-		f.write(template.render(item=sampleSummary, version=version, graphicsPath=os.path.join(output, 'graphics')))
+		f.write(template.render(item=sampleSummary, version=version, graphicsPath=os.path.join(destinationPath, 'graphics')))
 		f.close()
 
-		copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
+		copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
 		data.sampleSummary = sampleSummary
 

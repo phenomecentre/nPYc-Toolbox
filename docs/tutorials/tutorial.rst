@@ -78,8 +78,6 @@ Mapping metadata into an object is an accumulative operation, so multiple calls 
 When adding multiple rounds of metadata, the content of columns already present in :py:attr:`~nPYc.objects.Dataset.sampleMetadata` will be overwritten by any column with the same name in the metadata being added. See the documentation for :py:meth:`~nPYc.objects.Dataset.addSampleInfo` for possible options.
 
 
-
-
 Assessing Analytical Quality
 ============================
 
@@ -89,47 +87,14 @@ To generate reports of analytical quality, call the :py:func:`~nPYc.reports.gene
 
 	nPYc.reports.generateReport(datasetObject, 'feature summary')
 
-<<<<<<< HEAD:docs/tutorial.rst
-Parameters for the quality control procedure can be specified in a :doc:`SOP JSON<configuration/configurationSOPs>` file as the Dataset object is created, and amended after creation by modifying the relevant entry of the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
-
-
-Quality-control of UPLC-MS profiling datasets
-*********************************************
-
-By default the nPYc toolbox assumes an :py:class:`~nPYc.objects.MSDataset` instance contains untargeted peak-picked UPLC-MS data, and defines two primary quality control criteria for the features detected, as outlined in Lewis *et al.* [#]_.
-
-* Precision of measurement
-	A Relative Standard Deviation (RSD) threshold ensures that only features measured with a precision above this level are propagated on to further data analysis. This can be defined both in absolute terms, as measured on reference samples, but also by removing features where analytical variance is not sufficiently lower than biological variation.
-	In order to characterise RSDs, the dataset must include a sufficient number of precision reference samples, ideally a study reference pool to allow calculation of RSDs for all detected features.
-* Linearity of response
-	By filtering features based on the linearity of their measurement *vs* concentration in the matrix, we ensure that only features that can be meaningfully related to the study design are propagated into the analysis.
-	To assess linearity, features must be assayed across a range of concentrations, again in untargeted assays, using the pooled study reference will ensure all relevant features are represented.
-
-Beyond feature QC, the toolbox also allows for the detection and reduction of analytical run-order and batch effects.
-
-
-Quality-control of NMR profiling datasets
-*****************************************
-
-:py:class:`~nPYc.objects.NMRDataset` objects containing spectral data, may have their per-sample analytical quality assessed on the criteria laid out in Dona *et al.* [#]_, being judged on:
-
-* Line-width
-	By default, line-widths below 1.4\ Hz, are considered acceptable
-* Even baseline
-	The noise in the baseline regions flanking the spectrum are expected to have equal variance across the dataset, and not be predominantly below zero
-* Adequate water-suppression
-	The residual water signal should not affect the spectrum outside of the 4.9 to 4.5 ppm region
-
-Before finalising the dataset, typically the wings of the spectrum will be trimmed, and the residual water signal and references resonance removed. Where necessary the chemical shift scale can also referenced to a specified resonance.
-=======
 Parameters for the quality control procedure can be specified in a :doc:`SOP JSON<../configuration/configurationSOPs>` file as the Dataset object is created, and amended after creation by modifying the relevant entry of the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
->>>>>>> feature/paper-edits:docs/tutorials/tutorial.rst
 
+Each object type supports its own QC tests, see :doc:`nmrdataset`, :doc:`msdataset`, and :doc:`targeteddataset` for specific details.
 
 Filtering of samples *&* variables
 **********************************
 
-Filtering of features by the generic procedures defined for each type of dataset, using the thresholds load from the :doc:`SOP <../configuration/configurationSOPs>` and defined in :py:attr:`~nPYc.objects.Dataset.Attributes` is accomplished with the :py:meth:`~nPYc.objects.Dataset.updateMasks` method. When called, the elements in the  :py:attr:`~nPYc.objects.Dataset.featureMask` are set to ``False`` where the feature does not meet quality criteria, and nd elements in :py:attr:`~nPYc.objects.Dataset.sampleMask` are set to ``False`` for samples that do not pass quality criteria, or sample types and roles not specified.
+Filtering of features by the generic procedures defined for each type of dataset, using the thresholds loaded from the :doc:`SOP <../configuration/configurationSOPs>` and defined in :py:attr:`~nPYc.objects.Dataset.Attributes` is accomplished with the :py:meth:`~nPYc.objects.Dataset.updateMasks` method. When called, the elements in the :py:attr:`~nPYc.objects.Dataset.featureMask` are set to ``False`` where the feature does not meet quality criteria, and elements in :py:attr:`~nPYc.objects.Dataset.sampleMask` are set to ``False`` for samples that do not pass quality criteria, or sample types and roles not specified.
 
 The defaults arguments to :py:meth:`~nPYc.objects.Dataset.updateMasks` will filter the dataset to contain only study and study reference samples and only those features meeting quality criteria::
 
@@ -174,7 +139,7 @@ Report generated interactively by the :py:mod:`~nPYc.reports` module can be save
 Exporting data
 **************
 
-Datasets can be exported in a variety of formats with the :py:meth:`~nPYc.objects.Dataset.exportDataset` method. '*UnifiedCSV*' provides a good default output, exporting the :-:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` concatenated as a single coma-separated text file, with samples in rows, and features in columns. Where the number of features in a dataset might result in a file with too many columns to be opened by certain software packages, the '*CSV*' option allows the :py:attr:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`,  and :py:attr:`~nPYc.objects.Dataset.intensityData` to each be saved to a separate CSV file. The nPYc toolbox currently also supports exporting metadata in ISATAB format.
+Datasets can be exported in a variety of formats with the :py:meth:`~nPYc.objects.Dataset.exportDataset` method. '*UnifiedCSV*' provides a good default output, exporting the :-:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`, and :py:attr:`~nPYc.objects.Dataset.intensityData` concatenated as a single coma-separated text file, with samples in rows, and features in columns. Where the number of features in a dataset might result in a file with too many columns to be opened by certain software packages, the '*CSV*' option allows the :py:attr:`~nPYc.objects.Dataset.sampleMetadata`, :py:attr:`~nPYc.objects.Dataset.featureMetadata`, and :py:attr:`~nPYc.objects.Dataset.intensityData` to each be saved to a separate CSV file. The nPYc toolbox currently also supports exporting metadata in ISATAB format.
 
 
 .. toctree::

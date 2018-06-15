@@ -162,7 +162,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 			dataset.initialiseMasks()
 			dataset.updateMasks(filterFeatures=False,
-								sampleTypes=[SampleType.StudyPool, SampleType.ExternalReference], 
+								sampleTypes=[SampleType.StudyPool, SampleType.ExternalReference],
 								assayRoles=[AssayRole.PrecisionReference])
 
 			numpy.testing.assert_array_equal(expectedSampleMask, dataset.sampleMask)
@@ -172,7 +172,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 			dataset.initialiseMasks()
 			dataset.updateMasks(filterFeatures=False,
-								sampleTypes=[SampleType.StudyPool], 
+								sampleTypes=[SampleType.StudyPool],
 								assayRoles=[AssayRole.LinearityReference])
 
 			numpy.testing.assert_array_equal(expectedSampleMask, dataset.sampleMask)
@@ -460,6 +460,7 @@ class test_nmrdataset_ISATAB(unittest.TestCase):
 			'Status': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool','SampleType.StudySample', 'SampleType.StudySample'],
 			'Subject ID': ['', '', '', 'SCANS-120', 'SCANS-130'],
 			'Sampling ID': ['', '', '', 'T0-7-S', 'T0-9-S'],
+			'Sample File Name': ['sfn1', 'sfn2', 'sfn3', 'sfn4', 'sfn5'],
 			'Study': ['TestStudy', 'TestStudy', 'TestStudy', 'TestStudy', 'TestStudy'],
 			'Gender': ['', '', '', 'Female', 'Male'],
 			'Age': ['', '', '', '55', '66'],
@@ -474,7 +475,7 @@ class test_nmrdataset_ISATAB(unittest.TestCase):
 												  columns=['Acquired Time', 'AssayRole', 'Status', 'Subject ID',
 														   'Sampling ID', 'Study', 'Gender', 'Age', 'Sampling Date',
 														   'Sample batch', 'Batch',
-														   'Run Order', 'Instrument', 'Assay data name'])
+														   'Run Order', 'Instrument', 'Assay data name','Sample File Name'])
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			details = {

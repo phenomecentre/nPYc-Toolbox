@@ -81,7 +81,7 @@ class NMRDataset(Dataset):
 																				  pdata,
 																				  self.Attributes)
 			self.featureMetadata = pandas.DataFrame(ppm, columns=['ppm'])
-			
+
 			##
 			# Set up additional metadata columns
 			##
@@ -115,7 +115,7 @@ class NMRDataset(Dataset):
 			pass
 		else:
 			raise NotImplementedError('%s is not a format understood by NMRDataset.' % (fileType))
-		
+
 		# Log init
 		self.Attributes['Log'].append([datetime.now(), '%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
 
@@ -383,26 +383,29 @@ class NMRDataset(Dataset):
 
 
 		for index, row in self.sampleMetadata.iterrows():
-		    src_name = row['Subject ID'] if row['Subject ID'] is not '' else row['Sampling ID']
+		    src_name = row['Sample File Name']
 		    source = Source(name=src_name)
 
 		    source.comments.append(Comment(name='Study Name', value=row['Study']))
 		    study.sources.append(source)
 
-		    sample_name = row['Sampling ID'] if not pandas.isnull(row['Sampling ID']) else row['Subject ID']
+		    sample_name = src_name
 		    sample = Sample(name=sample_name, derives_from=[source])
-
-		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=detailsDict['study_material_type'])
+		    # check if field exists first
+		    status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
+		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
 		    sample.characteristics.append(characteristic_material_type)
 
-		    characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
-		    sample.characteristics.append(characteristic_material_role)
+		    #characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
+		    #sample.characteristics.append(characteristic_material_role)
 
-		    # perhaps check if field exists first
-		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=row['Age'],unit='Year')
+		    # check if field exists first
+		    age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
+		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
 		    sample.characteristics.append(characteristic_age)
-		    # perhaps check if field exists first
-		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=row['Gender'])
+		    # check if field exists first
+		    gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
+		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
 		    sample.characteristics.append(characteristic_gender)
 
 		    ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
@@ -411,10 +414,10 @@ class NMRDataset(Dataset):
 
 		    study.samples.append(sample)
 
-
-		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=row['Sampling Date'])
-
-		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=row['Sampling Date'])
+		    # check if field exists first
+		    sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
+		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
+		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
 
 		    sample_collection_process.inputs = [source]
 		    aliquoting_process.outputs = [sample]
@@ -436,7 +439,9 @@ class NMRDataset(Dataset):
 		study.protocols.append(extraction_protocol)
 		nmr_protocol = Protocol(name='NMR spectroscopy', protocol_type=OntologyAnnotation(term="NMR Assay"))
 		nmr_protocol.add_param('Run Order')
+		#if 'Instrument' in self.sampleMetadata.columns:
 		nmr_protocol.add_param('Instrument')
+		#if 'Sample Batch' in self.sampleMetadata.columns:
 		nmr_protocol.add_param('Sample Batch')
 		nmr_protocol.add_param('Acquisition Batch')
 
@@ -445,11 +450,7 @@ class NMRDataset(Dataset):
 
 		#for index, row in sampleMetadata.iterrows():
 		for index, sample in enumerate(study.samples):
-		    #print(sample.name)
-		    row = self.sampleMetadata.loc[self.sampleMetadata['Sampling ID'].astype(str) == sample.name]
-		    if row.empty:
-		        row = self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].astype(str) == sample.name]
-
+		    row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
 		    # create an extraction process that executes the extraction protocol
 		    extraction_process = Process(executes_protocol=extraction_protocol)
 
@@ -469,13 +470,19 @@ class NMRDataset(Dataset):
 		    nmr_process.name = "assay-name-{}".format(index)
 		    nmr_process.inputs.append(extraction_process.outputs[0])
 		    # nmr process usually has an output data file
-		    datafile = DataFile(filename=row['Assay data name'].values[0], label="NMR Assay Name", generated_from=[sample])
+		    # check if field exists first
+		    assay_data_name = row['Assay data name'].values[0] if 'Assay data name' in self.sampleMetadata.columns else 'N/A'
+		    datafile = DataFile(filename=assay_data_name, label="NMR Assay Name", generated_from=[sample])
 		    nmr_process.outputs.append(datafile)
 
 		    #nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
 		    nmr_process.parameter_values = [ParameterValue(category=nmr_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=row['Instrument'].values[0]))
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=row['Sample batch'].values[0]))
+		    # check if field exists first
+		    instrument = row['Instrument'].values[0] if 'Instrument' in self.sampleMetadata.columns else 'N/A'
+		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=instrument))
+             # check if field exists first
+		    sbatch = row['Sample batch'].values[0] if 'Sample batch' in self.sampleMetadata.columns else 'N/A'
+		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=sbatch))
 		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 
 		    # ensure Processes are linked forward and backward

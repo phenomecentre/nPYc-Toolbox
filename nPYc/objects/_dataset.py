@@ -1854,6 +1854,26 @@ class Dataset:
 
 		:param str destinationPath: Save data into the directory specified here
 		:param str format: File format for saved data, defaults to CSV.
+		:param dict detailsDict: Contains several key: value pairs required to for exporting ISATAB.
+		detailsDict should have the format:
+		detailsDict = {
+		    'investigation_identifier' : "i1",
+		    'investigation_title' : "Give it a title",
+		    'investigation_description' : "Add a description",
+		    'investigation_submission_date' : "2016-11-03",
+		    'investigation_public_release_date' : "2016-11-03",
+		    'first_name' : "Noureddin",
+		    'last_name' : "Sadawi",
+		    'affiliation' : "University",
+		    'study_filename' : "my_ms_study",
+		    'study_material_type' : "Serum",
+		    'study_identifier' : "s1",
+		    'study_title' : "Give the study a title",
+		    'study_description' : "Add study description",
+		    'study_submission_date' : "2016-11-03",
+		    'study_public_release_date' : "2016-11-03",
+		    'assay_filename' : "my_ms_assay"
+		}
 		:param bool withExclusions: If ``True`` mask features and samples will be excluded
 		:param bool escapeDelimiters: If ``True`` remove characters commonly used as delimiters in csv files from metadata
 		:param bool filterMetadata: If ``True`` does not export the sampleMetadata and featureMetadata columns listed in self.Attributes['sampleMetadataNotExported'] and self.Attributes['featureMetadataNotExported']
@@ -1950,7 +1970,7 @@ class Dataset:
 					  self.intensityData, delimiter=",")
 
 
-	def _exportISATAB(self, destinationPath, isaDetailsDict,assay='MS'):
+	def _exportISATAB(self, destinationPath, isaDetailsDict, assay='MS'):
 		"""
 		Export the dataset's metadata to the directory *destinationPath* as ISATAB
 

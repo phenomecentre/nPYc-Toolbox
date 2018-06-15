@@ -511,7 +511,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 														['Feature_3', 0.75, 200., 0.1],
 														['Feature_4', 0.9, 300., 0.1],
 														['Feature_5', 0.95, 300.08, 0.1]],
-												  		columns=['Feature Name','Retention Time','m/z','Peak Width'])
+														columns=['Feature Name','Retention Time','m/z','Peak Width'])
 
 		msData.initialiseMasks()
 
@@ -773,7 +773,6 @@ class test_msdataset_synthetic(unittest.TestCase):
 		with self.subTest(msg='No Dilution field'):
 			dataset.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
 			self.assertRaises(KeyError, dataset._MSDataset__correlateToDilution)
-
 
 
 	def test_validateObject(self):
@@ -1718,10 +1717,12 @@ class test_msdataset_import_xcms(unittest.TestCase):
 		self.msData.addSampleInfo(descriptionFormat='Filenames')
 		self.msData_PeakTable.addSampleInfo(descriptionFormat='Filenames')
 
+
 	def test_dimensions(self):
 
 		self.assertEqual((self.msData.noSamples, self.msData.noFeatures), (111, 4))
 		self.assertEqual((self.msData_PeakTable.noSamples, self.msData_PeakTable.noFeatures), (111, 4))
+
 
 	def test_samples(self):
 
@@ -1786,6 +1787,7 @@ class test_msdataset_import_xcms(unittest.TestCase):
 
 		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample File Name'], samples)
 		pandas.util.testing.assert_series_equal(self.msData_PeakTable.sampleMetadata['Sample File Name'], samples)
+
 
 	def test_featuremetadata_import(self):
 
@@ -1869,7 +1871,7 @@ class test_msdataset_import_xcms(unittest.TestCase):
 		self.assertEqual(self.msData_PeakTable.VariableType, nPYc.enumerations.VariableType.Discrete)
 
 
-	def tet_xcms_raises(self):
+	def test_xcms_raises(self):
 
 		path = os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv')
 
@@ -1965,7 +1967,6 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 		pandas.util.testing.assert_series_equal(self.diData.sampleMetadata['Sample File Name'], samples)
 
 
-
 	def test_featuremetadata_import(self):
 
 		with self.subTest(msg='Checking Feature Names'):
@@ -2046,6 +2047,16 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 
 		self.assertEqual(self.lcData.VariableType, nPYc.enumerations.VariableType.Discrete)
 
+
+	def test_csv_import(self):
+
+		path = os.path.join('..','..','npc-standard-project','Derived_Data', 'UnitTest1_PCSOP.069_Metaboscape_LC.csv')
+
+		lcData = nPYc.MSDataset(path, fileType='Metaboscape', noFeatureParams=18)
+		lcData.addSampleInfo(descriptionFormat='Filenames')
+
+		assert_frame_equal(self.lcData.sampleMetadata, lcData.sampleMetadata)
+		numpy.testing.assert_array_equal(self.lcData.intensityData, lcData.intensityData)
 
 
 class test_msdataset_import_biocrates(unittest.TestCase):
@@ -2215,8 +2226,6 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 
 		TODO: Test all paramaters
 		"""
-
-		#
 
 		# Expected data starts with the same samples
 		expected = copy.deepcopy(self.msData.sampleMetadata)
@@ -2510,6 +2519,7 @@ class test_msdataset_ISATAB(unittest.TestCase):
 			'Status': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
 			'Subject ID': ['', '', '', 'SCANS-120', 'SCANS-130'],
 			'Sampling ID': ['', '', '', 'T0-7-S', 'T0-9-S'],
+			'Sample File Name': ['sfn1', 'sfn2', 'sfn3', 'sfn4', 'sfn5'],
 			'Dilution': ['1', '10', '20', '', ''],
 			'Study': ['TestStudy', 'TestStudy', 'TestStudy', 'TestStudy', 'TestStudy'],
 			'Gender': ['', '', '', 'Female', 'Male'],
@@ -2531,7 +2541,7 @@ class test_msdataset_ISATAB(unittest.TestCase):
 
 		msData.sampleMetadata = pandas.DataFrame(raw_data, columns = ['Acquired Time', 'AssayRole', 'Status','Subject ID','Sampling ID','Dilution','Study',
 																'Gender','Age','Sampling Date','Detector','Sample batch','Well',
-																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name'])
+																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name','Sample File Name'])
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			details = {
