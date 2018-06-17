@@ -66,7 +66,6 @@ def jointplotRSDvCorrelation(rsd, correlation, histBins=100, savePath=None, figu
 		axr.hist(correlation,
 				 color='#5673E0',
 				 orientation='horizontal',
-				 normed=False,
 				 bins=100)
 
 		#Create X-marginal (top)
@@ -78,7 +77,6 @@ def jointplotRSDvCorrelation(rsd, correlation, histBins=100, savePath=None, figu
 						  xlim=(min(rsd), max(rsd)))
 		axt.hist(rsd,
 				 color='#5673E0',
-				 normed=False,
 				 bins=nbins)
 
 		#Bring the marginals closer to the scatter plot
@@ -92,15 +90,15 @@ def jointplotRSDvCorrelation(rsd, correlation, histBins=100, savePath=None, figu
 		cax.axes.set_yticks([-1, -0.5, 0, 0.5, 1])
 
 		cax.axes.tick_params(which='major',
-							 bottom='on',
-							 top='off',
-							 right='off',
+							 bottom=True,
+							 top=False,
+							 right=False,
 							 length=7,
 							 width=1.5)
 		cax.axes.tick_params(which='minor',
-							 bottom='on',
-							 top='off',
-							 right='off',
+							 bottom=True,
+							 top=False,
+							 right=False,
 							 length=4,
 							 width=1)
 		cax.axes.xaxis.set_major_formatter(mpl.ticker.ScalarFormatter())
@@ -110,29 +108,29 @@ def jointplotRSDvCorrelation(rsd, correlation, histBins=100, savePath=None, figu
 
 		axt.axes.spines['bottom'].set_visible(True)
 		axt.axes.spines['bottom'].set_color('k')
-		axt.axes.tick_params(labelbottom='off')
+		axt.axes.tick_params(labelbottom=False)
 		axt.axes.tick_params(which='major',
-							 bottom='on',
-							 top='off',
-							 right='off',
+							 bottom=True,
+							 top=False,
+							 right=False,
 							 length=7,
 							 width=1.5)
 		axt.axes.tick_params(which='minor',
-							 bottom='on',
-							 top='off',
-							 right='off',
+							 bottom=True,
+							 top=False,
+							 right=False,
 							 length=4,
 							 width=1)
 
 		axr.axes.spines['left'].set_visible(True)
-		axr.axes.tick_params(left='on',
+		axr.axes.tick_params(left=True,
 							 which='major',
-							 bottom='off',
-							 top='off',
-							 right='off',
+							 bottom=False,
+							 top=False,
+							 right=False,
 							 length=7,
 							 width=1.5)
-		axr.axes.tick_params(labelleft='off')
+		axr.axes.tick_params(labelleft=False)
 
 		if savePath:
 			plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)

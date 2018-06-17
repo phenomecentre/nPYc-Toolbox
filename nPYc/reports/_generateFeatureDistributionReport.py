@@ -3,7 +3,7 @@ import copy
 
 from ..plotting import plotFeatureRanges
 
-def generateFeatureDistributionReport(dataset, reportingGroups, logScale=False, filterUnits=None, output=None):
+def generateFeatureDistributionReport(dataset, reportingGroups, logScale=False, filterUnits=None, destinationPath=None):
 	"""
 	Plots distributions of features. If reference ranges are present in :py:attr:`~nPYc.objects.Dataset.featureMetadata` they will be indicated on the plot.
 
@@ -29,19 +29,19 @@ def generateFeatureDistributionReport(dataset, reportingGroups, logScale=False, 
 	:param dict reportingGroups: Dictionary of dictionaries of lists of metabolites
 	:param filterUnits: If specified only report on measutments with this unit
 	:type filterUnits: None or str
-	:param output: If ``None`` print interactively, otherwise a path to save output to
+	:param destinationPath: If ``None`` print interactively, otherwise a path to save destinationPath to
 	:param bool logScale: If ``True`` plot distributions on a log scale 
 	:param filterUnits: If not ``None``, only plot ranges for features with a unit that matches the value provided
 	:type filterUnits: None or str 
-	:type output: None or str
+	:type destinationPath: None or str
 	:returns: Dictionary of plot paths
 	:rtype: dict
 	"""
 
 	returnDict = dict()
 
-	if output is not None and (not os.path.exists(os.path.join(output, 'graphics'))):
-		os.makedirs(os.path.join(output, 'graphics'))
+	if destinationPath is not None and (not os.path.exists(os.path.join(destinationPath, 'graphics'))):
+		os.makedirs(os.path.join(destinationPath, 'graphics'))
 
 	if filterUnits:
 		dataset = copy.deepcopy(dataset)
@@ -59,15 +59,15 @@ def generateFeatureDistributionReport(dataset, reportingGroups, logScale=False, 
 
 		returnDict[key] = dict()
 
-		if not output:
+		if not destinationPath:
 			print(key)
 
 		for key2 in reportingGroups[key].keys():
 
 			if set(reportingGroups[key][key2]) <= featuresSet:
-				if output:
+				if destinationPath:
 					figureName = 'FeatureDistribution_' + key + '-' + key2 + '.' + dataset.Attributes['figureFormat']
-					saveAs = os.path.join(output, 'graphics', figureName)
+					saveAs = os.path.join(destinationPath, 'graphics', figureName)
 					returnDict[key][key2] = saveAs
 
 				else:

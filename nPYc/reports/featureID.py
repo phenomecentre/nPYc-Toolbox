@@ -288,13 +288,20 @@ def _msIDreport(msData, feature, outputDir='', rawData=None, dbConnection=None, 
 		item['Coelutants'] = 'Features observed to co-elute'
 
 		# find feature within rt bounds and peak width bounds
-		associatedFeatures =  msData.featureMetadata[
-				(msData.featureMetadata['Retention Time'] > (numpy.squeeze(localMetadata['Retention Time'].values) - (msData.Attributes['rtWindow'] / 60.0)))
-				& (msData.featureMetadata['Retention Time'].values < (numpy.squeeze(localMetadata['Retention Time'].values) +( msData.Attributes['rtWindow'] / 60.0)))
-				& (msData.featureMetadata['Peak Width'].values > (numpy.squeeze(localMetadata['Peak Width'].values) - msData.Attributes['peakWidthWindow']))
-				& (msData.featureMetadata['Peak Width'].values < (numpy.squeeze(localMetadata['Peak Width'].values) + msData.Attributes['peakWidthWindow']))
-				& (msData.featureMetadata['Feature Name'].values != feature)
-				& msData.featureMask]
+		try:
+			associatedFeatures =  msData.featureMetadata[
+					(msData.featureMetadata['Retention Time'] > (numpy.squeeze(localMetadata['Retention Time'].values) - (msData.Attributes['rtWindow'] / 60.0)))
+					& (msData.featureMetadata['Retention Time'].values < (numpy.squeeze(localMetadata['Retention Time'].values) +( msData.Attributes['rtWindow'] / 60.0)))
+					& (msData.featureMetadata['Peak Width'].values > (numpy.squeeze(localMetadata['Peak Width'].values) - msData.Attributes['peakWidthWindow']))
+					& (msData.featureMetadata['Peak Width'].values < (numpy.squeeze(localMetadata['Peak Width'].values) + msData.Attributes['peakWidthWindow']))
+					& (msData.featureMetadata['Feature Name'].values != feature)
+					& msData.featureMask]
+		except: # If no peak width information available
+			associatedFeatures =  msData.featureMetadata[
+					(msData.featureMetadata['Retention Time'] > (numpy.squeeze(localMetadata['Retention Time'].values) - (msData.Attributes['rtWindow'] / 60.0)))
+					& (msData.featureMetadata['Retention Time'].values < (numpy.squeeze(localMetadata['Retention Time'].values) +( msData.Attributes['rtWindow'] / 60.0)))
+					& (msData.featureMetadata['Feature Name'].values != feature)
+					& msData.featureMask]			
 
 		meanIntesities = numpy.mean(msData.intensityData, axis=0)
 

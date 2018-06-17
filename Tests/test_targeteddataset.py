@@ -965,7 +965,10 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 			t3 = copy.deepcopy(self.targetedData3)
 			t3.Attributes['sampleMetadataNotExported']  = ['testSampleMetaNotExported']
 			t3.Attributes['featureMetadataNotExported'] = ['Feature Name', 'testFeatNotExported']
-			concatenatedDataset = t1 + t2 + t3
+
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				concatenatedDataset = t1 + t2 + t3
 
 			expectedDataset = copy.deepcopy(self.expectedAddDataset)
 			expectedDataset.Attributes['sampleMetadataNotExported']  = ['testSampleMetaNotExported']
@@ -1035,7 +1038,9 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='Checking concatenation with unexpected attributes'):
 
-			tempConcatDataset = self.targetedData1 + self.targetedData2
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				tempConcatDataset = self.targetedData1 + self.targetedData2
 			otherConcatDataset = copy.deepcopy(self.targetedData3)
 
 			# add variables
@@ -1045,7 +1050,9 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 			otherConcatDataset.onlyInOther = 'only in other'
 
 			# merge
-			result = tempConcatDataset + otherConcatDataset
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				result = tempConcatDataset + otherConcatDataset
 
 			# check
 			self.assertEqual(result.inCommon[0], 'in common from self')
@@ -1067,10 +1074,13 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 				assert "Update the limits of quantification using" in str(w[-1].message)
 
 
-	def test_targeteddataset_radd(self):
+	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
+	def test_targeteddataset_radd(self, mock_stdout):
 		# sum([ X1, X2 ]) always tries to do 0 + X1 which fails, then reverts to __radd__ X1 + 0
 		expectedDataset = copy.deepcopy(self.expectedAddDataset)
-		concatenatedDataset = sum([self.targetedData1, self.targetedData2, self.targetedData3])
+		with warnings.catch_warnings():
+			warnings.simplefilter('ignore', UserWarning)
+			concatenatedDataset = sum([self.targetedData1, self.targetedData2, self.targetedData3])
 
 		with self.subTest(msg='Checking class'):
 			self.assertEqual(type(concatenatedDataset),type(expectedDataset))
@@ -2113,7 +2123,9 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 			expected = copy.deepcopy(self.targetedExpected)
 			result = dict()
 			# Generate
-			result['sampleMetadata'], result['featureMetadata'], result['intensityData'], result['expectedConcentration'], result['sampleMetadataExcluded'], result['featureMetadataExcluded'], result['intensityDataExcluded'], result['expectedConcentrationExcluded'], result['excludedFlag'], result['peakResponse'], result['peakArea'], result['peakConcentrationDeviation'], result['peakIntegrationFlag'], result['peakRT'] = targeted._TargetedDataset__matchDatasetToCalibrationReport(sampleMetadata=self.targetedTargetLynxData['sampleMetadata'],featureMetadata=self.targetedTargetLynxData['featureMetadata'],intensityData=self.targetedTargetLynxData['intensityData'],expectedConcentration=self.targetedTargetLynxData['expectedConcentration'],peakResponse=self.targetedTargetLynxData['peakResponse'], peakArea=self.targetedTargetLynxData['peakArea'],peakConcentrationDeviation=self.targetedTargetLynxData['peakConcentrationDeviation'],	peakIntegrationFlag=self.targetedTargetLynxData['peakIntegrationFlag'],peakRT=self.targetedTargetLynxData['peakRT'], calibReport=self.targetedReport)
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				result['sampleMetadata'], result['featureMetadata'], result['intensityData'], result['expectedConcentration'], result['sampleMetadataExcluded'], result['featureMetadataExcluded'], result['intensityDataExcluded'], result['expectedConcentrationExcluded'], result['excludedFlag'], result['peakResponse'], result['peakArea'], result['peakConcentrationDeviation'], result['peakIntegrationFlag'], result['peakRT'] = targeted._TargetedDataset__matchDatasetToCalibrationReport(sampleMetadata=self.targetedTargetLynxData['sampleMetadata'],featureMetadata=self.targetedTargetLynxData['featureMetadata'],intensityData=self.targetedTargetLynxData['intensityData'],expectedConcentration=self.targetedTargetLynxData['expectedConcentration'],peakResponse=self.targetedTargetLynxData['peakResponse'], peakArea=self.targetedTargetLynxData['peakArea'],peakConcentrationDeviation=self.targetedTargetLynxData['peakConcentrationDeviation'],	peakIntegrationFlag=self.targetedTargetLynxData['peakIntegrationFlag'],peakRT=self.targetedTargetLynxData['peakRT'], calibReport=self.targetedReport)
 			# Test
 			pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1),result['sampleMetadata'].reindex(sorted(result['sampleMetadata']), axis=1))
 			pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1),result['featureMetadata'].reindex(sorted(result['featureMetadata']), axis=1))
@@ -2136,7 +2148,9 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 			expected = copy.deepcopy(self.targetedExpectedNoExclusion)
 			result = dict()
 			# Generate
-			result['sampleMetadata'], result['featureMetadata'], result['intensityData'], result['expectedConcentration'], result['sampleMetadataExcluded'], result['featureMetadataExcluded'], result['intensityDataExcluded'], result['expectedConcentrationExcluded'], result['excludedFlag'], result['peakResponse'], result['peakArea'], result['peakConcentrationDeviation'], result['peakIntegrationFlag'], result['peakRT'] = targetedNoExclusion._TargetedDataset__matchDatasetToCalibrationReport(sampleMetadata=self.targetedTargetLynxData['sampleMetadata'],featureMetadata=self.targetedTargetLynxData['featureMetadata'],intensityData=self.targetedTargetLynxData['intensityData'],expectedConcentration=self.targetedTargetLynxData['expectedConcentration'],peakResponse=self.targetedTargetLynxData['peakResponse'],peakArea=self.targetedTargetLynxData['peakArea'],peakConcentrationDeviation=self.targetedTargetLynxData['peakConcentrationDeviation'],peakIntegrationFlag=self.targetedTargetLynxData['peakIntegrationFlag'],peakRT=self.targetedTargetLynxData['peakRT'], calibReport=self.targetedNoExclusionReport)
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				result['sampleMetadata'], result['featureMetadata'], result['intensityData'], result['expectedConcentration'], result['sampleMetadataExcluded'], result['featureMetadataExcluded'], result['intensityDataExcluded'], result['expectedConcentrationExcluded'], result['excludedFlag'], result['peakResponse'], result['peakArea'], result['peakConcentrationDeviation'], result['peakIntegrationFlag'], result['peakRT'] = targetedNoExclusion._TargetedDataset__matchDatasetToCalibrationReport(sampleMetadata=self.targetedTargetLynxData['sampleMetadata'],featureMetadata=self.targetedTargetLynxData['featureMetadata'],intensityData=self.targetedTargetLynxData['intensityData'],expectedConcentration=self.targetedTargetLynxData['expectedConcentration'],peakResponse=self.targetedTargetLynxData['peakResponse'],peakArea=self.targetedTargetLynxData['peakArea'],peakConcentrationDeviation=self.targetedTargetLynxData['peakConcentrationDeviation'],peakIntegrationFlag=self.targetedTargetLynxData['peakIntegrationFlag'],peakRT=self.targetedTargetLynxData['peakRT'], calibReport=self.targetedNoExclusionReport)
 			# Test
 			pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1),result['sampleMetadata'].reindex(sorted(result['sampleMetadata']), axis=1))
 			pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1),result['featureMetadata'].reindex(sorted(result['featureMetadata']), axis=1))
@@ -2900,7 +2914,9 @@ class test_targeteddataset_read_data_from_targetlynx(unittest.TestCase):
 			XMLpath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest4_targeted.xml')
 			result = copy.deepcopy(self.targeted)
 			# Generate
-			result._readTargetLynxDataset(datapath=XMLpath, calibrationReportPath=reportPath)
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				result._readTargetLynxDataset(datapath=XMLpath, calibrationReportPath=reportPath)
 			# Test
 			pandas.util.testing.assert_frame_equal(self.expected['sampleMetadata'].reindex(sorted(self.expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
 			pandas.util.testing.assert_frame_equal(self.expected['featureMetadata'].reindex(sorted(self.expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
@@ -3532,7 +3548,7 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 			# Result
 			result = copy.deepcopy(self.targetedIn)
 			with warnings.catch_warnings():
-				warnings.simplefilter("ignore")
+				warnings.simplefilter("ignore", UserWarning)
 				result._targetLynxApplyLimitsOfQuantificationNoiseFilled(onlyLLOQ=True, responseReference=None)
 
 			# Class
@@ -3597,7 +3613,9 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 			expected.calibration['calibPeakInfo']['peakRT'] = expected.calibration['calibPeakInfo']['peakRT'].iloc[:,[6, 7, 8, 0]]
 			# Result
 			result = copy.deepcopy(self.targetedIn)
-			result._targetLynxApplyLimitsOfQuantificationNoiseFilled(onlyLLOQ=False, responseReference=None)
+			with warnings.catch_warnings():
+				warnings.simplefilter("ignore", UserWarning)
+				result._targetLynxApplyLimitsOfQuantificationNoiseFilled(onlyLLOQ=False, responseReference=None)
 
 			# Class
 			self.assertEqual(type(result), type(expected))
@@ -3666,7 +3684,10 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 			delattr(result, 'intensityDataExcluded')
 			delattr(result, 'expectedConcentrationExcluded')
 			delattr(result, 'excludedFlag')
-			result._targetLynxApplyLimitsOfQuantificationNoiseFilled(onlyLLOQ=False, responseReference=None)
+
+			with warnings.catch_warnings():
+				warnings.simplefilter("ignore")
+				result._targetLynxApplyLimitsOfQuantificationNoiseFilled(onlyLLOQ=False, responseReference=None)
 
 			# Class
 			self.assertEqual(type(result), type(expected))
@@ -3922,9 +3943,11 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 			self.assertRaises(ValueError, lambda: self.targetedIn._targetLynxApplyLimitsOfQuantificationNoiseFilled(onlyLLOQ=False, responseReference=dict()))
 
 		with self.subTest(msg='Checking ValueError if calibrationEquation fails'):
-			failCalibrationEquation = copy.deepcopy(self.targetedIn)
-			failCalibrationEquation.featureMetadata['calibrationEquation'] = ['','','','','','','((area * responseFactor)-b)/a', '10**((numpy.log10(area * responseFactor)-b)/a)', 'myVariable/a']
-			self.assertRaises(ValueError, lambda: failCalibrationEquation._targetLynxApplyLimitsOfQuantificationNoiseFilled(onlyLLOQ=False, responseReference=None))
+			with warnings.catch_warnings():
+				warnings.simplefilter("ignore", UserWarning)
+				failCalibrationEquation = copy.deepcopy(self.targetedIn)
+				failCalibrationEquation.featureMetadata['calibrationEquation'] = ['','','','','','','((area * responseFactor)-b)/a', '10**((numpy.log10(area * responseFactor)-b)/a)', 'myVariable/a']
+				self.assertRaises(ValueError, lambda: failCalibrationEquation._targetLynxApplyLimitsOfQuantificationNoiseFilled(onlyLLOQ=False, responseReference=None))
 
 
 class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
@@ -3981,7 +4004,6 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
 	def test_targeteddataset_loadtargetlynxdataset(self, mock_stdout):
-		#sampleTypeToProcess=['Study Sample', 'QC'], onlyLLOQ=False, responseReference=None
 
 		with self.subTest(msg='Basic import, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False, no additional changes'):
 			with tempfile.TemporaryDirectory() as tmpdirname:
@@ -3997,7 +4019,7 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				expected['Attributes']['calibrationReportPath'] = reportPath
 				# Generate
 				with warnings.catch_warnings():
-					warnings.simplefilter("ignore")
+					warnings.simplefilter("ignore", UserWarning)
 					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
@@ -4029,7 +4051,9 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				XMLpath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','UnitTest4_targeted.xml')
 
 				# Trigger an error when sampleTypeToProcess is wrongly altered
-				self.assertRaises(ValueError, lambda: nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, sampleTypeToProcess=['Study Sample', 'Unknown Type'], keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False))
+				with warnings.catch_warnings():
+					warnings.simplefilter('ignore', UserWarning)
+					self.assertRaises(ValueError, lambda: nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, sampleTypeToProcess=['Study Sample', 'Unknown Type'], keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False))
 
 		with self.subTest(msg='Change keepIS, keepIS=True, noiseFilled=False, keepPeakInfo=False, keepExcluded=False, no additional changes'):
 			# IS feature is kept, however doesn't have LLOQ/ULOQ so is excluded in applyLLOQ
@@ -4047,7 +4071,9 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				expected['featureMetadata']['IS'] = numpy.array([False, False])
 				expected['featureMetadata']['TargetLynx IS ID'] = ['1', '1']
 				# Generate
-				result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=True, noiseFilled=False, keepPeakInfo=False, keepExcluded=False)
+				with warnings.catch_warnings():
+					warnings.simplefilter("ignore", UserWarning)
+					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=True, noiseFilled=False, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
 				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
@@ -4080,7 +4106,9 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				expected['Attributes']['calibrationReportPath'] = reportPath
 				expected['intensityData'] = numpy.array([[-numpy.inf, 359.219531]])
 				# Generate
-				result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, onlyLLOQ=True, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False)
+				with warnings.catch_warnings():
+					warnings.simplefilter("ignore", UserWarning)
+					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, onlyLLOQ=True, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
 				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
@@ -4115,7 +4143,9 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				expected['featureMetadata']['noiseConcentration'] = [1.724251, 1.334716]
 				expected['intensityData'][0,0] = 1.7242509759339286
 				# Generate
-				result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=True, keepPeakInfo=False, keepExcluded=False)
+				with warnings.catch_warnings():
+					warnings.simplefilter('ignore', UserWarning)
+					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=True, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
 				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
@@ -4150,7 +4180,9 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				expected['featureMetadata']['noiseConcentration'] = [1.724251, 1.334716]
 				expected['intensityData'] = [[1.7242509759339286, numpy.inf]]
 				# Generate
-				result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, onlyLLOQ=False, keepIS=False, noiseFilled=True, keepPeakInfo=False, keepExcluded=False)
+				with warnings.catch_warnings():
+					warnings.simplefilter("ignore", UserWarning)
+					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, onlyLLOQ=False, keepIS=False, noiseFilled=True, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
 				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
@@ -4181,7 +4213,9 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				XMLpath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','UnitTest4_targeted.xml')
 
 				# Trigger an error when responseReference is wrongly altered
-				self.assertRaises(ValueError, lambda: nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, responseReference=5., keepIS=False, noiseFilled=True, keepPeakInfo=False, keepExcluded=False))
+				with warnings.catch_warnings():
+					warnings.simplefilter("ignore", UserWarning)
+					self.assertRaises(ValueError, lambda: nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, responseReference=5., keepIS=False, noiseFilled=True, keepPeakInfo=False, keepExcluded=False))
 
 		with self.subTest(msg='Change keepPeakInfo, keepIS=False, noiseFilled=False, keepPeakInfo=True, keepExcluded=False, no additional changes'):
 			with tempfile.TemporaryDirectory() as tmpdirname:
@@ -4201,7 +4235,9 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				expected['peakIntegrationFlag'] = pandas.DataFrame({'Feature2': ['bb'], 'Feature3': ['bb']}, index=[1])
 				expected['peakRT'] = pandas.DataFrame(numpy.array([[11.501, 11.6407]]), index=[1], columns=expected['featureMetadata']['Feature Name'].values)
 				# Generate
-				result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=False, keepPeakInfo=True, keepExcluded=False)
+				with warnings.catch_warnings():
+					warnings.simplefilter("ignore", UserWarning)
+					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=False, keepPeakInfo=True, keepExcluded=False)
 
 				# Test
 				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
@@ -4244,7 +4280,9 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				expected = copy.deepcopy(self.expected)
 				expected['Attributes']['calibrationReportPath'] = reportPath
 				# Generate
-				result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=True)
+				with warnings.catch_warnings():
+					warnings.simplefilter("ignore", UserWarning)
+					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=True)
 
 				# Test
 				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
@@ -4289,15 +4327,15 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		# Expected TargetedDataset
 		# Do not check sampleMetadata['Path']
 		self.expectedQuantUR = dict()
-		self.expectedQuantUR['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest1_Urine_Rack1_SLL_270814_expno10.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno20.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno30.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno40.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno50.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno60.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno70.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno80.100000.10r',
-																				 'UnitTest1_Urine_Rack1_SLL_270814_expno90.100000.10r'],
+		self.expectedQuantUR['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest1_Urine_Rack1_SLL_270814/10',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/20',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/30',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/40',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/50',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/60',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/70',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/80',
+																				 'UnitTest1_Urine_Rack1_SLL_270814/90'],
 															'Sample Base Name': ['UnitTest1_Urine_Rack1_SLL_270814/10',
 																				 'UnitTest1_Urine_Rack1_SLL_270814/20',
 																				 'UnitTest1_Urine_Rack1_SLL_270814/30',
@@ -4584,16 +4622,16 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		# Expected TargetedDataset
 		# Do not check sampleMetadata['Path']
 		self.expectedBILISA = dict()
-		self.expectedBILISA['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest3_Serum_Rack01_RCM_190116_expno10.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno100.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno110.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno120.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno130.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno140.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno150.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno160.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno170.100000.10r',
-																					   'UnitTest3_Serum_Rack01_RCM_190116_expno180.100000.10r'],
+		self.expectedBILISA['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest3_Serum_Rack01_RCM_190116/10',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/100',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/110',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/120',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/130',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/140',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/150',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/160',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/170',
+																					   'UnitTest3_Serum_Rack01_RCM_190116/180'],
 																  'Sample Base Name': ['UnitTest3_Serum_Rack01_RCM_190116/10',
 																					   'UnitTest3_Serum_Rack01_RCM_190116/100',
 																					   'UnitTest3_Serum_Rack01_RCM_190116/110',
@@ -5122,7 +5160,9 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 
 		with self.subTest(msg='UnitTest3'):
 
-			dataset = nPYc.TargetedDataset(self.datapathBILISA, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
+			with warnings.catch_warnings():
+				warnings.simplefilter('ignore', UserWarning)
+				dataset = nPYc.TargetedDataset(self.datapathBILISA, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
 
 			limspath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Worklists', 'UnitTest3_NMR_serum_PCSOP.012.csv')
 			dataset.addSampleInfo(filePath=limspath, descriptionFormat='NPC LIMS')
@@ -5206,6 +5246,7 @@ class test_targeteddataset_exportdataset(unittest.TestCase):
 	def test_exportdataset_exportunifiedcsv(self):
 		expectedCombined = pandas.DataFrame({'Acqu Date': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16'],'Acqu Time': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, '05:46:40', '06:05:26', '07:26:32', '08:25:53', '09:16:04', '10:50:46'],'Acquired Time': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, '2016-09-10 05:46:40','2016-09-10 06:05:26', '2016-09-10 07:26:32', '2016-09-10 08:25:53', '2016-09-10 09:16:04', '2016-09-10 10:50:46'], 'Batch': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 1.0, 1.0, 1.0, 1.0, 1.0,  1.0], 'Dilution': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 100.0, 100.0, 100.0, 100.0, 100.0,  100.0], 'Instrument': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest'], 'MassLynx Row ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 4., 5., 6., 7.,8., 9.], 'Run Order': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 3., 4., 5., 6., 7., 8.],'Sample File Name': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'UnitTest_targeted_file_004', 'UnitTest_targeted_file_005', 'UnitTest_targeted_file_006', 'UnitTest_targeted_file_007', 'UnitTest_targeted_file_008', 'UnitTest_targeted_file_009'],'Sample Name': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'Sample-LLOQ', 'Sample-Fine', 'Sample-ULOQ', 'Blank', 'QC', 'Other'], 'Sample Type': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'Analyte', 'Analyte','Analyte', 'Blank', 'QC', 'Solvent'],'TargetLynx Sample ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, 4., 5., 6., 7., 8., 9.],'Vial': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,  numpy.nan, numpy.nan, '1:A,4', '1:A,5', '1:A,6', '1:A,7', '1:A,8', '1:A,9'],'0': ['info cpd5', 'Feature5-UnusableNoiseFilled', '100.0', numpy.nan, '5', '1000.0', 'uM', '2.0', 'something 5', '1.0', numpy.nan, 'Backcalculated with Internal Standard',  'Quantified and validated with own labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'1': ['info cpd6', 'Feature6-UnusableNoiseFilled', '100.0', '10.0', '6', '1000.0', 'pg/uL', numpy.nan,'something 6', '1.0', numpy.nan, 'Backcalculated with Internal Standard', 'Quantified and validated with own labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'2': ['info cpd7', 'Feature7-UnusableNoiseFilled', '100.0', '10.0', '7', '1000.0', 'uM', '2.0', 'something 7', numpy.nan, numpy.nan, 'Backcalculated with Internal Standard', 'Quantified and validated with alternative labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'3': ['info cpd8', 'Feature8-axb', '100.0', '10.0', '8', '1000.0', 'pg/uL', '2.0', 'something 8', '1.0','((area * responseFactor)-b)/a', 'Backcalculated with Internal Standard', 'Quantified and validated with own labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'4': ['info cpd9', 'Feature9-logaxb', '100.0', '10.0', '9', '1000.0', 'uM', '2.0', 'something 9', '1.0', '10**((numpy.log10(area * responseFactor)-b)/a)', 'Backcalculated with Internal Standard', 'Quantified and validated with alternative labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'], '5': ['info cpd10', 'Feature10-ax', '100.0', '10.0', '10', '1000.0', 'pg/uL', '2.0', 'something 10', '0.0', 'area/a', 'No Internal Standard', 'Other quantification', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'6': ['info cpd2', 'Feature2-Monitored', numpy.nan, numpy.nan, '2', numpy.nan, 'pg/uL', numpy.nan, 'something 2', numpy.nan, numpy.nan, 'No calibration', 'Monitored for relative information', '0.99', '0.995', '1.0', '50.0', '500.0', '5000.0', '500.0', '500.0', '500.0']})
 		expectedCombined.index = ['Cpd Info', 'Feature Name', 'LLOQ', 'Noise (area)', 'TargetLynx Feature ID', 'ULOQ', 'Unit', 'a', 'another column', 'b', 'calibrationEquation', 'calibrationMethod', 'quantificationType', 'r', 'r2', 'unitCorrectionFactor', '0', '1', '2', '3', '4', '5']
+		expectedCombined = expectedCombined.loc[('Feature Name','TargetLynx Feature ID','calibrationEquation','calibrationMethod','quantificationType','unitCorrectionFactor','Unit','Cpd Info','LLOQ','ULOQ','Noise (area)','a','another column','b','r','r2','0','1','2','3','4','5'),:]
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			targetFolder = os.path.join(tmpdirname)

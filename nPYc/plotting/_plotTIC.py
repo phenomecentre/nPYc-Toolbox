@@ -228,7 +228,6 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 
 	fig.suptitle(title)
-	fig.tight_layout()
 
 	# Save or output
 	if savePath:

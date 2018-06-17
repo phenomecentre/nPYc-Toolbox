@@ -80,7 +80,7 @@ class test_utilities_importBruker(unittest.TestCase):
 		with self.subTest(msg='No matching pulse program'):
 
 			path = os.path.join('..', '..', 'npc-standard-project',
-								'Raw_Data', 'nmr', 'UnitTest3', 
+								'Raw_Data', 'nmr', 'UnitTest3',
 								'UnitTest3_Serum_Rack01_RCM_190116')
 
 			self.assertRaises(ValueError, importBrukerSpectra, path, 'notpresent', 1, dict())
@@ -91,16 +91,16 @@ class test_utilities_importBruker(unittest.TestCase):
 
 		Attributes = dict()
 		Attributes['variableSize'] = numpy.random.randint(10000, high=50000, size=None)
-		
+
 		lowBound = (-0.5 - -5) * numpy.random.random_sample() + -5
 		highBound = (19 - 10) * numpy.random.random_sample() + 10
 		Attributes['bounds'] = [lowBound, highBound]
-		
+
 		Attributes['alignTo'] = 'doublet'
 		Attributes['calibrateTo'] = (6 - 4.5) * numpy.random.random_sample() + 4.5
 		offset = 5.233 - Attributes['calibrateTo']
 		Attributes['ppmSearchRange'] = [4.9, 5.733]
-		
+
 		Attributes['LWpeakRange'] = [4.08 - offset, 4.14 - offset]
 		Attributes['LWpeakMultiplicity'] = 'quartet'
 		Attributes['LWpeakIntesityFraction'] = 1e-4
@@ -167,16 +167,16 @@ class test_utilities_importBruker(unittest.TestCase):
 
 		Attributes = dict()
 		Attributes['variableSize'] = numpy.random.randint(10000, high=50000, size=None)
-		
+
 		lowBound = (-0.5 - -2) * numpy.random.random_sample() + -2
 		highBound = (14.5 - 10) * numpy.random.random_sample() + 10
 		Attributes['bounds'] = [lowBound, highBound]
-		
+
 		Attributes['alignTo'] = 'singlet'
 		Attributes['calibrateTo'] = (0.5 - -0.5) * numpy.random.random_sample() + -0.5
 		offset = Attributes['calibrateTo']
 		Attributes['ppmSearchRange'] = [-0.5, -0.5]
-		
+
 		Attributes['LWpeakRange'] = [-0.5 + offset, 0.5 + offset]
 		Attributes['LWpeakMultiplicity'] = 'singlet'
 		Attributes['LWpeakIntesityFraction'] = 1e-4
@@ -233,13 +233,13 @@ class test_utilities_importBruker(unittest.TestCase):
 
 		with self.assertWarnsRegex(UserWarning, 'Error parsing `QuantFactorSample`'):
 			intensityData, ppm, metadata = importBrukerSpectra(os.path.join('..', '..', 'npc-standard-project',
-																			'Raw_Data', 'nmr', 'UnitTest1', 
+																			'Raw_Data', 'nmr', 'UnitTest1',
 																			'UnitTest1_Urine_Rack1_SLL_270814', '10'),
 																			'noesypr1d', 1, Attributes)
 
 		expectedWarningText = 'Error calculating ERETIC integral'
 		self.assertEqual(metadata.loc[0, 'Warnings'], expectedWarningText)
-		
+
 		expectedERETIC = numpy.nan
 		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Integral'], expectedERETIC)
 

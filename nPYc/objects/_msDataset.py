@@ -43,7 +43,7 @@ class MSDataset(Dataset):
 		Operates on spreadsheets exported from Biocrates MetIDQ. By default loads data from the sheet named 'Data Export', this may be overridden with the ``sheetName=`` argument, If the number of sample metadata columns differes from the default, this can be overridden with the ``noSampleParams=`` argument.
 	"""
 
-	def __init__(self, datapath, fileType='QI', sop='GenericMS', **kwargs):
+	def __init__(self, datapath, fileType='xcms', sop='GenericMS', **kwargs):
 		"""
 		Basic initialisation.
 		"""
@@ -91,7 +91,6 @@ class MSDataset(Dataset):
 			raise NotImplementedError
 
 		self.Attributes['Log'].append([datetime.now(), '%s instance inited, with %d samples, %d features, from \%s\'' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
-
 
 	# When making a deepcopy, all artifactual linkage are reset
 	def __deepcopy__(self, memo):
@@ -186,8 +185,13 @@ class MSDataset(Dataset):
 
 		Resets feature linkage matrix and feature correlations.
 		"""
-		# if a change is made to the features, the whole artifactualLinkageMatrix must be updated (feature IDs change), else only correlation calculation
 		changeFeature = sum(self.featureMask==False) != 0					# True if featuresMask has a feature set to False
+
+		if changeFeature:
+			if hasattr(self, 'fit'):
+				self.fit = self.fit[:, self.featureMask]
+
+		# if a change is made to the features, the whole artifactualLinkageMatrix must be updated (feature IDs change), else only correlation calculation
 		super().applyMasks()																			# applyMasks
 		if self.Attributes['artifactualFilter'] == True:
 			if not self._artifactualLinkageMatrix.empty:
@@ -366,7 +370,7 @@ class MSDataset(Dataset):
 		# Now read for real
 		dataT = pandas.read_csv(path, header=2)
 		values = dataT.iloc[:,endIndex+1:endIndex+dataSize+1]
-		self._intensityData = values.as_matrix().transpose()
+		self._intensityData = values.values.transpose()
 
 		# Get the sample names as the only metadata we have
 		sampleMetadata = dict()
@@ -392,6 +396,9 @@ class MSDataset(Dataset):
 
 		self.initialiseMasks()
 
+		self.sampleMetadata['AssayRole'] = AssayRole.Assay
+		self.sampleMetadata['SampleType'] = SampleType.StudySample
+		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
 
 		self.Attributes['Log'].append([datetime.now(), 'Progenesis QI dataset loaded from %s' % (path)])
@@ -410,7 +417,7 @@ class MSDataset(Dataset):
 
 		# Now read for real
 		values = dataT.iloc[:,startIndex:]
-		self._intensityData = values.as_matrix().transpose()
+		self._intensityData = values.values.transpose()
 
 		# Get the sample names as the only metadata we have
 		sampleMetadata = dict()
@@ -431,7 +438,7 @@ class MSDataset(Dataset):
 				# rename mz to mzmed like in diffreport
 				dataT.rename(columns={'mz': 'mzmed', 'rt': 'rtmed'}, inplace=True)
 			except:
-				raise Exception('XCMS data frame should be obtained with either peakTable or diffreport methods')
+				raise ValueError('XCMS data frame should be obtained with either peakTable or diffreport methods')
 
 		featureMetadata['Feature Name'] = dataT['name'].values
 		featureMetadata['m/z'] = dataT['mzmed'].values
@@ -451,7 +458,14 @@ class MSDataset(Dataset):
 
 		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float) / 60.0
 		self.featureMetadata['m/z'] = self.featureMetadata['m/z'].astype(float)
+
+		self.sampleMetadata['AssayRole'] = AssayRole.Assay
+		self.sampleMetadata['SampleType'] = SampleType.StudySample
+		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
+
+		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
+		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
 
 		self.initialiseMasks()
 
@@ -470,7 +484,7 @@ class MSDataset(Dataset):
 		endIndex = len(dataT.index)
 
 		# Now read  intensities
-		self._intensityData = dataT.iloc[2:endIndex,noSampleParams+1:].as_matrix()
+		self._intensityData = dataT.iloc[2:endIndex,noSampleParams+1:].values
 
 		##
 		# Feature info
@@ -526,7 +540,14 @@ class MSDataset(Dataset):
 
 	def _loadMetaboscapeDataset(self, path, noFeatureParams=None, sheetName=None):
 
-		dataT = pandas.read_excel(path, sheet_name=sheetName)
+		prefix, fileType = os.path.splitext(path)
+
+		if fileType.lower() in ('.xls', '.xlsx'):
+			dataT = pandas.read_excel(path, sheet_name=sheetName)
+		elif fileType.lower() == '.csv':
+			dataT = pandas.read_csv(path)
+		else:
+			raise ValueError('"%s" is not a known file type!' % (fileType))
 
 		if noFeatureParams is None:
 			if 'RT [min]' in dataT.columns:
@@ -542,7 +563,7 @@ class MSDataset(Dataset):
 
 		# Now read for real
 		values = dataT.iloc[:,startIndex:]
-		intensityData = values.as_matrix().transpose()
+		intensityData = values.values.transpose()
 
 		# Get the sample names as the only metadata we have
 		sampleMetadata = dict()
@@ -577,7 +598,7 @@ class MSDataset(Dataset):
 			featureMetadata['Retention Time Deviation'] = dataT['ΔRT'].values
 
 			featureMetadata['Feature Name'] = [str(round(row['RT [min]'], 2)) + '_' + str(round(row['m/z'], 4)) + 'm/z' for idx,row in dataT.iterrows()]
-			featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float) / 60.0
+			featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float)
 
 		else:
 			featureMetadata['Feature Name'] = dataT['m/z'].apply(lambda mz: str(mz) + 'm/z').values
@@ -586,12 +607,21 @@ class MSDataset(Dataset):
 		featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T, columns=featureMetadata.keys())
 		sampleMetadata = pandas.DataFrame(numpy.concatenate([sampleMetadata[c] for c in sampleMetadata.keys()], axis=0), columns=sampleMetadata.keys())
 
+		sampleMetadata['AssayRole'] = AssayRole.Assay
+		sampleMetadata['SampleType'] = SampleType.StudySample
+		sampleMetadata['Dilution'] = 100
+
 		# Put Feature Names first
 		name = featureMetadata['Feature Name']
 		featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
 		featureMetadata.insert(0, 'Feature Name', name)
 
 		featureMetadata['m/z'] = featureMetadata['m/z'].astype(float)
+
+		if 'Retention Time' in featureMetadata.columns:
+			featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float)
+			featureMetadata['Retention Time Deviation'] = featureMetadata['Retention Time Deviation'].astype(float)
+
 
 		self._intensityData = intensityData
 		self.sampleMetadata = sampleMetadata
@@ -870,7 +900,7 @@ class MSDataset(Dataset):
 				lrMask = self.sampleMetadata['Dilution Series'].values == batch
 				lrMask = numpy.logical_and(lrMask,
 										   exclusions)
-	
+
 				correlations[index,:] = _vcorrcoef(self._intensityData,
 												   self.sampleMetadata['Dilution'].values,
 												   method=method,
@@ -1002,7 +1032,7 @@ class MSDataset(Dataset):
 
 		# make graphs
 		g	  = networkx.from_pandas_edgelist(df=tmpLinkage, source='node1', target='node2', edge_attr=True)
-		graphs = list(networkx.connected_component_subgraphs(g))		  # a list of clusters
+		graphs = list((g.subgraph(c).copy() for c in networkx.connected_components(g)))		  # a list of clusters
 
 		# update FeatureMask with features to remove (all but max intensity)
 		for i in range(0,len(graphs)):
@@ -1027,157 +1057,200 @@ class MSDataset(Dataset):
 		self.corrExclusions = copy.deepcopy(self.sampleMask)
 		self.__corrExclusions = copy.deepcopy(self.corrExclusions)
 
-	def _exportISATAB(self, destinationPath, escapeDelimiters=True):
+	def _exportISATAB(self, destinationPath, detailsDict):
 		"""
 		Export the dataset's metadata to the directory *destinationPath* as ISATAB
+		detailsDict should have the format:
+		detailsDict = {
+			'investigation_identifier' : "i1",
+			'investigation_title' : "Give it a title",
+			'investigation_description' : "Add a description",
+			'investigation_submission_date' : "2016-11-03",
+			'investigation_public_release_date' : "2016-11-03",
+			'first_name' : "Noureddin",
+			'last_name' : "Sadawi",
+			'affiliation' : "University",
+			'study_filename' : "my_ms_study",
+			'study_material_type' : "Serum",
+			'study_identifier' : "s1",
+			'study_title' : "Give the study a title",
+			'study_description' : "Add study description",
+			'study_submission_date' : "2016-11-03",
+			'study_public_release_date' : "2016-11-03",
+			'assay_filename' : "my_ms_assay"
+		}
 
 		:param str destinationPath: Path to a directory in which the output will be saved
-		:param bool escapeDelimiters: Remove characters commonly used as delimiters in csv files from metadata
+		:param dict detailsDict: Contains several key: value pairs required to for ISATAB
 		:raises IOError: If writing one of the files fails
 		"""
 
-		from distutils.dir_util import copy_tree
-		#import re
+		from isatools.model import Investigation, Study, Assay, OntologyAnnotation, OntologySource, Person,Publication,Protocol, Source
+		from isatools.model import  Comment, Sample, Characteristic, Process, Material, DataFile, ParameterValue, plink
+		from isatools import isatab
+		import isaExplorer as ie
 
-		#copy the blank ISATAB to destinationPath so we can populate it
-		copy_tree(os.path.join(toolboxPath(),'StudyDesigns','BlankISATAB','blank-ms'), destinationPath)
+		investigation = Investigation()
 
-		sampleMetadata = self.sampleMetadata.copy(deep=True)
-		#featureMetadata = self.featureMetadata.copy(deep=True)
+		investigation.identifier = detailsDict['investigation_identifier']
+		investigation.title = detailsDict['investigation_title']
+		investigation.description = detailsDict['investigation_description']
+		investigation.submission_date = detailsDict['investigation_submission_date']#use today if not specified
+		investigation.public_release_date = detailsDict['investigation_public_release_date']
+		study = Study(filename='s_'+detailsDict['study_filename']+'.txt')
+		study.identifier = detailsDict['study_identifier']
+		study.title = detailsDict['study_title']
+		study.description = detailsDict['study_description']
+		study.submission_date = detailsDict['study_submission_date']
+		study.public_release_date = detailsDict['study_public_release_date']
+		investigation.studies.append(study)
+		obi = OntologySource(name='OBI', description="Ontology for Biomedical Investigations")
+		investigation.ontology_source_references.append(obi)
+		intervention_design = OntologyAnnotation(term_source=obi)
+		intervention_design.term = "intervention design"
+		intervention_design.term_accession = "http://purl.obolibrary.org/obo/OBI_0000115"
+		study.design_descriptors.append(intervention_design)
 
-		#make sure this field is of type string
-		#otherwise the escapeDelimters causes it to become empty
-		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].astype(str)
-		sampleMetadata['SampleType'] = sampleMetadata['SampleType'].astype(str)
-		sampleMetadata['AssayRole'] = sampleMetadata['AssayRole'].astype(str)
-		# Columns required in ISATAB
-		if 'Organism' not in sampleMetadata.columns:
-			sampleMetadata['Organism'] = 'N/A'
-		if 'Material Type' not in sampleMetadata.columns:
-			sampleMetadata['Material Type'] = 'N/A'
-		if 'Detector Unit' not in sampleMetadata.columns:
-			sampleMetadata['Detector Unit'] = 'Volt'
-		#if 'Age Unit' not in sampleMetadata.columns:
-		#	sampleMetadata['Age Unit'] = 'Year'
+		# Other instance variables common to both Investigation and Study objects include 'contacts' and 'publications',
+		# each with lists of corresponding Person and Publication objects.
 
-		sampleMetadata.to_csv(os.path.join(destinationPath + 'sampleMetadata.csv'),
-			encoding='utf-8',index=False)
+		contact = Person(first_name=detailsDict['first_name'], last_name=detailsDict['last_name'], affiliation=detailsDict['affiliation'], roles=[OntologyAnnotation(term='submitter')])
+		study.contacts.append(contact)
+		publication = Publication(title="Experiments with Data", author_list="Auther 1, Author 2")
+		publication.pubmed_id = "12345678"
+		publication.status = OntologyAnnotation(term="published")
+		study.publications.append(publication)
 
-		if escapeDelimiters:
-			# Remove any commas from metadata/feature tables - for subsequent import of resulting csv files to other software packages
+		# To create the study graph that corresponds to the contents of the study table file (the s_*.txt file), we need
+		# to create a process sequence. To do this we use the Process class and attach it to the Study object's
+		# 'process_sequence' list instance variable. Each process must be linked with a Protocol object that is attached to
+		# a Study object's 'protocols' list instance variable. The sample collection Process object usually has as input
+		# a Source material and as output a Sample material.
 
-			for column in sampleMetadata.columns:
-				try:
-					sampleMetadata[column] = sampleMetadata[column].str.replace(',', ';')
-				except:
-					pass
+		sample_collection_protocol = Protocol(id_="sample collection",name="sample collection",protocol_type=OntologyAnnotation(term="sample collection"))
+		aliquoting_protocol = Protocol(id_="aliquoting",name="aliquoting",protocol_type=OntologyAnnotation(term="aliquoting"))
 
-		studyPath = os.path.join(destinationPath,'s_NPC-Test-Study.txt')
-		studyDF = pandas.read_csv(studyPath, sep='\t')
+		for index, row in self.sampleMetadata.iterrows():
+		    src_name = row['Sample File Name']
+		    source = Source(name=src_name)
 
-		#remove all rows in case the file is not empty
-		studyDF.drop(studyDF.index, inplace=True)
+		    source.comments.append(Comment(name='Study Name', value=row['Study']))
+		    study.sources.append(source)
 
-		#populate study using sampleMetadata
-		#studyDF['Source Name'] = sampleMetadata['Subject ID']
+		    sample_name = src_name
 
-		#Source Name is empty for SRs, LTRs and SRDs are they don't have Subj IDs
-		#Use names from the Status field
-		sampleMetadata['Source Name'] = sampleMetadata['Subject ID'].fillna(sampleMetadata['Sampling ID'])
-		sampleMetadata['Source Name'] = sampleMetadata.apply(lambda x: x['Source Name'] if pandas.notnull(x['Source Name']) else ('RSD'+str(x['Dilution']) if pandas.isnull(x['Source Name']) and pandas.notnull(x['Dilution']) else x['SampleType'].split('.')[1]), axis=1)
+		    #sample_name = 'sample_'+str(index)
+		    sample = Sample(name=sample_name, derives_from=[source])
+		    # check if field exists first
+		    status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
+		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
+		    sample.characteristics.append(characteristic_material_type)
 
-		#studyDF['Source Name'] = sampleMetadata['Subject ID'].fillna(sampleMetadata['Sampling ID'])
-		studyDF['Source Name'] = sampleMetadata['Source Name']
-		studyDF['Characteristics[material role]'] = sampleMetadata['SampleType'].apply(lambda x: x.split('.')[1])
-		studyDF['Comment[study name]'] = sampleMetadata['Study']
-		studyDF['Characteristics[organism]'] = sampleMetadata['Organism']
-		studyDF['Characteristics[material type]'] = sampleMetadata['Material Type']
-		studyDF['Characteristics[gender]'] = sampleMetadata['Gender']
-		studyDF['Characteristics[age]'] = sampleMetadata['Age']
-		studyDF['Unit'] = 'Years' #sampleMetadata['Age Unit']
-		studyDF['Protocol REF'] = 'sample collection'
-		studyDF['Date'] = sampleMetadata['Sampling Date']
-		studyDF['Comment[sample name]'] = ''
-		studyDF['Protocol REF.1'] = 'aliquoting'
+		    #characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['SampleType'])
+		    #sample.characteristics.append(characteristic_material_role)
 
-		sampleMetadata['Sample Name'] = sampleMetadata['Sampling ID'].fillna(sampleMetadata['Subject ID'])
-		sampleMetadata['Sample Name'] = sampleMetadata.apply(lambda x: x['Sample Name'] if pandas.notnull(x['Sample Name']) else ('RSD'+str(x['Dilution']) if pandas.isnull(x['Sample Name']) and pandas.notnull(x['Dilution']) else x['SampleType'].split('.')[1]), axis=1)
-		studyDF['Sample Name'] = sampleMetadata['Sample Name']
+		    # check if field exists first
+		    age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
+		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
+		    sample.characteristics.append(characteristic_age)
+		    # check if field exists first
+		    gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
+		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
+		    sample.characteristics.append(characteristic_gender)
+
+		    ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
+		    characteristic_organism = Characteristic(category=OntologyAnnotation(term="Organism"),value=OntologyAnnotation(term="Homo Sapiens", term_source=ncbitaxon,term_accession="http://purl.bioontology.org/ontology/NCBITAXON/9606"))
+		    sample.characteristics.append(characteristic_organism)
+		    # check if field exists first
+		    sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
+		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
+		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
+
+		    sample_collection_process.inputs = [source]
+		    aliquoting_process.outputs = [sample]
+
+		    # links processes
+		    plink(sample_collection_process, aliquoting_process)
+
+		    study.process_sequence.append(sample_collection_process)
+		    study.process_sequence.append(aliquoting_process)
+
+		    study.samples.append(sample)
 
 
-		#because ISATAB has several columns with the same name, pandas auto numbers them
-		#here we remove the numbering at the end of field names
-		"""
-		ls = studyDF.columns
-		ss = []
-		for s in ls:
-			x = re.search('\.{1}\d+',s)
-			if x != None:
-				i = x.span()[0]#index of the '.'
-				ss.append(s[:i])
-			else:
-				ss.append(s)
+		study.protocols.append(sample_collection_protocol)
+		study.protocols.append(aliquoting_protocol)
 
-		studyDF.columns = ss
-		"""
-		studyDF.columns = removeTrailingColumnNumbering(studyDF.columns)
+		### Add MS Assay ###
+		ms_assay = Assay(filename='a_'+detailsDict['assay_filename']+'.txt',measurement_type=OntologyAnnotation(term="metabolite profiling"),technology_type=OntologyAnnotation(term="mass spectrometry"))
+		extraction_protocol = Protocol(name='extraction', protocol_type=OntologyAnnotation(term="material extraction"))
 
-		#now we remove duplicate rows from study as we don't want the same sample to be declared more than once
-		#removal is based on Source Name and Sample Name to preserve aliquoting
-		studyDF.drop_duplicates(subset=['Source Name', 'Sample Name'], inplace=True)
-		studyDF.to_csv(studyPath,sep='\t', encoding='utf-8',index=False)
+		study.protocols.append(extraction_protocol)
+		ms_protocol = Protocol(name='mass spectrometry', protocol_type=OntologyAnnotation(term="MS Assay"))
+		ms_protocol.add_param('Run Order')
+		ms_protocol.add_param('Instrument')
+		ms_protocol.add_param('Sample Batch')
+		ms_protocol.add_param('Acquisition Batch')
 
-		msAssayPath = os.path.join(destinationPath,'a_npc-test-study_metabolite_profiling_mass_spectrometry.txt')
-		msAssay = pandas.read_csv(msAssayPath, sep='\t')
 
-		#remove all rows in case the file is not empty
-		msAssay.drop(msAssay.index, inplace=True)
+		study.protocols.append(ms_protocol)
 
-		msAssay['Sample Name'] = sampleMetadata['Sample Name']
-		msAssay['Characteristics[dilution final concentration]'] = sampleMetadata['Dilution']
-		msAssay['Unit'] = 'MicroGrmas/ml'
-		msAssay['Protocol REF'] = 'extraction'
-		msAssay['Protocol REF.1'] = 'labeling'
-		msAssay['Protocol REF.2'] = 'mass spectrometry'
+		#for index, row in sampleMetadata.iterrows():
+		for index, sample in enumerate(study.samples):
+			row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
 
-		msAssay['Parameter Value[detector voltage]'] = sampleMetadata['Detector']
-		msAssay['Unit.1'] = sampleMetadata['Detector Unit']
+			# create an extraction process that executes the extraction protocol
+			extraction_process = Process(executes_protocol=extraction_protocol)
 
-		msAssay['Date'], msAssay['Comment[time]'] = sampleMetadata['Acquired Time'].str.split(' ', 1).str
+			# extraction process takes as input a sample, and produces an extract material as output
+			sample_name = sample.name
+			sample = Sample(name=sample_name, derives_from=[source])
 
-		msAssay['Parameter Value[sample batch]'] = sampleMetadata['Sample batch']
-		msAssay['Parameter Value[plate well]'] = sampleMetadata['Well']
+			extraction_process.inputs.append(sample)
+			material = Material(name="extract-{}".format(index))
+			material.type = "Extract Name"
+			extraction_process.outputs.append(material)
 
-		msAssay['Parameter Value[plate number]'] = sampleMetadata['Plate']
-		msAssay['Parameter Value[batch number]'] = sampleMetadata['Batch']
-		msAssay['Parameter Value[correction batch]'] = sampleMetadata['Correction Batch']
-		msAssay['Parameter Value[run order]'] = sampleMetadata['Run Order']
+			# create a ms process that executes the nmr protocol
+			ms_process = Process(executes_protocol=ms_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
 
-		msAssay['Parameter Value[instrument]'] = sampleMetadata['Instrument']
-		msAssay['Parameter Value[chromatography]'] = sampleMetadata['Chromatography']
-		msAssay['Parameter Value[ionisation]'] = sampleMetadata['Ionisation']
+			ms_process.name = "assay-name-{}".format(index)
+			ms_process.inputs.append(extraction_process.outputs[0])
+			# nmr process usually has an output data file
+			# check if field exists first
+			assay_data_name = row['Assay data name'].values[0] if 'Assay data name' in self.sampleMetadata.columns else 'N/A'
+			datafile = DataFile(filename=assay_data_name, label="MS Assay Name", generated_from=[sample])
+			ms_process.outputs.append(datafile)
 
-		msAssay['MS Assay Name'] = sampleMetadata['Assay data name']
+			#nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
+			ms_process.parameter_values = [ParameterValue(category=ms_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
+			# check if field exists first
+			instrument = row['Instrument'].values[0] if 'Instrument' in self.sampleMetadata.columns else 'N/A'
+			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Instrument'),value=instrument))
+			# check if field exists first
+			sbatch = row['Sample batch'].values[0] if 'Sample batch' in self.sampleMetadata.columns else 'N/A'
+			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Sample Batch'),value=sbatch))
 
-		msAssay['Protocol REF.3'] = 'data transformation'
-		"""
-		ls = msAssay.columns
-		ss = []
-		for s in ls:
-			x = re.search('\.{1}\d+',s)
-			if x != None:
-				i = x.span()[0]#index of the .
-				ss.append(s[:i])
-			else:
-				ss.append(s)
+			ms_process.parameter_values.append(ParameterValue(category=ms_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 
-		msAssay.columns = ss
-		"""
-		msAssay.columns = removeTrailingColumnNumbering(msAssay.columns)
-		#print(msAssay.columns)
+			# ensure Processes are linked forward and backward
+			plink(extraction_process, ms_process)
+			# make sure the extract, data file, and the processes are attached to the assay
+			ms_assay.samples.append(sample)
+			ms_assay.data_files.append(datafile)
+			ms_assay.other_material.append(material)
+			ms_assay.process_sequence.append(extraction_process)
+			ms_assay.process_sequence.append(ms_process)
+			ms_assay.measurement_type = OntologyAnnotation(term="metabolite profiling")
+			ms_assay.technology_type = OntologyAnnotation(term="mass spectrometry")
 
-		msAssay.to_csv(msAssayPath,sep='\t', encoding='utf-8',index=False)
-		#copy_tree(os.path.join(toolboxPath(),'StudyDesigns','BlankISATAB','blank-ms'), destinationPath)
+		# attach the assay to the study
+		study.assays.append(ms_assay)
+
+		if os.path.exists(os.path.join(destinationPath,'i_Investigation.txt')):
+			ie.appendStudytoISA(study, destinationPath)
+		else:
+			isatab.dump(isa_obj=investigation, output_path=destinationPath)
 
 
 	def validateObject(self, verbose=True, raiseError=False, raiseWarning=True):
@@ -1789,7 +1862,6 @@ class MSDataset(Dataset):
 				if verbose:
 					print('--------')
 					print('No additional attributes in the object')
-
 
 			## Log and final Output
 			# Basic failure might compromise logging, failure of QC compromises sample meta

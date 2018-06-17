@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='nPYc',
-	version='1.0.4',
+	version='1.1.0',
 	description='National Phenome Centre toolbox',
 	url='https://github.com/phenomecentre/npyc-toolbox',
 	author='National Phenome Centre',
@@ -9,20 +9,23 @@ setup(name='nPYc',
 	license='MIT',
 	packages=find_packages(),
 	install_requires=[
-		'numpy>=1.11.0',
-		'scipy>=0.17.1 ',
-		'pandas>=0.21.0',
-		'matplotlib>=1.5.1',
-		'seaborn>=0.8.0',
-		'networkx>=2.0',
-		'statsmodels>=0.6.1 ',
-		'jinja2>=2.8',
-		'plotly>=2.0.0',
-		'scikit-learn>=0.18.1',
-		'isatools>=0.9.2',
-		'lmfit>=0.9.7',
 		'cycler>=0.10.0',
-		'pyChemometrics>=0.1'
+		'iPython>=6.3.1',
+		'isaExplorer>=0.1',
+		'isatools>=0.9.3',
+		'Jinja2>=2.10',
+		'lmfit>=0.9.7',
+		'matplotlib>=2.2.2',
+		'networkx>=2.1',
+		'numpy>=1.14.2',
+		'pandas>=0.23.0',
+		'plotly>=2.2.2',
+		'pyChemometrics>=0.1',
+		'scikit-learn>=0.19.1',
+		'scipy>=1.1.0',
+		'seaborn>=0.8.1',
+		'setuptools>=39.1.0',
+		'statsmodels>=0.9.0'
 	],
 	classifiers = [
 		"Programming Language :: Python",
@@ -31,13 +34,14 @@ setup(name='nPYc',
 		"License :: OSI Approved :: MIT License",
 		"Operating System :: OS Independent",
 		"Topic :: Scientific/Engineering :: Bio-Informatics",
-		],
+	],
 	long_description = """\
 		Toolbox for preprocessing of metabolic profiling datasets
 		---------------------------------------------------------
 
 		.. image:: https://travis-ci.org/phenomecentre/nPYc-Toolbox.svg?branch=master
 		   :target: https://travis-ci.org/phenomecentre/nPYc-Toolbox
+		   :alt: Travis CI build status
 
 		.. image:: https://readthedocs.org/projects/npyc-toolbox/badge/?version=latest
 		   :target: http://npyc-toolbox.readthedocs.io/en/latest/?badge=latest
@@ -45,6 +49,7 @@ setup(name='nPYc',
 
 		.. image:: https://codecov.io/gh/phenomecentre/nPYc-Toolbox/branch/master/graph/badge.svg
 		   :target: https://codecov.io/gh/phenomecentre/nPYc-Toolbox
+		   :alt: Test coverage
 
 		|
 
@@ -53,13 +58,13 @@ setup(name='nPYc',
 		Documentation can be found on `Read the Docs <http://npyc-toolbox.readthedocs.io/en/latest/?badge=latest>`_.
 
 		Imports
-		 - Peak-picked LC-MS data (XCMS, Progenesis QI)
+		 - Peak-picked LC-MS data (XCMS, Progenesis QI, *&* Metaboscape)
 		 - Raw NMR spectra (Bruker format)
-		 - Targeted datasets (TargetLynx, Bruker BI-LISA & BI-Quant-Ur)
+		 - Targeted datasets (TargetLynx, Bruker BI-LISA, *&* BI-Quant-Ur)
 
 		Provides
 		 - Batch *&* drift correction for LC-MS datasets
-		 - Feature filtering by RSD and linearity of response
+		 - Feature filtering by RSD *&* linearity of response
 		 - Calculation of spectral line-width in NMR
 		 - PCA of datasets
 		 - Visualisation of datasets

@@ -4,6 +4,7 @@
 import types
 import numpy
 import scipy
+import warnings
 from scipy import interp
 from scipy.signal import savgol_filter
 import statsmodels.api as sm
@@ -50,14 +51,16 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 	if not isinstance(excludeFailures, bool):
 		raise TypeError("excludeFailures must be a boolean")
 
-	correctedP = _batchCorrectionHead(data.intensityData,
-								 data.sampleMetadata['Run Order'].values,
-								 (data.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
-								 data.sampleMetadata['Correction Batch'].values,
-								 window=window,
-								 method=method,
-								 align=align,
-								 parallelise=parallelise)
+	with warnings.catch_warnings():
+		warnings.simplefilter('once')
+		correctedP = _batchCorrectionHead(data.intensityData,
+									 data.sampleMetadata['Run Order'].values,
+									 (data.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
+									 data.sampleMetadata['Correction Batch'].values,
+									 window=window,
+									 method=method,
+									 align=align,
+									 parallelise=parallelise)
 
 	correctedData = copy.deepcopy(data)
 	correctedData.intensityData = correctedP[0]

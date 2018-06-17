@@ -26,7 +26,7 @@ from ._generateBasicPCAReport import generateBasicPCAReport
 from ..__init__ import __version__ as version
 
 
-def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactualFiltering=None, output=None,
+def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactualFiltering=None, destinationPath=None,
                           msDataCorrected=None, pcaModel=None, batch_correction_window=11):
     """
     Summarise different aspects of an MS dataset
@@ -44,8 +44,8 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
     :param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection``, or ``final report``
     :param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
     :param None or bool withArtifactualFiltering: If ``None`` use the value from ``Attributes['artifactualFilter']``. If ``True`` apply artifactual filtering to the ``feature selection`` report and ``final report``
-    :param output: If ``None`` plot interactively, otherwise save report to the path specified
-    :type output: None or str
+    :param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
+    :type destinationPath: None or str
     :param MSDataset msDataCorrected: Only if ``batch correction``, if msDataCorrected included will generate report post correction
     :param PCAmodel pcaModel: Only if ``final report``, if PCAmodel object is available PCA scores plots coloured by sample type will be added to report
     """
@@ -75,9 +75,9 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
         warnings.warn("Warning: Attributes['artifactualFilter'] set to \'False\', artifactual filtering cannot be applied.")
         withArtifactualFiltering = False
 
-    if output is not None:
-        if not isinstance(output, str):
-            raise TypeError('output must be a string')
+    if destinationPath is not None:
+        if not isinstance(destinationPath, str):
+            raise TypeError('destinationPath must be a string')
 
     if msDataCorrected is not None:
         if not isinstance(msDataCorrected, MSDataset):
@@ -89,12 +89,12 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
 
     sns.set_style("whitegrid")
 
-    # Create directory to save output
-    if output:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        if not os.path.exists(os.path.join(output, 'graphics')):
-            os.makedirs(os.path.join(output, 'graphics'))
+    # Create directory to save destinationPath
+    if destinationPath:
+        if not os.path.exists(destinationPath):
+            os.makedirs(destinationPath)
+        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+            os.makedirs(os.path.join(destinationPath, 'graphics'))
 
     # Apply sample/feature masks if exclusions to be applied
     msData = copy.deepcopy(dataset)
@@ -102,27 +102,27 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
         msData.applyMasks()
 
     if reportType.lower() == 'feature summary':
-        _featureReport(msData, output)
+        _featureReport(msData, destinationPath)
     elif reportType.lower() == 'correlation to dilution':
-        _featureCorrelationToDilutionReport(msData, output)
+        _featureCorrelationToDilutionReport(msData, destinationPath)
     elif reportType.lower() == 'feature selection':
-        _featureSelectionReport(msData, output)
+        _featureSelectionReport(msData, destinationPath)
     elif reportType.lower() == 'batch correction assessment':
-        _batchCorrectionAssessmentReport(msData, output)
+        _batchCorrectionAssessmentReport(msData, destinationPath)
     elif reportType.lower() == 'batch correction summary':
-        _batchCorrectionSummaryReport(msData, msDataCorrected, output)
+        _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath)
     elif reportType.lower() == 'final report':
-        _finalReport(msData, output, pcaModel)
+        _finalReport(msData, destinationPath, pcaModel)
 
 
-def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=True):
+def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFiltering=True):
     """
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
 
     # Table 1: Sample summary
     # Generate sample summary
-    sampleSummary = _generateSampleReport(dataset, withExclusions=True, output=None, returnOutput=True)
+    sampleSummary = _generateSampleReport(dataset, withExclusions=True, destinationPath=None, returnOutput=True)
 
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
@@ -155,19 +155,19 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     ##
     # Report stats
     ##
-    if output is not None:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        if not os.path.exists(os.path.join(output, 'graphics')):
-            os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_finalSummary')
+    if destinationPath is not None:
+        if not os.path.exists(destinationPath):
+            os.makedirs(destinationPath)
+        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+            os.makedirs(os.path.join(destinationPath, 'graphics'))
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
         graphicsPath = None
         saveAs = None
 
-    if not output:
+    if not destinationPath:
         print('Table 1: Summary of samples present')
         display(sampleSummary['Acquired'])
 
@@ -193,7 +193,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     item['start'] = start.strftime('%d/%m/%y')
     item['end'] = end.strftime('%d/%m/%y')
 
-    if output:
+    if destinationPath:
         item['finalTICbatches'] = os.path.join(graphicsPath,
                                                item['Name'] + '_finalTICbatches.' + dataset.Attributes['figureFormat'])
         saveAs = item['finalTICbatches']
@@ -239,14 +239,14 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
 
-    if not output:
+    if not destinationPath:
         print('Feature Selection Summary')
         print('Features selected based on:')
         display(item['FeatureSelectionTable'])
         print('\n')
 
     # Figure 2: Final TIC
-    if output:
+    if destinationPath:
         item['finalTIC'] = os.path.join(graphicsPath, item['Name'] + '_finalTIC.' + dataset.Attributes['figureFormat'])
         saveAs = item['finalTIC']
     else:
@@ -261,7 +261,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
             figureSize=dataset.Attributes['figureSize'])
 
     # Figure 3: Histogram of log mean abundance by sample type
-    if output:
+    if destinationPath:
         item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_finalFeatureIntensityHist.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
@@ -272,7 +272,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
 
     # Figure 4: Histogram of RSDs in SP and SS
-    if output:
+    if destinationPath:
         item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
@@ -290,7 +290,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
              figureSize=dataset.Attributes['figureSize'])
 
     # Figure 5: Ion map
-    if output:
+    if destinationPath:
         item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
         saveAs = item['finalIonMap']
     else:
@@ -314,18 +314,18 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
         dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
     if pcaModel:
-        if output:
-            pcaPath = output
+        if destinationPath:
+            pcaPath = destinationPath
 
         else:
             pcaPath = None
-        pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=6, output=pcaPath, fileNamePrefix='')
+        pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=6, destinationPath=pcaPath, fileNamePrefix='')
 
 
     ##
     # Sample summary
     ##
-    if not output:
+    if not destinationPath:
         print('Table 1: Summary of samples present')
         display(sampleSummary['Acquired'])
         if 'StudySamples Exclusion Details' in sampleSummary:
@@ -335,10 +335,10 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
     ##
     # Write HTML if saving
     ##
-    if output:
+    if destinationPath:
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
-            if os.path.join(output, 'graphics') in str(item[key]):
+            if os.path.join(destinationPath, 'graphics') in str(item[key]):
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
 
         # Generate report
@@ -346,7 +346,7 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_FinalSummaryReport.html')
-        filename = os.path.join(output, dataset.name + '_report_finalSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
 
         f = open(filename,'w')
         f.write(template.render(item=item,
@@ -355,11 +355,11 @@ def _finalReport(dataset, output=None, pcaModel=None, withArtifactualFiltering=T
                                 graphicsPath=graphicsPath,
                                 pcaPlots=pcaModel))
         f.close()
-        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
+        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
     return None
 
 
-def _featureReport(dataset, output=None):
+def _featureReport(dataset, destinationPath=None):
     """
     Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
     """
@@ -389,12 +389,12 @@ def _featureReport(dataset, output=None):
     ##
     # Report stats
     ##
-    if output is not None:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        if not os.path.exists(os.path.join(output, 'graphics')):
-            os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_featureSummary')
+    if destinationPath is not None:
+        if not os.path.exists(destinationPath):
+            os.makedirs(destinationPath)
+        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+            os.makedirs(os.path.join(destinationPath, 'graphics'))
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_featureSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -410,7 +410,7 @@ def _featureReport(dataset, output=None):
     meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
 
     # Figure 1: Histogram of log mean abundance by sample type
-    if output:
+    if destinationPath:
         item['FeatureIntensityFigure'] = os.path.join(graphicsPath,
                                                       item['Name'] + '_meanIntensityFeature.' + dataset.Attributes[
                                                           'figureFormat'])
@@ -421,7 +421,7 @@ def _featureReport(dataset, output=None):
     _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
 
     # Figure 2: Sample intensity TIC and distribution by sample type
-    if output:
+    if destinationPath:
         item['SampleIntensityFigure'] = os.path.join(graphicsPath, item['Name'] + '_meanIntensitySample.' + dataset.Attributes[
             'figureFormat'])
         saveAs = item['SampleIntensityFigure']
@@ -438,7 +438,7 @@ def _featureReport(dataset, output=None):
             figureSize=dataset.Attributes['figureSize'])
 
     # Figure 3: Acquisition structure and detector voltage
-    if output:
+    if destinationPath:
         item['AcquisitionStructureFigure'] = os.path.join(graphicsPath,
                                                           item['Name'] + '_acquisitionStructure.' + dataset.Attributes[
                                                               'figureFormat'])
@@ -462,7 +462,7 @@ def _featureReport(dataset, output=None):
     if sum(LRmask) != 0:
 
         # Figure 4: Histogram of correlation to dilution by abundance percentiles
-        if output:
+        if destinationPath:
             item['CorrelationByPercFigure'] = os.path.join(graphicsPath,
                                                            item['Name'] + '_correlationByPerc.' + dataset.Attributes[
                                                                'figureFormat'])
@@ -482,7 +482,7 @@ def _featureReport(dataset, output=None):
                   figureSize=dataset.Attributes['figureSize'])
 
         # Figure 5: TIC of linearity reference samples
-        if output:
+        if destinationPath:
             item['TICinLRfigure'] = os.path.join(graphicsPath,
                                                  item['Name'] + '_TICinLR.' + dataset.Attributes['figureFormat'])
             saveAs = item['TICinLRfigure']
@@ -497,7 +497,7 @@ def _featureReport(dataset, output=None):
                   figureSize=dataset.Attributes['figureSize'])
 
     else:
-        if not output:
+        if not destinationPath:
             print('Figure 4: Histogram of ' + item[
                 'corrMethod'] + ' correlation of features to serial dilution, segmented by percentile.')
             print('Unable to calculate (no linearity reference samples present in dataset).\n')
@@ -506,7 +506,7 @@ def _featureReport(dataset, output=None):
             print('Unable to calculate (no linearity reference samples present in dataset).\n')
 
     # Figure 6: Histogram of RSD in SP samples by abundance percentiles
-    if output:
+    if destinationPath:
         item['RsdByPercFigure'] = os.path.join(graphicsPath,
                                                item['Name'] + '_rsdByPerc.' + dataset.Attributes['figureFormat'])
         saveAs = item['RsdByPercFigure']
@@ -528,7 +528,7 @@ def _featureReport(dataset, output=None):
 
     # Figure 7: Scatterplot of RSD vs correlation to dilution
     if sum(LRmask) != 0:
-        if output:
+        if destinationPath:
             item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
                                                           item['Name'] + '_rsdVsCorrelation.' + dataset.Attributes[
                                                               'figureFormat'])
@@ -544,13 +544,13 @@ def _featureReport(dataset, output=None):
                                  figureSize=dataset.Attributes['figureSize'])
 
     else:
-        if not output:
+        if not destinationPath:
             print('Figure 7: Scatterplot of RSD vs correlation to dilution.')
             print('Unable to calculate (no serial dilution samples present in dataset).\n')
 
     if 'Peak Width' in dataset.featureMetadata.columns:
         # Figure 8: Histogram of chromatographic peak width
-        if output:
+        if destinationPath:
             item['PeakWidthFigure'] = os.path.join(graphicsPath,
                                                    item['Name'] + '_peakWidth.' + dataset.Attributes['figureFormat'])
             saveAs = item['PeakWidthFigure']
@@ -565,12 +565,12 @@ def _featureReport(dataset, output=None):
                   dpi=dataset.Attributes['dpi'],
                   figureSize=dataset.Attributes['figureSize'])
     else:
-        if not output:
+        if not destinationPath:
             print('\x1b[31;1m No peak width data to plot')
             print('Figure 8: Histogram of chromatographic peak width.')
 
     # Figure 9: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type)
-    if output:
+    if destinationPath:
         item['RSDdistributionFigure'] = os.path.join(graphicsPath,
                                                      item['Name'] + '_RSDdistributionFigure.' + dataset.Attributes[
                                                          'figureFormat'])
@@ -588,7 +588,7 @@ def _featureReport(dataset, output=None):
              figureSize=dataset.Attributes['figureSize'])
 
     # Figure 10: Ion map
-    if output:
+    if destinationPath:
         item['IonMap'] = os.path.join(graphicsPath, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
         saveAs = item['IonMap']
     else:
@@ -602,10 +602,10 @@ def _featureReport(dataset, output=None):
 
     # Write HTML if saving
     ##
-    if output:
+    if destinationPath:
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
-            if os.path.join(output, 'graphics') in str(item[key]):
+            if os.path.join(destinationPath, 'graphics') in str(item[key]):
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
 
         # Generate report
@@ -613,7 +613,7 @@ def _featureReport(dataset, output=None):
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_FeatureSummaryReport.html')
-        filename = os.path.join(output, dataset.name + '_report_featureSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_report_featureSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
@@ -622,12 +622,12 @@ def _featureReport(dataset, output=None):
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
+        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
     return None
 
 
-def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False):
+def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFiltering=False):
     """
     Report on feature quality
     Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
@@ -659,12 +659,12 @@ def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False
     ##
     # Report stats
     ##
-    if output is not None:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        if not os.path.exists(os.path.join(output, 'graphics')):
-            os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_featureSelectionSummary')
+    if destinationPath is not None:
+        if not os.path.exists(destinationPath):
+            os.makedirs(destinationPath)
+        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+            os.makedirs(os.path.join(destinationPath, 'graphics'))
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_featureSelectionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -759,7 +759,7 @@ def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False
     sns.heatmap(test, annot=True, fmt='g', cbar=False)
     plt.tight_layout()
 
-    if output:
+    if destinationPath:
         item['NoFeaturesHeatmap'] = os.path.join(graphicsPath,
                                                  item['Name'] + '_noFeatures.' + dataset.Attributes['figureFormat'])
         plt.savefig(item['NoFeaturesHeatmap'], format=dataset.Attributes['figureFormat'], dpi=dataset.Attributes['dpi'])
@@ -788,10 +788,10 @@ def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False
 
     # Write HTML if saving
     ##
-    if output:
+    if destinationPath:
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
-            if os.path.join(output, 'graphics') in str(item[key]):
+            if os.path.join(destinationPath, 'graphics') in str(item[key]):
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
 
         # Generate report
@@ -799,7 +799,7 @@ def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_FeatureSelectionReport.html')
-        filename = os.path.join(output, dataset.name + '_report_featureSelectionSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_report_featureSelectionSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
@@ -808,12 +808,12 @@ def _featureSelectionReport(dataset, output=None, withArtifactualFiltering=False
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
+        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
     return None
 
 
-def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_window=11):
+def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correction_window=11):
     """
     Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
     """
@@ -843,12 +843,12 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
     ##
     # Report stats
     ##
-    if output is not None:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        if not os.path.exists(os.path.join(output, 'graphics')):
-            os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_batchCorrectionAssessment')
+    if destinationPath is not None:
+        if not os.path.exists(destinationPath):
+            os.makedirs(destinationPath)
+        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+            os.makedirs(os.path.join(destinationPath, 'graphics'))
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_batchCorrectionAssessment')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -863,7 +863,7 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
         raise ValueError("Correction Batch information missing, run addSampleInfo(descriptionFormat=\'Batches\')")
 
     # Figure 1: TIC for all samples by sample type and detector voltage change
-    if output:
+    if destinationPath:
         item['TICdetectorBatches'] = os.path.join(graphicsPath, item['Name'] + '_TICdetectorBatches.' + dataset.Attributes[
             'figureFormat'])
         saveAs = item['TICdetectorBatches']
@@ -882,7 +882,7 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
     (preData, postData, maskNum) = batchCorrectionTest(dataset, nFeatures=10, window=batch_correction_window)
     item['NoBatchPlotFeatures'] = len(maskNum)
 
-    if output:
+    if destinationPath:
         figuresCorrectionExamples = OrderedDict()  # To save figures
     else:
         print(
@@ -892,7 +892,7 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
     for feature in range(len(maskNum)):
 
         featureName = str(numpy.squeeze(preData.featureMetadata.loc[feature, 'Feature Name'])).replace('/', '-')
-        if output:
+        if destinationPath:
             figuresCorrectionExamples['Feature ' + featureName] = os.path.join(graphicsPath, item[
                 'Name'] + '_batchPlotFeature_' + featureName + '.' + dataset.Attributes['figureFormat'])
             saveAs = figuresCorrectionExamples['Feature ' + featureName]
@@ -911,17 +911,17 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
     if figuresCorrectionExamples is not None:
         # Make paths for graphics local not absolute for use in the HTML.
         for key in figuresCorrectionExamples:
-            if os.path.join(output, 'graphics') in str(figuresCorrectionExamples[key]):
+            if os.path.join(destinationPath, 'graphics') in str(figuresCorrectionExamples[key]):
                 figuresCorrectionExamples[key] = re.sub('.*graphics', 'graphics', figuresCorrectionExamples[key])
         # Save to item
         item['figuresCorrectionExamples'] = figuresCorrectionExamples
 
     # Write HTML if saving
     ##
-    if output:
+    if destinationPath:
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
-            if os.path.join(output, 'graphics') in str(item[key]):
+            if os.path.join(destinationPath, 'graphics') in str(item[key]):
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
 
         # Generate report
@@ -929,7 +929,7 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_BatchCorrectionAssessmentReport.html')
-        filename = os.path.join(output, dataset.name + '_report_batchCorrectionAssessment.html')
+        filename = os.path.join(destinationPath, dataset.name + '_report_batchCorrectionAssessment.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
@@ -938,12 +938,12 @@ def _batchCorrectionAssessmentReport(dataset, output=None, batch_correction_wind
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
+        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
     return None
 
 
-def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
+def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=None):
     """
     Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
     """
@@ -973,12 +973,12 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
     ##
     # Report stats
     ##
-    if output is not None:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        if not os.path.exists(os.path.join(output, 'graphics')):
-            os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_batchCorrectionSummary')
+    if destinationPath is not None:
+        if not os.path.exists(destinationPath):
+            os.makedirs(destinationPath)
+        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+            os.makedirs(os.path.join(destinationPath, 'graphics'))
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_batchCorrectionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -994,7 +994,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
     # Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).
 
     # Pre-correction
-    if output:
+    if destinationPath:
         item['FeatureIntensityFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS1_meanIntesityFeaturePRE.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['FeatureIntensityFigurePRE']
@@ -1005,7 +1005,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
     _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
 
     # Post-correction
-    if output:
+    if destinationPath:
         item['FeatureIntensityFigurePOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS1_meanIntesityFeaturePOST.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['FeatureIntensityFigurePOST']
@@ -1017,7 +1017,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
     # Figure 2: TIC for all samples and features.
 
     # Pre-correction
-    if output:
+    if destinationPath:
         item['TicPRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS2_TicPRE.' + dataset.Attributes['figureFormat'])
         saveAs = item['TicPRE']
     else:
@@ -1033,7 +1033,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
             figureSize=dataset.Attributes['figureSize'])
 
     # Post-correction
-    if output:
+    if destinationPath:
         item['TicPOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS2_TicPOST.' + dataset.Attributes['figureFormat'])
         saveAs = item['TicPOST']
     else:
@@ -1050,7 +1050,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
     # Figure 3: Histogram of RSD in study pool (SP) samples, segmented by abundance percentiles.
 
     # Pre-correction
-    if output:
+    if destinationPath:
         item['RsdByPercFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS3_rsdByPercPRE.' + dataset.Attributes[
             'figureFormat'])
         saveAs = item['RsdByPercFigurePRE']
@@ -1072,7 +1072,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
               figureSize=dataset.Attributes['figureSize'])
 
     # Post-correction
-    if output:
+    if destinationPath:
         item['RsdByPercFigurePOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS3_rsdByPercPOST.' + dataset.Attributes[
             'figureFormat'])
         saveAs = item['RsdByPercFigurePOST']
@@ -1094,7 +1094,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
     # Figure 4: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type).
 
     # Pre-correction
-    if output:
+    if destinationPath:
         item['RSDdistributionFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS4_RSDdistributionFigurePRE.' +
                                                         dataset.Attributes['figureFormat'])
         saveAs = item['RSDdistributionFigurePRE']
@@ -1112,7 +1112,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
              figureSize=dataset.Attributes['figureSize'])
 
     # Post-correction
-    if output:
+    if destinationPath:
         item['RSDdistributionFigurePOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS4_RSDdistributionFigurePOST.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['RSDdistributionFigurePOST']
@@ -1130,10 +1130,10 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
 
     # Write HTML if saving
     ##
-    if output:
+    if destinationPath:
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
-            if os.path.join(output, 'graphics') in str(item[key]):
+            if os.path.join(destinationPath, 'graphics') in str(item[key]):
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
 
         # Generate report
@@ -1141,7 +1141,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_BatchCorrectionSummaryReport.html')
-        filename = os.path.join(output, dataset.name + '_report_batchCorrectionSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_report_batchCorrectionSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
@@ -1150,12 +1150,12 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, output=None):
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
+        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
     return None
 
 
-def _featureCorrelationToDilutionReport(dataset, output=None):
+def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
     """
     Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
     """
@@ -1190,12 +1190,12 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
     ##
     # Report stats
     ##
-    if output is not None:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        if not os.path.exists(os.path.join(output, 'graphics')):
-            os.makedirs(os.path.join(output, 'graphics'))
-        graphicsPath = os.path.join(output, 'graphics', 'report_correlationToDilutionSummary')
+    if destinationPath is not None:
+        if not os.path.exists(destinationPath):
+            os.makedirs(destinationPath)
+        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+            os.makedirs(os.path.join(destinationPath, 'graphics'))
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_correlationToDilutionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -1213,7 +1213,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
     corLRsummary = {}  # summary of number of features with correlation above threshold
     corLRsummary['TotalOriginal'] = len(dataset.featureMask)
 
-    if output:
+    if destinationPath:
         saveAs = graphicsPath
         figuresCorLRbyBatch = OrderedDict()  # To save figures
     else:
@@ -1251,7 +1251,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
     if figuresCorLRbyBatch is not None:
         # Make paths for graphics local not absolute for use in the HTML.
         for key in figuresCorLRbyBatch:
-            if os.path.join(output, 'graphics') in str(figuresCorLRbyBatch[key]):
+            if os.path.join(destinationPath, 'graphics') in str(figuresCorLRbyBatch[key]):
                 figuresCorLRbyBatch[key] = re.sub('.*graphics', 'graphics', figuresCorLRbyBatch[key])
         # Save to item
         item['figuresCorLRbyBatch'] = figuresCorLRbyBatch
@@ -1271,7 +1271,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
     else:
         item['corrExclusions'] = 'none'
 
-    if not output:
+    if not destinationPath:
         print('Number of features exceeding correlation to dilution threshold (' + str(
             item['corrThreshold']) + ') for each LR sample subset/correlation to dilution method')
         display(temp)
@@ -1361,7 +1361,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
         ax2 = plt.subplot(gs[0, -5:])
         ax1 = sns.heatmap(satHeatmap, ax=ax1, annot=True, fmt='.3g', vmin=0, vmax=100, cmap='Reds', cbar=False)
         ax2 = satLineplot.plot(kind='line', ax=ax2, ylim=[0, 100], colormap='jet')
-        if output:
+        if destinationPath:
             item['SatFeaturesHeatmap'] = os.path.join(graphicsPath,
                                                       item['Name'] + '_satFeaturesHeatmap.' + dataset.Attributes[
                                                           'figureFormat'])
@@ -1376,10 +1376,10 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
 
     # Write HTML if saving
     ##
-    if output:
+    if destinationPath:
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
-            if os.path.join(output, 'graphics') in str(item[key]):
+            if os.path.join(destinationPath, 'graphics') in str(item[key]):
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
 
         # Generate report
@@ -1387,7 +1387,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_CorrelationToDilutionReport.html')
-        filename = os.path.join(output, dataset.name + '_report_correlationToDilutionSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_report_correlationToDilutionSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
@@ -1396,7 +1396,7 @@ def _featureCorrelationToDilutionReport(dataset, output=None):
                                 graphicsPath=graphicsPath))
         f.close()
 
-        copyBackingFiles(toolboxPath(), os.path.join(output, 'graphics'))
+        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
     return None
 

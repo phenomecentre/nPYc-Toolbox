@@ -14,6 +14,8 @@ from nPYc.enumerations import SampleType
 from nPYc.enumerations import AssayRole
 from nPYc.enumerations import VariableType
 from generateTestDataset import generateTestDataset
+import tempfile
+from isatools import isatab
 
 
 class test_msdataset_synthetic(unittest.TestCase):
@@ -150,7 +152,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Study'], study)
 
 		##
-		# 
+		#
 		##
 		chromatography = pandas.Series(['H',
 										'R',
@@ -509,7 +511,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 														['Feature_3', 0.75, 200., 0.1],
 														['Feature_4', 0.9, 300., 0.1],
 														['Feature_5', 0.95, 300.08, 0.1]],
-												  		columns=['Feature Name','Retention Time','m/z','Peak Width'])
+														columns=['Feature Name','Retention Time','m/z','Peak Width'])
 
 		msData.initialiseMasks()
 
@@ -606,8 +608,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 		msData = nPYc.MSDataset('', fileType='empty')
 
 		msData.intensityData = numpy.zeros([18, 5],dtype=float)
-		
-		
+
+
 		msData.sampleMetadata['AssayRole'] = pandas.Series([AssayRole.LinearityReference,
 								AssayRole.LinearityReference,
 								AssayRole.LinearityReference,
@@ -649,7 +651,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								SampleType.MethodReference],
 								name='SampleType',
 								dtype=object)
-								
+
 
 		with self.subTest(msg='Default Parameters'):
 			expectedSampleMask = numpy.array([False, False, False, False, False,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, False, False], dtype=bool)
@@ -664,7 +666,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 
 			msData.initialiseMasks()
 			msData.updateMasks(withArtifactualFiltering=False, filterFeatures=False,
-								sampleTypes=[SampleType.StudyPool, SampleType.ExternalReference], 
+								sampleTypes=[SampleType.StudyPool, SampleType.ExternalReference],
 								assayRoles=[AssayRole.PrecisionReference])
 
 			numpy.testing.assert_array_equal(expectedSampleMask, msData.sampleMask)
@@ -674,7 +676,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 
 			msData.initialiseMasks()
 			msData.updateMasks(withArtifactualFiltering=False, filterFeatures=False,
-								sampleTypes=[SampleType.StudyPool], 
+								sampleTypes=[SampleType.StudyPool],
 								assayRoles=[AssayRole.LinearityReference])
 
 			numpy.testing.assert_array_equal(expectedSampleMask, msData.sampleMask)
@@ -712,6 +714,21 @@ class test_msdataset_synthetic(unittest.TestCase):
 			self.assertRaises(TypeError, msData.updateMasks, overlapThresholdArtifactual='0.5', blankThreshold=False)
 
 
+	def test_applyMasks(self):
+
+		fit = numpy.random.randn(self.msData.noSamples, self.msData.noFeatures)
+
+		self.msData.fit = copy.deepcopy(fit)
+		deletedFeatures = numpy.random.randint(0, self.msData.noFeatures, size=2)
+
+		self.msData.featureMask[deletedFeatures] = False
+		fit = numpy.delete(fit, deletedFeatures, 1)
+
+		self.msData.applyMasks()
+
+		numpy.testing.assert_array_almost_equal(self.msData.fit, fit)
+
+
 	def test_correlationToDilution(self):
 
 		from nPYc.utilities._internal import _vcorrcoef
@@ -724,11 +741,18 @@ class test_msdataset_synthetic(unittest.TestCase):
 		dataset.sampleMetadata['SampleType'] = nPYc.enumerations.SampleType.StudyPool
 		dataset.sampleMetadata['AssayRole'] = nPYc.enumerations.AssayRole.LinearityReference
 		dataset.sampleMetadata['Well'] = 1
-		dataset.sampleMetadata['Dilution'] = numpy.linspace(1,noSamp, num=noSamp)
+		dataset.sampleMetadata['Dilution'] = numpy.linspace(1, noSamp, num=noSamp)
 
 		correlations = dataset.correlationToDilution
 
-		numpy.testing.assert_array_almost_equal(correlations, _vcorrcoef(dataset.intensityData, dataset.sampleMetadata['Dilution'].values))
+		with self.subTest(msg='Checking default path'):
+
+			numpy.testing.assert_array_almost_equal(correlations, _vcorrcoef(dataset.intensityData, dataset.sampleMetadata['Dilution'].values))
+
+		with self.subTest(msg='Checking corr exclusions'):
+			dataset.corrExclusions = None
+
+			numpy.testing.assert_array_almost_equal(correlations, _vcorrcoef(dataset.intensityData, dataset.sampleMetadata['Dilution'].values))
 
 
 	def test_correlateToDilution_raises(self):
@@ -749,7 +773,6 @@ class test_msdataset_synthetic(unittest.TestCase):
 		with self.subTest(msg='No Dilution field'):
 			dataset.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
 			self.assertRaises(KeyError, dataset._MSDataset__correlateToDilution)
-
 
 
 	def test_validateObject(self):
@@ -1319,7 +1342,7 @@ class test_msdataset_batch_inference(unittest.TestCase):
 
 	def test_amendbatches(self):
 		"""
-		
+
 		"""
 
 		self.msData._fillBatches()
@@ -1651,7 +1674,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 								1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 20., 20., 20., 20., 20.,
 								40., 40., 40., 60., 60., 60., 80., 80., 80., 80., 80., 100., 100., 100., 100., 100., 100., 100., 100., 100., 100.,
 								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan], 
+								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 								name='Dilution',
 								dtype='float')
 
@@ -1694,10 +1717,12 @@ class test_msdataset_import_xcms(unittest.TestCase):
 		self.msData.addSampleInfo(descriptionFormat='Filenames')
 		self.msData_PeakTable.addSampleInfo(descriptionFormat='Filenames')
 
+
 	def test_dimensions(self):
 
 		self.assertEqual((self.msData.noSamples, self.msData.noFeatures), (111, 4))
 		self.assertEqual((self.msData_PeakTable.noSamples, self.msData_PeakTable.noFeatures), (111, 4))
+
 
 	def test_samples(self):
 
@@ -1763,6 +1788,7 @@ class test_msdataset_import_xcms(unittest.TestCase):
 		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample File Name'], samples)
 		pandas.util.testing.assert_series_equal(self.msData_PeakTable.sampleMetadata['Sample File Name'], samples)
 
+
 	def test_featuremetadata_import(self):
 
 		with self.subTest(msg='Checking Feature Names'):
@@ -1807,7 +1833,7 @@ class test_msdataset_import_xcms(unittest.TestCase):
 								1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 20., 20., 20., 20., 20.,
 								40., 40., 40., 60., 60., 60., 80., 80., 80., 80., 80., 100., 100., 100., 100., 100., 100., 100., 100., 100., 100.,
 								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan], 
+								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 								name='Dilution',
 								dtype='float')
 
@@ -1843,6 +1869,194 @@ class test_msdataset_import_xcms(unittest.TestCase):
 
 		self.assertEqual(self.msData.VariableType, nPYc.enumerations.VariableType.Discrete)
 		self.assertEqual(self.msData_PeakTable.VariableType, nPYc.enumerations.VariableType.Discrete)
+
+
+	def test_xcms_raises(self):
+
+		path = os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv')
+
+		self.assertRaises(ValueError, nPYc.MSDataset, path, fileType='XCMS', noFeatureParams=9)
+
+
+class test_msdataset_import_metaboscape(unittest.TestCase):
+	"""
+	Test import from metaboscape xlsx outputs
+	"""
+
+	def setUp(self):
+
+		path = os.path.join('..','..','npc-standard-project','Derived_Data', 'UnitTest1_PCSOP.069_Metaboscape.xlsx')
+
+		self.lcData = nPYc.MSDataset(path, fileType='Metaboscape', noFeatureParams=18, sheetName='Test Data')
+		self.lcData.addSampleInfo(descriptionFormat='Filenames')
+
+		self.diData = nPYc.MSDataset(path, fileType='Metaboscape', noFeatureParams=16, sheetName='Test Data (DI)')
+		self.diData.addSampleInfo(descriptionFormat='Filenames')
+
+
+	def test_dimensions(self):
+
+		self.assertEqual((self.lcData.noSamples, self.lcData.noFeatures), (115, 4))
+		self.assertEqual((self.diData.noSamples, self.diData.noFeatures), (115, 4))
+
+
+	def test_samples(self):
+
+		samples = pandas.Series(['UnitTest1_LPOS_ToF02_B1SRD01', 'UnitTest1_LPOS_ToF02_B1SRD02',
+								'UnitTest1_LPOS_ToF02_B1SRD03', 'UnitTest1_LPOS_ToF02_B1SRD04',
+								'UnitTest1_LPOS_ToF02_B1SRD05', 'UnitTest1_LPOS_ToF02_B1SRD06',
+								'UnitTest1_LPOS_ToF02_B1SRD07', 'UnitTest1_LPOS_ToF02_B1SRD08',
+								'UnitTest1_LPOS_ToF02_B1SRD09', 'UnitTest1_LPOS_ToF02_B1SRD10',
+								'UnitTest1_LPOS_ToF02_B1SRD11', 'UnitTest1_LPOS_ToF02_B1SRD12',
+								'UnitTest1_LPOS_ToF02_B1SRD13', 'UnitTest1_LPOS_ToF02_B1SRD14',
+								'UnitTest1_LPOS_ToF02_B1SRD15', 'UnitTest1_LPOS_ToF02_B1SRD16',
+								'UnitTest1_LPOS_ToF02_B1SRD17', 'UnitTest1_LPOS_ToF02_B1SRD18',
+								'UnitTest1_LPOS_ToF02_B1SRD19', 'UnitTest1_LPOS_ToF02_B1SRD20',
+								'UnitTest1_LPOS_ToF02_B1SRD21', 'UnitTest1_LPOS_ToF02_B1SRD22',
+								'UnitTest1_LPOS_ToF02_B1SRD23', 'UnitTest1_LPOS_ToF02_B1SRD24',
+								'UnitTest1_LPOS_ToF02_B1SRD25', 'UnitTest1_LPOS_ToF02_B1SRD26',
+								'UnitTest1_LPOS_ToF02_B1SRD27', 'UnitTest1_LPOS_ToF02_B1SRD28',
+								'UnitTest1_LPOS_ToF02_B1SRD29', 'UnitTest1_LPOS_ToF02_B1SRD30',
+								'UnitTest1_LPOS_ToF02_B1SRD31', 'UnitTest1_LPOS_ToF02_B1SRD32',
+								'UnitTest1_LPOS_ToF02_B1SRD33', 'UnitTest1_LPOS_ToF02_B1SRD34',
+								'UnitTest1_LPOS_ToF02_B1SRD35', 'UnitTest1_LPOS_ToF02_B1SRD36',
+								'UnitTest1_LPOS_ToF02_B1SRD37', 'UnitTest1_LPOS_ToF02_B1SRD38',
+								'UnitTest1_LPOS_ToF02_B1SRD39', 'UnitTest1_LPOS_ToF02_B1SRD40',
+								'UnitTest1_LPOS_ToF02_B1SRD41', 'UnitTest1_LPOS_ToF02_B1SRD42',
+								'UnitTest1_LPOS_ToF02_B1SRD43', 'UnitTest1_LPOS_ToF02_B1SRD44',
+								'UnitTest1_LPOS_ToF02_B1SRD45', 'UnitTest1_LPOS_ToF02_B1SRD46',
+								'UnitTest1_LPOS_ToF02_B1SRD47', 'UnitTest1_LPOS_ToF02_B1SRD48',
+								'UnitTest1_LPOS_ToF02_B1SRD49', 'UnitTest1_LPOS_ToF02_B1SRD50',
+								'UnitTest1_LPOS_ToF02_B1SRD51', 'UnitTest1_LPOS_ToF02_B1SRD52',
+								'UnitTest1_LPOS_ToF02_B1SRD53', 'UnitTest1_LPOS_ToF02_B1SRD54',
+								'UnitTest1_LPOS_ToF02_B1SRD55', 'UnitTest1_LPOS_ToF02_B1SRD56',
+								'UnitTest1_LPOS_ToF02_B1SRD57', 'UnitTest1_LPOS_ToF02_B1SRD58',
+								'UnitTest1_LPOS_ToF02_B1SRD59', 'UnitTest1_LPOS_ToF02_B1SRD60',
+								'UnitTest1_LPOS_ToF02_B1SRD61', 'UnitTest1_LPOS_ToF02_B1SRD62',
+								'UnitTest1_LPOS_ToF02_B1SRD63', 'UnitTest1_LPOS_ToF02_B1SRD64',
+								'UnitTest1_LPOS_ToF02_B1SRD65', 'UnitTest1_LPOS_ToF02_B1SRD66',
+								'UnitTest1_LPOS_ToF02_B1SRD67', 'UnitTest1_LPOS_ToF02_B1SRD68',
+								'UnitTest1_LPOS_ToF02_B1SRD69', 'UnitTest1_LPOS_ToF02_B1SRD70',
+								'UnitTest1_LPOS_ToF02_B1SRD71', 'UnitTest1_LPOS_ToF02_B1SRD72',
+								'UnitTest1_LPOS_ToF02_B1SRD73', 'UnitTest1_LPOS_ToF02_B1SRD74',
+								'UnitTest1_LPOS_ToF02_B1SRD75', 'UnitTest1_LPOS_ToF02_B1SRD76',
+								'UnitTest1_LPOS_ToF02_B1SRD77', 'UnitTest1_LPOS_ToF02_B1SRD78',
+								'UnitTest1_LPOS_ToF02_B1SRD79', 'UnitTest1_LPOS_ToF02_B1SRD80',
+								'UnitTest1_LPOS_ToF02_B1SRD81', 'UnitTest1_LPOS_ToF02_B1SRD82',
+								'UnitTest1_LPOS_ToF02_B1SRD83', 'UnitTest1_LPOS_ToF02_B1SRD84',
+								'UnitTest1_LPOS_ToF02_B1SRD85', 'UnitTest1_LPOS_ToF02_B1SRD86',
+								'UnitTest1_LPOS_ToF02_B1SRD87', 'UnitTest1_LPOS_ToF02_B1SRD88',
+								'UnitTest1_LPOS_ToF02_B1SRD89', 'UnitTest1_LPOS_ToF02_B1SRD90',
+								'UnitTest1_LPOS_ToF02_B1SRD91', 'UnitTest1_LPOS_ToF02_B1SRD92',
+								'UnitTest1_LPOS_ToF02_Blank01', 'UnitTest1_LPOS_ToF02_Blank02',
+								'UnitTest1_LPOS_ToF02_B1E1_SR', 'UnitTest1_LPOS_ToF02_B1E2_SR',
+								'UnitTest1_LPOS_ToF02_B1E3_SR', 'UnitTest1_LPOS_ToF02_B1E4_SR',
+								'UnitTest1_LPOS_ToF02_B1E5_SR', 'UnitTest1_LPOS_ToF02_B1S1_SR',
+								'UnitTest1_LPOS_ToF02_B1S2_SR', 'UnitTest1_LPOS_ToF02_B1S3_SR',
+								'UnitTest1_LPOS_ToF02_B1S4_SR', 'UnitTest1_LPOS_ToF02_B1S5_SR',
+								'UnitTest1_LPOS_ToF02_S1W01', 'UnitTest1_LPOS_ToF02_S1W02',
+								'UnitTest1_LPOS_ToF02_S1W03', 'UnitTest1_LPOS_ToF02_S1W04',
+								'UnitTest1_LPOS_ToF02_S1W05', 'UnitTest1_LPOS_ToF02_S1W06',
+								'UnitTest1_LPOS_ToF02_S1W07', 'UnitTest1_LPOS_ToF02_S1W08_x',
+								'UnitTest1_LPOS_ToF02_S1W11_LTR', 'UnitTest1_LPOS_ToF02_S1W12_SR',
+								'UnitTest1_LPOS_ToF02_ERROR'],
+								name='Sample File Name',
+								dtype=str)
+
+		pandas.util.testing.assert_series_equal(self.lcData.sampleMetadata['Sample File Name'], samples)
+		pandas.util.testing.assert_series_equal(self.diData.sampleMetadata['Sample File Name'], samples)
+
+
+	def test_featuremetadata_import(self):
+
+		with self.subTest(msg='Checking Feature Names'):
+			features = pandas.Series(['3.17_262.0378m/z',
+									'3.17_293.1812m/z',
+									'3.17_145.0686m/z',
+									'3.17_258.1033m/z'],
+									name='Feature Name',
+									dtype='str')
+
+			pandas.util.testing.assert_series_equal(self.lcData.featureMetadata['Feature Name'], features)
+
+			features = pandas.Series(['262.0378339m/z',
+									  '293.1811941m/z',
+									  '145.0686347m/z',
+									  '258.1033447m/z'],
+									  name='Feature Name',
+									  dtype='str')
+
+			pandas.util.testing.assert_series_equal(self.diData.featureMetadata['Feature Name'], features)
+
+		with self.subTest(msg='Checking m/z'):
+			mz = pandas.Series([262.0378,
+								293.1812,
+								145.0686,
+								258.1033],
+								name='m/z',
+								dtype='float')
+
+			pandas.util.testing.assert_series_equal(self.lcData.featureMetadata['m/z'], mz)
+			pandas.util.testing.assert_series_equal(self.diData.featureMetadata['m/z'], mz)
+
+		with self.subTest(msg='Checking Retention Time'):
+			rt = pandas.Series([3.17485,
+								3.17485,
+								3.17485,
+								3.17485],
+								name='Retention Time',
+								dtype='float')
+
+			pandas.util.testing.assert_series_equal(self.lcData.featureMetadata['Retention Time'], rt)
+
+
+	def test_dilutionlevels(self):
+
+		dilution = pandas.Series([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 20., 20., 20., 20., 20.,
+								40., 40., 40., 60., 60., 60., 80., 80., 80., 80., 80., 100., 100., 100., 100., 100., 100., 100., 100., 100., 100.,
+								1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 20., 20., 20., 20., 20.,
+								40., 40., 40., 60., 60., 60., 80., 80., 80., 80., 80., 100., 100., 100., 100., 100., 100., 100., 100., 100., 100.,
+								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
+								name='Dilution',
+								dtype='float')
+
+		pandas.util.testing.assert_series_equal(self.lcData.sampleMetadata['Dilution'], dilution)
+		pandas.util.testing.assert_series_equal(self.diData.sampleMetadata['Dilution'], dilution)
+
+
+	def test_feature_correlation(self):
+
+		self.lcData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
+		self.lcData.addSampleInfo(descriptionFormat='Batches')
+
+		with self.subTest(msg='Testing Pearson correlations'):
+			correlations = numpy.array([0.99999997, 0.32017508, 1., -0.0693418])
+
+			numpy.testing.assert_array_almost_equal(self.lcData.correlationToDilution, correlations)
+
+		with self.subTest(msg='Testing Spearman correlations'):
+			correlations = numpy.array([0.9992837, 0.34708745, 1., -0.038844])
+
+			self.lcData.Attributes['corrMethod'] = 'spearman'
+
+			numpy.testing.assert_array_almost_equal(self.lcData.correlationToDilution, correlations)
+
+
+	def test_variabletype(self):
+
+		self.assertEqual(self.lcData.VariableType, nPYc.enumerations.VariableType.Discrete)
+
+
+	def test_csv_import(self):
+
+		path = os.path.join('..','..','npc-standard-project','Derived_Data', 'UnitTest1_PCSOP.069_Metaboscape_LC.csv')
+
+		lcData = nPYc.MSDataset(path, fileType='Metaboscape', noFeatureParams=18)
+		lcData.addSampleInfo(descriptionFormat='Filenames')
+
+		assert_frame_equal(self.lcData.sampleMetadata, lcData.sampleMetadata)
+		numpy.testing.assert_array_equal(self.lcData.intensityData, lcData.intensityData)
 
 
 class test_msdataset_import_biocrates(unittest.TestCase):
@@ -2009,13 +2223,11 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 	def test_msdataset_load_watersraw_metadata(self):
 		"""
 		Test we read raw data from Waters .raw and concatenate it correctly - currently focusing on parameters of importance to the workflow.
-		
+
 		TODO: Test all paramaters
 		"""
-		
-		# 
 
-		# Expected data starts with the same samples 
+		# Expected data starts with the same samples
 		expected = copy.deepcopy(self.msData.sampleMetadata)
 
 		##
@@ -2075,8 +2287,14 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 
 		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 
-		for series in testSeries:
-			pandas.util.testing.assert_series_equal(self.msData.sampleMetadata[series], expected[series])
+		with self.subTest(msg='Default Path'):
+			for series in testSeries:
+				pandas.util.testing.assert_series_equal(self.msData.sampleMetadata[series], expected[series])
+
+		with self.subTest(msg='No Exclusion details'):
+			self.msData.sampleMetadata.drop(columns='Exclusion Details', inplace=True)
+
+			self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 
 
 	def test_msdataset__getSampleMetadataFromRawData_invalidpath(self):
@@ -2087,12 +2305,12 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 class test_msdataset_artifactual_filtering(unittest.TestCase):
 	"""
 	Test calculation and update of artifactual filtering results
-	
+
 	Simulated data design:
 		14 features, 10 samples
 		normal threshold | 0.1mz, 0.9corr, 50% ov
 		advanced threshold | 0.05mz, 0.95 corr, 70% ov
-		
+
 		0 and 1, Nothing (corr=0, 10. mz, ov 0%)
 		1 and 2, corr>0.9, 10. mz, ov 80% | fail default param
 		3 and 4, corr<0.3, 0.005mz, ov 60% | fail default corr, present in ._temp not in ._arti
@@ -2101,7 +2319,7 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		9 and 10, corr 0.97, 0.01mz, ov 55% | ok default, then fail overlap (9 is higher intensity)
 		11 and 12, corr 0.97, 0.01mz, ov 90% | ok default, then still okay (11 is higher intensity)
 		13, 14, 15, 16, all ov > 92.5%, close mz, corr | ok default, then still okay (13 is higher intensity)
-	
+
 	Test:
 		1) compare output .artifactualLinkageMatrix, ._artifactualLinkageMatrix, ._tempArtifactualLinkageMatrix
 			test .artifactualFilter() results with and without a given featureMask
@@ -2153,20 +2371,20 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 			index=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], columns=['node1', 'node2'])
 		assert_frame_equal(self.msData.artifactualLinkageMatrix, result_artifactualLinkageMatrix)
 		assert_frame_equal(self.msData._artifactualLinkageMatrix, result_artifactualLinkageMatrix)
-		
+
 		## _tempArtifactualLinkageMatrix (not filtered by correlation)
 		result_tempArtifactualLinkageMatrix = pandas.DataFrame(
 			[[3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [13, 15], [13, 16], [14, 15], [14, 16], [15, 16]],
 			index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], columns=['node1', 'node2'])
 		assert_frame_equal(self.msData._tempArtifactualLinkageMatrix, result_tempArtifactualLinkageMatrix)
-		
+
 		## artifactualFilter()
 		# default msData.featureMask
 		result_artifactualFilter = numpy.array(
 			[True, True, True, True, True, True, False, True, False, True, False, True, False, True, False, False,
 			 False], dtype=bool)
 		numpy.testing.assert_equal(self.msData.artifactualFilter(), result_artifactualFilter)
-		
+
 		# with featureMask excluding feature 0, 1 and 2
 		result_artifactualFilter_featMask = numpy.array(
 			[False, False, False, True, True, True, False, True, False, True, False, True, False, True, False, False,
@@ -2214,27 +2432,27 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		self.msData3.Attributes['overlapThresholdArtifactual'] = 70
 		self.msData3.Attributes['corrThresholdArtifactual'] = 0.95
 		self.msData3.updateArtifactualLinkageMatrix()
-		
+
 		## _artifactualLinkageMatrix, artifactualLinkageMatrix
 		updatedRes_artifactualLinkageMatrix = pandas.DataFrame(
 			[[11, 12], [13, 14], [13, 15], [13, 16], [14, 15], [14, 16], [15, 16]], index=[1, 2, 3, 4, 5, 6, 7],
 			columns=['node1', 'node2'])
 		assert_frame_equal(self.msData3.artifactualLinkageMatrix, updatedRes_artifactualLinkageMatrix)
 		assert_frame_equal(self.msData3._artifactualLinkageMatrix, updatedRes_artifactualLinkageMatrix)
-		
+
 		## _tempArtifactualLinkageMatrix (not filtered by correlation)
 		updatedRes_tempArtifactualLinkageMatrix = pandas.DataFrame(
 			[[5, 6], [11, 12], [13, 14], [13, 15], [13, 16], [14, 15], [14, 16], [15, 16]],
 			index=[0, 1, 2, 3, 4, 5, 6, 7], columns=['node1', 'node2'])
 		assert_frame_equal(self.msData3._tempArtifactualLinkageMatrix, updatedRes_tempArtifactualLinkageMatrix)
-		
+
 		## artifactualFilter()
 		# default self.featureMask
 		updatedRes_artifactualFilter = numpy.array(
 			[True, True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False],
 			dtype=bool)
 		numpy.testing.assert_equal(self.msData3.artifactualFilter(), updatedRes_artifactualFilter)
-		
+
 		# with featureMask excluding feature 0, 1 and 2
 		updatedRes_artifactualFilter_featMask = numpy.array(
 			[False, False, False, True, True, True, True, True, True, True, True, True, False, True, False, False,
@@ -2256,19 +2474,19 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		self.msData4.sampleMask = numpy.array([False, False, False, False, False, True, True, True, True, True],
 											  dtype=bool)
 		self.msData4.applyMasks()
-		
+
 		# _artifactualLinkageMatrix, artifactualLinkageMatrix are modified
 		sampleMaskRes_artifactualLinkageMatrix = pandas.DataFrame([[14, 15], [14, 16], [15, 16]], index=[8, 9, 10],
 																  columns=['node1', 'node2'])
 		assert_frame_equal(self.msData4.artifactualLinkageMatrix, sampleMaskRes_artifactualLinkageMatrix)
 		assert_frame_equal(self.msData4._artifactualLinkageMatrix, sampleMaskRes_artifactualLinkageMatrix)
-		
+
 		# _tempArtifactualLinkageMatrix (not filtered by correlation) is not changed
 		sampleMaskRes_tempArtifactualLinkageMatrix = pandas.DataFrame(
 			[[3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [13, 15], [13, 16], [14, 15], [14, 16], [15, 16]],
 			index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], columns=['node1', 'node2'])
 		assert_frame_equal(self.msData4._tempArtifactualLinkageMatrix, sampleMaskRes_tempArtifactualLinkageMatrix)
-		
+
 		##
 		# featureMask, remove sample 12 15 16
 		##
@@ -2276,13 +2494,13 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		self.msData5.artifactualLinkageMatrix
 		self.msData5.featureMask = numpy.array([True,True,True,True,True,True,True,True,True,True,True,True,False,True,True,False,False],dtype=bool)
 		self.msData5.applyMasks()
-		
+
 		# _artifactualLinkageMatrix, artifactualLinkageMatrix are modified
 		featMaskRes_artifactualLinkageMatrix = pandas.DataFrame([[5, 6], [7, 8], [9, 10], [12, 13]], index=[1, 2, 3, 4],
 																columns=['node1', 'node2'])
 		assert_frame_equal(self.msData5.artifactualLinkageMatrix, featMaskRes_artifactualLinkageMatrix)
 		assert_frame_equal(self.msData5._artifactualLinkageMatrix, featMaskRes_artifactualLinkageMatrix)
-		
+
 		# _tempArtifactualLinkageMatrix (not filtered by correlation) is changed
 		featMaskRes_tempArtifactualLinkageMatrix = pandas.DataFrame([[3, 4], [5, 6], [7, 8], [9, 10], [12, 13]],
 																	index=[0, 1, 2, 3, 4], columns=['node1', 'node2'])
@@ -2292,15 +2510,16 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 class test_msdataset_ISATAB(unittest.TestCase):
 
 	def test_exportISATAB(self):
-		import tempfile
 
 		msData = nPYc.MSDataset('', fileType='empty')
 		raw_data = {
-			'Acquired Time': ['09/08/2016  01:36:23', '09/08/2016  01:56:23', '09/08/2016  02:16:23', '09/08/2016  02:36:23', '09/08/2016  02:56:23'],
+			'Acquired Time': ['2016-08-09  01:36:23', '2016-08-09  01:56:23', '2016-08-09  02:16:23', '2016-08-09  02:36:23', '2016-08-09  02:56:23'],
 			'AssayRole': ['AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.Assay', 'AssayRole.Assay'],
-			'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
+			#'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
+			'Status': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
 			'Subject ID': ['', '', '', 'SCANS-120', 'SCANS-130'],
 			'Sampling ID': ['', '', '', 'T0-7-S', 'T0-9-S'],
+			'Sample File Name': ['sfn1', 'sfn2', 'sfn3', 'sfn4', 'sfn5'],
 			'Dilution': ['1', '10', '20', '', ''],
 			'Study': ['TestStudy', 'TestStudy', 'TestStudy', 'TestStudy', 'TestStudy'],
 			'Gender': ['', '', '', 'Female', 'Male'],
@@ -2320,15 +2539,45 @@ class test_msdataset_ISATAB(unittest.TestCase):
 			'Assay data name': ['', '', '', 'SS_LNEG_ToF02_S1W4', 'SS_LNEG_ToF02_S1W5']
 		}
 
-		msData.sampleMetadata = pandas.DataFrame(raw_data, columns = ['Acquired Time', 'AssayRole', 'SampleType','Subject ID','Sampling ID','Dilution','Study',
+		msData.sampleMetadata = pandas.DataFrame(raw_data, columns = ['Acquired Time', 'AssayRole', 'Status','Subject ID','Sampling ID','Dilution','Study',
 																'Gender','Age','Sampling Date','Detector','Sample batch','Well',
-																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name'])
+																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name','Sample File Name'])
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
-			msData.exportDataset(destinationPath=tmpdirname, saveFormat='ISATAB',withExclusions=False,filterMetadata=False)
+			details = {
+			    'investigation_identifier' : "i1",
+			    'investigation_title' : "Give it a title",
+			    'investigation_description' : "Add a description",
+			    'investigation_submission_date' : "2016-11-03", #use today if not specified
+			    'investigation_public_release_date' : "2016-11-03",
+			    'first_name' : "Noureddin",
+			    'last_name' : "Sadawi",
+			    'affiliation' : "University",
+			    'study_filename' : "my_ms_study",
+			    'study_material_type' : "Serum",
+			    'study_identifier' : "s1",
+			    'study_title' : "Give the study a title",
+			    'study_description' : "Add study description",
+			    'study_submission_date' : "2016-11-03",
+			    'study_public_release_date' : "2016-11-03",
+			    'assay_filename' : "my_ms_assay"
+			}
+			msData.initialiseMasks()
+			msData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
 
-			a = os.path.join(tmpdirname,'a_npc-test-study_metabolite_profiling_mass_spectrometry.txt')
-			self.assertTrue(os.path.exists(a))
+			investigatio_file = os.path.join(tmpdirname,'i_investigation.txt')
+			print(investigatio_file)
+			numerrors = 0
+			with open(investigatio_file) as fp:
+				report = isatab.validate(fp)
+				numerrors = len(report['errors'])
+
+
+			#self.assertTrue(os.path.exists(a))
+			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))
+
+			#a = os.path.join(tmpdirname,'a_my_ms_assay.txt')
+			#self.assertTrue(os.path.exists(a))
 
 
 if __name__ == '__main__':

@@ -13,8 +13,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
    :includehidden:
+   :glob:
 
-   tutorial
+   tutorials/tutorial
 
    objects
    enumerations
@@ -29,7 +30,7 @@ Contents:
 
 Using the nPYc toolbox
 ======================
-The :doc:`tutorial <tutorial>` introduces the basic process of using the nPYc toolbox to load, perform quality-control on, and basic interpretation of a metabolic profiling dataset.
+The :doc:`tutorial <tutorials/tutorial>` introduces the basic process of using the nPYc toolbox to load, perform quality-control on, and basic interpretation of a metabolic profiling dataset.
 
 
 The :py:class:`~nPYc.objects.Dataset` classes

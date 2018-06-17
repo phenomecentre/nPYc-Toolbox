@@ -10,7 +10,7 @@ def massSpectrumBuilder(msData, correlationThreshold=0.95, rtWindow=20, simulate
 	"""
 	Combine individual features into pseudo-mass spectra, by looking for co-eluting features where the observed intensities correlate above *correlationThreshold* across the dataset.
 
-	.. warning:: Care should be taken with datasets exhibiting strong run-order, batch, or sample concentration effects, as these affects may introduce strong correlations between all features in the dataset.
+	.. warning:: Care should be taken with datasets exhibiting strong run-order, batch, or sample concentration effects, as these effects may introduce strong correlations between all features in the dataset.
 
 	:param MSDataset msData: MSdataset to process
 	:param float correlationThreshold: Combine features correlated above this level
