@@ -209,8 +209,8 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		if len(myset) == 1:
 			pass
 
-		elif all((my == pandas._libs.tslib.NaTType or my == pandas._libs.tslib.Timestamp) for my in myset):
-			pass
+		# elif all((my == pandas._libs.tslib.NaTType or my == pandas._libs.tslib.Timestamp) for my in myset):
+		# 	pass
 
 		else:
 			print(plotdata)

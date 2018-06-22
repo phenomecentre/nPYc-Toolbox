@@ -32,7 +32,7 @@ def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, 
 		featureMask = (dataset.featureMetadata[featureNames].values > xlim[0]) & \
 					  (dataset.featureMetadata[featureNames].values < xlim[1]) & \
 					  featureMask
-	features = dataset.featureMetadata[featureMask].values.squeeze()
+	features = dataset.featureMetadata.loc[featureMask, 'ppm'].values.squeeze()
 
 	X = dataset.intensityData[:, featureMask]
 

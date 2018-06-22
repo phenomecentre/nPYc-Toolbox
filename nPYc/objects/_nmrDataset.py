@@ -250,24 +250,7 @@ class NMRDataset(Dataset):
 			if exclusionRegions is None:
 				raise ValueError('No exclusion regions supplied')
 
-			for region in exclusionRegions:
-				low = region[0]
-				high = region[1]
-
-				if low == high:
-					warnings.warn('Low (%.2f) and high (%.2f) bounds are identical, skipping region' % (low, high))
-					continue
-
-				elif low > high:
-					low = high
-					high = region[0]
-
-				regionMask = numpy.logical_or(self.featureMetadata['ppm'].values < low,
-											  self.featureMetadata['ppm'].values > high)
-
-				self.featureMask = numpy.logical_and(self.featureMask,
-													 regionMask)
-
+			self.excludeFeatures(exclusionRegions, on='ppm')
 			# If features are modified, retrigger
 			self._nmrQCChecks()
 
