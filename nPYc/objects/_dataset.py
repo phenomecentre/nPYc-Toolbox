@@ -1826,18 +1826,44 @@ class Dataset:
 		if 'Exclusion Details' not in self.featureMetadata:
 			self.featureMetadata['Exclusion Details'] = None
 
-		for feature in featureList:
-			if feature in self.featureMetadata[on].unique():
-				self.featureMask[self.featureMetadata[self.featureMetadata[on] == feature].index] = False
-				if (self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'].isnull()).any():
-					self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = message
+		if self.VariableType == VariableType.Discrete:
+			for feature in featureList:
+				if feature in self.featureMetadata[on].unique():
+					self.featureMask[self.featureMetadata[self.featureMetadata[on] == feature].index] = False
+					if (self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'].isnull()).any():
+						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = message
+					else:
+						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = \
+						self.featureMetadata.loc[
+							self.featureMetadata[on] == feature, 'Exclusion Details'] + ' AND ' + message
 				else:
-					self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = \
-					self.featureMetadata.loc[
-						self.featureMetadata[on] == feature, 'Exclusion Details'] + ' AND ' + message
-			else:
-				# AMtched must be unique.
-				notFound.append(feature)
+					# AMtched must be unique.
+					notFound.append(feature)
+
+		elif self.VariableType == VariableType.Spectral:
+			for chunk in featureList:
+				start = min(chunk)
+				stop = max(chunk)
+
+				if start == stop:
+					warnings.warn('Low (%.2f) and high (%.2f) bounds are identical, skipping region' % (start, stop))
+					continue
+
+				mask = numpy.logical_or(self.featureMetadata[on] < start,
+										 self.featureMetadata[on] > stop)
+
+				self.featureMask = numpy.logical_and(self.featureMask,
+													 mask)
+
+				mask = numpy.logical_not(mask)
+				if (self.featureMetadata.loc[mask, 'Exclusion Details'].isnull()).any():
+					self.featureMetadata.loc[mask, 'Exclusion Details'] = message
+				else:
+					self.featureMetadata.loc[mask, 'Exclusion Details'] = \
+					self.featureMetadata.loc[mask, 'Exclusion Details'] + ' AND ' + message
+
+		else:
+			raise ValueError('Unknown VariableType.')
 
 		return notFound
 

@@ -1162,7 +1162,6 @@ class test_plotting_interactive(unittest.TestCase):
 			##
 			# Basic output
 			##
-			outputPath = os.path.join(tmpdirname, 'default')
 			figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset)
 
 			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
@@ -1170,7 +1169,6 @@ class test_plotting_interactive(unittest.TestCase):
 			##
 			# Classes
 			##
-			outputPath = os.path.join(tmpdirname, 'classesAndXlim')
 			figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset, classes='Classes', xlim=(1,9), average='mean')
 
 			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
@@ -1178,7 +1176,6 @@ class test_plotting_interactive(unittest.TestCase):
 			##
 			# Loq Y + title + NMR
 			##
-			outputPath = os.path.join(tmpdirname, 'with title')
 			figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset, title='Figure Name')
 
 			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
@@ -1204,6 +1201,19 @@ class test_plotting_interactive(unittest.TestCase):
 			dataset.VariableType = nPYc.enumerations.VariableType.Continuum
 			dataset.sampleMetadata = pandas.DataFrame(0, index=numpy.arange(5), columns=['Classes'])
 			self.assertRaises(ValueError, nPYc.plotting.plotSpectralVarianceInteractive, dataset, classes='Not present')
+
+
+	def test_correlationSpectroscopyInteractive(self):
+
+		with self.subTest(msg='SHY'):
+			noSamp = numpy.random.randint(50, high=100, size=None)
+			noFeat = numpy.random.randint(200, high=400, size=None)
+
+			dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=nPYc.enumerations.VariableType.Spectral)
+
+			figure = nPYc.plotting.correlationSpectroscopyInteractive(dataset, dataset.intensityData[:, 10], mode='SHY')
+
+			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
 
 
 class test_plotting_helpers(unittest.TestCase):

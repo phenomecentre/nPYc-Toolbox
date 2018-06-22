@@ -13,6 +13,8 @@ import warnings
 
 sys.path.append("..")
 import nPYc
+from generateTestDataset import generateTestDataset
+from nPYc.enumerations import VariableType
 
 class test_dataset_synthetic(unittest.TestCase):
 	"""
@@ -40,6 +42,8 @@ class test_dataset_synthetic(unittest.TestCase):
 		self.data.sampleMetadata['Sample Metadata'] = [randomword(10) for x in range(0, self.noSamp)]
 		self.data.featureMetadata['Feature Name'] = list(map(str, numpy.linspace(1, self.noFeat, num=self.noFeat, dtype=int)))
 		self.data.featureMetadata['Feature Metadata'] = [randomword(10) for x in range(0, self.noFeat)]
+
+		self.data.VariableType = VariableType.Discrete
 
 
 	def test_nofeatures(self):
@@ -997,7 +1001,7 @@ class test_dataset_synthetic(unittest.TestCase):
 		self.assertRaises(TypeError, self.data.excludeSamples, map(str, exclusionList), on='Sample File Name', message=list())
 
 
-	def test_exclude_features(self):
+	def test_exclude_features_discrete(self):
 
 		exclusionList = numpy.random.randint(1, self.noFeat, size=numpy.random.randint(1, int(self.noFeat / 2) + 1))
 		exclusionList = set(exclusionList)
@@ -1018,6 +1022,27 @@ class test_dataset_synthetic(unittest.TestCase):
 		self.assertEqual(missingFeatures, ['Not a feature in the list'])
 
 
+	def test_exclude_features_spectral(self):
+
+		noSamp = numpy.random.randint(5, high=10, size=None)
+		noFeat = numpy.random.randint(500, high=1000, size=None)
+
+		dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=VariableType.Spectral)
+
+		ranges = [(1,2), (8.5, 7)]
+
+		mask = numpy.ones_like(dataset.featureMask, dtype=bool)
+		for spRange in ranges:
+			localMask = numpy.logical_or(dataset.featureMetadata['ppm'] < min(spRange),
+				 						 dataset.featureMetadata['ppm'] > max(spRange))
+
+			mask = numpy.logical_and(mask, localMask)
+
+		dataset.excludeFeatures(ranges, on='ppm')
+
+		numpy.testing.assert_array_equal(mask, dataset.featureMask)
+
+
 	def test_exclude_features_raises(self):
 
 		exclusionList = numpy.random.randint(1, self.noFeat, size=numpy.random.randint(1, int(self.noFeat / 2) + 1))
@@ -1027,6 +1052,15 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		self.assertRaises(ValueError, self.data.excludeFeatures, map(str, exclusionList), on='Not a real key', message='Test Excluded')
 		self.assertRaises(TypeError, self.data.excludeFeatures, map(str, exclusionList), on='Feature Name', message=list())
+
+		self.data.VariableType = 'Not a real type'
+		self.assertRaises(ValueError, self.data.excludeFeatures, ['unimportant'], on='Feature Name', message='Test Excluded')
+
+
+	def test_exclude_features_warns(self):
+
+		self.data.VariableType = VariableType.Spectral
+		self.assertWarns(UserWarning, self.data.excludeFeatures, [(1, 1)], on='Feature Name', message='Test Excluded')
 
 
 	def test_get_features_discrete(self):
