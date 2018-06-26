@@ -745,7 +745,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		f.write(template.render(item=item, version=version, graphicsPath='/report_multivariate' + reportType.capitalize()))
 		f.close()
 
-		copyBackingFiles(toolboxPath(), saveDir)
+		copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
 	return None
 
