@@ -294,7 +294,9 @@ class MSDataset(Dataset):
 
 			rsdSS = rsd(self._intensityData[mask, :])
 
-			featureMask = (self.correlationToDilution >= correlationThreshold) & (self.rsdSP <= rsdThreshold) & ((self.rsdSP * varianceRatio) <= rsdSS) & self.featureMask
+			featureMask = (self.rsdSP <= rsdThreshold) & ((self.rsdSP * varianceRatio) <= rsdSS) & self.featureMask
+			if self.correlationToDilution is not None:
+				featureMask = featureMask & (self.correlationToDilution >= correlationThreshold)
 
 			featureMask = numpy.logical_and(featureMask, blankMask)
 
@@ -1131,51 +1133,51 @@ class MSDataset(Dataset):
 		aliquoting_protocol = Protocol(id_="aliquoting",name="aliquoting",protocol_type=OntologyAnnotation(term="aliquoting"))
 
 		for index, row in self.sampleMetadata.iterrows():
-		    src_name = row['Sample File Name']
-		    source = Source(name=src_name)
+			src_name = row['Sample File Name']
+			source = Source(name=src_name)
 
-		    source.comments.append(Comment(name='Study Name', value=row['Study']))
-		    study.sources.append(source)
+			source.comments.append(Comment(name='Study Name', value=row['Study']))
+			study.sources.append(source)
 
-		    sample_name = src_name
+			sample_name = src_name
 
-		    #sample_name = 'sample_'+str(index)
-		    sample = Sample(name=sample_name, derives_from=[source])
-		    # check if field exists first
-		    status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
-		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
-		    sample.characteristics.append(characteristic_material_type)
+			#sample_name = 'sample_'+str(index)
+			sample = Sample(name=sample_name, derives_from=[source])
+			# check if field exists first
+			status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
+			characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
+			sample.characteristics.append(characteristic_material_type)
 
-		    #characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['SampleType'])
-		    #sample.characteristics.append(characteristic_material_role)
+			#characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['SampleType'])
+			#sample.characteristics.append(characteristic_material_role)
 
-		    # check if field exists first
-		    age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
-		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
-		    sample.characteristics.append(characteristic_age)
-		    # check if field exists first
-		    gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
-		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
-		    sample.characteristics.append(characteristic_gender)
+			# check if field exists first
+			age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
+			characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
+			sample.characteristics.append(characteristic_age)
+			# check if field exists first
+			gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
+			characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
+			sample.characteristics.append(characteristic_gender)
 
-		    ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
-		    characteristic_organism = Characteristic(category=OntologyAnnotation(term="Organism"),value=OntologyAnnotation(term="Homo Sapiens", term_source=ncbitaxon,term_accession="http://purl.bioontology.org/ontology/NCBITAXON/9606"))
-		    sample.characteristics.append(characteristic_organism)
-		    # check if field exists first
-		    sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
-		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
-		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
+			ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
+			characteristic_organism = Characteristic(category=OntologyAnnotation(term="Organism"),value=OntologyAnnotation(term="Homo Sapiens", term_source=ncbitaxon,term_accession="http://purl.bioontology.org/ontology/NCBITAXON/9606"))
+			sample.characteristics.append(characteristic_organism)
+			# check if field exists first
+			sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
+			sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
+			aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
 
-		    sample_collection_process.inputs = [source]
-		    aliquoting_process.outputs = [sample]
+			sample_collection_process.inputs = [source]
+			aliquoting_process.outputs = [sample]
 
-		    # links processes
-		    plink(sample_collection_process, aliquoting_process)
+			# links processes
+			plink(sample_collection_process, aliquoting_process)
 
-		    study.process_sequence.append(sample_collection_process)
-		    study.process_sequence.append(aliquoting_process)
+			study.process_sequence.append(sample_collection_process)
+			study.process_sequence.append(aliquoting_process)
 
-		    study.samples.append(sample)
+			study.samples.append(sample)
 
 
 		study.protocols.append(sample_collection_protocol)
