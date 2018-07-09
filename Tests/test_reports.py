@@ -889,7 +889,7 @@ class test_reports_multivariate(unittest.TestCase):
 				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleTypePC1vsPC2.png',
 							 'Dataset_PCAscreePlot.png', 'Dataset_metadataPlot_metadataDistribution_categorical0.png', 'Dataset_metadataPlot_metadataDistribution_continuous0.png',
 							 'Dataset_metadataPlot_metadataDistribution_date0.png', 'Dataset_modOutliersPlot.png', 'Dataset_sigCorHeatmap.png', 'Dataset_sigKruHeatmap.png',
-							 'Dataset_strongOutliersPlot.png', 'npc-main.css', 'toolbox_logo.png']
+							 'Dataset_strongOutliersPlot.png']
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAll', testFile)
@@ -922,7 +922,7 @@ class test_reports_multivariate(unittest.TestCase):
 				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleTypePC1vsPC2.png',
 							 'Dataset_PCAscreePlot.png', 'Dataset_metadataPlot_metadataDistribution_categorical0.png', 'Dataset_metadataPlot_metadataDistribution_continuous0.png',
 							 'Dataset_metadataPlot_metadataDistribution_date0.png', 'Dataset_modOutliersPlot.png', 'Dataset_sigCorHeatmap.png', 'Dataset_sigKruHeatmap.png',
-							 'Dataset_strongOutliersPlot.png', 'npc-main.css', 'toolbox_logo.png']
+							 'Dataset_strongOutliersPlot.png']
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAnalytical', testFile)
