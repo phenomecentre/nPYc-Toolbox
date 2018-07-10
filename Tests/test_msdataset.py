@@ -1371,12 +1371,31 @@ class test_msdataset_batch_inference(unittest.TestCase):
 		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
 
 
-class test_msdataset_import_csvexport(unittest.TestCase):
+class test_msdataset_import_csvimport_discrete(unittest.TestCase):
 	"""
 	Test import from NPC csv files
 	"""
-	def test_raise_notimplemented(self):
-		self.assertRaises(NotImplementedError, nPYc.MSDataset, os.path.join('nopath'), fileType='csv export')
+
+	def setUp(self):
+		self.msData = nPYc.MSDataset(
+			os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_Metaboscape.xlsx'),
+			fileType='CSV Import',
+			noFeatureParams=2,
+			variableType='Continuum')
+
+		self.msData.addSampleInfo(descriptionFormat='Filenames')
+
+class test_msdataset_import_csvimport_continuum(unittest.TestCase):
+	"""
+	Test import from NPC csv files
+	"""
+	def setUp(self):
+		self.msData = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_Metaboscape.xlsx'),
+									 fileType='CSV Import',
+									 noFeatureParams=2,
+									 variableType='Continuum')
+
+		self.msData.addSampleInfo(descriptionFormat='Filenames')
 
 
 class test_msdataset_import_undefined(unittest.TestCase):

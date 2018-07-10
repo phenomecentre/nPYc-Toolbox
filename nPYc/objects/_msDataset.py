@@ -70,8 +70,13 @@ class MSDataset(Dataset):
 			self._loadQIDataset(datapath)
 			self.Attributes['FeatureExtractionSoftware'] = 'Progenesis QI'
 			self.VariableType = VariableType.Discrete
-		elif fileType == 'csv export':
-			raise NotImplementedError
+		elif fileType == 'csv import':
+			self._loadCSVImport(datapath, **kwargs)
+			self.Attributes['FeatureExtractionSoftware'] = 'Unknown'
+			if 'variableType' not in kwargs:
+				self.VariableType = VariableType.Discrete
+			else:
+				self.VariableType = kwargs['variableType']
 		elif fileType == 'xcms':
 			self._loadXCMSDataset(datapath, **kwargs)
 			self.Attributes['FeatureExtractionSoftware'] = 'XCMS'
@@ -403,6 +408,65 @@ class MSDataset(Dataset):
 
 		self.Attributes['Log'].append([datetime.now(), 'Progenesis QI dataset loaded from %s' % (path)])
 
+	def _loadCSVImport(self, path, noFeatureParams=2, variableType='Discrete'):
+
+		if variableType not in ['Discrete', 'Continuum', 'Profile', 'Spectrum']:
+			raise ValueError('Feature type must either be Discrete or Continuum')
+		# Import into dataframe
+		dataT = pandas.read_csv(path, index_col=False)
+
+		# Find start of data
+		startIndex = noFeatureParams
+		endIndex = len(dataT.columns)
+
+		# Now read for real
+		values = dataT.iloc[:, startIndex:]
+		self._intensityData = values.values
+
+		# Get the sample names as the only metadata we have
+		sampleMetadata = dict()
+		sampleMetadata['Sample File Name'] = [name for name in list(dataT.iloc[:, 0])]
+
+		# Peak info
+		featureMetadata = dict()
+
+		feature_names = dataT.columns[startIndex::]
+
+		if variableType in ['Continuum', 'Profile', 'Spectrum']:
+			try:
+				# when variableType is one of these kinds, it is expected that variable names are considered as m/z values
+				feature_names = [str(round(x, 6)) for x in feature_names]
+			except:
+				raise ValueError('Could not interpret column names ')
+
+		featureMetadata['Feature Name'] = feature_names
+
+		if  variableType is 'Continuum':
+			featureMetadata['m/z'] = feature_names
+
+		self.featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T,
+												columns=featureMetadata.keys())
+		self.sampleMetadata = pandas.DataFrame(
+			numpy.concatenate([sampleMetadata[c] for c in sampleMetadata.keys()], axis=0), columns=sampleMetadata.keys())
+
+		# Address continuum vs Discrete
+
+		# Put Feature Names first
+		name = self.featureMetadata['Feature Name']
+		self.featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
+		self.featureMetadata.insert(0, 'Feature Name', name)
+
+		self.sampleMetadata['AssayRole'] = AssayRole.Assay
+		self.sampleMetadata['SampleType'] = SampleType.StudySample
+		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['Metadata Available'] = False
+
+		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
+		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
+
+		self.initialiseMasks()
+
+		self.Attributes['Log'].append([datetime.now(), 'CSV dataset loaded from %s' % (path)])
 
 	def _loadXCMSDataset(self, path, noFeatureParams=14):
 
