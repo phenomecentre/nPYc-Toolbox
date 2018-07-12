@@ -127,19 +127,27 @@ class MSDataset(Dataset):
 			self.corrExclusions = copy.deepcopy(self.sampleMask)
 			self.__corrExclusions = copy.deepcopy(self.corrExclusions)
 
-		if not self._correlationToDilution.any():
+		lrMask = numpy.logical_and(self.sampleMetadata['SampleType'] == SampleType.StudyPool,
+								   self.sampleMetadata['AssayRole'] == AssayRole.LinearityReference)
 
-			self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'], exclusions=self.corrExclusions)
+		if sum(lrMask) == 0:
+			self._correlationToDilution = numpy.ones(shape=self.featureMask.shape)
+			print('No StudyPool samples defined with AssayRole equal to LinearityReference')
+		else:
 
-			self.__corrMethod = self.Attributes['corrMethod']
-			self.__corrExclusions = self.corrExclusions
+			if not self._correlationToDilution.any():
 
-		elif (self.__corrMethod != self.Attributes['corrMethod']) | (numpy.array_equal(self.__corrExclusions, self.corrExclusions) == False):
+				self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'], exclusions=self.corrExclusions)
 
-			self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'], exclusions=self.corrExclusions)
+				self.__corrMethod = self.Attributes['corrMethod']
+				self.__corrExclusions = self.corrExclusions
 
-			self.__corrMethod = self.Attributes['corrMethod']
-			self.__corrExclusions = copy.deepcopy(self.corrExclusions)
+			elif (self.__corrMethod != self.Attributes['corrMethod']) | (numpy.array_equal(self.__corrExclusions, self.corrExclusions) == False):
+
+				self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'], exclusions=self.corrExclusions)
+
+				self.__corrMethod = self.Attributes['corrMethod']
+				self.__corrExclusions = copy.deepcopy(self.corrExclusions)
 
 		return self._correlationToDilution
 
@@ -148,7 +156,6 @@ class MSDataset(Dataset):
 	def correlationToDilution(self):
 		self._correlationToDilution = numpy.array(None)
 
-
 	@property
 	def artifactualLinkageMatrix(self):
 		"""Gets overlapping artifactual features."""
@@ -156,7 +163,6 @@ class MSDataset(Dataset):
 			self._artifactualLinkageMatrix = self.__generateArtifactualLinkageMatrix()
 
 		return self._artifactualLinkageMatrix
-
 
 	@artifactualLinkageMatrix.deleter
 	def artifactualLinkageMatrix(self):
