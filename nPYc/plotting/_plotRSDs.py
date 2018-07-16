@@ -45,7 +45,7 @@ def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=No
 		xLim = (minRSD, maxRSD)
 
 	if logx:
-		xlab = 'Log RSD (%)'
+		xlab = 'RSD (%)'
 	else:
 		xlab = 'RSD (%)'
 
@@ -120,7 +120,7 @@ def plotRSDsInteractive(dataset, ratio=False, logx=True):
 	if logx:
 		xaxis = dict(
 					type='log',
-					title='Log RSD (%)',
+					title='RSD (%)',
 					autorange=True
 					)
 	else:
