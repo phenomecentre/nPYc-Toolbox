@@ -100,7 +100,6 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 		NotInCSVmaskEx = sampleMetadataExcluded['Metadata Available'] == False
 		UnclearRolemaskEx = (SSmaskEx==False) & (SPmaskEx==False) & (ERmaskEx==False) & (NotInCSVmaskEx==False) & (BlankmaskEx == False) & (SRDmaskEx == False)
-
 		sampleSummary['Excluded Details'] = sampleMetadataExcluded.set_index('Sample File Name')
 
 
@@ -128,6 +127,10 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	# Save details of samples of unknown type
 	if (sum(UnclearRolemask) != 0):
 		sampleSummary['UnknownType Details'] = data.sampleMetadata[['Sample File Name']][UnclearRolemask]
+
+	if hasattr(data, 'sampleAbsentMetadata'):
+		sampleSummary['NotAcquired'] = data.sampleAbsentMetadata['Assay data name']
+		sampleSummary['NotAcquired Details'] = data.sampleAbsentMetadata[['Assay data name', 'LIMS Marked Missing']]
 
 	# Finally - add column of samples already excluded to sampleSummary
 	if excluded != 0:
