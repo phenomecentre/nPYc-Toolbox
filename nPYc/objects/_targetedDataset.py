@@ -1118,7 +1118,7 @@ class TargetedDataset(Dataset):
         ## Initialise sampleMetadata
         self.sampleMetadata['AssayRole'] = numpy.nan
         self.sampleMetadata['SampleType'] = numpy.nan
-        self.sampleMetadata['Dilution'] = numpy.nan
+        self.sampleMetadata['Dilution'] = 100
         self.sampleMetadata['Correction Batch'] = numpy.nan
         self.sampleMetadata['Sampling ID'] = numpy.nan
         self.sampleMetadata['Exclusion Details'] = None
