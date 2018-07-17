@@ -2006,6 +2006,7 @@ class Dataset:
 		"""
 		raise NotImplementedError
 
+
 	def _exportUnifiedCSV(self, destinationPath, escapeDelimiters=True):
 		"""
 		Export the dataset to the directory *destinationPath* as a combined CSV file containing intensity data, and feature and sample metadata
@@ -2051,6 +2052,7 @@ class Dataset:
 		# Save
 		tmpCombined.to_csv(os.path.join(destinationPath + '_combinedData.csv'),
 						   encoding='utf-8', date_format=self._timestampFormat)
+
 
 	def getFeatures(self, featureIDs, by=None, useMasks=True):
 		"""

@@ -4358,7 +4358,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 															'Run Order': [0, 1, 2, 3, 4, 5, 6, 7, 8],
 															'AssayRole': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'SampleType': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
-															'Dilution': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
+															'Dilution': [100, 100, 100, 100, 100, 100, 100, 100, 100],
 															'Correction Batch': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'Sampling ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'Exclusion Details': [None, None, None, None, None, None, None, None, None],
@@ -4656,7 +4656,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 															'Run Order': [0, 6, 1, 2, 3, 7, 8, 9, 4, 5],
 															'AssayRole': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'SampleType': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
-															'Dilution': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
+															'Dilution': [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
 															'Correction Batch': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'Sampling ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'Exclusion Details': [None, None, None, None, None, None, None, None, None, None],
@@ -5070,7 +5070,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 
 
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
-	def test_loadBrukerXMLDataset_warnDuplicates(self, mock_tdout):
+	def test_loadBrukerXMLDataset_warnDuplicates(self, mock_stdout):
 
 		with self.subTest(msg='Import duplicated features (BI-LISA), Raises warning if features are duplicated'):
 			expected = copy.deepcopy(self.expectedBILISA)
