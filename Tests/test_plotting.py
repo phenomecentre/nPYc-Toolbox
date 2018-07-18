@@ -494,32 +494,39 @@ class test_plotting(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			outputPath = os.path.join(tmpdirname, 'basic')
-			nPYc.plotting.plotFeatureLOQ(inputData, savePath=outputPath)
-			self.assertTrue(os.path.exists(outputPath))
+			paths = nPYc.plotting.plotFeatureLOQ(inputData, savePath=outputPath)
+			for path in paths:
+				self.assertTrue(os.path.exists(path))
 
 			outputPath = os.path.join(tmpdirname, 'noSplitByBatch')
-			nPYc.plotting.plotFeatureLOQ(inputData, splitByBatch=False, savePath=outputPath)
-			self.assertTrue(os.path.exists(outputPath))
+			paths = nPYc.plotting.plotFeatureLOQ(inputData, splitByBatch=False, savePath=outputPath)
+			for path in paths:
+				self.assertTrue(os.path.exists(path))
 
 			outputPath = os.path.join(tmpdirname, 'withPlotBatchLOQ')
-			nPYc.plotting.plotFeatureLOQ(inputData, plotBatchLOQ=True, savePath=outputPath)
-			self.assertTrue(os.path.exists(outputPath))
+			paths = nPYc.plotting.plotFeatureLOQ(inputData, plotBatchLOQ=True, savePath=outputPath)
+			for path in paths:
+				self.assertTrue(os.path.exists(path))
 
 			outputPath = os.path.join(tmpdirname, 'withZoomLOQ')
-			nPYc.plotting.plotFeatureLOQ(inputData, zoomLOQ=True, savePath=outputPath)
-			self.assertTrue(os.path.exists(outputPath))
+			paths = nPYc.plotting.plotFeatureLOQ(inputData, zoomLOQ=True, savePath=outputPath)
+			for path in paths:
+				self.assertTrue(os.path.exists(path))
 
 			outputPath = os.path.join(tmpdirname, 'withLogY')
 			nPYc.plotting.plotFeatureLOQ(inputData, logY=True, savePath=outputPath)
-			self.assertTrue(os.path.exists(outputPath))
+			for path in paths:
+				self.assertTrue(os.path.exists(path))
 
 			outputPath = os.path.join(tmpdirname, 'noTightYLim')
-			nPYc.plotting.plotFeatureLOQ(inputData, tightYLim=False, savePath=outputPath)
-			self.assertTrue(os.path.exists(outputPath))
+			paths = nPYc.plotting.plotFeatureLOQ(inputData, tightYLim=False, savePath=outputPath)
+			for path in paths:
+				self.assertTrue(os.path.exists(path))
 
 			outputPath = os.path.join(tmpdirname, 'otherNbPlotPerRow')
 			nPYc.plotting.plotFeatureLOQ(inputData, nbPlotPerRow=5, savePath=outputPath)
-			self.assertTrue(os.path.exists(outputPath))
+			for path in paths:
+				self.assertTrue(os.path.exists(path))
 
 
 	def test_plotFeatureLOQ_raises(self):
