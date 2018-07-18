@@ -641,7 +641,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A.png', 'unittest_FeatureConcentrationDistribution-B.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
+			testFiles = ['unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png', 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', testFile)
@@ -657,7 +657,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_mergeLoqAssessment.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['unittest_ConcentrationPrePostMergeLOQ.png']
+			testFiles = ['unittest_ConcentrationPrePostMergeLOQ_features_0_to_2.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_mergeLoqAssessment', testFile)
@@ -688,8 +688,8 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			testFiles = ['unittest_AcquisitionStructure.png',
 						 'unittest_FeatureAccuracy-A.png',
 						 'unittest_FeatureAccuracy-B.png',
-						 'unittest_FeatureConcentrationDistribution-A.png',
-						 'unittest_FeatureConcentrationDistribution-B.png',
+						 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png',
+						 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png',
 						 'unittest_FeaturePrecision-A.png',
 						 'unittest_FeaturePrecision-B.png']
 

@@ -326,11 +326,12 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
             # Figure 4: Measured concentrations distribution, split by sample types.
             if destinationPath:
-                item['FeatureConcentrationDistribution'].append(os.path.join(saveDir, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
+                item['FeatureConcentrationDistribution'].append(os.path.join(saveDir, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i]))
                 saveAs = item['FeatureConcentrationDistribution'][i]
             else:
-                print('\nFigure ' + item['figTabNumber']['4'][i] + ': Measured concentrations distribution, split by sample types, for features ' + item['TextQType'][i] + '.')
-            plotFeatureLOQ(tmpData,
+                item['FeatureConcentrationDistribution'].append(None)
+                print('\nFigure ' + item['figTabNumber']['4'][i] + ': Measured concentration distributions, split by sample types, for features ' + item['TextQType'][i] + '.')
+            item['FeatureConcentrationDistribution'][i] = plotFeatureLOQ(tmpData,
                            splitByBatch=True,
                            plotBatchLOQ=False,
                            zoomLOQ=False,
@@ -406,12 +407,12 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
         # Figure 1: Measured concentrations pre and post LOQ
         if destinationPath:
-            item['ConcentrationPrePostMergeLOQ'] = os.path.join(saveDir, item['Name'] + '_ConcentrationPrePostMergeLOQ.' + tData.Attributes['figureFormat'])
+            item['ConcentrationPrePostMergeLOQ'] = os.path.join(saveDir, item['Name'] + '_ConcentrationPrePostMergeLOQ')
             saveAs = item['ConcentrationPrePostMergeLOQ']
         else:
             print('Figure 1: Measured concentrations pre and post LOQ merge, split by batch and sample types.')
 
-        plotFeatureLOQ(mergeLOQData,
+        item['ConcentrationPrePostMergeLOQ'] = plotFeatureLOQ(mergeLOQData,
                        splitByBatch=True,
                        plotBatchLOQ=True,
                        zoomLOQ=True,
@@ -654,11 +655,12 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
             ## Figure 4: Measured concentrations distribution, split by sample types.
             if destinationPath:
-                item['FeatureConcentrationDistribution'].append(os.path.join(saveDir, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
+                item['FeatureConcentrationDistribution'].append(os.path.join(saveDir, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i]))
                 saveAs = item['FeatureConcentrationDistribution'][i]
             else:
-                print('\nFigure ' + item['figTabNumber']['4'][i] + ': Measured concentrations distribution, split by sample types, for features ' + item['TextQType'][i] + '.')
-            plotFeatureLOQ(tmpData,
+                item['FeatureConcentrationDistribution'].append(None)
+                print('\nFigure ' + item['figTabNumber']['4'][i] + ': Measured concentration distributions, split by sample types, for features ' + item['TextQType'][i] + '.')
+            item['FeatureConcentrationDistribution'][i] = plotFeatureLOQ(tmpData,
                            splitByBatch=True,
                            plotBatchLOQ=False,
                            zoomLOQ=False,
@@ -736,7 +738,10 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
         for key in item:
             if isinstance(item[key], list):
                 for i in range(0, len(item[key])):
-                    if os.path.join(destinationPath, 'graphics') in str(item[key][i]):
+                    if isinstance(item[key][i], list):
+                        for j in range(0, len(item[key][i])):
+                            item[key][i][j] = re.sub('.*graphics', 'graphics', item[key][i][j])
+                    elif os.path.join(destinationPath, 'graphics') in str(item[key][i]):
                         item[key][i] = re.sub('.*graphics', 'graphics', item[key][i])
             elif os.path.join(destinationPath, 'graphics') in str(item[key]):
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
