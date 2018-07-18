@@ -26,11 +26,11 @@ def correlationSpectroscopyInteractive(dataset, target, mode='SHY', correlationM
 	magnitude = numpy.mean(dataset.intensityData[dataset.sampleMask, :],axis=0)
 	
 	plot = plotyShadedLineplot(dataset.featureMetadata.loc[dataset.featureMask, 'ppm'], magnitude[dataset.featureMask], colour[dataset.featureMask])
-	
-	if isinstance(dataset, NMRDataset):
+
+	if 'ppm' in dataset.featureMetadata.columns:
 		xaxis = 'reversed'
 	else:
-		xaxis= 'auto'
+		xaxis = 'auto'
 	
 	layout = go.Layout(
 		title=None,
@@ -38,11 +38,13 @@ def correlationSpectroscopyInteractive(dataset, target, mode='SHY', correlationM
 			orientation="h"),
 		hovermode = "closest",
 		yaxis = dict(
-			showticklabels=False
+			showticklabels=False,
+			hoverformat = '.2f'
 		),
 		xaxis=dict(
 			autorange=xaxis, 
-			title='PPM'
+			title='PPM',
+			hoverformat = '.2f'
 		)
 	)
 
@@ -65,6 +67,9 @@ def plotyShadedLineplot(x, y, colour, shadeLevels=24):
 	cutoff = minC
 
 	plotData = list()
+
+	hovertext = ["r = %.2f" % i for i in zip(colour)] # Text for tooltips
+
 	for i in range(shadeLevels):
 
 		mask = numpy.zeros_like(colour, dtype=bool)
@@ -98,11 +103,12 @@ def plotyShadedLineplot(x, y, colour, shadeLevels=24):
 					x = x[traceRange[0]:traceRange[1]],
 					y = y[traceRange[0]:traceRange[1]],
 					mode = 'lines',
-					text = colour[traceRange[0]:traceRange[1]],
+					text = hovertext[traceRange[0]:traceRange[1]],
 					line = dict(
 						color = 'rgb(%f, %f, %f)' % colourScale[i],
 					),
 					showlegend = False,
+					hoverinfo="x+text"
 				)
 			plotData.append(trace)
 	return plotData

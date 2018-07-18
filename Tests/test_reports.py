@@ -641,7 +641,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A.png', 'unittest_FeatureConcentrationDistribution-B.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
+			testFiles = ['unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png', 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', testFile)
@@ -657,7 +657,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_mergeLoqAssessment.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['unittest_ConcentrationPrePostMergeLOQ.png']
+			testFiles = ['unittest_ConcentrationPrePostMergeLOQ_features_0_to_2.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_mergeLoqAssessment', testFile)
@@ -688,8 +688,8 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			testFiles = ['unittest_AcquisitionStructure.png',
 						 'unittest_FeatureAccuracy-A.png',
 						 'unittest_FeatureAccuracy-B.png',
-						 'unittest_FeatureConcentrationDistribution-A.png',
-						 'unittest_FeatureConcentrationDistribution-B.png',
+						 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png',
+						 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png',
 						 'unittest_FeaturePrecision-A.png',
 						 'unittest_FeaturePrecision-B.png']
 
@@ -889,7 +889,7 @@ class test_reports_multivariate(unittest.TestCase):
 				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleTypePC1vsPC2.png',
 							 'Dataset_PCAscreePlot.png', 'Dataset_metadataPlot_metadataDistribution_categorical0.png', 'Dataset_metadataPlot_metadataDistribution_continuous0.png',
 							 'Dataset_metadataPlot_metadataDistribution_date0.png', 'Dataset_modOutliersPlot.png', 'Dataset_sigCorHeatmap.png', 'Dataset_sigKruHeatmap.png',
-							 'Dataset_strongOutliersPlot.png', 'npc-main.css', 'toolbox_logo.png']
+							 'Dataset_strongOutliersPlot.png']
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAll', testFile)
@@ -922,7 +922,7 @@ class test_reports_multivariate(unittest.TestCase):
 				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleTypePC1vsPC2.png',
 							 'Dataset_PCAscreePlot.png', 'Dataset_metadataPlot_metadataDistribution_categorical0.png', 'Dataset_metadataPlot_metadataDistribution_continuous0.png',
 							 'Dataset_metadataPlot_metadataDistribution_date0.png', 'Dataset_modOutliersPlot.png', 'Dataset_sigCorHeatmap.png', 'Dataset_sigKruHeatmap.png',
-							 'Dataset_strongOutliersPlot.png', 'npc-main.css', 'toolbox_logo.png']
+							 'Dataset_strongOutliersPlot.png']
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAnalytical', testFile)

@@ -83,7 +83,10 @@
 		<!--Figure 4: Measured concentrations distribution, split by sample types.-->
 		<p class="caption"><span class="heading">Figure {{ item['figTabNumber']['4'][i] }}.</span> Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.</p>
 		<div class='figure'>
-			<img src="{{ item.FeatureConcentrationDistribution[i] }}" alt="Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.">
+			{% for value in item.FeatureConcentrationDistribution[i] %}
+				<img src="{{ value }}" alt="Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.">
+			{% endfor %}
+			
 		</div>
 
 
@@ -125,7 +128,11 @@
 	<!--Figure 1: Measured concentrations pre and post LOQ-->
 	<p class="caption"><span class="heading">Figure 1.</span> Measured concentrations pre and post LOQ merge, split by batch and sample types.</p>
 	<div class='figure'>
-		<img src="{{ item.ConcentrationPrePostMergeLOQ }}" alt="Measured concentrations pre and post LOQ merge, split by batch and sample types.">
+		<div class='figure'>
+			{% for value in item.ConcentrationPrePostMergeLOQ %}
+				<img src="{{ value }}" alt="Measured concentrations pre and post LOQ merge, split by batch and sample types.">
+			{% endfor %}
+		
 	</div>
 
 {% endif %}
@@ -227,7 +234,9 @@
 		<!--Figure 4: Measured concentrations distribution, split by sample types.-->
 		<p class="caption"><span class="heading">Figure {{ item['figTabNumber']['4'][i] }}.</span> Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.</p>
 		<div class='figure'>
-			<img src="{{ item.FeatureConcentrationDistribution[i] }}" alt="Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.">
+			{% for value in item.FeatureConcentrationDistribution[i] %}
+				<img src="{{ value }}" alt="Measured concentrations pre and post LOQ merge, split by batch and sample types.">
+			{% endfor %}
 		</div>
 
 
