@@ -129,8 +129,10 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		sampleSummary['UnknownType Details'] = data.sampleMetadata[['Sample File Name']][UnclearRolemask]
 
 	if hasattr(data, 'sampleAbsentMetadata'):
-		sampleSummary['NotAcquired'] = data.sampleAbsentMetadata['Assay data name']
-		sampleSummary['NotAcquired Details'] = data.sampleAbsentMetadata[['Assay data name', 'LIMS Marked Missing']]
+		if 'Sample File Name' in data.sampleAbsentMetadata.columns:
+			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sample File Name', 'Sample ID']]
+		else:
+			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sampling ID', 'Assay data name', 'LIMS Marked Missing']]
 
 	# Finally - add column of samples already excluded to sampleSummary
 	if excluded != 0:
@@ -179,7 +181,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		print('\n')
 
 		if 'NotAcquired' in sampleSummary:
-			print('Summary of Samples Missing from Acquisition/Import (i.e., present in LIMS but not acquired/imported)')
+			print('Summary of Samples Missing from Acquisition/Import (i.e., present in metadata file but not acquired/imported)')
 			display(sampleSummary['NotAcquired'])
 			print('\n')
 
@@ -191,11 +193,6 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		if 'UnknownType Details' in sampleSummary:
 			print('Details of Samples with Unknown Type')
 			display(sampleSummary['UnknownType Details'])
-			print('\n')
-
-		if 'NotAcquired Details' in sampleSummary:
-			print('Details of Samples Missing from Acquisition/Import (and not already excluded)')
-			display(sampleSummary['NotAcquired Details'])
 			print('\n')
 
 		if 'MarkedToExclude Details' in sampleSummary:
