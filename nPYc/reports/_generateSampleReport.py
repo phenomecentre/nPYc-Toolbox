@@ -26,7 +26,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	:param bool returnOutput: If ``True``, returns a dictionary of all tables generated during run
 	:return: Optional, dictionary of all tables generated during run
 	"""
-
+	
 	# Check inputs
 	if not isinstance(dataTrue, Dataset):
 		raise TypeError('dataTrue must be an instance of nPYc.Dataset')
