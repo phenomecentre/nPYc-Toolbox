@@ -1108,9 +1108,9 @@ class TargetedDataset(Dataset):
         # rename columns
         self.featureMetadata.rename(columns={'loq': 'LLOQ', 'lod': 'LOD', 'Lower Reference Bound': 'Lower Reference Percentile', 'Upper Reference Bound': 'Upper Reference Percentile'}, inplace=True)
         # replace '-' with nan
-        self.featureMetadata.loc[self.featureMetadata['LLOQ'] == '-', 'LLOQ'] = numpy.nan
+        self.featureMetadata['LLOQ'].replace('-', numpy.nan, inplace=True)
         self.featureMetadata['LLOQ'] = [float(x) for x in self.featureMetadata['LLOQ'].tolist()]
-        self.featureMetadata.loc[self.featureMetadata['LOD'] == '-', 'LOD'] = numpy.nan
+        self.featureMetadata['LOD'].replace('-', numpy.nan, inplace=True)
         self.featureMetadata['LOD'] = [float(x) for x in self.featureMetadata['LOD'].tolist()]
         # ULOQ
         self.featureMetadata['ULOQ'] = numpy.nan
@@ -1118,7 +1118,7 @@ class TargetedDataset(Dataset):
         ## Initialise sampleMetadata
         self.sampleMetadata['AssayRole'] = numpy.nan
         self.sampleMetadata['SampleType'] = numpy.nan
-        self.sampleMetadata['Dilution'] = numpy.nan
+        self.sampleMetadata['Dilution'] = 100
         self.sampleMetadata['Correction Batch'] = numpy.nan
         self.sampleMetadata['Sampling ID'] = numpy.nan
         self.sampleMetadata['Exclusion Details'] = None
