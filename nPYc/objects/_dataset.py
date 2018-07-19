@@ -1143,7 +1143,7 @@ class Dataset:
 		else:
 			raise NotImplementedError
 
-	def addFeatureInfo(self, descriptionFormat=None, filePath=None, **kwargs):
+	def addFeatureInfo(self, descriptionFormat=None, filePath=None, featureId=None, **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`featureMetadata` table.
 
@@ -1153,13 +1153,32 @@ class Dataset:
 
 		:param str descriptionFormat:
 		:param str filePath: Path to the additional data to be added
+		:param str featureId: Unique feature Id field in the metadata file provided to match with internal Feature Name
 		:raises NotImplementedError: if the descriptionFormat is not understood
 		"""
 		if descriptionFormat.lower() == 'reference ranges':
 			from ..utilities._addReferenceRanges import addReferenceRanges
 			addReferenceRanges(self.featureMetadata, filePath)
 		else:
-			raise NotImplementedError
+			if featureId is None:
+				raise ValueError('Please provide a valid featureId')
+
+			# Read new data and copy the current state of featureMetadata
+			csvData = pandas.read_csv(filePath)
+			currentMetadata = self.featureMetadata.copy()
+
+			# Overwrite previously existing columns
+			columnsToRemove = csvData.columns
+			columnsToRemove = columnsToRemove.drop(['Feature Name'])
+
+			for column in columnsToRemove:
+				if column in currentMetadata.columns:
+					currentMetadata.drop(column, axis=1, inplace=True)
+
+			currentMetadata = currentMetadata.merge(csvData, how='left', left_on='Feature Name',
+													right_on=featureId, sort=False)
+
+			self.featureMetadata = currentMetadata
 
 	def _matchBasicCSV(self, filePath):
 		"""
