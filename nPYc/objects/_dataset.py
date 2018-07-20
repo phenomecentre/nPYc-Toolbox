@@ -1156,10 +1156,7 @@ class Dataset:
 		:param str featureId: Unique feature Id field in the metadata file provided to match with internal Feature Name
 		:raises NotImplementedError: if the descriptionFormat is not understood
 		"""
-		if descriptionFormat.lower() == 'reference ranges':
-			from ..utilities._addReferenceRanges import addReferenceRanges
-			addReferenceRanges(self.featureMetadata, filePath)
-		elif descriptionFormat is None:
+		if descriptionFormat is None:
 			if featureId is None:
 				raise ValueError('Please provide a valid featureId')
 
@@ -1169,7 +1166,8 @@ class Dataset:
 
 			# Overwrite previously existing columns
 			columnsToRemove = csvData.columns
-			columnsToRemove = columnsToRemove.drop(['Feature Name'])
+			if 'Feature Name' in columnsToRemove:
+				columnsToRemove = columnsToRemove.drop(['Feature Name'])
 
 			for column in columnsToRemove:
 				if column in currentMetadata.columns:
@@ -1177,8 +1175,13 @@ class Dataset:
 
 			currentMetadata = currentMetadata.merge(csvData, how='left', left_on='Feature Name',
 													right_on=featureId, sort=False)
+			currentMetadata.drop(featureId, in_place=True)
 
 			self.featureMetadata = currentMetadata
+
+		elif descriptionFormat.lower() == 'reference ranges':
+			from ..utilities._addReferenceRanges import addReferenceRanges
+			addReferenceRanges(self.featureMetadata, filePath)
 
 	def _matchBasicCSV(self, filePath):
 		"""
