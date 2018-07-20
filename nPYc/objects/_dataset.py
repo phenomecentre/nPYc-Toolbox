@@ -1159,7 +1159,7 @@ class Dataset:
 		if descriptionFormat.lower() == 'reference ranges':
 			from ..utilities._addReferenceRanges import addReferenceRanges
 			addReferenceRanges(self.featureMetadata, filePath)
-		else:
+		elif descriptionFormat is None:
 			if featureId is None:
 				raise ValueError('Please provide a valid featureId')
 
