@@ -56,9 +56,8 @@ def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, destinationPath=N
 								 figureSize=dataset.Attributes['figureSize'])
 
 	for keyS in figuresQCscores:
-		if 'graphics' in str(destinationPath): # expect graphics to have been already passed in the previous path
-			if str(destinationPath) in str(figuresQCscores[keyS]):
-				figuresQCscores[keyS] = re.sub('.*graphics', 'graphics', figuresQCscores[keyS])
+		if 'graphics' in str(graphicsPath): # expect graphics to have been already passed in the previous path
+			figuresQCscores[keyS] = re.sub('.*graphics', 'graphics', figuresQCscores[keyS])
 
 	returnDict['QCscores'] = figuresQCscores
 	returnDict['PCAcount'] = figureCounter
@@ -84,9 +83,8 @@ def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, destinationPath=N
 								   figureSize=dataset.Attributes['figureSize'])
 
 	for keyL in figuresLoadings:
-		if 'graphics' in str(destinationPath):
-			if str(destinationPath) in str(figuresLoadings[keyL]):
-				figuresLoadings[keyL] = re.sub('.*graphics', 'graphics', figuresLoadings[keyL])
+		if 'graphics' in str(graphicsPath):
+			figuresLoadings[keyL] = re.sub('.*graphics', 'graphics', figuresLoadings[keyL])
 
 	returnDict['loadings'] = figuresLoadings
 
