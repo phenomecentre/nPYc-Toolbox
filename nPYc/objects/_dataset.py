@@ -1240,6 +1240,13 @@ class Dataset:
 		joinedTable = pandas.merge(currentMetadata, csvData, how='left', left_on='Sample File Name',
 								   right_on='Sample File Name', sort=False)
 
+		merged_samples = pandas.merge(currentMetadata, csvData, how='inner', left_on='Sample File Name',
+								   right_on='Sample File Name', sort=False)
+
+		merged_samples = merged_samples['Sample File Name']
+
+		merged_indices = joinedTable[joinedTable['Sample File Name'].isin(merged_samples)].index
+
 		# Samples in the CSV file but not acquired will go for sampleAbsentMetadata, for consistency with NPC Lims import
 		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(currentMetadata['Sample File Name']) == False, :]
 
@@ -1268,7 +1275,7 @@ class Dataset:
 
 		# By default everything in the CSV has metadata available and samples mentioned there will not be masked
 		# unless Include Sample field was == False
-		joinedTable['Metadata Available'] = True
+		joinedTable.loc[merged_indices, 'Metadata Available'] = True
 
 		# Samples in the folder and processed but not mentioned in the CSV.
 		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False), :]
@@ -1365,8 +1372,17 @@ class Dataset:
 		# Remove already present columns
 		if 'Sampling ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sampling ID'], axis=1, inplace=True)
 		if 'Subject ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Subject ID'], axis=1, inplace=True)
+
+		merged_samples = pandas.merge(self.sampleMetadata, self.limsFile, how='inner',left_on='Sample Base Name Normalised',
+									  right_on='Assay data name Normalised', sort=False)
+
 		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.limsFile, left_on='Sample Base Name Normalised',
 										   right_on='Assay data name Normalised', how='left', sort=False)
+
+		merged_samples = merged_samples['Sample File Name']
+
+		merged_indices = self.sampleMetadata[self.sampleMetadata['Sample File Name'].isin(merged_samples)].index
+
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
 		self.sampleMetadata.loc[:, 'Data Present'] = self.sampleMetadata['Sample File Name'].str.match('.+', na=False)
@@ -1442,7 +1458,7 @@ class Dataset:
 		self.sampleMetadata.loc[(self.sampleMetadata[
 									 'Sampling ID'] == '').tolist(), 'Sampling ID'] = 'Present but undefined in the LIMS file'
 		# Metadata Available field is set to True
-		self.sampleMetadata['Metadata Available'] = True
+		self.sampleMetadata.loc[merged_indices, 'Metadata Available'] = True
 
 		# Log
 		self.Attributes['Log'].append([datetime.now(), 'LIMS sample IDs matched from %s' % (pathToLIMSfile)])
