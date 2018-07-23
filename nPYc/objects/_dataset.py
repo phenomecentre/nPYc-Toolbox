@@ -1441,6 +1441,8 @@ class Dataset:
 		self.sampleMetadata.loc[(self.sampleMetadata['Sampling ID'] == 'nan').tolist(), 'Sampling ID'] = 'Not specified'
 		self.sampleMetadata.loc[(self.sampleMetadata[
 									 'Sampling ID'] == '').tolist(), 'Sampling ID'] = 'Present but undefined in the LIMS file'
+		# Metadata Available field is set to True
+		self.sampleMetadata['Metadata Available'] = True
 
 		# Log
 		self.Attributes['Log'].append([datetime.now(), 'LIMS sample IDs matched from %s' % (pathToLIMSfile)])
