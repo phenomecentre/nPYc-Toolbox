@@ -212,6 +212,8 @@ class NMRDataset(Dataset):
 
 			self.sampleMetadata.loc[:,'Sample Base Name'], self.sampleMetadata.loc[:,'expno'] = generateBaseName(self.sampleMetadata)
 
+		self.sampleMetadata['Metadata Available'] = True
+
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
 
