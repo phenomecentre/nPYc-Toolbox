@@ -305,9 +305,8 @@ class MSDataset(Dataset):
 
 			rsdSS = rsd(self._intensityData[mask, :])
 
-			featureMask = (self.rsdSP <= rsdThreshold) & ((self.rsdSP * varianceRatio) <= rsdSS) & self.featureMask
-			if self.correlationToDilution is not None:
-				featureMask = featureMask & (self.correlationToDilution >= correlationThreshold)
+			featureMask = (self.correlationToDilution >= correlationThreshold) & \
+						  (self.rsdSP <= rsdThreshold) & ((self.rsdSP * varianceRatio) <= rsdSS) & self.featureMask
 
 			featureMask = numpy.logical_and(featureMask, blankMask)
 
