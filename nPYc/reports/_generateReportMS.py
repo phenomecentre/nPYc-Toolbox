@@ -290,17 +290,22 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
              figureSize=dataset.Attributes['figureSize'])
 
     # Figure 5: Ion map
-    if destinationPath:
-        item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
-        saveAs = item['finalIonMap']
-    else:
-        print('Figure 5: Ion map of all features (coloured by log median intensity).')
+    if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
+        if destinationPath:
+            item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
+            saveAs = item['finalIonMap']
+        else:
+            print('Figure 5: Ion map of all features (coloured by log median intensity).')
 
-    plotIonMap(dataset,
-               savePath=saveAs,
-               figureFormat=dataset.Attributes['figureFormat'],
-               dpi=dataset.Attributes['dpi'],
-               figureSize=dataset.Attributes['figureSize'])
+        plotIonMap(dataset,
+                   savePath=saveAs,
+                   figureFormat=dataset.Attributes['figureFormat'],
+                   dpi=dataset.Attributes['dpi'],
+                   figureSize=dataset.Attributes['figureSize'])
+
+    else:
+        if not destinationPath:
+            print('No Retention Time and m/z information, unable to plot the ion map.\n')
 
     # Figures 6 and 7: (if available) PCA scores and loadings plots by sample type
     ##
