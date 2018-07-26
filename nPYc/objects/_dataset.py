@@ -1143,16 +1143,15 @@ class Dataset:
 		else:
 			raise NotImplementedError
 
-	def addFeatureInfo(self, descriptionFormat=None, filePath=None, featureId=None, **kwargs):
+	def addFeatureInfo(self, filePath=None, descriptionFormat=None, featureId=None, **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`featureMetadata` table.
 
 		Possible options:
 
 		* **'Reference Ranges'** JSON file specifying upper and lower reference ranges for a feature.
-
-		:param str descriptionFormat:
 		:param str filePath: Path to the additional data to be added
+		:param str descriptionFormat:
 		:param str featureId: Unique feature Id field in the metadata file provided to match with internal Feature Name
 		:raises NotImplementedError: if the descriptionFormat is not understood
 		"""
