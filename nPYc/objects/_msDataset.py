@@ -70,7 +70,7 @@ class MSDataset(Dataset):
 			self._loadQIDataset(datapath)
 			self.Attributes['FeatureExtractionSoftware'] = 'Progenesis QI'
 			self.VariableType = VariableType.Discrete
-		elif fileType == 'csv import':
+		elif fileType == 'csv':
 			self._loadCSVImport(datapath, **kwargs)
 			self.Attributes['FeatureExtractionSoftware'] = 'Unknown'
 			if 'variableType' not in kwargs:
