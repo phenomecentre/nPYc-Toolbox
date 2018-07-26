@@ -1162,7 +1162,7 @@ class Dataset:
 			# Read new data and copy the current state of featureMetadata
 			csvData = pandas.read_csv(filePath)
 
-			if ~any(csvData[featureId].isin(self.featureMetadata['Feature Name'])):
+			if  not any(csvData[featureId].isin(self.featureMetadata['Feature Name'])):
 				raise ValueError('No matching features found in csv file provided.')
 
 			currentMetadata = self.featureMetadata.copy()

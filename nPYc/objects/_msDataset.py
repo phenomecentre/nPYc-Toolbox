@@ -415,7 +415,7 @@ class MSDataset(Dataset):
 
 		self.Attributes['Log'].append([datetime.now(), 'Progenesis QI dataset loaded from %s' % (path)])
 
-	def _loadCSVImport(self, path, noFeatureParams=2, variableType='Discrete'):
+	def _loadCSVImport(self, path, noFeatureParams=1, variableType='Discrete'):
 
 		if variableType not in ['Discrete', 'Continuum', 'Profile', 'Spectrum']:
 			raise ValueError('Feature type must either be Discrete or Continuum')
