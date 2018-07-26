@@ -1178,7 +1178,7 @@ class Dataset:
 
 			currentMetadata = currentMetadata.merge(csvData, how='left', left_on='Feature Name',
 													right_on=featureId, sort=False)
-			currentMetadata.drop(featureId, in_place=True)
+			currentMetadata.drop(featureId, axis=1, inplace=True)
 
 			self.featureMetadata = currentMetadata
 
