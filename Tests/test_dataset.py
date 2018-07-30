@@ -1617,17 +1617,21 @@ class test_dataset_addfeatureinfo(unittest.TestCase):
 	def test_dataset_add_feature_info(self):
 
 		data = nPYc.Dataset()
-		referencePath = os.path.join('..', 'nPYc', 'StudyDesigns', 'featureMetadataInfo.csv')
+		csvFilePath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data',
+								'UnitTest1_PCSOP.069_featureMetadata.csv')
 
 		data.featureMetadata = pandas.DataFrame(
-			['TPTG', 'TPCH', 'TPFC', 'TPA1', 'TPA2', 'TPAB', 'VLTG', 'VLCH', 'VLFC', 'VLPL', 'VLAB'],
+			['3.17_262.0378m/z', '3.17_293.1812m/z', '3.17_145.0686m/z', '3.17_258.1033m/z'],
 			columns=['Feature Name'])
 
-		data.addFeatureInfo(descriptionFormat='Reference Ranges', filePath=referencePath)
+		data.addFeatureInfo(descriptionFormat=None, filePath=csvFilePath, featureId='Feature Name')
 
-		data = nPYc.Dataset()
-		self.assertRaises(NotImplementedError, data.addFeatureInfo, descriptionFormat='Not an understood format',
-						  filenameSpec='')
+		expectedFeatureMetadata = pandas.DataFrame({'Feature Name': ['3.17_262.0378m/z', '3.17_293.1812m/z', '3.17_145.0686m/z', '3.17_258.1033m/z'],
+			 'Retention Time': [3.17, 3.17, 3.17, 3.17],
+			 'm/z': [262.0378, 293.1812, 145.0686, 258.1033]})
+
+		pandas.util.testing.assert_frame_equal(expectedFeatureMetadata, data.featureMetadata, check_dtype=False)
+
 
 
 if __name__ == '__main__':

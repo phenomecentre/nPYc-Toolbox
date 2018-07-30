@@ -1178,7 +1178,10 @@ class Dataset:
 
 			currentMetadata = currentMetadata.merge(csvData, how='left', left_on='Feature Name',
 													right_on=featureId, sort=False)
-			currentMetadata.drop(featureId, axis=1, inplace=True)
+
+			# Avoid duplicating feature ID field
+			if featureId != 'Feature Name':
+				currentMetadata.drop(featureId, axis=1, inplace=True)
 
 			self.featureMetadata = currentMetadata
 
