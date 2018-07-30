@@ -214,7 +214,11 @@ class MSDataset(Dataset):
 		del(self.correlationToDilution)
 
 
-	def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool], assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], correlationThreshold=None, rsdThreshold=None, varianceRatio=None, withArtifactualFiltering=None, deltaMzArtifactual=None, overlapThresholdArtifactual=None, corrThresholdArtifactual=None, blankThreshold=None, **kwargs):
+	def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
+					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference],
+					correlationThreshold=None, rsdThreshold=None, varianceRatio=None,
+					withArtifactualFiltering=None, deltaMzArtifactual=None, overlapThresholdArtifactual=None,
+					corrThresholdArtifactual=None, blankThreshold=None, aggregateRedundantFeatures=False, **kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to QC parameters.
 
@@ -292,6 +296,11 @@ class MSDataset(Dataset):
 				raise TypeError('overlapThresholdArtifactual must be a number , %s provided' % (type(overlapThresholdArtifactual)))
 			self.Attributes['overlapThresholdArtifactual'] = overlapThresholdArtifactual
 
+		if aggregateRedundantFeatures is True:
+			if self.VariableType != VariableType.Discrete:
+				raise TypeError('aggregateRedundantFeatures is only applicable to MSDataset objects containing data of type \'Discrete\'.')
+			self.Attributes['overlapThresholdArtifactual'] = overlapThresholdArtifactual
+
 		if filterFeatures:
 
 			blankMask = blankFilter(self, threshold=blankThreshold)
@@ -318,6 +327,9 @@ class MSDataset(Dataset):
 				featureMask = self.artifactualFilter(featMask=featureMask)
 
 			self.featureMask = featureMask
+
+			if aggregateRedundantFeatures:
+				pass
 
 		# Sample Exclusions
 		if filterSamples:

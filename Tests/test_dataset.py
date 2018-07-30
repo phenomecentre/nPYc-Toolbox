@@ -1597,12 +1597,6 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 class test_dataset_addfeatureinfo(unittest.TestCase):
 
-	def test_dataset_raises(self):
-
-		data = nPYc.Dataset()
-		self.assertRaises(NotImplementedError, data.addFeatureInfo, descriptionFormat='Not an understood format', filenameSpec='')
-
-
 	def test_dataset_add_reference_ranges(self):
 		"""
 		Assume the addReferenceRanges function is well tested - just check the expected columns appear
@@ -1619,6 +1613,21 @@ class test_dataset_addfeatureinfo(unittest.TestCase):
 		for column in columns:
 			self.subTest(msg='Checking ' + column)
 			self.assertIn(column, data.featureMetadata.columns)
+
+	def test_dataset_add_feature_info(self):
+
+		data = nPYc.Dataset()
+		referencePath = os.path.join('..', 'nPYc', 'StudyDesigns', 'featureMetadataInfo.csv')
+
+		data.featureMetadata = pandas.DataFrame(
+			['TPTG', 'TPCH', 'TPFC', 'TPA1', 'TPA2', 'TPAB', 'VLTG', 'VLCH', 'VLFC', 'VLPL', 'VLAB'],
+			columns=['Feature Name'])
+
+		data.addFeatureInfo(descriptionFormat='Reference Ranges', filePath=referencePath)
+
+		data = nPYc.Dataset()
+		self.assertRaises(NotImplementedError, data.addFeatureInfo, descriptionFormat='Not an understood format',
+						  filenameSpec='')
 
 
 if __name__ == '__main__':
