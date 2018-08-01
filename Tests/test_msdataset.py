@@ -1381,150 +1381,6 @@ class test_msdataset_import_undefined(unittest.TestCase):
 
 class test_msdataset_import_QI(unittest.TestCase):
 	"""
-	Test import from Bruker Metaboscape
-	"""
-
-	def setUp(self):
-
-		self.msData = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_Metaboscape.xlsx'),
-									 fileType='Metaboscape',
-									 sheetName='Test Data',
-									 noFeatureParams=18)
-
-		self.msData.addSampleInfo(descriptionFormat='Filenames')
-
-
-	def test_dimensions(self):
-
-		self.assertEqual((self.msData.noSamples, self.msData.noFeatures), (115, 4))
-
-
-	def test_samples(self):
-
-		samples = pandas.Series(['UnitTest1_LPOS_ToF02_B1SRD01', 'UnitTest1_LPOS_ToF02_B1SRD02',
-								'UnitTest1_LPOS_ToF02_B1SRD03', 'UnitTest1_LPOS_ToF02_B1SRD04',
-								'UnitTest1_LPOS_ToF02_B1SRD05', 'UnitTest1_LPOS_ToF02_B1SRD06',
-								'UnitTest1_LPOS_ToF02_B1SRD07', 'UnitTest1_LPOS_ToF02_B1SRD08',
-								'UnitTest1_LPOS_ToF02_B1SRD09', 'UnitTest1_LPOS_ToF02_B1SRD10',
-								'UnitTest1_LPOS_ToF02_B1SRD11', 'UnitTest1_LPOS_ToF02_B1SRD12',
-								'UnitTest1_LPOS_ToF02_B1SRD13', 'UnitTest1_LPOS_ToF02_B1SRD14',
-								'UnitTest1_LPOS_ToF02_B1SRD15', 'UnitTest1_LPOS_ToF02_B1SRD16',
-								'UnitTest1_LPOS_ToF02_B1SRD17', 'UnitTest1_LPOS_ToF02_B1SRD18',
-								'UnitTest1_LPOS_ToF02_B1SRD19', 'UnitTest1_LPOS_ToF02_B1SRD20',
-								'UnitTest1_LPOS_ToF02_B1SRD21', 'UnitTest1_LPOS_ToF02_B1SRD22',
-								'UnitTest1_LPOS_ToF02_B1SRD23', 'UnitTest1_LPOS_ToF02_B1SRD24',
-								'UnitTest1_LPOS_ToF02_B1SRD25', 'UnitTest1_LPOS_ToF02_B1SRD26',
-								'UnitTest1_LPOS_ToF02_B1SRD27', 'UnitTest1_LPOS_ToF02_B1SRD28',
-								'UnitTest1_LPOS_ToF02_B1SRD29', 'UnitTest1_LPOS_ToF02_B1SRD30',
-								'UnitTest1_LPOS_ToF02_B1SRD31', 'UnitTest1_LPOS_ToF02_B1SRD32',
-								'UnitTest1_LPOS_ToF02_B1SRD33', 'UnitTest1_LPOS_ToF02_B1SRD34',
-								'UnitTest1_LPOS_ToF02_B1SRD35', 'UnitTest1_LPOS_ToF02_B1SRD36',
-								'UnitTest1_LPOS_ToF02_B1SRD37', 'UnitTest1_LPOS_ToF02_B1SRD38',
-								'UnitTest1_LPOS_ToF02_B1SRD39', 'UnitTest1_LPOS_ToF02_B1SRD40',
-								'UnitTest1_LPOS_ToF02_B1SRD41', 'UnitTest1_LPOS_ToF02_B1SRD42',
-								'UnitTest1_LPOS_ToF02_B1SRD43', 'UnitTest1_LPOS_ToF02_B1SRD44',
-								'UnitTest1_LPOS_ToF02_B1SRD45', 'UnitTest1_LPOS_ToF02_B1SRD46',
-								'UnitTest1_LPOS_ToF02_B1SRD47', 'UnitTest1_LPOS_ToF02_B1SRD48',
-								'UnitTest1_LPOS_ToF02_B1SRD49', 'UnitTest1_LPOS_ToF02_B1SRD50',
-								'UnitTest1_LPOS_ToF02_B1SRD51', 'UnitTest1_LPOS_ToF02_B1SRD52',
-								'UnitTest1_LPOS_ToF02_B1SRD53', 'UnitTest1_LPOS_ToF02_B1SRD54',
-								'UnitTest1_LPOS_ToF02_B1SRD55', 'UnitTest1_LPOS_ToF02_B1SRD56',
-								'UnitTest1_LPOS_ToF02_B1SRD57', 'UnitTest1_LPOS_ToF02_B1SRD58',
-								'UnitTest1_LPOS_ToF02_B1SRD59', 'UnitTest1_LPOS_ToF02_B1SRD60',
-								'UnitTest1_LPOS_ToF02_B1SRD61', 'UnitTest1_LPOS_ToF02_B1SRD62',
-								'UnitTest1_LPOS_ToF02_B1SRD63', 'UnitTest1_LPOS_ToF02_B1SRD64',
-								'UnitTest1_LPOS_ToF02_B1SRD65', 'UnitTest1_LPOS_ToF02_B1SRD66',
-								'UnitTest1_LPOS_ToF02_B1SRD67', 'UnitTest1_LPOS_ToF02_B1SRD68',
-								'UnitTest1_LPOS_ToF02_B1SRD69', 'UnitTest1_LPOS_ToF02_B1SRD70',
-								'UnitTest1_LPOS_ToF02_B1SRD71', 'UnitTest1_LPOS_ToF02_B1SRD72',
-								'UnitTest1_LPOS_ToF02_B1SRD73', 'UnitTest1_LPOS_ToF02_B1SRD74',
-								'UnitTest1_LPOS_ToF02_B1SRD75', 'UnitTest1_LPOS_ToF02_B1SRD76',
-								'UnitTest1_LPOS_ToF02_B1SRD77', 'UnitTest1_LPOS_ToF02_B1SRD78',
-								'UnitTest1_LPOS_ToF02_B1SRD79', 'UnitTest1_LPOS_ToF02_B1SRD80',
-								'UnitTest1_LPOS_ToF02_B1SRD81', 'UnitTest1_LPOS_ToF02_B1SRD82',
-								'UnitTest1_LPOS_ToF02_B1SRD83', 'UnitTest1_LPOS_ToF02_B1SRD84',
-								'UnitTest1_LPOS_ToF02_B1SRD85', 'UnitTest1_LPOS_ToF02_B1SRD86',
-								'UnitTest1_LPOS_ToF02_B1SRD87', 'UnitTest1_LPOS_ToF02_B1SRD88',
-								'UnitTest1_LPOS_ToF02_B1SRD89', 'UnitTest1_LPOS_ToF02_B1SRD90',
-								'UnitTest1_LPOS_ToF02_B1SRD91', 'UnitTest1_LPOS_ToF02_B1SRD92',
-								'UnitTest1_LPOS_ToF02_Blank01', 'UnitTest1_LPOS_ToF02_Blank02',
-								'UnitTest1_LPOS_ToF02_B1E1_SR', 'UnitTest1_LPOS_ToF02_B1E2_SR',
-								'UnitTest1_LPOS_ToF02_B1E3_SR', 'UnitTest1_LPOS_ToF02_B1E4_SR',
-								'UnitTest1_LPOS_ToF02_B1E5_SR', 'UnitTest1_LPOS_ToF02_B1S1_SR',
-								'UnitTest1_LPOS_ToF02_B1S2_SR', 'UnitTest1_LPOS_ToF02_B1S3_SR',
-								'UnitTest1_LPOS_ToF02_B1S4_SR', 'UnitTest1_LPOS_ToF02_B1S5_SR',
-								'UnitTest1_LPOS_ToF02_S1W01', 'UnitTest1_LPOS_ToF02_S1W02',
-								'UnitTest1_LPOS_ToF02_S1W03', 'UnitTest1_LPOS_ToF02_S1W04',
-								'UnitTest1_LPOS_ToF02_S1W05', 'UnitTest1_LPOS_ToF02_S1W06',
-								'UnitTest1_LPOS_ToF02_S1W07', 'UnitTest1_LPOS_ToF02_S1W08_x',
-								'UnitTest1_LPOS_ToF02_S1W11_LTR', 'UnitTest1_LPOS_ToF02_S1W12_SR',
-								'UnitTest1_LPOS_ToF02_ERROR'],
-								name='Sample File Name',
-								dtype=str)
-
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample File Name'], samples)
-
-
-	def test_featuremetadata_import(self):
-
-		with self.subTest(msg='Checking Feature Names'):
-			features = pandas.Series(['3.17_262.0378m/z',
-									'3.17_293.1812m/z',
-									'3.17_145.0686m/z',
-									'3.17_258.1033m/z'],
-									name='Feature Name',
-									dtype='str')
-
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Feature Name'], features)
-
-		with self.subTest(msg='M meas.'):
-			peakWidth = pandas.Series([263.0378339,
-									   294.1811941,
-									   146.0686347,
-									   259.1033447],
-									name='M meas.',
-									dtype='float')
-
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['M meas.'], peakWidth)
-
-		with self.subTest(msg='Checking m/z'):
-			mz = pandas.Series([262.0378339,
-							293.1811941,
-							145.0686347,
-							258.1033447],
-							name='m/z',
-							dtype='float')
-
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['m/z'], mz)
-
-		with self.subTest(msg='Checking Retention Time'):
-			rt = pandas.Series([3.17485,
-							3.17485,
-							3.17485,
-							3.17485],
-							name='Retention Time',
-							dtype='float')
-
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Retention Time'], rt)
-
-		with self.subTest(msg='Checking ΔRT'):
-			isotope = pandas.Series([0,
-									0.1,
-									0,
-									-0.1],
-							name='Isotope Distribution',
-							dtype='float')
-
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['ΔRT'], isotope)
-
-
-	def test_variabletype(self):
-
-		self.assertEqual(self.msData.VariableType, nPYc.enumerations.VariableType.Discrete)
-
-
-class test_msdataset_import_QI(unittest.TestCase):
-	"""
 	Test import from QI csv files
 	"""
 
@@ -2136,6 +1992,16 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 								dtype='float')
 
 			pandas.util.testing.assert_series_equal(self.lcData.featureMetadata['Retention Time'], rt)
+
+		with self.subTest(msg='Checking ΔRT'):
+			deltaRT = pandas.Series([0,
+									0.1,
+									0,
+									-0.1],
+							name='ΔRT',
+							dtype='object')
+
+			pandas.util.testing.assert_series_equal(self.lcData.featureMetadata['ΔRT'], deltaRT)
 
 
 	def test_dilutionlevels(self):
