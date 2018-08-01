@@ -431,6 +431,10 @@ class MSDataset(Dataset):
 
 		if variableType not in ['Discrete', 'Continuum', 'Profile', 'Spectrum']:
 			raise ValueError('Feature type must either be Discrete or Continuum')
+		# temporary here as not fully implemented
+		if variableType in ['Continuum', 'Profile', 'Spectrum']:
+			raise NotImplementedError
+
 		# Import into dataframe
 		dataT = pandas.read_csv(path, index_col=False)
 
@@ -553,7 +557,6 @@ class MSDataset(Dataset):
 		self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'XCMS dataset loaded from %s' % (path)])
-
 
 	def _loadBiocratesDataset(self, path, noSampleParams=15, sheetName='Data Export'):
 
