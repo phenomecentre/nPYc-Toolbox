@@ -156,11 +156,11 @@ def plotBaselineInteractive(nmrData):
 				hovermode = "closest",
 				xaxis=dict(
 					domain = [0, 0.48],
-					range=[(max(nmrData.Attributes['baselineCheckRegion'][1]),min(nmrData.Attributes['baselineCheckRegion'][1]))]
+					range=[max(nmrData.Attributes['baselineCheckRegion'][1]),min(nmrData.Attributes['baselineCheckRegion'][1])]
 				),
 				xaxis2=dict(
 					domain = [0.52, 1],
-					range=[(max(nmrData.Attributes['baselineCheckRegion'][0]),min(nmrData.Attributes['baselineCheckRegion'][0]))]
+					range=[max(nmrData.Attributes['baselineCheckRegion'][0]),min(nmrData.Attributes['baselineCheckRegion'][0])]
 					),
 				)
 
