@@ -663,7 +663,7 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='if self.sampleMask are not a bool'):
 			badDataset = copy.deepcopy(testDataset)
-			badDataset.sampleMask = numpy.matrix([[5.]])
+			badDataset.sampleMask = numpy.array([[5.]])
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -681,7 +681,7 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='if self.featureMask are not a bool'):
 			badDataset = copy.deepcopy(testDataset)
-			badDataset.featureMask = numpy.matrix([[5.]])
+			badDataset.featureMask = numpy.array([[5.]])
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
