@@ -1,5 +1,6 @@
 {
 	"methodName":"Bruker BI-LISA Data",
+	"fileNamePattern":".*?results\\.xml$",
 	"externalID":[],
 	"sampleMetadataNotExported":["Acqu Date", "Acqu Time", "Sample Type"],
 	"featureMetadataNotExported":["comment"],

@@ -5068,6 +5068,38 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 			for i in expected['Attributes']:
 				self.assertEqual(expected['Attributes'][i], result.Attributes[i])
 
+		with self.subTest(msg='Basic import BrukerQuant-UR with implicit fileNamePattern from SOP'):
+			expected = copy.deepcopy(self.expectedQuantUR)
+			# Generate
+			result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', unit='mmol/mol Crea')
+			# Remove path from sampleMetadata
+			result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
+			result.calibration['calibSampleMetadata'].drop(['Path'], axis=1, inplace=True)
+
+			# Need to sort samples as different OS have different path order
+			result.sampleMetadata.sort_values('Sample Base Name', inplace=True)
+			sortIndex = result.sampleMetadata.index.values
+			result.intensityData = result.intensityData[sortIndex, :]
+			result.expectedConcentration = result.expectedConcentration.loc[sortIndex,:]
+			result.sampleMetadata = result.sampleMetadata.reset_index(drop=True)
+			result.expectedConcentration = result.expectedConcentration.reset_index(drop=True)
+
+			# Test
+			pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+			pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+			numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
+			pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+			# Calibration
+			pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+			pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+			numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
+			pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
+			# Attributes, no check of 'Log'
+			self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
+			for i in expected['Attributes']:
+				self.assertEqual(expected['Attributes'][i], result.Attributes[i])
+
+
 
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
 	def test_loadBrukerXMLDataset_warnDuplicates(self, mock_stdout):
