@@ -980,7 +980,7 @@ class TargetedDataset(Dataset):
         peakInfo    = copy.deepcopy(self.peakInfo)
 
         # Feature to keep
-        keptFeat = ~featureMetadata['IS'].values
+        keptFeat = ~featureMetadata['IS'].values.astype(bool)
         # Filter
         tmpFeatureMetadata       = featureMetadata.loc[keptFeat, :]
         tmpIntensityData         = intensityData[:, keptFeat]
