@@ -2197,7 +2197,7 @@ class MSDataset(Dataset):
 		msData.sampleMetadata = copy.deepcopy(sampleMetadata)
 
 		allUniqueSamples = set(numpy.r_[msData.sampleMetadata['Sample File Name'].values, other.sampleMetadata['Sample File Name'].values])
-		nUniqueSamples =
+		nUniqueSamples = 0 
 		## featureMetadata
 
 		# From that point onward no variable should exist without a '_batchX'
