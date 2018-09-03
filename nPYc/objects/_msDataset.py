@@ -2158,16 +2158,21 @@ class MSDataset(Dataset):
 		#if not validOtherDataset['BasicMSDataset']:
 		#		raise ValueError('other does not satisfy to the Basic MSDataset definition, check with other.validateObject(verbose=True, raiseError=False)')
 		# Warning if duplicate 'Sample File Name' in sampleMetadata
+
+		if 'Sampling ID' in self.samplemMetadata.columns:
+			mergeVar = 'Sampling ID'
+		else:
+			mergeVar = 'Sample File Name'
+
 		u_ids, u_counts = numpy.unique(
-			pandas.concat([self.sampleMetadata['Sample File Name'], other.sampleMetadata['Sample File Name']], ignore_index=True, sort=False), return_counts=True)
+			pandas.concat([self.sampleMetadata[mergeVar], other.sampleMetadata[mergeVar]], ignore_index=True, sort=False), return_counts=True)
 		if any(u_counts > 1):
-			warnings.warn('Warning: The following \'Sample File Name\' are present more than once: ' + str(u_ids[u_counts > 1].tolist()))
+			warnings.warn('Warning: The following \'{0}\' values are present more than once: {1}'.format(mergeVar, str(u_ids[u_counts > 1].tolist())))
 
 		## Initialise an empty msDataset to overwrite
 		msData = MSDataset(datapath='', fileType='empty')
 
 		## Attributes
-
 
 		# copy from the first (mainly dataset parameters, methodName, chromatography and ionisation)
 		msData.Attributes = copy.deepcopy(self.Attributes)
@@ -2205,19 +2210,35 @@ class MSDataset(Dataset):
 		# new sampleMetadata
 		msData.sampleMetadata = copy.deepcopy(sampleMetadata)
 
-		allUniqueSamples = set(numpy.r_[msData.sampleMetadata['Sample File Name'].values, other.sampleMetadata['Sample File Name'].values])
-		nUniqueSamples = 0 
+		samplesMsDataset = set(msData.sampleMetadata[mergeVar].values)
+		samplesOther = set(other.sampleMetadata[mergeVar].values)
+
+		uniqueSamplesMsDataset = samplesMsDataset - samplesOther
+		uniqueSamplesOther = samplesOther - uniqueSamplesMsDataset
+
+		commonSamples = samplesMsDataset & samplesOther
+
+		indexCommonMSDataset = numpy.where(self.sampleMetadata[mergeVar].isin(commonSamples))[0]
+		indexCommonOtherDataset = numpy.where(other.sampleMetadata[mergeVar].isin(commonSamples))[0]
+
+		indexUniqueMSDataset = numpy.where(self.sampleMetadata[mergeVar].isin(uniqueSamplesMsDataset))[0]
+		indexUniqueOtherDataset = numpy.where(other.sampleMetadata[mergeVar].isin(uniqueSamplesOther))[0]
+
+		nUniqueSamples = len(uniqueSamplesMsDataset) + len(uniqueSamplesOther)
+		nUniqueSamplesMSDataset = len(uniqueSamplesMsDataset)
+		nUniqueSamplesOther = len(uniqueSamplesOther)
+		nCommonSamples = len(commonSamples)
+
 		## featureMetadata
 
 		# From that point onward no variable should exist without a '_batchX'
 		# Apply to '_batchX' the batchChangeSelf and batchChangeOther to align it with the 'Batch'
-		mergeCol = ['Feature Name', 'Retention Time', 'm/z']
-
-		#mergeCol.extend(self.Attributes['externalID'])
+		mergeCol = ['Feature Name']
 
 		tmpFeatureMetadata1 = copy.deepcopy(self.featureMetadata)
 
 		updatedCol1 = batchListReNumber(tmpFeatureMetadata1.columns.tolist(), batchChangeSelf, mergeCol)
+
 		tmpFeatureMetadata1.columns = updatedCol1
 		tmpFeatureMetadata2 = copy.deepcopy(other.featureMetadata)
 
@@ -2240,35 +2261,59 @@ class MSDataset(Dataset):
 		msData.Attributes['featureMetadataNotExported'] = list(set().union(notExportedSelf, notExportedOther))
 
 		## _intensityData
-		# samples are simply concatenated, but features are merged. Reproject each dataset on the merge feature list before concatenation.
-		# init with nan
+		# a new data matrix with a nrows = number of unique samples in both datasets and number of rows = number of merged features
+		# is generated
 
-		intensityData1 = numpy.full([self._intensityData.shape[0], msData.featureMetadata.shape[0]], numpy.nan)
-		intensityData2 = numpy.full([other._intensityData.shape[0], msData.featureMetadata.shape[0]], numpy.nan)
-
+		newIntensityData = numpy.full([nCommonSamples + nUniqueSamples, msData.featureMetadata.shape[0]], numpy.nan)
+		newFeatureMask = numpy.ones((msData.featureMetadata.shape[0]), dtype=bool)
 		# iterate over the merged features
+
 		for i in range(msData.featureMetadata.shape[0]):
 			featureName = msData.featureMetadata.loc[i, 'Feature Name']
 			featurePosition1 = self.featureMetadata['Feature Name'] == featureName
 			featurePosition2 = other.featureMetadata['Feature Name'] == featureName
+
+			# If a feature is present in both datasets...
+			if (sum(featurePosition1) == 1) and (sum(featurePosition2) == 1):
+				# ... check if that feature has a non NA measurement on both datasets (ambiguous measurement for feature)
+				nonNanIdxMSDataset = numpy.where(~numpy.isnan(self._intensityData[:, featurePosition1]))[0]
+				nonNanIdxOther = numpy.where(~numpy.isnan(other._intensityData[:, featurePosition2]))[0]
+				common_samples = len(set(self.sampleMetadata[mergeVar][nonNanIdxMSDataset]) & set(other.sampleMetadata[mergeVar][nonNanIdxOther]))
+				if len(set(self.sampleMetadata[mergeVar][nonNanIdxMSDataset]) & set(other.sampleMetadata[mergeVar][nonNanIdxOther])) > 0:
+					raise ValueError('The feature \'{0}\' is already present for the samples shared by both MSDatasets'.format(featureName))
+			# Feature is in 'self' Dataset
 			if sum(featurePosition1) == 1:
-				intensityData1[:, i] = self._intensityData[:, featurePosition1].ravel()
+				# Write common samples
+				newIntensityData[0:nCommonSamples, i] = self._intensityData[indexCommonMSDataset, featurePosition1].ravel()
+				# Write Unique Samples from 'self' dataset
+				newIntensityData[nCommonSamples:(nCommonSamples + nUniqueSamplesMSDataset), i] = self._intensityData[indexUniqueMSDataset, featurePosition1].ravel()
+				# Write Unique Samples other dataset
+				newFeatureMask[i] = self.featureMask[i]
+
 			elif sum(featurePosition1) > 1:
 				raise ValueError('Duplicate feature name in first input: ' + featureName)
+
 			if sum(featurePosition2) == 1:
-				intensityData2[:, i] = other._intensityData[:, featurePosition2].ravel()
+				newIntensityData[0:nCommonSamples, i] = other._intensityData[indexCommonOtherDataset, featurePosition2].ravel()
+				newIntensityData[(nCommonSamples + nUniqueSamplesMSDataset):, i] = other._intensityData[indexUniqueOtherDataset, featurePosition2].ravel()
+				newFeatureMask[i] = other.featureMask[i]
 			elif sum(featurePosition2) > 1:
 				raise ValueError('Duplicate feature name in second input: ' + featureName)
 
-		intensityData = numpy.concatenate([intensityData1, intensityData2], axis=0)
-		msData._intensityData = copy.deepcopy(intensityData)
+		#intensityData = numpy.concatenate([intensityData1, intensityData2], axis=0)
+
+		msData._intensityData = copy.deepcopy(newIntensityData)
+
+		msData.initialiseMasks()
+
+		msData.featureMask = newFeatureMask
 
 		## Masks
 		msData.initialiseMasks()
 		# sampleMask
 		msData.sampleMask = numpy.concatenate([self.sampleMask, other.sampleMask], axis=0)
 
-		msData.sampleMask = numpy.ones(shape=(nCommonSamples), dtype=bool)
+		msData.sampleMask = numpy.ones(shape=(nCommonSamples + nUniqueSamples), dtype=bool)
 
 		# featureMask
 		# if featureMask agree in both, keep that value. Otherwise let the default True value. If feature exist only in one, use that value.
@@ -2288,6 +2333,7 @@ class MSDataset(Dataset):
 			# if feature only exist in second input
 			elif sum(featurePosition2 == 1):
 				msData.featureMask[i] = other.featureMask[featurePosition2]
+
 
 		## Excluded data with applyMask()
 		# attribute doesn't exist the first time. From one round of __add__ onward the attribute is created and the length matches the number and order of 'Batch'
@@ -2360,7 +2406,6 @@ class MSDataset(Dataset):
 		#validMergedDataset = msData.validateObject(verbose=False, raiseError=False, raiseWarning=False)
 		#if not validMergedDataset['BasicMSDataset']:
 	   #	raise ValueError('The merged dataset does not satisfy to the Basic MSDataset definition')
-
 		## Log
 		msData.Attributes['Log'].append([datetime.now(),
 										 'Concatenated datasets %s (%i samples and %i features) and %s (%i samples and %i features), to a dataset of %i samples and %i features.' % (
