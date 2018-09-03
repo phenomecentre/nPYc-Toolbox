@@ -510,5 +510,33 @@ class test_nmrdataset_ISATAB(unittest.TestCase):
 			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))
 
 
+class test_nmrdataset_initialiseFromCSV(unittest.TestCase):
+
+	def test_init(self):
+
+		noSamp = numpy.random.randint(5, high=10, size=None)
+		noFeat = numpy.random.randint(500, high=1000, size=None)
+
+		dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', sop='GenericNMRurine')
+		dataset.name = 'Testing'
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+
+			dataset.exportDataset(destinationPath=tmpdirname, saveFormat='CSV', withExclusions=False)
+
+			pathName = os.path.join(tmpdirname, 'Testing_sampleMetadata.csv')
+
+			rebuitData =  nPYc.NMRDataset(pathName, fileType='CSV Export')
+
+			numpy.testing.assert_array_equal(rebuitData.intensityData, dataset.intensityData)
+
+			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
+				pandas.util.testing.assert_series_equal(rebuitData.sampleMetadata[column], dataset.sampleMetadata[column], check_dtype=False)
+			for column in ['ppm']:
+				pandas.util.testing.assert_series_equal(rebuitData.featureMetadata[column], dataset.featureMetadata[column], check_dtype=False)
+
+			self.assertEqual(rebuitData.name, dataset.name)
+
+
 if __name__ == '__main__':
 	unittest.main()

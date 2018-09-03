@@ -55,7 +55,7 @@ class NMRDataset(Dataset):
 		self.filePath, fileName = os.path.split(datapath)
 		self.fileName, fileExtension = os.path.splitext(fileName)
 
-		if fileType == 'Bruker':
+		if fileType.lower() == 'bruker':
 			from ..utilities._importBrukerSpectrum import importBrukerSpectra
 
 			self.Attributes['Feature Names'] = 'ppm'
@@ -109,7 +109,10 @@ class NMRDataset(Dataset):
 			self._nmrQCChecks()
 
 			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
-
+		elif fileType.lower() == 'csv export':
+			(self.name, self.intensityData, self.featureMetadata, self.sampleMetadata) = self._initialiseFromCSV(datapath)
+			self.VariableType = VariableType.Spectral
+			self.initialiseMasks()
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
 			pass

@@ -5,6 +5,7 @@ import os
 import isatools.isatab as isatab
 import json
 import inspect
+import re
 from ..enumerations import VariableType, DatasetLevel, SampleType, AssayRole
 from ..utilities.generic import removeDuplicateColumns
 from .._toolboxPath import toolboxPath
@@ -1223,10 +1224,10 @@ class Dataset:
 		# If AssayRole or SampleType columns are present parse strings into enums
 		if 'AssayRole' in csvData.columns:
 			for role in AssayRole:
-				csvData.loc[csvData['AssayRole'].values == role.name, 'AssayRole'] = role
+				csvData.loc[csvData['AssayRole'].values == str(role), 'AssayRole'] = role
 		if 'SampleType' in csvData.columns:
 			for stype in SampleType:
-				csvData.loc[csvData['SampleType'].values == stype.name, 'SampleType'] = stype
+				csvData.loc[csvData['SampleType'].values == str(stype), 'SampleType'] = stype
 
 		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
 		# which are used in some plotting functions
@@ -1554,6 +1555,51 @@ class Dataset:
 			return True
 		else:
 			return False
+
+
+	def _initialiseFromCSV(self, sampleMetadataPath):
+		"""
+		Initialise the object from the three csv outputs of :py:meth:`~nPYc.Dataset.exportDataset()`.
+
+		NOTE: This function assumes that the saved dataset was well formed with all the expected columns in the metadta tables.
+
+		:param str sampleMetadataPath: Path to the *Name_sampleMetadata.csv* table, the file names of the featureMetadata and intensityData talbes are infered from the provided filename.
+		"""
+		##
+		# Determine object name and paths
+		##
+		(folderPath, fileName) = os.path.split(sampleMetadataPath)
+		objectName = re.match('(.*?)_sampleMetadata.csv', fileName).groups()[0]
+
+		intensityDataPath = os.path.join(folderPath, objectName + '_intensityData.csv')
+		featureMetadataPath = os.path.join(folderPath, objectName + '_featureMetadata.csv')
+
+		##
+		# Load tables
+		##
+		intensityData = numpy.loadtxt(intensityDataPath, dtype=float, delimiter=',')
+
+		featureMetadata = pandas.read_csv(featureMetadataPath, index_col=0)
+		sampleMetadata = pandas.read_csv(sampleMetadataPath, index_col=0)
+
+		##
+		# Fix up types
+		##
+		featureMetadata['Feature Name'] = featureMetadata['Feature Name'].astype(str)
+		sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
+
+		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].apply(pandas.to_datetime)
+		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].astype(datetime)
+
+		# If AssayRole or SampleType columns are present parse strings into enums
+		if 'AssayRole' in sampleMetadata.columns:
+			for role in AssayRole:
+				sampleMetadata.loc[sampleMetadata['AssayRole'].values == str(role), 'AssayRole'] = role
+		if 'SampleType' in sampleMetadata.columns:
+			for stype in SampleType:
+				sampleMetadata.loc[sampleMetadata['SampleType'].values == str(stype), 'SampleType'] = stype
+
+		return (objectName, intensityData, featureMetadata, sampleMetadata)
 
 
 	def _matchDatasetToISATAB(self, pathToISATABFile, filenameSpec=None, studyID = 1, assayID=1, assay='MS'):
@@ -1972,7 +2018,7 @@ class Dataset:
 			exportDataset.applyMasks()
 
 		# do not filter metadata if safe format is ISATAB
-		if filterMetadata and saveFormat in ['CSV', 'UnifiedCSV']:
+		if filterMetadata and saveFormat in ['UnifiedCSV']:
 			# sampleMetadata not exported
 			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['sampleMetadataNotExported']))

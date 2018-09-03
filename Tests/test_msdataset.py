@@ -2574,5 +2574,33 @@ class test_msdataset_ISATAB(unittest.TestCase):
 			#self.assertTrue(os.path.exists(a))
 
 
+class test_msdataset_initialiseFromCSV(unittest.TestCase):
+
+	def test_init(self):
+
+		noSamp = numpy.random.randint(5, high=10, size=None)
+		noFeat = numpy.random.randint(500, high=1000, size=None)
+
+		dataset = generateTestDataset(noSamp, noFeat, dtype='MSDataset', sop='GenericMS')
+		dataset.name = 'Testing'
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+
+			dataset.exportDataset(destinationPath=tmpdirname, saveFormat='CSV', withExclusions=False)
+
+			pathName = os.path.join(tmpdirname, 'Testing_sampleMetadata.csv')
+
+			rebuitData =  nPYc.MSDataset(pathName, fileType='CSV Export')
+
+			numpy.testing.assert_array_equal(rebuitData.intensityData, dataset.intensityData)
+
+			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
+				pandas.util.testing.assert_series_equal(rebuitData.sampleMetadata[column], dataset.sampleMetadata[column])
+			for column in rebuitData.featureMetadata.columns:
+				pandas.util.testing.assert_series_equal(rebuitData.featureMetadata[column], dataset.featureMetadata[column])
+
+			self.assertEqual(rebuitData.name, dataset.name)
+
+
 if __name__ == '__main__':
 	unittest.main()

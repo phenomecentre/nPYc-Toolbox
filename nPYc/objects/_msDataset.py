@@ -90,6 +90,14 @@ class MSDataset(Dataset):
 			self._loadMetaboscapeDataset(datapath, **kwargs)
 			self.Attributes['FeatureExtractionSoftware'] = 'Metaboscape'
 			self.VariableType = VariableType.Discrete
+		elif fileType == 'csv export':
+			(self.name, self.intensityData, self.featureMetadata, self.sampleMetadata) = self._initialiseFromCSV(datapath)
+			if 'm/z' in self.featureMetadata.columns:
+				self.featureMetadata['m/z'] = self.featureMetadata['m/z'].apply(pandas.to_numeric, errors='ignore')
+			if 'Retention Time' in self.featureMetadata.columns:
+				self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].apply(pandas.to_numeric, errors='ignore')
+			self.VariableType = VariableType.Discrete
+			self.initialiseMasks()
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
 			pass
@@ -97,6 +105,7 @@ class MSDataset(Dataset):
 			raise NotImplementedError
 
 		self.Attributes['Log'].append([datetime.now(), '%s instance inited, with %d samples, %d features, from \%s\'' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
+
 
 	# When making a deepcopy, all artifactual linkage are reset
 	def __deepcopy__(self, memo):

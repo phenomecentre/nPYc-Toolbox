@@ -32,6 +32,8 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 		data = nPYc.MSDataset('', fileType='empty', sop=sop)
 	elif dtype == 'NMRDataset':
 		data = nPYc.NMRDataset('', fileType='empty', sop=sop)
+	elif dtype  == 'TargetedDataset':
+		data = nPYc.TargetedDataset('', fileType='empty', sop=sop)
 	else:
 		raise ValueError
 
@@ -78,6 +80,7 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 
 	elif dtype == 'NMRDataset':
 		data.featureMetadata = pandas.DataFrame(numpy.linspace(10, -1, noFeat), columns=('ppm',), dtype=float)
+		data.featureMetadata['Feature Name'] = data.featureMetadata['ppm'].astype(str)
 		data.sampleMetadata['Delta PPM'] = numpy.random.rand(noSamp)
 		data.sampleMetadata['Line Width (Hz)'] = numpy.random.rand(noSamp)
 		data.sampleMetadata['CalibrationFail'] = False
