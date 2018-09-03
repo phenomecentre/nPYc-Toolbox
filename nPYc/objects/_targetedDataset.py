@@ -980,7 +980,7 @@ class TargetedDataset(Dataset):
         peakInfo    = copy.deepcopy(self.peakInfo)
 
         # Feature to keep
-        keptFeat = ~featureMetadata['IS'].values
+        keptFeat = ~featureMetadata['IS'].values.astype(bool)
         # Filter
         tmpFeatureMetadata       = featureMetadata.loc[keptFeat, :]
         tmpIntensityData         = intensityData[:, keptFeat]
@@ -1034,7 +1034,7 @@ class TargetedDataset(Dataset):
         self.Attributes['Log'].append([datetime.now(), '%d features kept for processing (%d samples). %d IS features filtered.' % (sum(keptFeat), self.noSamples, sum(ISFeat))])
 
 
-    def _loadBrukerXMLDataset(self, datapath, fileNamePattern=r'.*?results\.xml$', pdata=1, unit=None, **kwargs):
+    def _loadBrukerXMLDataset(self, datapath, fileNamePattern=None, pdata=1, unit=None, **kwargs):
         """
         Initialise object from Bruker XML files. Read files and prepare a valid TargetedDataset.
 
@@ -1053,6 +1053,9 @@ class TargetedDataset(Dataset):
         """
         from ..utilities._readBrukerXML import importBrukerXML
         from ..utilities.extractParams import buildFileList
+
+        if fileNamePattern is None:
+            fileNamePattern = self.Attributes['fileNamePattern']
 
         # Check inputs
         if not isinstance(fileNamePattern, str):

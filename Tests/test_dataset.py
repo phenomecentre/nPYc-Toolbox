@@ -663,7 +663,7 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='if self.sampleMask are not a bool'):
 			badDataset = copy.deepcopy(testDataset)
-			badDataset.sampleMask = numpy.matrix([[5.]])
+			badDataset.sampleMask = numpy.array([[5.]])
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -681,7 +681,7 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='if self.featureMask are not a bool'):
 			badDataset = copy.deepcopy(testDataset)
-			badDataset.featureMask = numpy.matrix([[5.]])
+			badDataset.featureMask = numpy.array([[5.]])
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -1597,12 +1597,6 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 class test_dataset_addfeatureinfo(unittest.TestCase):
 
-	def test_dataset_raises(self):
-
-		data = nPYc.Dataset()
-		self.assertRaises(NotImplementedError, data.addFeatureInfo, descriptionFormat='Not an understood format', filenameSpec='')
-
-
 	def test_dataset_add_reference_ranges(self):
 		"""
 		Assume the addReferenceRanges function is well tested - just check the expected columns appear
@@ -1619,6 +1613,25 @@ class test_dataset_addfeatureinfo(unittest.TestCase):
 		for column in columns:
 			self.subTest(msg='Checking ' + column)
 			self.assertIn(column, data.featureMetadata.columns)
+
+	def test_dataset_add_feature_info(self):
+
+		data = nPYc.Dataset()
+		csvFilePath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data',
+								'UnitTest1_PCSOP.069_featureMetadata.csv')
+
+		data.featureMetadata = pandas.DataFrame(
+			['3.17_262.0378m/z', '3.17_293.1812m/z', '3.17_145.0686m/z', '3.17_258.1033m/z'],
+			columns=['Feature Name'])
+
+		data.addFeatureInfo(descriptionFormat=None, filePath=csvFilePath, featureId='Feature Name')
+
+		expectedFeatureMetadata = pandas.DataFrame({'Feature Name': ['3.17_262.0378m/z', '3.17_293.1812m/z', '3.17_145.0686m/z', '3.17_258.1033m/z'],
+			 'Retention Time': [3.17, 3.17, 3.17, 3.17],
+			 'm/z': [262.0378, 293.1812, 145.0686, 258.1033]})
+
+		pandas.util.testing.assert_frame_equal(expectedFeatureMetadata, data.featureMetadata, check_dtype=False)
+
 
 
 if __name__ == '__main__':

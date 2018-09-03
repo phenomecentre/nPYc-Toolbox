@@ -865,7 +865,10 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 			# X axis is PC loading, Y axis is ordered features
 			sortOrder = numpy.argsort(pcaModel.loadings[component, :])
 			Yvals     = list(range(pcaModel.loadings.shape[1], 0, -1))
-			hovertext = ["Feature: %s; W: %s" % i for i in zip(featureMetadata['Feature Name'], W_str)]  # Text for tooltips
+			W_str = numpy.array(W_str)
+			W_str = W_str[sortOrder]
+			
+			hovertext = ["Feature: %s; W: %s" % i for i in zip(featureMetadata['Feature Name'][sortOrder], W_str)]  # Text for tooltips
 
 			LOADSplot = go.Scatter(
 				x=pcaModel.loadings[component, sortOrder],

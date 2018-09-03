@@ -1,5 +1,6 @@
 {
 	"methodName":"Bruker Quant-UR Data",
+	"fileNamePattern":".*?urine_quant_report_b\\.xml$",
 	"externalID":[],
 	"sampleMetadataNotExported":["Acqu Date", "Acqu Time", "Sample Type"],
 	"featureMetadataNotExported":["comment"],

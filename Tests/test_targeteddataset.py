@@ -690,19 +690,19 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='if self.expectedConcentration does not have the same number of samples as self._intensityData'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.expectedConcentration = pandas.DataFrame(numpy.matrix([[1,1],[1,1]]))
+			badDataset.expectedConcentration = pandas.DataFrame(numpy.array([[1,1],[1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.expectedConcentration does not have the same number of samples as self._intensityData'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.expectedConcentration = pandas.DataFrame(numpy.matrix([[1,1]]))
+			badDataset.expectedConcentration = pandas.DataFrame(numpy.array([[1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.expectedConcentration column name do not match self.featureMetadata[\'Feature Name\']'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.expectedConcentration = pandas.DataFrame(numpy.matrix([[1]]))
+			badDataset.expectedConcentration = pandas.DataFrame(numpy.array([[1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -774,7 +774,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='if self.calibration[\'calibIntensityData\'] (basic) does not have the same number of features as self._intensityData'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.calibration['calibIntensityData'] = numpy.matrix([[1,1,1],[1,1,1],[1,1,1]])
+			badDataset.calibration['calibIntensityData'] = numpy.array([[1,1,1],[1,1,1],[1,1,1]])
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -804,13 +804,13 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='if self.calibration[\'calibSampleMetadata\'] (basic) does not have the same number of samples as self.calibration[\'calibIntensityData\']'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.calibration['calibSampleMetadata'] = pandas.DataFrame(numpy.matrix([[1,1,1],[1,1,1],[1,1,1]]))
+			badDataset.calibration['calibSampleMetadata'] = pandas.DataFrame(numpy.array([[1,1,1],[1,1,1],[1,1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.calibration[\'calibSampleMetadata\'] (merged) does not have the same number of samples as self.calibration[\'calibIntensityData\']'):
 			badDataset = copy.deepcopy(self.targetedData1)
-			badDataset.calibration[1]['calibSampleMetadata'] = pandas.DataFrame(numpy.matrix([[1,1,1],[1,1,1],[1,1,1]]))
+			badDataset.calibration[1]['calibSampleMetadata'] = pandas.DataFrame(numpy.array([[1,1,1],[1,1,1],[1,1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -840,25 +840,25 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='if self.calibration[\'calibFeatureMetadata\'] (basic) does not have the same number of samples as self.calibration[\'calibIntensityData\']'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.calibration['calibFeatureMetadata'] = pandas.DataFrame(numpy.matrix([[1,1,1],[1,1,1],[1,1,1]]))
+			badDataset.calibration['calibFeatureMetadata'] = pandas.DataFrame(numpy.array([[1,1,1],[1,1,1],[1,1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.calibration[\'calibFeatureMetadata\'] (merged) does not have the same number of samples as self.calibration[\'calibIntensityData\']'):
 			badDataset = copy.deepcopy(self.targetedData1)
-			badDataset.calibration[1]['calibFeatureMetadata'] = pandas.DataFrame(numpy.matrix([[1,1],[1,1]]))
+			badDataset.calibration[1]['calibFeatureMetadata'] = pandas.DataFrame(numpy.array([[1,1],[1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.calibration[\'calibFeatureMetadata\'] (basic) does not have a [\'Feature Name\'] column'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.calibration['calibFeatureMetadata'] = pandas.DataFrame(numpy.matrix([[1]]))
+			badDataset.calibration['calibFeatureMetadata'] = pandas.DataFrame(numpy.array([[1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(LookupError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.calibration[\'calibFeatureMetadata\'] (merged) does not have a [\'Feature Name\'] column'):
 			badDataset = copy.deepcopy(self.targetedData1)
-			badDataset.calibration[1]['calibFeatureMetadata'] = pandas.DataFrame(numpy.matrix([[1,1,1],[1,1,1],[1,1,1]]))
+			badDataset.calibration[1]['calibFeatureMetadata'] = pandas.DataFrame(numpy.array([[1,1,1],[1,1,1],[1,1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(LookupError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -888,37 +888,37 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='if self.calibration[\'calibExpectedConcentration\'] (basic) does not have the same number of samples as self.calibration[\'calibIntensityData\']'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.calibration['calibExpectedConcentration'] = pandas.DataFrame(numpy.matrix([[1,1,1],[1,1,1],[1,1,1]]))
+			badDataset.calibration['calibExpectedConcentration'] = pandas.DataFrame(numpy.array([[1,1,1],[1,1,1],[1,1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.calibration[\'calibExpectedConcentration\'] (merged) does not have the same number of samples as self.calibration[\'calibIntensityData\']'):
 			badDataset = copy.deepcopy(self.targetedData1)
-			badDataset.calibration[1]['calibExpectedConcentration'] = pandas.DataFrame(numpy.matrix([[1,1],[1,1]]))
+			badDataset.calibration[1]['calibExpectedConcentration'] = pandas.DataFrame(numpy.array([[1,1],[1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.calibration[\'calibExpectedConcentration\'] (basic) does not have the same number of features as self.calibration[\'calibIntensityData\']'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.calibration['calibExpectedConcentration'] = pandas.DataFrame(numpy.matrix([[1,1]]))
+			badDataset.calibration['calibExpectedConcentration'] = pandas.DataFrame(numpy.array([[1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.calibration[\'calibExpectedConcentration\'] (merged) does not have the same number of features as self.calibration[\'calibIntensityData\']'):
 			badDataset = copy.deepcopy(self.targetedData1)
-			badDataset.calibration[1]['calibExpectedConcentration'] = pandas.DataFrame(numpy.matrix([[1,1]]))
+			badDataset.calibration[1]['calibExpectedConcentration'] = pandas.DataFrame(numpy.array([[1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.calibration[\'calibExpectedConcentration\'] (basic) does not have a [\'Feature Name\'] column'):
 			badDataset = copy.deepcopy(self.targetedData3)
-			badDataset.calibration['calibExpectedConcentration'] = pandas.DataFrame(numpy.matrix([[1]]))
+			badDataset.calibration['calibExpectedConcentration'] = pandas.DataFrame(numpy.array([[1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='if self.calibration[\'calibExpectedConcentration\'] (merged) does not have a [\'Feature Name\'] column'):
 			badDataset = copy.deepcopy(self.targetedData1)
-			badDataset.calibration[1]['calibExpectedConcentration'] = pandas.DataFrame(numpy.matrix([[1,1,1]]))
+			badDataset.calibration[1]['calibExpectedConcentration'] = pandas.DataFrame(numpy.array([[1,1,1]]))
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -5067,6 +5067,38 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 			self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
 			for i in expected['Attributes']:
 				self.assertEqual(expected['Attributes'][i], result.Attributes[i])
+
+		with self.subTest(msg='Basic import BrukerQuant-UR with implicit fileNamePattern from SOP'):
+			expected = copy.deepcopy(self.expectedQuantUR)
+			# Generate
+			result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', unit='mmol/mol Crea')
+			# Remove path from sampleMetadata
+			result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
+			result.calibration['calibSampleMetadata'].drop(['Path'], axis=1, inplace=True)
+
+			# Need to sort samples as different OS have different path order
+			result.sampleMetadata.sort_values('Sample Base Name', inplace=True)
+			sortIndex = result.sampleMetadata.index.values
+			result.intensityData = result.intensityData[sortIndex, :]
+			result.expectedConcentration = result.expectedConcentration.loc[sortIndex,:]
+			result.sampleMetadata = result.sampleMetadata.reset_index(drop=True)
+			result.expectedConcentration = result.expectedConcentration.reset_index(drop=True)
+
+			# Test
+			pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+			pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+			numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
+			pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+			# Calibration
+			pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+			pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+			numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
+			pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
+			# Attributes, no check of 'Log'
+			self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
+			for i in expected['Attributes']:
+				self.assertEqual(expected['Attributes'][i], result.Attributes[i])
+
 
 
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)

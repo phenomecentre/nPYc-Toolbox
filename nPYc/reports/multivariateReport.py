@@ -22,6 +22,7 @@ import re
 import numbers
 import shutil
 from IPython.display import display
+from warnings import warn
 
 from ..__init__ import __version__ as version
 
@@ -98,7 +99,7 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 			raise ValueError('r_threshold must be a positive number')
 			
 	if not isinstance(hotellings_alpha, numbers.Number) & ((hotellings_alpha < 1) & (hotellings_alpha > 0)):
-		 raise ValueError('hotellings_alpha must be a number in the range 0 to 1')
+		raise ValueError('hotellings_alpha must be a number in the range 0 to 1')
 
 	if excludeFields is not None:
 		if not isinstance(excludeFields, list):
@@ -211,12 +212,15 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 
 		# elif all((my == pandas._libs.tslib.NaTType or my == pandas._libs.tslib.Timestamp) for my in myset):
 		# 	pass
+		elif str in myset:
+			data.sampleMetadata[plotdata] = data.sampleMetadata[plotdata].astype(str)
+			warning_string = "Ensure datatype of all entries in \"{0}\" are consistent. Column \"{0}\" has been typecasted to str".format(plotdata)
+			warn(warning_string)
 
 		else:
-			print(plotdata)
-			print(myset)
-			print('Ensure datatype of all entries in ' + plotdata + ' is consistent')
-			return
+			warning_string = "Ensure datatype of all entries in \"{0}\" are consistent. Skipping Column \"{0}\"".format(plotdata)
+			warn(warning_string)
+			continue
 
 		# Change type if uniform, uniformBySampleType or unique (and categorical) - do not plot these
 		out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Plot Sample Type'])

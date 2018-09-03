@@ -13,6 +13,7 @@ from ..enumerations import VariableType, SampleType, AssayRole
 from ..utilities import rsd
 from ._plotVariableScatter import plotVariableScatter
 
+
 def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=None, featName=False, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotRSDs(dataset, ratio=False, savePath=None, color=None \*\*kwargs)
@@ -45,7 +46,7 @@ def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=No
 		xLim = (minRSD, maxRSD)
 
 	if logx:
-		xlab = 'Log RSD (%)'
+		xlab = 'RSD (%)'
 	else:
 		xlab = 'RSD (%)'
 
@@ -120,7 +121,7 @@ def plotRSDsInteractive(dataset, ratio=False, logx=True):
 	if logx:
 		xaxis = dict(
 					type='log',
-					title='Log RSD (%)',
+					title='RSD (%)',
 					autorange=True
 					)
 	else:

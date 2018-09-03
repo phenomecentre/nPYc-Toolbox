@@ -1143,23 +1143,51 @@ class Dataset:
 		else:
 			raise NotImplementedError
 
-	def addFeatureInfo(self, descriptionFormat=None, filePath=None, **kwargs):
+	def addFeatureInfo(self, filePath=None, descriptionFormat=None, featureId=None, **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`featureMetadata` table.
 
 		Possible options:
 
 		* **'Reference Ranges'** JSON file specifying upper and lower reference ranges for a feature.
-
-		:param str descriptionFormat:
 		:param str filePath: Path to the additional data to be added
+		:param str descriptionFormat:
+		:param str featureId: Unique feature Id field in the metadata file provided to match with internal Feature Name
 		:raises NotImplementedError: if the descriptionFormat is not understood
 		"""
-		if descriptionFormat.lower() == 'reference ranges':
+		if descriptionFormat is None:
+			if featureId is None:
+				raise ValueError('Please provide a valid featureId')
+
+			# Read new data and copy the current state of featureMetadata
+			csvData = pandas.read_csv(filePath)
+
+			if  not any(csvData[featureId].isin(self.featureMetadata['Feature Name'])):
+				raise ValueError('No matching features found in csv file provided.')
+
+			currentMetadata = self.featureMetadata.copy()
+
+			# Overwrite previously existing columns
+			columnsToRemove = csvData.columns
+			if 'Feature Name' in columnsToRemove:
+				columnsToRemove = columnsToRemove.drop(['Feature Name'])
+
+			for column in columnsToRemove:
+				if column in currentMetadata.columns:
+					currentMetadata.drop(column, axis=1, inplace=True)
+
+			currentMetadata = currentMetadata.merge(csvData, how='left', left_on='Feature Name',
+													right_on=featureId, sort=False)
+
+			# Avoid duplicating feature ID field
+			if featureId != 'Feature Name':
+				currentMetadata.drop(featureId, axis=1, inplace=True)
+
+			self.featureMetadata = currentMetadata
+
+		elif descriptionFormat.lower() == 'reference ranges':
 			from ..utilities._addReferenceRanges import addReferenceRanges
 			addReferenceRanges(self.featureMetadata, filePath)
-		else:
-			raise NotImplementedError
 
 	def _matchBasicCSV(self, filePath):
 		"""
@@ -1218,6 +1246,13 @@ class Dataset:
 		joinedTable = pandas.merge(currentMetadata, csvData, how='left', left_on='Sample File Name',
 								   right_on='Sample File Name', sort=False)
 
+		merged_samples = pandas.merge(currentMetadata, csvData, how='inner', left_on='Sample File Name',
+								   right_on='Sample File Name', sort=False)
+
+		merged_samples = merged_samples['Sample File Name']
+
+		merged_indices = joinedTable[joinedTable['Sample File Name'].isin(merged_samples)].index
+
 		# Samples in the CSV file but not acquired will go for sampleAbsentMetadata, for consistency with NPC Lims import
 		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(currentMetadata['Sample File Name']) == False, :]
 
@@ -1246,7 +1281,7 @@ class Dataset:
 
 		# By default everything in the CSV has metadata available and samples mentioned there will not be masked
 		# unless Include Sample field was == False
-		joinedTable['Metadata Available'] = True
+		joinedTable.loc[merged_indices, 'Metadata Available'] = True
 
 		# Samples in the folder and processed but not mentioned in the CSV.
 		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False), :]
@@ -1343,8 +1378,17 @@ class Dataset:
 		# Remove already present columns
 		if 'Sampling ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sampling ID'], axis=1, inplace=True)
 		if 'Subject ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Subject ID'], axis=1, inplace=True)
+
+		merged_samples = pandas.merge(self.sampleMetadata, self.limsFile, how='inner',left_on='Sample Base Name Normalised',
+									  right_on='Assay data name Normalised', sort=False)
+
 		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.limsFile, left_on='Sample Base Name Normalised',
 										   right_on='Assay data name Normalised', how='left', sort=False)
+
+		merged_samples = merged_samples['Sample File Name']
+
+		merged_indices = self.sampleMetadata[self.sampleMetadata['Sample File Name'].isin(merged_samples)].index
+
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
 		self.sampleMetadata.loc[:, 'Data Present'] = self.sampleMetadata['Sample File Name'].str.match('.+', na=False)
@@ -1419,6 +1463,8 @@ class Dataset:
 		self.sampleMetadata.loc[(self.sampleMetadata['Sampling ID'] == 'nan').tolist(), 'Sampling ID'] = 'Not specified'
 		self.sampleMetadata.loc[(self.sampleMetadata[
 									 'Sampling ID'] == '').tolist(), 'Sampling ID'] = 'Present but undefined in the LIMS file'
+		# Metadata Available field is set to True
+		self.sampleMetadata.loc[merged_indices, 'Metadata Available'] = True
 
 		# Log
 		self.Attributes['Log'].append([datetime.now(), 'LIMS sample IDs matched from %s' % (pathToLIMSfile)])

@@ -22,7 +22,7 @@
 
 {% if 'Excluded Details' in item %}
 	{% if 'isFinalReport' in item %}
-    	{%if (item['isFinalReport'] == True) and (item['studySamplesExcluded'] == True)%}
+    	{%if (item['isFinalReport'] == True) and ('StudySamples Exclusion Details' in item)%}
         	<h3>Study samples excluded on analytical criteria</h3><!--ie those marked with (_x)-->
 	    {{ item['StudySamples Exclusion Details'].to_html() }}
 	    {% endif %}

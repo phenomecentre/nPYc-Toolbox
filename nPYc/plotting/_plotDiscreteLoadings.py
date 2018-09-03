@@ -75,7 +75,7 @@ def plotDiscreteLoadings(npycDataset, pcaModel, nbComponentPerRow=3, firstCompon
 		# Add y-label to first plot of row
 		if rowPos == 0:
 			currentAxes.axes.set_yticks(numpy.arange(0, pcaModel.loadings.shape[1]))
-			currentAxes.axes.set_yticklabels(npycDataset.featureMetadata[metadataColumn].values)
+			currentAxes.axes.set_yticklabels(npycDataset.featureMetadata[metadataColumn].values[sortOrder])
 			currentAxes.set_ylim((-0.5, pcaModel.loadings.shape[1] - 0.5))
 
 	# Random 'ValueError: bottom cannot be >= top' from mpl which they cannot reliably correct

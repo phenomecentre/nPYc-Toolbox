@@ -100,7 +100,6 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 		NotInCSVmaskEx = sampleMetadataExcluded['Metadata Available'] == False
 		UnclearRolemaskEx = (SSmaskEx==False) & (SPmaskEx==False) & (ERmaskEx==False) & (NotInCSVmaskEx==False) & (BlankmaskEx == False) & (SRDmaskEx == False)
-
 		sampleSummary['Excluded Details'] = sampleMetadataExcluded.set_index('Sample File Name')
 
 
@@ -129,13 +128,19 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	if (sum(UnclearRolemask) != 0):
 		sampleSummary['UnknownType Details'] = data.sampleMetadata[['Sample File Name']][UnclearRolemask]
 
+	if hasattr(data, 'sampleAbsentMetadata'):
+		if 'Sample File Name' in data.sampleAbsentMetadata.columns:
+			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sample File Name', 'Sample ID']]
+		else:
+			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sampling ID', 'Assay data name', 'LIMS Marked Missing']]
+
 	# Finally - add column of samples already excluded to sampleSummary
 	if excluded != 0:
 		sampleSummary['Acquired']['Already Excluded'] = [excluded, sum(SSmaskEx), sum(SPmaskEx), sum(ERmaskEx),
 														 sum(SRDmaskEx), sum(BlankmaskEx), sum(NotInCSVmaskEx), sum(UnclearRolemaskEx)]
 		# Save field with Study Samples exclusions
 		if (sum(SSmaskEx) != 0):
-			sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name']][SSmaskEx]
+			sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', 'Exclusion Details']][SSmaskEx]
 
 	# Drop rows where no samples present for that datatype
 	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
@@ -176,7 +181,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		print('\n')
 
 		if 'NotAcquired' in sampleSummary:
-			print('Summary of Samples Missing from Acquisition/Import (i.e., present in LIMS but not acquired/imported)')
+			print('Summary of Samples Missing from Acquisition/Import (i.e., present in metadata file but not acquired/imported)')
 			display(sampleSummary['NotAcquired'])
 			print('\n')
 
@@ -188,11 +193,6 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		if 'UnknownType Details' in sampleSummary:
 			print('Details of Samples with Unknown Type')
 			display(sampleSummary['UnknownType Details'])
-			print('\n')
-
-		if 'NotAcquired Details' in sampleSummary:
-			print('Details of Samples Missing from Acquisition/Import (and not already excluded)')
-			display(sampleSummary['NotAcquired Details'])
 			print('\n')
 
 		if 'MarkedToExclude Details' in sampleSummary:

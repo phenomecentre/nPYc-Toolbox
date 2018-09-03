@@ -1,6 +1,6 @@
 {
-	"methodName":"Bruker BI-LISA Data",
-	"fileNamePattern":".*?results\\.xml$",
+	"methodName":"Bruker BI-QUANT-PS Data",
+	"fileNamePattern":".*?plasma_quant_report_b\\.xml$",
 	"externalID":[],
 	"sampleMetadataNotExported":["Acqu Date", "Acqu Time", "Sample Type"],
 	"featureMetadataNotExported":["comment"],

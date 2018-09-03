@@ -127,14 +127,14 @@ class test_utilities_ms(unittest.TestCase):
 
 	def test_rsd(self):
 
-		testData = numpy.matrix([[1, 2, 3], [1, 5, 10], [1, -5,-10]])
+		testData = numpy.array([[1, 2, 3], [1, 5, 10], [1, -5,-10]])
 		testResults = nPYc.utilities.ms.rsd(testData)
 
-		testData = numpy.matrix([[1, 2, 3], [1, 2, 3], [1, 2, numpy.nan]])
+		testData = numpy.array([[1, 2, 3], [1, 2, 3], [1, 2, numpy.nan]])
 		testResultsWithNaNs = nPYc.utilities.ms.rsd(testData)
 
-		numpy.testing.assert_allclose(testResults, [[0., 628.4902545, 828.65352631]], err_msg='RSD calculations not correct.')
-		numpy.testing.assert_allclose(testResultsWithNaNs, [[0, 0, numpy.finfo(numpy.float64).max]], err_msg='RSD calculation not handling NaNs correctly.')
+		numpy.testing.assert_allclose(testResults, [0., 628.4902545, 828.65352631], err_msg='RSD calculations not correct.')
+		numpy.testing.assert_allclose(testResultsWithNaNs, [0, 0, numpy.finfo(numpy.float64).max], err_msg='RSD calculation not handling NaNs correctly.')
 
 
 	def test_sequentialPrecision(self):
