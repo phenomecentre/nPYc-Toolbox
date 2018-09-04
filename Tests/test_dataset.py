@@ -877,63 +877,57 @@ class test_dataset_synthetic(unittest.TestCase):
 		pandas.util.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
 
 
-	# def test_exportdataset_filterMetadata(self):
-	# 	"""
-	# 	Test that csv files saved with `filterMetadata` match the dataset with these sampleMetadata and featureMetadata columns removed.
-	# 	"""
-	# 	featureMetaCols = list(set(self.data.featureMetadata.columns.tolist()) - set(['Feature Name']))
-	# 	sampleMetaCols  = list(set(self.data.sampleMetadata.columns.tolist()) - set(['Sample File Name']))
-	# 	randomFeatCols = [1] #numpy.random.randint(0, len(featureMetaCols), size=numpy.random.randint(int(len(featureMetaCols) / 2) + 1)).tolist()
-	# 	randomSampCols = numpy.random.randint(0, len(sampleMetaCols), size=numpy.random.randint(int(len(sampleMetaCols) / 3) + 1)).tolist()
-	# 	self.data.Attributes['featureMetadataNotExported'] = [x for i, x in enumerate(featureMetaCols) if i in randomFeatCols] + ['not an existing featureMeta column']
-	# 	self.data.Attributes['sampleMetadataNotExported'] = [x for i, x in enumerate(sampleMetaCols) if i in randomSampCols]  + ['not an existing sampleMeta column']
-	#
-	# 	with tempfile.TemporaryDirectory() as tmpdirname:
-	# 		projectName = 'tempFile'
-	# 		self.data.name = projectName
-	#
-	#
-	# 		print(randomFeatCols)
-	# 		print(randomSampCols)
-	# 		print(self.data.Attributes['featureMetadataNotExported'])
-	# 		print(self.data.Attributes['sampleMetadataNotExported'])
-	# 		print(self.data.featureMetadata.columns)
-	#
-	#
-	# 		self.data.exportDataset(destinationPath=tmpdirname, saveFormat='UnifiedCSV', withExclusions=False, filterMetadata=True)
-	#
-	# 		# Load exported data back in, cast types back to str
-	#
-	# 		filePath = os.path.join(tmpdirname, projectName + '_combinedData.csv')
-	# 		savedData = pandas.read_csv(filePath)
-	#
-	# 		print(self.data.sampleMetadata.shape[1])
-	# 		print(savedData.iloc[self.data.featureMetadata.shape[1]:, self.data.sampleMetadata.shape[1] - len(randomSampCols):])
-	#
-	# 		intensityData = savedData.iloc[self.data.featureMetadata.shape[1]:, self.data.sampleMetadata.shape[1]+1 - len(sampleMetaCols) - 1:].apply(pandas.to_numeric)
-	#
-	# 		# Extract feature metadata
-	# 		featureMetadata = savedData.iloc[:self.data.featureMetadata.shape[1], self.data.sampleMetadata.shape[1]+1:].T
-	# 		featureMetadata.columns = savedData.iloc[:self.data.featureMetadata.shape[1], 0]
-	# 		featureMetadata.reset_index(drop=True, inplace=True)
-	# 		featureMetadata.columns.name = None
-	#
-	# 		# Extract sample metadata
-	# 		sampleMetadata = savedData.iloc[self.data.featureMetadata.shape[1]:, :self.data.sampleMetadata.shape[1]+1]
-	# 		sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(int).astype(str)
-	# 		sampleMetadata.drop('Unnamed: 0', axis=1, inplace=True)
-	# 		sampleMetadata.reset_index(drop=True, inplace=True)
-	#
-	# 		featureMetadata['Feature Name'] = featureMetadata['Feature Name'].astype(str)
-	# 		sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
-	#
-	# 	# Remove the same columns
-	# 	self.data.featureMetadata.drop([x for i, x in enumerate(featureMetaCols) if i in randomFeatCols], axis=1, inplace=True)
-	# 	self.data.sampleMetadata.drop( [x for i, x in enumerate(sampleMetaCols) if i in randomSampCols],  axis=1, inplace=True)
-	#
-	# 	numpy.testing.assert_equal(self.data.intensityData, intensityData)
-	# 	pandas.util.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
-	# 	pandas.util.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
+	def test_exportdataset_filterMetadata(self):
+		"""
+		Test that csv files saved with `filterMetadata` match the dataset with these sampleMetadata and featureMetadata columns removed.
+		"""
+		featureMetaCols = list(set(self.data.featureMetadata.columns.tolist()) - set(['Feature Name']))
+		sampleMetaCols  = list(set(self.data.sampleMetadata.columns.tolist()) - set(['Sample File Name']))
+		randomFeatCols = [1] #numpy.random.randint(0, len(featureMetaCols), size=numpy.random.randint(int(len(featureMetaCols) / 2) + 1)).tolist()
+		randomSampCols = numpy.random.randint(0, len(sampleMetaCols), size=numpy.random.randint(int(len(sampleMetaCols) / 3) + 1)).tolist()
+		self.data.Attributes['featureMetadataNotExported'] = [x for i, x in enumerate(featureMetaCols) if i in randomFeatCols] + ['not an existing featureMeta column']
+		self.data.Attributes['sampleMetadataNotExported'] = [x for i, x in enumerate(sampleMetaCols) if i in randomSampCols]  + ['not an existing sampleMeta column']
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			projectName = 'tempFile'
+			self.data.name = projectName
+
+			self.data.exportDataset(destinationPath=tmpdirname, saveFormat='UnifiedCSV', withExclusions=False, filterMetadata=True)
+
+			# Load exported data back in, cast types back to str
+
+			filePath = os.path.join(tmpdirname, projectName + '_combinedData.csv')
+			savedData = pandas.read_csv(filePath)
+
+			featureCols = self.data.featureMetadata.shape[1] - (len(self.data.Attributes['featureMetadataNotExported']) -1)
+			sampleCols = self.data.sampleMetadata.shape[1]+1 - (len(self.data.Attributes['sampleMetadataNotExported']) -1)
+
+			intensityData = savedData.iloc[featureCols:, sampleCols:].apply(pandas.to_numeric)
+
+			# Extract feature metadata
+			featureMetadata = savedData.iloc[:featureCols, sampleCols:].T
+			featureMetadata.columns = savedData.iloc[:featureCols, 0]
+			featureMetadata.reset_index(drop=True, inplace=True)
+			featureMetadata.columns.name = None
+
+			# Extract sample metadata
+			sampleMetadata = savedData.iloc[featureCols:, :sampleCols]
+			sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(int).astype(str)
+			sampleMetadata.drop('Unnamed: 0', axis=1, inplace=True)
+			sampleMetadata.reset_index(drop=True, inplace=True)
+
+			featureMetadata['Feature Name'] = featureMetadata['Feature Name'].astype(str)
+			sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
+
+		# Remove the same columns
+		self.data.featureMetadata.drop([x for i, x in enumerate(featureMetaCols) if i in randomFeatCols], axis=1, inplace=True)
+		self.data.sampleMetadata.drop( [x for i, x in enumerate(sampleMetaCols) if i in randomSampCols],  axis=1, inplace=True)
+
+		numpy.testing.assert_array_almost_equal(self.data.intensityData, intensityData)
+		for column in featureMetadata.columns:
+			pandas.util.testing.assert_series_equal(self.data.featureMetadata[column], featureMetadata[column], check_dtype=False)
+		for column in sampleMetadata.columns:
+			pandas.util.testing.assert_series_equal(self.data.sampleMetadata[column], sampleMetadata[column], check_dtype=False)
 
 
 	def test_exportDataset_raises(self):
