@@ -916,7 +916,7 @@ class test_plotting_interactive(unittest.TestCase):
 		dataset.sampleMetadata['WaterPeakFail'] = low_area | low_neg | high_area | high_neg
 
 		figure = nPYc.plotting.plotWaterResonanceInteractive(dataset)
-		self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+		self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotCalibrationInteractive(self):
@@ -925,7 +925,7 @@ class test_plotting_interactive(unittest.TestCase):
 												sop='GenericNMRurine')
 
 		figure = nPYc.plotting.plotCalibrationInteractive(dataset)
-		self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+		self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotBaselineInteractive(self):
@@ -942,7 +942,7 @@ class test_plotting_interactive(unittest.TestCase):
 		dataset.sampleMetadata['BaselineFail'] = high_area | high_neg | low_area | low_neg
 
 		figure = nPYc.plotting.plotBaselineInteractive(dataset)
-		self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+		self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotLineWidthInteractive(self):
@@ -953,7 +953,7 @@ class test_plotting_interactive(unittest.TestCase):
 		dataset.sampleMetadata['Line Width (Hz)'] =	 [numpy.nan, 1, 2, 0.9, 0, 1, 1, 1, 1, 1]
 
 		figure = nPYc.plotting.plotLineWidthInteractive(dataset)
-		self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+		self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotLoadingsInteractive(self):
@@ -963,14 +963,14 @@ class test_plotting_interactive(unittest.TestCase):
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(self.dataset)
 
 			figure = nPYc.plotting.plotLoadingsInteractive(self.dataset, pcaModel)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Testing MSDataset, 2 components'):
 
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(self.dataset)
 
 			figure = nPYc.plotting.plotLoadingsInteractive(self.dataset, pcaModel, component=[1, 2])
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Testing NMRDataset, 1 component'):
 			noSamp = numpy.random.randint(100, high=500, size=None)
@@ -980,7 +980,7 @@ class test_plotting_interactive(unittest.TestCase):
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 
 			figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Testing NMRDataset, 2 components'):
 			noSamp = numpy.random.randint(100, high=500, size=None)
@@ -990,7 +990,7 @@ class test_plotting_interactive(unittest.TestCase):
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 
 			figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel, component=[1, 2])
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Testing other dataset, 1 component'):
 			noSamp = numpy.random.randint(100, high=500, size=None)
@@ -1000,7 +1000,7 @@ class test_plotting_interactive(unittest.TestCase):
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 
 			figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Testing other dataset, 2 components'):
 			noSamp = numpy.random.randint(100, high=500, size=None)
@@ -1010,7 +1010,7 @@ class test_plotting_interactive(unittest.TestCase):
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 
 			figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel, component=[1, 2])
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 		with self.subTest(msg='Testing all components'):
@@ -1023,7 +1023,7 @@ class test_plotting_interactive(unittest.TestCase):
 			for i in range(pcaModel.ncomps):
 
 				figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel, component=i)
-				self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+				self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotLoadingsInteractive_raises(self):
@@ -1051,11 +1051,11 @@ class test_plotting_interactive(unittest.TestCase):
 
 		with self.subTest(msg='Continuous varaible'):
 			figure = nPYc.plotting.plotScoresInteractive(self.dataset, pcaModel, 'Detector')
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Discrete variables'):
 			figure = nPYc.plotting.plotScoresInteractive(self.dataset, pcaModel, 'Classes')
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotScoresInteractive_raises(self):
@@ -1075,31 +1075,31 @@ class test_plotting_interactive(unittest.TestCase):
 
 		with self.subTest(msg='Defalt'):
 			figure = nPYc.plotting.plotRSDsInteractive(self.dataset)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Ratio and no xlog'):
 			figure = nPYc.plotting.plotRSDsInteractive(self.dataset, ratio=True, logx=False)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='No external reference'):
 			self.dataset.sampleMetadata.loc[self.dataset.sampleMetadata['SampleType'] == SampleType.ExternalReference, 'SampleType'] = SampleType.StudySample
 			figure = nPYc.plotting.plotRSDsInteractive(self.dataset)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotIonMapInteractive(self):
 
 		with self.subTest(msg='Default'):
 			figure = nPYc.plotting.plotIonMapInteractive(self.dataset)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='With title and log scales'):
 			figure = nPYc.plotting.plotIonMapInteractive(self.dataset, title='Title!', logx=True, logy=True)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='With axis limits'):
 			figure = nPYc.plotting.plotIonMapInteractive(self.dataset, xlim=[100, 500], ylim=[100, 500])
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotIonMapInteractive_raises(self):
@@ -1115,34 +1115,34 @@ class test_plotting_interactive(unittest.TestCase):
 
 		with self.subTest(msg='Default'):
 			figure = nPYc.plotting.plotSpectraInteractive(dataset)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='With xlims'):
 			figure = nPYc.plotting.plotSpectraInteractive(dataset, samples=None, xlim=[3,7])
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Specify samples as int'):
 			figure = nPYc.plotting.plotSpectraInteractive(dataset, samples=1)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Specify samples as list'):
 			figure = nPYc.plotting.plotSpectraInteractive(dataset, samples=[1, 0, 3, 5])
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Specify samples as mask'):
 			mask = dataset.sampleMask
 			mask[0] = False
 			figure = nPYc.plotting.plotSpectraInteractive(dataset, samples=mask)
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Specify label text'):
 			figure = nPYc.plotting.plotSpectraInteractive(dataset, sampleLabels='SampleType')
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 		with self.subTest(msg='Specify feature names'):
 			dataset.featureMetadata['A new column'] = dataset.featureMetadata['ppm']
 			figure = nPYc.plotting.plotSpectraInteractive(dataset, featureNames='A new column')
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotSpectraInteractive_raises(self):
@@ -1165,27 +1165,26 @@ class test_plotting_interactive(unittest.TestCase):
 
 		dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=nPYc.enumerations.VariableType.Spectral)
 
-		with tempfile.TemporaryDirectory() as tmpdirname:
-			##
-			# Basic output
-			##
-			figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset)
+		##
+		# Basic output
+		##
+		figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset)
 
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
-			
-			##
-			# Classes
-			##
-			figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset, classes='Classes', xlim=(1,9), average='mean')
+		self.assertIsInstance(figure, plotly.graph_objs.Figure)
+		
+		##
+		# Classes
+		##
+		figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset, classes='Classes', xlim=(1,9), average='mean')
 
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+		self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
-			##
-			# Loq Y + title + NMR
-			##
-			figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset, title='Figure Name')
+		##
+		# Loq Y + title + NMR
+		##
+		figure = nPYc.plotting.plotSpectralVarianceInteractive(dataset, title='Figure Name')
 
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+		self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotspectralvariance_raises(self):
@@ -1220,7 +1219,7 @@ class test_plotting_interactive(unittest.TestCase):
 
 			figure = nPYc.plotting.correlationSpectroscopyInteractive(dataset, dataset.intensityData[:, 10], mode='SHY')
 
-			self.assertIsInstance(figure, plotly.graph_objs.graph_objs.Figure)
+			self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 class test_plotting_helpers(unittest.TestCase):

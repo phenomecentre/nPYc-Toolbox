@@ -62,7 +62,7 @@ def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, 
 			trace = go.Scatter(
 				x = features,
 				y = X[i, :],
-				name = dataset.sampleMetadata.loc[i, sampleLabels],
+				name = str(dataset.sampleMetadata.loc[i, sampleLabels]),
 				mode = 'lines',
 				)
 			data.append(trace)

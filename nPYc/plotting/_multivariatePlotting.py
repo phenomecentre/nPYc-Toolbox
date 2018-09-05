@@ -843,7 +843,7 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 			LOADSline = go.Scatter(
 				x = Xvals,
 				y = numpy.median(dataMasked.intensityData, axis=0),
-				mode = 'line',
+				mode = 'lines',
 				line = dict(
 					color = 'black',
 					width = 1
