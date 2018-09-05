@@ -919,15 +919,18 @@ class test_dataset_synthetic(unittest.TestCase):
 			featureMetadata['Feature Name'] = featureMetadata['Feature Name'].astype(str)
 			sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
 
-		# Remove the same columns
-		self.data.featureMetadata.drop([x for i, x in enumerate(featureMetaCols) if i in randomFeatCols], axis=1, inplace=True)
-		self.data.sampleMetadata.drop( [x for i, x in enumerate(sampleMetaCols) if i in randomSampCols],  axis=1, inplace=True)
-
+		# Check we did not break the data we kept
 		numpy.testing.assert_array_almost_equal(self.data.intensityData, intensityData)
 		for column in featureMetadata.columns:
 			pandas.util.testing.assert_series_equal(self.data.featureMetadata[column], featureMetadata[column], check_dtype=False)
 		for column in sampleMetadata.columns:
 			pandas.util.testing.assert_series_equal(self.data.sampleMetadata[column], sampleMetadata[column], check_dtype=False)
+
+		# Check excluded columns are not in the new tables
+		for column in randomFeatCols:
+			self.assertFalse(column in featureMetadata.columns)
+		for column in randomSampCols:
+			self.assertFalse(column in sampleMetadata.columns)
 
 
 	def test_exportDataset_raises(self):
