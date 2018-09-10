@@ -6,7 +6,7 @@ from collections import OrderedDict
 import matplotlib.pyplot as plt
 import seaborn as sns
 import copy
-from IPython.display import display 
+from IPython.display import display
 import warnings
 import re
 import shutil
@@ -52,7 +52,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
 
     acceptableOptions = {'feature summary', 'correlation to dilution',
                          'batch correction assessment',
-                         'batch correction summary', 'feature selection', 'final report'}
+                         'batch correction summary', 'feature selection', 'final report', 'final report abridged'}
 
     # Check inputs
     if not isinstance(dataset, MSDataset):
@@ -111,11 +111,11 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
         _batchCorrectionAssessmentReport(msData, destinationPath)
     elif reportType.lower() == 'batch correction summary':
         _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath)
-    elif reportType.lower() == 'final report':
-        _finalReport(msData, destinationPath, pcaModel)
+    elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged'):
+        _finalReport(msData, destinationPath, pcaModel, reportType=reportType)
 
 
-def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFiltering=True):
+def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFiltering=True, reportType='final report'):
     """
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
@@ -145,6 +145,11 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
     item['ERcount'] = str(sum(ERmask))
     item['LRcount'] = str(sum(LRmask))
     item['corrMethod'] = dataset.Attributes['corrMethod']
+
+    # Mean intensities of Study Pool samples (for future plotting segmented by intensity)
+    meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[SPmask, :], axis=0))
+    meanIntensitiesSP[numpy.mean(dataset.intensityData[SPmask, :], axis=0) == 0] = numpy.nan
+    meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
 
     sampleSummary['isFinalReport'] = True
     if 'StudySamples Exclusion Details' in sampleSummary:
@@ -245,6 +250,28 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
         display(item['FeatureSelectionTable'])
         print('\n')
 
+    # Histogram of correlation to dilution and RSD in study pool samples (for abridged version)
+    if destinationPath:
+
+            # RSD histogram
+            item['finalRsdHist'] = os.path.join(graphicsPath,
+                                                           item['Name'] + '_rsdSP.' + dataset.Attributes[
+                                                               'figureFormat'])
+            saveAs = item['finalRsdHist']
+
+            histogram(dataset.rsdSP,
+                   xlabel='RSD',
+                   histBins=dataset.Attributes['histBins'],
+                   quantiles=dataset.Attributes['quantiles'],
+                   inclusionVector=numpy.exp(meanIntensitiesSP),
+                   logx=False,
+ #                  xlim=(0, 100),
+                   savePath=saveAs,
+                   figureFormat=dataset.Attributes['figureFormat'],
+                   dpi=dataset.Attributes['dpi'],
+                   figureSize=dataset.Attributes['figureSize'])
+
+
     # Figure 2: Final TIC
     if destinationPath:
         item['finalTIC'] = os.path.join(graphicsPath, item['Name'] + '_finalTIC.' + dataset.Attributes['figureFormat'])
@@ -341,6 +368,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
     # Write HTML if saving
     ##
     if destinationPath:
+
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
             if os.path.join(destinationPath, 'graphics') in str(item[key]):
@@ -350,7 +378,13 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
         from jinja2 import Environment, FileSystemLoader
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-        template = env.get_template('MS_FinalSummaryReport.html')
+
+        if reportType.lower() == 'final report':
+            template = env.get_template('MS_FinalSummaryReport.html')
+
+        elif reportType.lower() == 'final report abridged':
+            template = env.get_template('MS_FinalSummaryReport_Abridged.html')
+
         filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
 
         f = open(filename,'w')
@@ -642,7 +676,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     Report on feature quality
     Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
     """
-    
+
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
@@ -652,7 +686,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
     LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
-    
+
     # Set up template item and save required info
     item = dict()
     item['Name'] = dataset.name
@@ -664,8 +698,8 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     item['ERcount'] = str(sum(ERmask))
     item['LRcount'] = str(sum(LRmask))
     item['corrMethod'] = dataset.Attributes['corrMethod']
-    
-    
+
+
     ##
     # Report stats
     ##
@@ -681,7 +715,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
         graphicsPath = None
 
     # Feature selection parameters and numbers passing
-    
+
     # rsdSP <= rsdSS
     rsdSS = rsd(dataset.intensityData[SSmask, :])
     item['rsdSPvsSSvarianceRatio'] = str(dataset.Attributes['varianceRatio'])

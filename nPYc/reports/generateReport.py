@@ -49,7 +49,7 @@ def generateReport(data, reportType, destinationPath=None, **kwargs):
 		raise TypeError('data must be an instance of nPYc.Dataset')
 	
 	if isinstance(data, MSDataset):
-		acceptAllOptions = {'sample summary', 'feature summary', 'correlation to dilution', 'batch correction assessment', 'batch correction summary', 'feature selection', 'final report'}
+		acceptAllOptions = {'sample summary', 'feature summary', 'correlation to dilution', 'batch correction assessment', 'batch correction summary', 'feature selection', 'final report', 'final report abridged'}
 	elif isinstance(data, NMRDataset):
 		acceptAllOptions = {'sample summary', 'feature summary', 'final report'}
 	elif isinstance(data, TargetedDataset):
