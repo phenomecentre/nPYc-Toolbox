@@ -149,6 +149,8 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
     item['QTypeIter'] = list(range(0, item['NQType']))
     item['TextQType'] = textQType
     item['CountQType'] = countQType
+	
+    sampleSummary=None
 
 
     # Feature summary report
@@ -489,44 +491,46 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
         # Generate sample summary
         sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
+        sampleSummary['isFinalReport'] = True
+        item['sampleSummary'] = sampleSummary
 
-        # Extract summary table for samples acquired
-        sampleSummaryTable = copy.deepcopy(sampleSummary['Acquired'])
-
-        # Drop unwanted columns
-        sampleSummaryTable.drop(['Marked for Exclusion'], axis=1, inplace=True)
-        if 'LIMS marked as missing' in sampleSummaryTable.columns:
-            sampleSummaryTable.drop(['LIMS marked as missing', 'Missing from LIMS'], axis=1, inplace=True)
-        if 'Missing Subject Information' in sampleSummaryTable.columns:
-            sampleSummaryTable.drop(['Missing Subject Information'], axis=1, inplace=True)
-
-        # Rename 'already excluded'
-        sampleSummaryTable.rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
-
-        # Add 'unavailable' column
-        if 'NotAcquired' in sampleSummary:
-            sampleSummaryTable = sampleSummaryTable.join(pandas.DataFrame(data=sampleSummary['NotAcquired']['Marked as Sample'] - sampleSummary['NotAcquired']['Already Excluded'], columns=['Unavailable']), how='left', sort=False)
-        else:
-            sampleSummaryTable['Unavailable'] = 0
-
-        # Update 'All', 'Unavailable' to only reflect sample types present in data
-        sampleSummaryTable.loc['All', 'Unavailable'] = sum(sampleSummaryTable['Unavailable'][1:])
-
-        # Save to item
-        item['SampleSummaryTable'] = sampleSummaryTable
-
-        # Save details of study samples missing from dataset
-        if sampleSummaryTable['Unavailable']['Study Sample'] != 0:
-            item['SamplesMissingInfo'] = sampleSummary['NotAcquired Details'].loc[sampleSummary['NotAcquired Details']['Sampling ID'].isnull() == False, :]
-            item['SamplesMissingInfo'] = item['SamplesMissingInfo'].drop(['LIMS Marked Missing'], axis=1)
-            item['SamplesMissingNo'] = str(sampleSummaryTable['Unavailable']['Study Sample'])
-
-        # Save details of study samples excluded from dataset
-        if hasattr(sampleSummaryTable, 'Excluded'):
-            if sampleSummaryTable['Excluded']['Study Sample'] != 0:
-                item['SamplesExcludedInfo'] = sampleSummary['Excluded Details'].loc[(sampleSummary['Excluded Details']['SampleType'] == SampleType.StudySample) & (sampleSummary['Excluded Details']['AssayRole'] == AssayRole.Assay),:]
-                item['SamplesExcludedInfo'] = item['SamplesExcludedInfo'].drop(['Sample Base Name', 'SampleType', 'AssayRole'], axis=1)
-                item['SamplesExcludedNo'] = str(sampleSummaryTable['Excluded']['Study Sample'])
+#        # Extract summary table for samples acquired
+#        sampleSummaryTable = copy.deepcopy(sampleSummary['Acquired'])
+#
+#        # Drop unwanted columns
+#        sampleSummaryTable.drop(['Marked for Exclusion'], axis=1, inplace=True)
+#        if 'LIMS marked as missing' in sampleSummaryTable.columns:
+#            sampleSummaryTable.drop(['LIMS marked as missing', 'Missing from LIMS'], axis=1, inplace=True)
+#        if 'Missing Subject Information' in sampleSummaryTable.columns:
+#            sampleSummaryTable.drop(['Missing Subject Information'], axis=1, inplace=True)
+#
+#        # Rename 'already excluded'
+#        sampleSummaryTable.rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
+#
+#        # Add 'unavailable' column
+#        if 'NotAcquired' in sampleSummary:
+#            sampleSummaryTable = sampleSummaryTable.join(pandas.DataFrame(data=sampleSummary['NotAcquired']['Marked as Sample'] - sampleSummary['NotAcquired']['Already Excluded'], columns=['Unavailable']), how='left', sort=False)
+#        else:
+#            sampleSummaryTable['Unavailable'] = 0
+#
+#        # Update 'All', 'Unavailable' to only reflect sample types present in data
+#        sampleSummaryTable.loc['All', 'Unavailable'] = sum(sampleSummaryTable['Unavailable'][1:])
+#
+#        # Save to item
+#        item['SampleSummaryTable'] = sampleSummaryTable
+#
+#        # Save details of study samples missing from dataset
+#        if sampleSummaryTable['Unavailable']['Study Sample'] != 0:
+#            item['SamplesMissingInfo'] = sampleSummary['NotAcquired Details'].loc[sampleSummary['NotAcquired Details']['Sampling ID'].isnull() == False, :]
+#            item['SamplesMissingInfo'] = item['SamplesMissingInfo'].drop(['LIMS Marked Missing'], axis=1)
+#            item['SamplesMissingNo'] = str(sampleSummaryTable['Unavailable']['Study Sample'])
+#
+#        # Save details of study samples excluded from dataset
+#        if hasattr(sampleSummaryTable, 'Excluded'):
+#            if sampleSummaryTable['Excluded']['Study Sample'] != 0:
+#                item['SamplesExcludedInfo'] = sampleSummary['Excluded Details'].loc[(sampleSummary['Excluded Details']['SampleType'] == SampleType.StudySample) & (sampleSummary['Excluded Details']['AssayRole'] == AssayRole.Assay),:]
+#                item['SamplesExcludedInfo'] = item['SamplesExcludedInfo'].drop(['Sample Base Name', 'SampleType', 'AssayRole'], axis=1)
+#                item['SamplesExcludedNo'] = str(sampleSummaryTable['Excluded']['Study Sample'])
 
         if not destinationPath:
             print('Final Dataset for: ' + item['Name'])
@@ -536,8 +540,11 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
                 print('\t\t' + item['CountQType'][i] + ' features ' + item['TextQType'][i] + '.')
 
             print('\nSample Summary')
-            display(item['SampleSummaryTable'])
-            print('\n')
+            print('Table 1: Summary of samples present')
+            display(sampleSummary['Acquired'])
+            if 'StudySamples Exclusion Details' in sampleSummary:
+                print('Table 2: Summary of samples excluded')
+                display(sampleSummary['StudySamples Exclusion Details'])
 
 
         ## Overall feature quantification parameters
@@ -750,7 +757,11 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
         template = env.get_template('generateReportTargeted.html')
         filename = os.path.join(destinationPath, tData.name + '_report_' + reportTypeCases[reportType] + '.html')
         f = open(filename, 'w')
-        f.write(template.render(item=item, version=version, graphicsPath=graphicsPath, pcaPlots=pcaModel))
+        f.write(template.render(item=item, 
+								version=version, 
+								graphicsPath=graphicsPath, 
+								sampleSummary=sampleSummary,
+								pcaPlots=pcaModel))
         f.close()
 
         copyBackingFiles(toolboxPath(), graphicsPath)
