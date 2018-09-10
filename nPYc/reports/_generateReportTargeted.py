@@ -84,23 +84,20 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
     sns.set_style("whitegrid")
 
-    # Create directory to save destinationPath
-    if destinationPath:
+    if destinationPath is not None:
         reportTypeCases = {'feature summary': 'featureSummary',
                            'merge loq assessment': 'mergeLoqAssessment',
                            'final report': 'finalSummary'}
-        #reportTypeCase = reportType.title().replace(" ", "")
-        #reportTypeCase = reportTypeCase[0].lower() + reportTypeCase[1:]
-        graphicsPath = os.path.join(destinationPath, 'graphics')
-        saveDir = os.path.join(graphicsPath,  'report_' + reportTypeCases[reportType])
-        # If directory exists delete directory and contents
-        if os.path.exists(saveDir):
-            shutil.rmtree(saveDir)
-
-        # Create directory to save destinationPath
-        os.makedirs(saveDir)
-
+        
+        if not os.path.exists(destinationPath):
+            os.makedirs(destinationPath)
+        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+            os.makedirs(os.path.join(destinationPath, 'graphics'))
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_' + reportTypeCases[reportType])
+        if not os.path.exists(graphicsPath):
+            os.makedirs(graphicsPath)
     else:
+        graphicsPath = None
         saveAs = None
 
     # Apply sample/feature masks if exclusions to be applied
@@ -232,7 +229,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
         # Figure 1: Acquisition structure colored by limits of quantification
         if destinationPath:
-            item['AcquisitionStructure'] = os.path.join(saveDir, item['Name'] + '_AcquisitionStructure.' + tData.Attributes['figureFormat'])
+            item['AcquisitionStructure'] = os.path.join(graphicsPath, item['Name'] + '_AcquisitionStructure.' + tData.Attributes['figureFormat'])
             saveAs = item['AcquisitionStructure']
         else:
             print('Figure 1: Acquisition structure colored by Limits Of Quantification.')
@@ -272,7 +269,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
             # Figure 2: Feature Accuracy Plot
             if withAccPrec:
                 if destinationPath:
-                    item['FeatureAccuracyPlot'].append(os.path.join(saveDir, item['Name'] + '_FeatureAccuracy' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
+                    item['FeatureAccuracyPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureAccuracy' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureAccuracyPlot'][i]
                 else:
                     print('\nFigure ' + item['figTabNumber']['2'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
@@ -292,7 +289,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
             # Figure 3: Feature Precision Plot, or RSD Plot
             if withAccPrec:
                 if destinationPath:
-                    item['FeaturePrecisionPlot'].append(os.path.join(saveDir, item['Name'] + '_FeaturePrecision' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
+                    item['FeaturePrecisionPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeaturePrecision' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeaturePrecisionPlot'][i]
                 else:
                     print('\nFigure ' + item['figTabNumber']['3'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
@@ -305,7 +302,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
                                       figureSize=tmpData.Attributes['figureSize'])
             elif withRSD:
                 if destinationPath:
-                    item['FeatureRSDPlot'].append(os.path.join(saveDir, item['Name'] + '_FeatureRSD' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
+                    item['FeatureRSDPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureRSD' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureRSDPlot'][i]
                 else:
                     print('\nFigure ' + item['figTabNumber']['3'][i] + ': Measurements RSD for features ' + item['TextQType'][i] + ' in all samples (by sample type).')
@@ -326,7 +323,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
             # Figure 4: Measured concentrations distribution, split by sample types.
             if destinationPath:
-                item['FeatureConcentrationDistribution'].append(os.path.join(saveDir, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i]))
+                item['FeatureConcentrationDistribution'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i]))
                 saveAs = item['FeatureConcentrationDistribution'][i]
             else:
                 item['FeatureConcentrationDistribution'].append(None)
@@ -407,7 +404,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
         # Figure 1: Measured concentrations pre and post LOQ
         if destinationPath:
-            item['ConcentrationPrePostMergeLOQ'] = os.path.join(saveDir, item['Name'] + '_ConcentrationPrePostMergeLOQ')
+            item['ConcentrationPrePostMergeLOQ'] = os.path.join(graphicsPath, item['Name'] + '_ConcentrationPrePostMergeLOQ')
             saveAs = item['ConcentrationPrePostMergeLOQ']
         else:
             print('Figure 1: Measured concentrations pre and post LOQ merge, split by batch and sample types.')
@@ -565,7 +562,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
 
         if destinationPath:
-            item['AcquisitionStructure'] = os.path.join(saveDir, item['Name'] + '_AcquisitionStructure.' + tData.Attributes['figureFormat'])
+            item['AcquisitionStructure'] = os.path.join(graphicsPath, item['Name'] + '_AcquisitionStructure.' + tData.Attributes['figureFormat'])
             saveAs = item['AcquisitionStructure']
         else:
             print('Acquisition Structure')
@@ -603,7 +600,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
             ## Figure 2: Feature Accuracy Plot
             if withAccPrec:
                 if destinationPath:
-                    item['FeatureAccuracyPlot'].append(os.path.join(saveDir, item['Name'] + '_FeatureAccuracy' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
+                    item['FeatureAccuracyPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureAccuracy' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureAccuracyPlot'][i]
                 else:
                     print('\nFigure ' + item['figTabNumber']['2'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
@@ -622,7 +619,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
             ## Figure 3: Feature Precision Plot, or RSD Plot
             if withAccPrec:
                 if destinationPath:
-                    item['FeaturePrecisionPlot'].append(os.path.join(saveDir, item['Name'] + '_FeaturePrecision' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
+                    item['FeaturePrecisionPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeaturePrecision' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeaturePrecisionPlot'][i]
                 else:
                     print('\nFigure ' + item['figTabNumber']['3'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
@@ -635,7 +632,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
                                       figureSize=tmpData.Attributes['figureSize'])
             elif withRSD:
                 if destinationPath:
-                    item['FeatureRSDPlot'].append(os.path.join(saveDir, item['Name'] + '_FeatureRSD' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
+                    item['FeatureRSDPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureRSD' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureRSDPlot'][i]
                 else:
                     print('\nFigure ' + item['figTabNumber']['3'][i] + ': Measurements RSD for features ' + item['TextQType'][i] + ' in all samples (by sample type).')
@@ -655,7 +652,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
             ## Figure 4: Measured concentrations distribution, split by sample types.
             if destinationPath:
-                item['FeatureConcentrationDistribution'].append(os.path.join(saveDir, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i]))
+                item['FeatureConcentrationDistribution'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i]))
                 saveAs = item['FeatureConcentrationDistribution'][i]
             else:
                 item['FeatureConcentrationDistribution'].append(None)
