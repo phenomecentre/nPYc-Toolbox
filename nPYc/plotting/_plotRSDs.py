@@ -14,7 +14,7 @@ from ..utilities import rsd
 from ._plotVariableScatter import plotVariableScatter
 
 
-def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=None, featName=False, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, savePath=None, color=None, featName=False, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotRSDs(dataset, ratio=False, savePath=None, color=None \*\*kwargs)
 
@@ -26,6 +26,7 @@ def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=No
 
 	:param Dataset dataset: Dataset object to plot, the object must have greater that one 'Study Sample' and 'Study-Reference Sample' defined
 	:param bool ratio: If ``True`` plot the ratio of analytical variance to biological variance instead of raw values
+	:param str featureName: featureMetadata column name by which to label features
 	:param bool logx: If ``True`` plot RSDs on a log10 scaled axis
 	:param xlim: Tuple of (min, max) RSD values to plot
 	:type xlim: None or tuple(float, float)
@@ -35,7 +36,7 @@ def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=No
 	:type color: None or seaborn.palettes._ColorPalette
 	:param bool featName: If ``True`` y-axis label is the feature Name, if ``False`` features are numbered.
 	"""
-	rsdTable = _plotRSDsHelper(dataset, ratio=ratio)
+	rsdTable = _plotRSDsHelper(dataset, featureName=featureName, ratio=ratio)
 
 	# Plot
 	if xlim:
@@ -60,10 +61,10 @@ def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=No
 	plotVariableScatter(rsdTable, logX=logx, xLim=xLim, xLabel=xlab, yLabel=ylab, sampletypeColor=True, hLines=None, vLines=None, savePath=savePath, figureFormat=figureFormat, dpi=dpi, figureSize=figureSize)
 
 
-def plotRSDsInteractive(dataset, ratio=False, logx=True):
+def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=True):
 	"""
 	Plotly-based interactive version of :py:func:`plotRSDs`
-	
+
 	Visualise analytical *versus* biological variance.
 
 	Plot RSDs calculated in study-reference samples (analytical variance), versus those calculated in study samples (biological variance). RSDs can be visualised either in absolute terms, or as a ratio to analytical variation (*ratio=*\ ``True``).
@@ -71,11 +72,12 @@ def plotRSDsInteractive(dataset, ratio=False, logx=True):
 	:py:func:`plotRSDsInteractive` requires that the dataset have at least two samples with the :py:attr:`~nPYc.enumerations.AssayRole.PrecisionReference` :term:`assay role`, if present, RSDs calculated on independent sets of :py:attr:`~nPYc.enumerations.AssayRole.PrecisionReference` samples will also be plotted.
 
 	:param Dataset dataset: Dataset object to plot, the object must have greater that one 'Study Sample' and 'Study-Reference Sample' defined
+	:param str featureName: featureMetadata column name by which to label features
 	:param bool ratio: If ``True`` plot the ratio of analytical variance to biological variance instead of raw values
 	:param bool logx: If ``True`` plot RSDs on a log10 scaled axis
 
 	"""
-	rsdTable = _plotRSDsHelper(dataset, ratio=ratio)
+	rsdTable = _plotRSDsHelper(dataset, featureName=featureName, ratio=ratio)
 
 	reversedIndex =  numpy.arange(len(rsdTable)-1,-1, -1)
 	data = []
@@ -145,7 +147,7 @@ def plotRSDsInteractive(dataset, ratio=False, logx=True):
 	return figure
 
 
-def _plotRSDsHelper(dataset, ratio=False):
+def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False):
 	if not dataset.VariableType == VariableType.Discrete:
 		raise ValueError('Only datasets with discreetly sampled variables are supported.')
 
@@ -159,7 +161,7 @@ def _plotRSDsHelper(dataset, ratio=False):
 	precRefMask = numpy.logical_and(precRefMask, dataset.sampleMask)
 	sTypes = list(set(dataset.sampleMetadata.loc[precRefMask, 'SampleType'].values))
 
-	rsdVal['Feature Name'] = dataset.featureMetadata.loc[dataset.featureMask, 'Feature Name'].values
+	rsdVal['Feature Name'] = dataset.featureMetadata.loc[dataset.featureMask, featureName].values
 
 	rsdVal[SampleType.StudyPool] = dataset.rsdSP[dataset.featureMask]
 	ssMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & dataset.sampleMask
