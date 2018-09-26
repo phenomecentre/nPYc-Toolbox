@@ -54,7 +54,9 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
 
     acceptableOptions = {'feature summary', 'correlation to dilution',
                          'batch correction assessment',
-                         'batch correction summary', 'feature selection', 'final report', 'final report abridged', 'final report targeted abridged'}
+                         'batch correction summary', 'feature selection',
+						 'final report', 'final report abridged',
+						 'final report targeted abridged'}
 
     # Check inputs
     if not isinstance(dataset, MSDataset):
@@ -122,6 +124,20 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
 
+	# Create save directory if required
+    if destinationPath is not None:
+        if not os.path.exists(destinationPath):
+            os.makedirs(destinationPath)
+        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+            os.makedirs(os.path.join(destinationPath, 'graphics'))
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
+        if not os.path.exists(graphicsPath):
+            os.makedirs(graphicsPath)
+    else:
+        graphicsPath = None
+        saveAs = None
+
+	# Use cpdName (targeted) to label RSD plot if available
     if (hasattr(dataset.featureMetadata, 'cpdName')):
         featureName = 'cpdName'
         featName=True
@@ -131,11 +147,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
         featName=False
         figureSize=dataset.Attributes['figureSize']
 
-    # Table 1: Sample summary
-    # Generate sample summary
-    sampleSummary = _generateSampleReport(dataset, withExclusions=True, destinationPath=None, returnOutput=True)
-
-    # Define sample masks
+	# Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
     SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
@@ -156,11 +168,17 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
     item['ERcount'] = str(sum(ERmask))
     item['LRcount'] = str(sum(LRmask))
     item['corrMethod'] = dataset.Attributes['corrMethod']
+    figNo = 1
 
     # Mean intensities of Study Pool samples (for future plotting segmented by intensity)
     meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[SPmask, :], axis=0))
     meanIntensitiesSP[numpy.mean(dataset.intensityData[SPmask, :], axis=0) == 0] = numpy.nan
     meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
+
+    # Table 1: Sample summary
+
+    # Generate sample summary
+    sampleSummary = _generateSampleReport(dataset, withExclusions=True, destinationPath=None, returnOutput=True)
 
     sampleSummary['isFinalReport'] = True
     if 'StudySamples Exclusion Details' in sampleSummary:
@@ -168,65 +186,12 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
     else:
         sampleSummary['studySamplesExcluded'] = False
     item['sampleSummary'] = sampleSummary
-    ##
-    # Report stats
-    ##
-    if destinationPath is not None:
-        if not os.path.exists(destinationPath):
-            os.makedirs(destinationPath)
-        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
-            os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
-        if not os.path.exists(graphicsPath):
-            os.makedirs(graphicsPath)
-    else:
-        graphicsPath = None
-        saveAs = None
 
     if not destinationPath:
+        print('Sample Summary')
         print('Table 1: Summary of samples present')
         display(sampleSummary['Acquired'])
 
-    # Figure 1: Acquisition Structure, TIC by sample and batch
-    nBatchCollect = len((numpy.unique(
-        dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
-    if nBatchCollect == 1:
-        item['nBatchesCollect'] = '1 batch'
-    else:
-        item['nBatchesCollect'] = str(nBatchCollect) + ' batches'
-
-    nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[
-                                          ~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
-    if nBatchCorrect == 1:
-        item['nBatchesCorrect'] = '1 batch'
-    else:
-        item['nBatchesCorrect'] = str(nBatchCorrect) + ' batches'
-
-    start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(
-            dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
-    end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(
-            dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
-    item['start'] = start.strftime('%d/%m/%y')
-    item['end'] = end.strftime('%d/%m/%y')
-
-    if destinationPath:
-        item['finalTICbatches'] = os.path.join(graphicsPath,
-                                               item['Name'] + '_finalTICbatches.' + dataset.Attributes['figureFormat'])
-        saveAs = item['finalTICbatches']
-    else:
-        print('Acquisition Structure')
-        print(
-            '\n\tSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
-        print('\n\tBatch correction applied (LOESS regression fitted to SP samples in ' + item[
-            'nBatchesCorrect'] + ') for run-order correction and batch alignment\n')
-        print('Figure 1: Acquisition Structure')
-
-    plotTIC(dataset,
-            savePath=saveAs,
-            addBatchShading=True,
-            figureFormat=dataset.Attributes['figureFormat'],
-            dpi=dataset.Attributes['dpi'],
-            figureSize=dataset.Attributes['figureSize'])
 
     # Table 2: Feature Selection parameters
     FeatureSelectionTable = pandas.DataFrame(
@@ -257,66 +222,100 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
 
     if not destinationPath:
         print('Feature Selection Summary')
-        print('Features selected based on:')
+        print('Figure 2: Features selected based on:')
         display(item['FeatureSelectionTable'])
         print('\n')
 
-    # Histogram of correlation to dilution and RSD in study pool samples (for abridged version)
+    # ONLY 'final report': plot TIC by batch and TIC
+    if (reportType.lower() == 'final report'):
+
+	    # Figure 1: Acquisition Structure, TIC by sample and batch
+	    nBatchCollect = len((numpy.unique(
+	        dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
+	    if nBatchCollect == 1:
+	        item['nBatchesCollect'] = '1 batch'
+	    else:
+	        item['nBatchesCollect'] = str(nBatchCollect) + ' batches'
+
+	    nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[
+	                                          ~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
+	    if nBatchCorrect == 1:
+		        item['nBatchesCorrect'] = '1 batch'
+	    else:
+	        item['nBatchesCorrect'] = str(nBatchCorrect) + ' batches'
+
+	    start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(
+	            dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+	    end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(
+	            dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+	    item['start'] = start.strftime('%d/%m/%y')
+	    item['end'] = end.strftime('%d/%m/%y')
+
+	    if destinationPath:
+	        item['finalTICbatches'] = os.path.join(graphicsPath,
+	                                               item['Name'] + '_finalTICbatches.' + dataset.Attributes['figureFormat'])
+	        saveAs = item['finalTICbatches']
+	    else:
+	        print('Acquisition Structure')
+	        print(
+	            '\n\tSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
+	        print('\n\tBatch correction applied (LOESS regression fitted to SP samples in ' + item[
+	            'nBatchesCorrect'] + ') for run-order correction and batch alignment\n')
+	        print('Figure ' + str(figNo) + ': Acquisition Structure')
+	        figNo = figNo+1
+
+	    plotTIC(dataset,
+	            savePath=saveAs,
+	            addBatchShading=True,
+	            figureFormat=dataset.Attributes['figureFormat'],
+	            dpi=dataset.Attributes['dpi'],
+	            figureSize=dataset.Attributes['figureSize'])
+
+
+	    # Figure 2: Final TIC
+	    if destinationPath:
+	        item['finalTIC'] = os.path.join(graphicsPath, item['Name'] + '_finalTIC.' + dataset.Attributes['figureFormat'])
+	        saveAs = item['finalTIC']
+	    else:
+	        print('Figure ' + str(figNo) + ': Total Ion Count (TIC) for all samples and all features in final dataset.')
+	        figNo = figNo+1
+
+	    plotTIC(dataset,
+	            addViolin=True,
+	            title='',
+	            savePath=saveAs,
+	            figureFormat=dataset.Attributes['figureFormat'],
+	            dpi=dataset.Attributes['dpi'],
+	            figureSize=dataset.Attributes['figureSize'])
+
+
+	# Figure: Histogram of RSD in study pool samples
     if destinationPath:
+        item['finalRsdHist'] = os.path.join(graphicsPath,item['Name'] + '_rsdSP.' + dataset.Attributes['figureFormat'])
+        saveAs = item['finalRsdHist']
+    else:
+        print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) histogram for study pool samples and all features in final dataset, segmented by abundance percentiles.')
+        figNo = figNo+1
 
-            # RSD histogram
-            item['finalRsdHist'] = os.path.join(graphicsPath,
-                                                           item['Name'] + '_rsdSP.' + dataset.Attributes[
-                                                               'figureFormat'])
-            saveAs = item['finalRsdHist']
-
-            histogram(dataset.rsdSP,
+    histogram(dataset.rsdSP,
                    xlabel='RSD',
                    histBins=dataset.Attributes['histBins'],
                    quantiles=dataset.Attributes['quantiles'],
                    inclusionVector=numpy.exp(meanIntensitiesSP),
                    logx=False,
- #                  xlim=(0, 100),
                    savePath=saveAs,
                    figureFormat=dataset.Attributes['figureFormat'],
                    dpi=dataset.Attributes['dpi'],
                    figureSize=dataset.Attributes['figureSize'])
 
-
-    # Figure 2: Final TIC
-    if destinationPath:
-        item['finalTIC'] = os.path.join(graphicsPath, item['Name'] + '_finalTIC.' + dataset.Attributes['figureFormat'])
-        saveAs = item['finalTIC']
-    else:
-        print('Figure 2: Total Ion Count (TIC) for all samples and all features in final dataset.')
-
-    plotTIC(dataset,
-            addViolin=True,
-            title='',
-            savePath=saveAs,
-            figureFormat=dataset.Attributes['figureFormat'],
-            dpi=dataset.Attributes['dpi'],
-            figureSize=dataset.Attributes['figureSize'])
-
-    # Figure 3: Histogram of log mean abundance by sample type
-    if destinationPath:
-        item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_finalFeatureIntensityHist.' +
-                                                         dataset.Attributes['figureFormat'])
-        saveAs = item['finalFeatureIntensityHist']
-    else:
-        print(
-            'Figure 3: Feature intensity histogram for all samples and all features in final dataset (by sample type)')
-
-    _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
-
-    # Figure 4: Histogram of RSDs in SP and SS
+    # Figure: Distribution of RSDs in SP and SS
     if destinationPath:
         item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
     else:
-        print(
-            'Figure 4: Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type)')
+        print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type)')
+        figNo = figNo+1
 
     plotRSDs(dataset,
             featureName=featureName,
@@ -329,13 +328,27 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
             dpi=dataset.Attributes['dpi'],
             figureSize=figureSize)
 
-    # Figure 5: Ion map
+
+    # Figure: Histogram of log mean abundance by sample type
+    if destinationPath:
+        item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_finalFeatureIntensityHist.' +
+                                                         dataset.Attributes['figureFormat'])
+        saveAs = item['finalFeatureIntensityHist']
+    else:
+        print('Figure ' + str(figNo) + ': Feature intensity histogram for all samples and all features in final dataset (by sample type)')
+        figNo = figNo+1
+
+    _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
+
+
+    # Figure: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
         if destinationPath:
             item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
             saveAs = item['finalIonMap']
         else:
-            print('Figure 5: Ion map of all features (coloured by log median intensity).')
+            print('Figure ' + str(figNo) + ': Ion map of all features (coloured by log median intensity).')
+            figNo = figNo+1
 
         plotIonMap(dataset,
                    savePath=saveAs,
@@ -348,6 +361,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
             print('No Retention Time and m/z information, unable to plot the ion map.\n')
 
 
+    # ONLY 'final report targeted abridged' feature distributions (violin plots)
     if (reportType.lower() == 'final report targeted abridged'):
 
         figuresFeatureDistribution = OrderedDict()
@@ -358,7 +372,8 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
             temp['FeatureConcentrationDistribution'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution_')
             saveAs = temp['FeatureConcentrationDistribution']
         else:
-            print('Figure 6: Relative concentration distributions, split by sample types')
+            print('Figure ' + str(figNo) + ': Relative concentration distributions, split by sample types')
+            figNo = figNo+1
 
         figuresFeatureDistribution = plotTargetedFeatureDistribution(
                    dataset,
@@ -374,39 +389,33 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
                 figuresFeatureDistribution[key] = re.sub('.*graphics', 'graphics', figuresFeatureDistribution[key])
 
         item['FeatureConcentrationDistribution'] = figuresFeatureDistribution
-    # Figures 6 and 7: (if available) PCA scores and loadings plots by sample type
-    ##
-    # PCA plots
-    ##
 
-    if not 'Plot Sample Type' in dataset.sampleMetadata.columns:
-        dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-        dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-        dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-        dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
-    if pcaModel:
+    # ONLY 'final report' and ONLY if pcaModel available
+
+    if ((reportType.lower() == 'final report') and (pcaModel)):
+
+        if not 'Plot Sample Type' in dataset.sampleMetadata.columns:
+            dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+            dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+            dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
+            dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+
         if destinationPath:
             pcaPath = destinationPath
 
         else:
             pcaPath = None
-        pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=6, destinationPath=pcaPath, fileNamePrefix='')
 
+        pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=figNo, destinationPath=pcaPath, fileNamePrefix='')
 
-    ##
-    # Sample summary
-    ##
+    # Table 3: Summary of samples excluded
     if not destinationPath:
-        print('Table 1: Summary of samples present')
-        display(sampleSummary['Acquired'])
         if 'StudySamples Exclusion Details' in sampleSummary:
-            print('Table 2: Summary of samples excluded')
+            print('Table 3: Summary of samples excluded')
             display(sampleSummary['StudySamples Exclusion Details'])
 
-    ##
     # Write HTML if saving
-    ##
     if destinationPath:
 
         # Make paths for graphics local not absolute for use in the HTML.
@@ -438,6 +447,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
                                 pcaPlots=pcaModel))
         f.close()
         copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+
     return None
 
 
