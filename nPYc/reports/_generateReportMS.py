@@ -11,17 +11,17 @@ import warnings
 import re
 import shutil
 from matplotlib import gridspec
-
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from ..plotting import plotTIC, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings
+from ..plotting import plotTIC, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd
 from ..utilities._internal import _vcorrcoef
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..enumerations import AssayRole, SampleType
 from ._generateBasicPCAReport import generateBasicPCAReport
+
 
 from ..__init__ import __version__ as version
 
@@ -31,7 +31,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
     """
     Summarise different aspects of an MS dataset
 
-    Generate reports for ``feature summary``, ``correlation to dilution``, ``batch correction assessment``, ``batch correction summary``, ``feature selection``, or ``final report``
+    Generate reports for ``feature summary``, ``correlation to dilution``, ``batch correction assessment``, ``batch correction summary``, ``feature selection``, ``final report``, ``final report abridged``, or ``final report targeted abridged``
 
     * **'feature summary'** Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
     * **'correlation to dilution'** Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
@@ -39,9 +39,11 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
     * **'batch correction summary'** Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
     * **'feature selection'** Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
     * **'final report'** Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
+    * **'final report abridged'** Generates an abridged summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
+    * **'final report targeted abridged'** Generates an abridged summary of the final targeted (peakPantheR) dataset, lists sample numbers present, a selection of figures summarising dataset quality, feature distributions, and a final list of samples missing from acquisition.
 
     :param MSDataset msDataTrue: MSDataset to report on
-    :param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection``, or ``final report``
+    :param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection``, ``final report``, ``final report abridged``, or ``final report targeted abridged``
     :param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
     :param None or bool withArtifactualFiltering: If ``None`` use the value from ``Attributes['artifactualFilter']``. If ``True`` apply artifactual filtering to the ``feature selection`` report and ``final report``
     :param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
@@ -52,7 +54,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
 
     acceptableOptions = {'feature summary', 'correlation to dilution',
                          'batch correction assessment',
-                         'batch correction summary', 'feature selection', 'final report', 'final report abridged'}
+                         'batch correction summary', 'feature selection', 'final report', 'final report abridged', 'final report targeted abridged'}
 
     # Check inputs
     if not isinstance(dataset, MSDataset):
@@ -111,7 +113,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
         _batchCorrectionAssessmentReport(msData, destinationPath)
     elif reportType.lower() == 'batch correction summary':
         _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath)
-    elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged'):
+    elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged') or (reportType.lower() == 'final report targeted abridged'):
         _finalReport(msData, destinationPath, pcaModel, reportType=reportType)
 
 
@@ -119,6 +121,15 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
     """
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
+
+    if (hasattr(dataset.featureMetadata, 'cpdName')):
+        featureName = 'cpdName'
+        featName=True
+        figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
+    else:
+        featureName = 'Feature Name'
+        featName=False
+        figureSize=dataset.Attributes['figureSize']
 
     # Table 1: Sample summary
     # Generate sample summary
@@ -308,13 +319,15 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
             'Figure 4: Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type)')
 
     plotRSDs(dataset,
-             ratio=False,
-             logx=True,
-             color='matchReport',
-             savePath=saveAs,
-             figureFormat=dataset.Attributes['figureFormat'],
-             dpi=dataset.Attributes['dpi'],
-             figureSize=dataset.Attributes['figureSize'])
+            featureName=featureName,
+            ratio=False,
+            logx=True,
+            color='matchReport',
+            featName=featName,
+            savePath=saveAs,
+            figureFormat=dataset.Attributes['figureFormat'],
+            dpi=dataset.Attributes['dpi'],
+            figureSize=figureSize)
 
     # Figure 5: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
@@ -334,6 +347,33 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
         if not destinationPath:
             print('No Retention Time and m/z information, unable to plot the ion map.\n')
 
+
+    if (reportType.lower() == 'final report targeted abridged'):
+
+        figuresFeatureDistribution = OrderedDict()
+
+        # Plot distributions for each feature
+        temp = dict()
+        if destinationPath:
+            temp['FeatureConcentrationDistribution'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution_')
+            saveAs = temp['FeatureConcentrationDistribution']
+        else:
+            print('Figure 6: Relative concentration distributions, split by sample types')
+
+        figuresFeatureDistribution = plotTargetedFeatureDistribution(
+                   dataset,
+                   logx=False,
+                   figures=figuresFeatureDistribution,
+                   savePath=saveAs,
+                   figureFormat=dataset.Attributes['figureFormat'],
+                   dpi=dataset.Attributes['dpi'],
+                   figureSize=dataset.Attributes['figureSize'])
+
+        for key in figuresFeatureDistribution:
+            if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistribution[key]):
+                figuresFeatureDistribution[key] = re.sub('.*graphics', 'graphics', figuresFeatureDistribution[key])
+
+        item['FeatureConcentrationDistribution'] = figuresFeatureDistribution
     # Figures 6 and 7: (if available) PCA scores and loadings plots by sample type
     ##
     # PCA plots
@@ -385,6 +425,9 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
         elif reportType.lower() == 'final report abridged':
             template = env.get_template('MS_FinalSummaryReport_Abridged.html')
 
+        elif reportType.lower() == 'final report targeted abridged':
+            template = env.get_template('MS_Targeted_FinalSummaryReport_Abridged.html')
+
         filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
 
         f = open(filename,'w')
@@ -402,6 +445,15 @@ def _featureReport(dataset, destinationPath=None):
     """
     Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
     """
+
+    if (hasattr(dataset.featureMetadata, 'cpdName')):
+        featureName = 'cpdName'
+        featName=True
+        figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
+    else:
+        featureName = 'Feature Name'
+        featName=False
+        figureSize=dataset.Attributes['figureSize']
 
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
@@ -618,13 +670,15 @@ def _featureReport(dataset, destinationPath=None):
         print('Figure 9: RSD distribution for all samples and all features in dataset (by sample type).')
 
     plotRSDs(dataset,
+ 			 featureName=featureName,
              ratio=False,
              logx=True,
              color='matchReport',
+			 featName=featName,
              savePath=saveAs,
              figureFormat=dataset.Attributes['figureFormat'],
              dpi=dataset.Attributes['dpi'],
-             figureSize=dataset.Attributes['figureSize'])
+             figureSize=figureSize)
 
     # Figure 10: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
@@ -992,6 +1046,16 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
     """
 
+    if (hasattr(dataset.featureMetadata, 'cpdName')):
+        featureName = 'cpdName'
+        featName=True
+        figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
+    else:
+        featureName = 'Feature Name'
+        featName=False
+        figureSize=dataset.Attributes['figureSize']
+
+
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
@@ -1147,13 +1211,15 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
         print('Pre-correction.')
 
     plotRSDs(dataset,
+ 			 featureName=featureName,
              ratio=False,
              logx=True,
              color='matchReport',
+			 featName=featName,
              savePath=saveAs,
              figureFormat=dataset.Attributes['figureFormat'],
              dpi=dataset.Attributes['dpi'],
-             figureSize=dataset.Attributes['figureSize'])
+             figureSize=figureSize)
 
     # Post-correction
     if destinationPath:
@@ -1164,13 +1230,15 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
         print('Post-correction.')
 
     plotRSDs(correctedDataset,
+			 featureName=featureName,
              ratio=False,
              logx=True,
              color='matchReport',
+			 featName=featName,
              savePath=saveAs,
              figureFormat=dataset.Attributes['figureFormat'],
              dpi=dataset.Attributes['dpi'],
-             figureSize=dataset.Attributes['figureSize'])
+             figureSize=figureSize)
 
     # Write HTML if saving
     ##
