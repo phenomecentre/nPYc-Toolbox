@@ -19,22 +19,22 @@
 <h2>Sample Summary</h2>
 
 <!--Summary of samples in final dataset-->
-<h3>Sample Summary Table</h3>
-{{ item.sampleSummary['Acquired'].to_html() }}
-
 <div class='content'>
-	<p>*Details of any missing samples given at the end of the report</p>
+	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
+	{{ item.sampleSummary['Acquired'].to_html() }}
+	<p>*Details of any missing/excluded study samples given at the end of the report</p>
 	<p></p>
 </div>
-
-
 
 <!--Feature Summary______________________________________________________________________________________________________________-->
 <h2>Feature Summary</h2>
 
 <div class='content'>
-	<p>Features selected based on the following criteria:</p>
+	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
 	{{ item['FeatureSelectionTable'].to_html() }}
+	<p>Samples acquired in {{ item['nBatchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
+	<p>Batch correction applied (LOESS regression fitted to SR samples in {{ item['nBatchesCorrect'] }}) for run-order correction and batch alignment</p>
+	<p></p>
 </div>
 
 
@@ -72,7 +72,11 @@
 	{% endfor %}
 </div>
 
-<!--Samples -->
-{{ sampleReport.sampleReport(item.sampleSummary) }}
+<!--Details of any missing/excluded samples-->
+{% if 'StudySamples Exclusion Details' in item.sampleSummary %}
+	<h2>Missing/Excluded Study Samples</h2>
+	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
+	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
+{% endif %}
 
 {% endblock %}

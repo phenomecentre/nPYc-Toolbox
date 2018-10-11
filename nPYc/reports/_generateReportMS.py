@@ -119,7 +119,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
         _finalReport(msData, destinationPath, pcaModel, reportType=reportType)
 
 
-def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFiltering=True, reportType='final report'):
+def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final report'):
     """
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
@@ -178,7 +178,14 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
     # Table 1: Sample summary
 
     # Generate sample summary
+
     sampleSummary = _generateSampleReport(dataset, withExclusions=True, destinationPath=None, returnOutput=True)
+    
+    # Tidy table for final report format
+    sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
+    
+    if hasattr(sampleSummary['Acquired'], 'Already Excluded'):
+        sampleSummary['Acquired'].rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
 
     sampleSummary['isFinalReport'] = True
     if 'StudySamples Exclusion Details' in sampleSummary:
@@ -189,8 +196,9 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
 
     if not destinationPath:
         print('Sample Summary')
-        print('Table 1: Summary of samples present')
+        print('\nTable 1: Summary of samples present')
         display(sampleSummary['Acquired'])
+        print('\nDetails of any missing/excluded study samples given at the end of the report\n')
 
 
     # Table 2: Feature Selection parameters
@@ -210,7 +218,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
         pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
                          index=['Relative Standard Devation (RSD)', 'RSD of SP Samples: Threshold',
                                 'RSD of SS Samples > RSD of SP Samples'], columns=['Applied']))
-    if withArtifactualFiltering:
+    if (dataset.Attributes['artifactualFilter'] == 'True'):
         FeatureSelectionTable = FeatureSelectionTable.append(pandas.DataFrame(
             data=['yes', dataset.Attributes['deltaMzArtifactual'], dataset.Attributes['overlapThresholdArtifactual'],
                   dataset.Attributes['corrThresholdArtifactual']],
@@ -221,8 +229,8 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
     item['FeatureSelectionTable'] = FeatureSelectionTable
 
     if not destinationPath:
-        print('Feature Selection Summary')
-        print('Figure 2: Features selected based on:')
+        print('\nFeature Summary')
+        print('\nTable 2: Features selected based on:')
         display(item['FeatureSelectionTable'])
         print('\n')
 
@@ -256,7 +264,6 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
 	                                               item['Name'] + '_finalTICbatches.' + dataset.Attributes['figureFormat'])
 	        saveAs = item['finalTICbatches']
 	    else:
-	        print('Acquisition Structure')
 	        print(
 	            '\n\tSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
 	        print('\n\tBatch correction applied (LOESS regression fitted to SP samples in ' + item[
@@ -412,7 +419,8 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, withArtifactualFi
     # Table 3: Summary of samples excluded
     if not destinationPath:
         if 'StudySamples Exclusion Details' in sampleSummary:
-            print('Table 3: Summary of samples excluded')
+            print('Missing/Excluded Study Samples')
+            print('\nTable 3: Details of missing/excluded study samples')
             display(sampleSummary['StudySamples Exclusion Details'])
 
     # Write HTML if saving
@@ -667,8 +675,8 @@ def _featureReport(dataset, destinationPath=None):
                   figureSize=dataset.Attributes['figureSize'])
     else:
         if not destinationPath:
-            print('\x1b[31;1m No peak width data to plot')
             print('Figure 8: Histogram of chromatographic peak width.')
+            print('\x1b[31;1m Peak width data not available to plot\n\033[0;0m')
 
     # Figure 9: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type)
     if destinationPath:

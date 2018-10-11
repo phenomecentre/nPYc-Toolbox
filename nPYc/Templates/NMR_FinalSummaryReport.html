@@ -22,6 +22,11 @@
 	{{ item['SampleSummaryTable']['Acquired'].to_html() }}
 {% endif %}
 
+<div class='content'>
+	<p>*Details of any missing/excluded study samples given at the end of the report</p>
+	<p></p>
+</div>
+
 
 <!--Sample Acquisition Structure_______________________________________________________________________________________________________-->
 <h2>Sample Acquisition Structure</h2>
@@ -111,9 +116,10 @@
 	{{ pca.basicPCAReport(pcaPlots) }}
 {% endif %}
 
-<!--Samples -->
-{% if sampleSummary %}
-	{{ sampleReport.sampleReport(sampleSummary) }}
+<!--Details of any missing/excluded samples-->
+{% if 'StudySamples Exclusion Details' in item.SampleSummaryTable %}
+	<h3>Details of missing/excluded samples</h3>
+	{{ item.SampleSummaryTable['StudySamples Exclusion Details'].to_html() }}
 {% endif %}
 
 {% endblock %}
