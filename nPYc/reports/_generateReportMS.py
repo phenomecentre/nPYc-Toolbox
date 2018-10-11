@@ -205,15 +205,15 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     FeatureSelectionTable = pandas.DataFrame(
         data=['yes', dataset.Attributes['corrMethod'], dataset.Attributes['corrThreshold']],
         index=['Correlation to Dilution', 'Correlation to Dilution: Method', 'Correlation to Dilution: Threshold'],
-        columns=['Applied'])
+        columns=['Value Applied'])
 
     if sum(dataset.corrExclusions) != dataset.noSamples:
         temp = ', '.join(dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
         FeatureSelectionTable = FeatureSelectionTable.append(
-            pandas.DataFrame(data=temp, index=['Correlation to Dilution: Sample Exclusions'], columns=['Applied']))
+            pandas.DataFrame(data=temp, index=['Correlation to Dilution: Sample Exclusions'], columns=['Value Applied']))
     else:
         FeatureSelectionTable = FeatureSelectionTable.append(
-            pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Applied']))
+            pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied']))
     FeatureSelectionTable = FeatureSelectionTable.append(
         pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
                          index=['Relative Standard Devation (RSD)', 'RSD of SP Samples: Threshold',
@@ -224,7 +224,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
                   dataset.Attributes['corrThresholdArtifactual']],
             index=['Artifactual Filtering', 'Artifactual Filtering: Delta m/z',
                    'Artifactual Filtering: Overlap Threshold', 'Artifactual Filtering: Correlation Threshold'],
-            columns=['Applied']))
+            columns=['Value Applied']))
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
 
@@ -264,9 +264,8 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
 	                                               item['Name'] + '_finalTICbatches.' + dataset.Attributes['figureFormat'])
 	        saveAs = item['finalTICbatches']
 	    else:
-	        print(
-	            '\n\tSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
-	        print('\n\tBatch correction applied (LOESS regression fitted to SP samples in ' + item[
+	        print('\nSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
+	        print('\nBatch correction applied (LOESS regression fitted to SP samples in ' + item[
 	            'nBatchesCorrect'] + ') for run-order correction and batch alignment\n')
 	        print('Figure ' + str(figNo) + ': Acquisition Structure')
 	        figNo = figNo+1

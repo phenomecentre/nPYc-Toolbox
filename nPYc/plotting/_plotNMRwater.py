@@ -65,7 +65,7 @@ def plotWaterResonance(nmrData, savePath=None, figureFormat='png', dpi=72, figur
 		plt.show()
 
 
-def plotWaterResonanceInteractive(nmrData):
+def plotWaterResonanceInteractive(nmrData, title='Residual water resonance'):
 	"""
 	Ploty interactive version of :py:func:`plotWaterResonance`
 
@@ -120,7 +120,7 @@ def plotWaterResonanceInteractive(nmrData):
 	# Add water region in layout
 	##
 	layout = go.Layout(
-		title='Residual water resonance',
+		title=title,
 		legend=dict(
 			orientation="h"),
 		hovermode = "closest",

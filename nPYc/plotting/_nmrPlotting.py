@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objs as go
 
 
-def plotPW(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotPW(nmrData, savePath=None, title='Line with values (Hz)', figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotPW(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7))
 	
@@ -71,9 +71,9 @@ def plotPW(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)
 	if numpy.size(tempDF_outliers) > 0:#we dont attempt to plot if their is no outliers
 		sns.stripplot(data=tempDF_outliers, jitter=True, color="red")#overlay strip plot so can see the data points are outliers
 	sns.violinplot(data=tempDF, cut=0, palette=sTypeColourDict) #cut:Set to 0 to limit the violin range within the range of the observed data
-	plt.suptitle('Peak width values in Hz')
-	plt.xlabel('peak width')
-	plt.ylabel('Hz')		
+	plt.suptitle(title)
+	plt.xlabel('')
+	plt.ylabel('Line width (Hz)')		
 	if savePath:
 		plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
 		plt.close()

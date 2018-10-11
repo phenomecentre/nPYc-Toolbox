@@ -60,8 +60,6 @@ def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath
 			os.makedirs(destinationPath)
 		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
 			os.makedirs(os.path.join(destinationPath, 'graphics'))
-	else:
-		saveDir = None
 
 	# Apply sample/feature masks if exclusions to be applied
 	nmrData = copy.deepcopy(nmrData)
@@ -80,9 +78,9 @@ def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath
 		nmrData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
 
 	if reportType.lower() == 'feature summary':
-		_featureReport(nmrData, destinationPath)
+		_featureReport(nmrData, destinationPath=destinationPath)
 	elif reportType.lower() == 'final report':
-		_finalReport(nmrData, destinationPath, pcaModel)
+		_finalReport(nmrData, destinationPath=destinationPath, pcaModel=pcaModel)
 
 
 def _featureReport(dataset, destinationPath=None):
@@ -100,10 +98,6 @@ def _featureReport(dataset, destinationPath=None):
 	# Report stats
 	##
 	if destinationPath is not None:
-		if not os.path.exists(destinationPath):
-			os.makedirs(destinationPath)
-		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
-			os.makedirs(os.path.join(destinationPath, 'graphics'))
 		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_featureSummary')
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
@@ -116,7 +110,7 @@ def _featureReport(dataset, destinationPath=None):
 		saveAs = item['calibrationCheck']
 	else:
 		print('Figure 1: Calibration Check Plot, aligned to:', dataset.Attributes['alignTo'])
-		saveAs = None
+
 	
 	if destinationPath:
 		plotCalibration(dataset,
@@ -238,97 +232,101 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 	"""
 	Report on final dataset
 	"""
+    
+    # Create save directory if required
+	if destinationPath is not None:
+		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
+	else:
+		saveAs = None
+    
+    
 	item = dict()
 	item['Name'] = dataset.name
 	item['Nsamples'] = dataset.noSamples
 
-	item['toA_from'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
-	item['toA_to'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
+	item['start'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
+	item['end'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
 
-	# Generate sample Summary
+    
+    # Table 1: Sample summary
+
+    # Generate sample summary
+    
 	sampleSummary = _generateSampleReport(dataset, withExclusions=True, destinationPath=None, returnOutput=True)
+    
+    # Tidy table for final report format
+	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
+    
+	if hasattr(sampleSummary['Acquired'], 'Already Excluded'):
+		sampleSummary['Acquired'].rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
+
 	sampleSummary['isFinalReport'] = True
+	if 'StudySamples Exclusion Details' in sampleSummary:
+		sampleSummary['studySamplesExcluded'] = True
+	else:
+		sampleSummary['studySamplesExcluded'] = False
 	item['sampleSummary'] = sampleSummary
 
-	##
-	# Report stats
-	##
-	if destinationPath is not None:
-		if not os.path.exists(destinationPath):
-			os.makedirs(destinationPath)
-		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
-			os.makedirs(os.path.join(destinationPath, 'graphics'))
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
-		if not os.path.exists(graphicsPath):
-			os.makedirs(graphicsPath)
+	if not destinationPath:
+		print('Sample Summary')
+		print('\nTable 1: Summary of samples present.')
+		display(sampleSummary['Acquired'])
+		print('\nDetails of any missing/excluded study samples given at the end of the report\n')
+
+
+	# Table 2: data processed with these parameters
+	dataParametersTable = pandas.DataFrame(
+			data = [dataset.Attributes['calibrateTo'], dataset.Attributes['variableSize'], dataset.Attributes['baselineCheckRegion'],
+				   dataset.Attributes['waterPeakCheckRegion'], dataset.Attributes['LWpeakRange'], dataset.Attributes['LWpeakMultiplicity'],
+				   dataset.Attributes['PWFailThreshold'], dataset.Attributes['exclusionRegions']],
+			index = ['Referenced to (ppm)', 'Spectral Resolution (points)', 'Baseline Region Checked (ppm)', 
+					'Water Suppresion Region Checked (ppm)', 'Line Width: Calculated on', 'Line Width: Peak Multiplicity',
+					'Line Width: Threshold (Hz)', 'Spectral Regions Automatically Removed (ppm)'],
+			columns = ['Value Applied']
+			)
+	item['DataParametersTable'] = dataParametersTable
+	
+	if not destinationPath:
+		print('Spectral Data')
+		print('\nTable 2: Data processed with the following criteria:')
+		display(dataParametersTable)
+		print('\nSamples acquired between ' + item['start'] + ' and ' + item['end'] + '\n')	
 
 	##
 	# LW box plot
 	##
 	if destinationPath:
-		item['peakWidthBoxplot'] = os.path.join(graphicsPath,
-					item['Name'] + '_peakWidthBoxplot.' + dataset.Attributes['figureFormat'])
-		saveAs = item['peakWidthBoxplot']
+		item['linewidthBoxplot'] = os.path.join(graphicsPath, item['Name'] + '_linewidthBoxplot.' + dataset.Attributes['figureFormat'])
+		saveAs = item['linewidthBoxplot']
 	else:
-		print('Figure 1: Peak Width Boxplot (Hz)')
-		saveAs = None
+		print('Figure 1: Boxplot of line width distributions (by sample type).')
+		
 		
 	nPYc.plotting.plotPW(dataset,
 			savePath=saveAs,
+			title='',
 			figureFormat=dataset.Attributes['figureFormat'],
 			dpi=dataset.Attributes['dpi'],
 			figureSize=dataset.Attributes['figureSize'])
 
 	##
-	# LW shape plot
-	##
-	if not destinationPath:
-		print('Figure 1a: Peak Width Modeling')
-		figure = plotLineWidthInteractive(dataset)
-		iplot(figure)
-
-	##
-	# Baseline plot
-	##
-	if destinationPath:
-		item['finalFeatureBLWPplots1'] = os.path.join(graphicsPath,
-					item['Name'] + '_finalFeatureBLWPplots1.' + dataset.Attributes['figureFormat'])
-		saveAs = item['finalFeatureBLWPplots1']
-	else:
-		print('Figure 2: Baseline Low and High')
-
-		saveAs = None
-
-	if destinationPath:
-		plotBaseline(dataset,
-					savePath=saveAs,
-					figureFormat=dataset.Attributes['figureFormat'],
-					dpi=dataset.Attributes['dpi'],
-					figureSize=dataset.Attributes['figureSize'])
-
-	else:
-		figure = plotBaselineInteractive(dataset)
-		iplot(figure)
-
-	##
 	# Water Peak plot
 	##
 	if destinationPath:
-		item['finalFeatureBLWPplots3'] = os.path.join(graphicsPath,
-						item['Name'] + '_finalFeatureBLWPplots3.' + dataset.Attributes['figureFormat'])
-		saveAs = item['finalFeatureBLWPplots3']
+		item['spectraWaterPeakRegion'] = os.path.join(graphicsPath, item['Name'] + '_spectraWaterPeakRegion' + dataset.Attributes['figureFormat'])
+		saveAs = item['spectraWaterPeakRegion']
 		
+		plotWaterResonance(dataset,	
+						 savePath=saveAs,
+						 figureFormat=dataset.Attributes['figureFormat'],
+						 dpi=dataset.Attributes['dpi'],
+						 figureSize=dataset.Attributes['figureSize'])
+				
 	else:
-		print('Figure 3: Waterpeak Low and High')
-		saveAs = None
-
-	if destinationPath:
-		plotWaterResonance(dataset,	savePath=saveAs,
-									figureFormat=dataset.Attributes['figureFormat'],
-									dpi=dataset.Attributes['dpi'],
-									figureSize=dataset.Attributes['figureSize'])
-	else:
-		figure = plotWaterResonanceInteractive(dataset)
+		print('Figure 2: Distribution in intensity of spectral data around the removed water peak region.')
+		figure = plotWaterResonanceInteractive(dataset, title='')
 		iplot(figure)
 
 	##
@@ -339,18 +337,17 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 			pcaPath = destinationPath
 		else:
 			pcaPath = None
-		pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=6, destinationPath=pcaPath, fileNamePrefix='')
+		pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=3, destinationPath=pcaPath, fileNamePrefix='')
 
 	##
-	# Sample summary
+	#  Table 3: Summary of samples excluded
 	##
 	if not destinationPath:
-		print('Table 1: Summary of samples present')
-		display(sampleSummary['Acquired'])
 		if 'StudySamples Exclusion Details' in sampleSummary:
-			print('Table 2: Summary of samples excluded')
+			print('Missing/Excluded Study Samples')
+			print('\nTable 3: Details of missing/excluded study samples')
 			display(sampleSummary['StudySamples Exclusion Details'])
-
+			
 	##
 	# Write HTML if saving
 	##
@@ -369,7 +366,6 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 
 		f = open(filename,'w')
 		f.write(template.render(item=item,
-								attributes=dataset.Attributes,
 								version=version,
 								sampleSummary=sampleSummary,
 								graphicsPath=graphicsPath,
