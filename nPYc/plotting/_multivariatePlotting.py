@@ -9,7 +9,9 @@ from matplotlib import gridspec
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 from matplotlib.collections import LineCollection
-from matplotlib.dates import DateFormatter
+import matplotlib.dates as mdates
+#from matplotlib.dates import AutoDateFormatter
+#from matplotlib.dates import AutoDateLocator
 import seaborn as sns
 import plotly.graph_objs as go
 import pandas
@@ -1029,19 +1031,20 @@ def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=N
 
 			# Date
 			elif valueType == 'date':
-
-				# ensure date is datetime.datetime
+				
 				try:
-					xtime = [xtime.to_pydatetime() for xtime in sampleMetadata[field[plotNo]].tolist()]
-				except AttributeError:
-					xtime = sampleMetadata[field[plotNo]].tolist()
-				axIXs[axNo].hist(x=xtime)
-				formatter = DateFormatter('%d/%m/%y %H:%M')
-				axIXs[axNo].set_xticklabels(axIXs[axNo].xaxis.get_majorticklabels(), rotation=90)
-				axIXs[axNo].xaxis.set_major_formatter(formatter)
-
-				axIXs[axNo].set_ylabel('Count')
-				axIXs[axNo].set_title(field[plotNo])
+					xtime = mdates.date2num(sampleMetadata[field[plotNo]].values)
+					axIXs[axNo].hist(xtime, bins=20)
+					locator = mdates.AutoDateLocator()
+					axIXs[axNo].xaxis.set_major_locator(locator)
+					axIXs[axNo].xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))#AutoDateFormatter(locator))
+					axIXs[axNo].xaxis.set_tick_params(rotation=90)
+					axIXs[axNo].grid()
+	
+					axIXs[axNo].set_ylabel('Count')
+					axIXs[axNo].set_title(field[plotNo])					
+				except:
+					pass
 
 			# Advance plotNo
 			plotNo = plotNo+1
