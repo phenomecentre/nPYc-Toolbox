@@ -1725,7 +1725,7 @@ class Dataset:
 		self.sampleMetadata = removeDuplicateColumns(self.sampleMetadata)
 		#
 		if 'Exclusion Details' not in self.sampleMetadata:
-			self.sampleMetadata['Exclusion Details'] = None
+			self.sampleMetadata['Exclusion Details'] = ''
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
 		#self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Sampling ID'].notnull().astype(bool)
@@ -1879,12 +1879,12 @@ class Dataset:
 		notFound = []
 
 		if 'Exclusion Details' not in self.sampleMetadata:
-			self.sampleMetadata['Exclusion Details'] = None
+			self.sampleMetadata['Exclusion Details'] = ''
 
 		for sample in sampleList:
 			if sample in self.sampleMetadata[on].unique():
 				self.sampleMask[self.sampleMetadata[self.sampleMetadata[on] == sample].index] = False
-				if (self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'].isnull()).any():
+				if (self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'].values == ''):
 					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] = message
 				else:
 					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] = \
@@ -1916,13 +1916,13 @@ class Dataset:
 		notFound = []
 
 		if 'Exclusion Details' not in self.featureMetadata:
-			self.featureMetadata['Exclusion Details'] = None
+			self.featureMetadata['Exclusion Details'] = ''
 
 		if self.VariableType == VariableType.Discrete:
 			for feature in featureList:
 				if feature in self.featureMetadata[on].unique():
 					self.featureMask[self.featureMetadata[self.featureMetadata[on] == feature].index] = False
-					if (self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'].isnull()).any():
+					if (self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'].values == ''):
 						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = message
 					else:
 						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = \
@@ -1948,7 +1948,7 @@ class Dataset:
 													 mask)
 
 				mask = numpy.logical_not(mask)
-				if (self.featureMetadata.loc[mask, 'Exclusion Details'].isnull()).any():
+				if (self.featureMetadata.loc[mask, 'Exclusion Details'].values == ''):
 					self.featureMetadata.loc[mask, 'Exclusion Details'] = message
 				else:
 					self.featureMetadata.loc[mask, 'Exclusion Details'] = \

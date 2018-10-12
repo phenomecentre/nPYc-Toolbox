@@ -77,7 +77,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	# Determine if samples have been excluded
 	try:
 		excludedIX = [i for i, x in enumerate(data.excludedFlag) if x == 'Samples']
-		sampleMetadataExcluded = pandas.DataFrame(columns=['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available'])
+		sampleMetadataExcluded = pandas.DataFrame(columns=['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available', 'Sampling ID'])
 		excluded = len(excludedIX)
 	except:
 		excluded = 0
@@ -87,7 +87,13 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		# Stick info of all previously excluded samples together
 		for i in excludedIX:
 			temp = copy.deepcopy(data.sampleMetadataExcluded[i])
-			sampleMetadataExcluded = sampleMetadataExcluded.append(temp.reindex(['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available'], axis=1), ignore_index=True)
+			
+			if ('Sampling ID' in temp):
+				sampleMetadataExcluded = sampleMetadataExcluded.append(temp[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available', 'Sampling ID']], ignore_index=True)
+			
+			else:
+				sampleMetadataExcluded = sampleMetadataExcluded.append(temp[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available']], ignore_index=True)
+
 
 		excluded = sampleMetadataExcluded.shape[0]
 
@@ -100,7 +106,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 		NotInCSVmaskEx = sampleMetadataExcluded['Metadata Available'] == False
 		UnclearRolemaskEx = (SSmaskEx==False) & (SPmaskEx==False) & (ERmaskEx==False) & (NotInCSVmaskEx==False) & (BlankmaskEx == False) & (SRDmaskEx == False)
-		sampleSummary['Excluded Details'] = sampleMetadataExcluded.set_index('Sample File Name')
+		sampleSummary['Excluded Details'] = sampleMetadataExcluded[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Sampling ID']]
 
 
 	# Summary table for samples acquired
@@ -140,7 +146,12 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 														 sum(SRDmaskEx), sum(BlankmaskEx), sum(NotInCSVmaskEx), sum(UnclearRolemaskEx)]
 		# Save field with Study Samples exclusions
 		if (sum(SSmaskEx) != 0):
-			sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', 'Exclusion Details']][SSmaskEx]
+			
+			if ('Sampling ID' in sampleMetadataExcluded):
+				sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', 'Sampling ID', 'Exclusion Details']][SSmaskEx]
+
+			else:
+				sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', 'Exclusion Details']][SSmaskEx]
 
 	# Drop rows where no samples present for that datatype
 	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
@@ -199,4 +210,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 			print('Details of Samples Marked for Exclusion')
 			display(sampleSummary['MarkedToExclude Details'])
 			print('\n')
-
+			
+		if 'Excluded Details' in sampleSummary:
+			print('Details of Samples Already Excluded')
+			display(sampleSummary['Excluded Details'])
+			print('\n')
