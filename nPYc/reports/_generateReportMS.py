@@ -217,7 +217,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     FeatureSelectionTable = FeatureSelectionTable.append(
         pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
                          index=['Relative Standard Devation (RSD)', 'RSD of SP Samples: Threshold',
-                                'RSD of SS Samples > RSD of SP Samples'], columns=['Applied']))
+                                'RSD of SS Samples > RSD of SP Samples'], columns=['Value Applied']))
     if (dataset.Attributes['artifactualFilter'] == 'True'):
         FeatureSelectionTable = FeatureSelectionTable.append(pandas.DataFrame(
             data=['yes', dataset.Attributes['deltaMzArtifactual'], dataset.Attributes['overlapThresholdArtifactual'],
