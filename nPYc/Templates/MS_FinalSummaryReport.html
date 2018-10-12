@@ -51,10 +51,10 @@
 	<img src="{{ item['finalTIC'] }}" alt="TIC for all samples and all features passing selection.">
 </div>
 
-<!--Figure 3: TIC for all samples and features passing selection-->
+<!--Figure 3: Histogram of RSD in study pool samples -->
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Feature Intensity Histogram for all samples and all features in final dataset (by sample type).</p>
-	<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature Intensity Histogram for all samples and all features in final dataset (by sample type).">
+	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Residual Standard Deviation (RSD) histogram for study pool samples and all features in final dataset, segmented by abundance percentiles.</p>
+	<img src="{{ item['finalRsdHist'] }}" alt="Residual Standard Deviation (RSD) histogram for study pool samples and all features in final dataset, segmented by abundance percentiles.">
 </div>	
 
 <!--Figure 4: RSD for all samples and features passing selection-->
@@ -63,9 +63,15 @@
 	<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
 </div>
 
-<!--Figure 5: Ion map of all features (coloured by log median intensity)-->
+<!--Figure 5: Histogram of feature intensity-->
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;5.</span> Ion map of all features (coloured by log median intensity).</p>
+	<p class="caption"><span class="heading">Figure&nbsp;5.</span> Feature Intensity Histogram for all samples and all features in final dataset (by sample type).</p>
+	<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature Intensity Histogram for all samples and all features in final dataset (by sample type).">
+</div>
+
+<!--Figure 6: Ion map of all features (coloured by log median intensity)-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;6.</span> Ion map of all features (coloured by log median intensity).</p>
 	<img src="{{ item.finalIonMap}}" alt="Ion map of all features (coloured by log median intensity).">
 </div>
 

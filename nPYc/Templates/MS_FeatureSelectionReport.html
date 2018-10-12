@@ -14,7 +14,7 @@
 <h3>Summary of current feature filtering parameters and number of features passing at each stage</h3>
 <div class="content">
 	<p>
-		<p>Number of features in original dataset: {{ item['No Features'] }}</p>
+		<p>Number of features in original dataset: {{ item['Nfeatures'] }}</p>
 		<p>Features filtered on:</p>
 		<ul>
 			<li>Correlation ({{ item.corrMethod }}, {{ item.corrStyle }}, exclusions: {{ item.corrExclusions }}) to dilution greater than {{ item.corrThreshold }}: {{ item.corrPassed }} features passed selection.</li>
