@@ -1944,15 +1944,10 @@ class Dataset:
 				mask = numpy.logical_or(self.featureMetadata[on] < start,
 										 self.featureMetadata[on] > stop)
 
-				self.featureMask = numpy.logical_and(self.featureMask,
-													 mask)
+				self.featureMask = numpy.logical_and(self.featureMask, mask)
 
 				mask = numpy.logical_not(mask)
-				if (self.featureMetadata.loc[mask, 'Exclusion Details'].values == ''):
-					self.featureMetadata.loc[mask, 'Exclusion Details'] = message
-				else:
-					self.featureMetadata.loc[mask, 'Exclusion Details'] = \
-					self.featureMetadata.loc[mask, 'Exclusion Details'] + ' AND ' + message
+				self.featureMetadata.loc[mask, 'Exclusion Details'] = message
 
 		else:
 			raise ValueError('Unknown VariableType.')
