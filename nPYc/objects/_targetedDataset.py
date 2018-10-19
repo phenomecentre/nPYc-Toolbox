@@ -746,7 +746,7 @@ class TargetedDataset(Dataset):
         # check number of compounds in SOP & calibReport
         if SOPFeatureMetadata.shape[0] != calibReport.shape[0]:
             raise ValueError('SOP and Calibration Report number of compounds differ')
-        featureCalibSOP = pandas.merge(left=SOPFeatureMetadata, right=calibReport, how='inner', left_on='compoundID', right_on='TargetLynx ID', sort=False)
+        featureCalibSOP = pandas.merge(left=SOPFeatureMetadata, right=calibReport, how='inner', left_on='compoundName', right_on='Compound', sort=False)
         featureCalibSOP.drop('TargetLynx ID', inplace=True, axis=1)
 
         # check we still have the same number of features (inner join)
