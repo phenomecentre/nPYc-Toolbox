@@ -435,8 +435,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
         item['FeatureQuantParamTable'] = []
         item['FeatureConcentrationDistribution'] = []
         withAccPrec = False
-        withRSD = True
-        
+        withRSD = True        
 
         # Feature quantification parameters
         # add number of <LLOQ >ULOQ and percentage
@@ -497,11 +496,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
         ## Overall feature quantification parameters
         
-        # TODO - adapt this to include RSD table values
         featureSummaryTable = tData.featureMetadata.loc[:, quantParamColumns]
-#        featureSummaryTable.set_index('Feature Name', inplace=True)
-        
- #       pdb.set_trace()
 
         ## Append table with Feature Accuracy Precision, or RSD
         try:
@@ -510,23 +505,25 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
                 withAccPrec = False
             else:
                 # TODO add on to featureSummaryTable
+                tempTable.rename(columns={SampleType.StudyPool: 'RSD Study Pool', SampleType.StudySample: 'RSD Study Sample'}, inplace=True)
+                tempTable.columns.names = [None]
+                tempTable.index.names = [None]
+                featureSummaryTable = featureSummaryTable.join(tempTable, on='Feature Name')    
                 withAccPrec = True
-                import pdb
-                pdb.set_trace()
-        
         except:
-            pass
 
-        try:
-            tempTable = _getRSDTable(tData)
-            tempTable.rename(columns={SampleType.StudyPool: 'RSD Study Pool', SampleType.StudySample: 'RSD Study Sample'}, inplace=True)
-            tempTable.columns.names = [None]
-            tempTable.index.names = [None]
-            featureSummaryTable = featureSummaryTable.join(tempTable, on='Feature Name')
-            withRSD = True
-             
-        except:
-            pass
+            try:
+                tempTable = _getRSDTable(tData)
+                if tempTable.empty:
+                    withRSD = False
+                else:
+                    tempTable.rename(columns={SampleType.StudyPool: 'RSD Study Pool', SampleType.StudySample: 'RSD Study Sample'}, inplace=True)
+                    tempTable.columns.names = [None]
+                    tempTable.index.names = [None]
+                    featureSummaryTable = featureSummaryTable.join(tempTable, on='Feature Name')
+                    withRSD = True    
+            except:
+                pass
         
         # TODO - sort by quantification type
         
@@ -830,7 +827,7 @@ def _getAccuracyPrecisionTable(tData, table='both'):
     :param TargetedDataset tData: TargetedDataset object to plot
     :param str table: If ``accuracy` returns the Accuracy of each measurements, if ``precision`` returns the Precision of measurements, if ``both`` returns the combined table.
     """
-
+    
     def generateTable(statistic):
 
         ## Prepare data (loop over features, append to an destinationPath df, remove all rows with NA, define a y-axis)
