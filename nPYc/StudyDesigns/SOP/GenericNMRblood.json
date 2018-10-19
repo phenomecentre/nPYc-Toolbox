@@ -1,4 +1,5 @@
 {
+	"methodName":"NPC NMR Urine Profiling",
 	"bounds": [-1,10],
 	"variableSize": 20000,
 	"PWFailThreshold":1.3,

@@ -1,4 +1,5 @@
 {
+	"methodName":"NPC LC-MS Profiling",
 	"rtWindow":0.01,
 	"peakWidthWindow": 0.05,
 	"corrThreshold": 0.7,

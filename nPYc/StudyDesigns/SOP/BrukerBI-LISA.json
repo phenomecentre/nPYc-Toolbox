@@ -1,5 +1,5 @@
 {
-	"methodName":"Bruker BI-LISA Data",
+	"methodName":"NMR Bruker - BI-LISA",
 	"fileNamePattern":".*?results\\.xml$",
 	"externalID":[],
 	"sampleMetadataNotExported":["Acqu Date", "Acqu Time", "Sample Type"],

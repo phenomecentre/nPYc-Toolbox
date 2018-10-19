@@ -1,5 +1,5 @@
 {
-	"methodName":"Bruker BI-QUANT-PS Data",
+	"methodName":"NMR Bruker - BI-QUANT-PS",
 	"fileNamePattern":".*?plasma_quant_report_b\\.xml$",
 	"externalID":[],
 	"sampleMetadataNotExported":["Acqu Date", "Acqu Time", "Sample Type"],

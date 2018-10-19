@@ -137,7 +137,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         graphicsPath = None
         saveAs = None
 
-	# Use cpdName (targeted) to label RSD plot if available
+	# TODO: change how this is done If targeted assay can use compound name to label RSD plots
     if (hasattr(dataset.featureMetadata, 'cpdName')):
         featureName = 'cpdName'
         featName=True
