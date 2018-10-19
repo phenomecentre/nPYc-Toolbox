@@ -9,7 +9,7 @@ import copy
 from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import TargetedDataset
-from ..plotting import plotFeatureLOQ, plotLOQRunOrder, plotAccuracyPrecision, plotTIC, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings
+from ..plotting import plotFeatureLOQ, plotLOQRunOrder, plotAccuracyPrecision, plotTIC, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
@@ -431,39 +431,12 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
         """
 
         # Prepare numbering for iteration over quantificationTypes
-        figTabNumber = dict({'1': ['1'], '2': ['2'], '3': ['3'], '4': ['4']})
-        if nQType > 1:
-            allSuffix = ['-A', '-B', '-C', '-D', '-E']
-            suffix = allSuffix[0:nQType]
-            for i in figTabNumber.keys():
-                figTabNumber[i] = [i + x for x in suffix]
-        else:
-            suffix = ['']
-        item['figTabNumber'] = figTabNumber
-
+        figNo = 1
         item['FeatureQuantParamTable'] = []
         item['FeatureConcentrationDistribution'] = []
-        # Accuracy and precision data is present
-        if _getAccuracyPrecisionTable(tData, table='accuracy').shape[0] != 0:
-            withAccPrec = True
-            item['FeatureAccuracyPlot'] = []
-            item['FeaturePrecisionPlot'] = []
-            item['FeatureAccPreTable'] = []
-        else:
-            # check safely RSD can be calculated
-            try:
-                tmpRSD = _getRSDTable(tData)
-            except ValueError:
-                tmpRSD = pandas.DataFrame(None)
-            if tmpRSD.shape[0] != 0:
-                withAccPrec = False
-                withRSD = True
-                item['FeatureRSDPlot'] = []
-                item['FeatureRSDTable'] = []
-            else:
-                withAccPrec = False
-                withRSD = False
-
+        withAccPrec = False
+        withRSD = True
+        
 
         # Feature quantification parameters
         # add number of <LLOQ >ULOQ and percentage
@@ -487,130 +460,121 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
                 if (col in tData.featureMetadata.columns) and (col not in quantParamColumns):
                     quantParamColumns.append(col)
 
-        ## Table 1: Sample summary
 
-        # Generate sample summary
-        sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
-        sampleSummary['isFinalReport'] = True
-        item['sampleSummary'] = sampleSummary
-
-#        # Extract summary table for samples acquired
-#        sampleSummaryTable = copy.deepcopy(sampleSummary['Acquired'])
-#
-#        # Drop unwanted columns
-#        sampleSummaryTable.drop(['Marked for Exclusion'], axis=1, inplace=True)
-#        if 'LIMS marked as missing' in sampleSummaryTable.columns:
-#            sampleSummaryTable.drop(['LIMS marked as missing', 'Missing from LIMS'], axis=1, inplace=True)
-#        if 'Missing Subject Information' in sampleSummaryTable.columns:
-#            sampleSummaryTable.drop(['Missing Subject Information'], axis=1, inplace=True)
-#
-#        # Rename 'already excluded'
-#        sampleSummaryTable.rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
-#
-#        # Add 'unavailable' column
-#        if 'NotAcquired' in sampleSummary:
-#            sampleSummaryTable = sampleSummaryTable.join(pandas.DataFrame(data=sampleSummary['NotAcquired']['Marked as Sample'] - sampleSummary['NotAcquired']['Already Excluded'], columns=['Unavailable']), how='left', sort=False)
-#        else:
-#            sampleSummaryTable['Unavailable'] = 0
-#
-#        # Update 'All', 'Unavailable' to only reflect sample types present in data
-#        sampleSummaryTable.loc['All', 'Unavailable'] = sum(sampleSummaryTable['Unavailable'][1:])
-#
-#        # Save to item
-#        item['SampleSummaryTable'] = sampleSummaryTable
-#
-#        # Save details of study samples missing from dataset
-#        if sampleSummaryTable['Unavailable']['Study Sample'] != 0:
-#            item['SamplesMissingInfo'] = sampleSummary['NotAcquired Details'].loc[sampleSummary['NotAcquired Details']['Sampling ID'].isnull() == False, :]
-#            item['SamplesMissingInfo'] = item['SamplesMissingInfo'].drop(['LIMS Marked Missing'], axis=1)
-#            item['SamplesMissingNo'] = str(sampleSummaryTable['Unavailable']['Study Sample'])
-#
-#        # Save details of study samples excluded from dataset
-#        if hasattr(sampleSummaryTable, 'Excluded'):
-#            if sampleSummaryTable['Excluded']['Study Sample'] != 0:
-#                item['SamplesExcludedInfo'] = sampleSummary['Excluded Details'].loc[(sampleSummary['Excluded Details']['SampleType'] == SampleType.StudySample) & (sampleSummary['Excluded Details']['AssayRole'] == AssayRole.Assay),:]
-#                item['SamplesExcludedInfo'] = item['SamplesExcludedInfo'].drop(['Sample Base Name', 'SampleType', 'AssayRole'], axis=1)
-#                item['SamplesExcludedNo'] = str(sampleSummaryTable['Excluded']['Study Sample'])
+        # Final Summary
 
         if not destinationPath:
             print('Final Dataset for: ' + item['Name'])
             print('\n\t' + 'Method: ' + item['TargMethod'] + '\n\t' + item['Nsamples'] + ' samples\n\t' + item['Nfeatures'] + ' features')
-            ## Feature Summary
             for i in range(0, item['NQType']):
                 print('\t\t' + item['CountQType'][i] + ' features ' + item['TextQType'][i] + '.')
 
-            print('\nSample Summary')
-            print('Table 1: Summary of samples present')
+
+        # Table 1: Sample summary
+
+        # Generate sample summary
+    
+        sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
+        
+        # Tidy table for final report format
+        sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
+        
+        if hasattr(sampleSummary['Acquired'], 'Already Excluded'):
+            sampleSummary['Acquired'].rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
+    
+        sampleSummary['isFinalReport'] = True
+        if 'StudySamples Exclusion Details' in sampleSummary:
+            sampleSummary['studySamplesExcluded'] = True
+        else:
+            sampleSummary['studySamplesExcluded'] = False
+        item['sampleSummary'] = sampleSummary
+    
+        if not destinationPath:
+            print('Sample Summary')
             display(sampleSummary['Acquired'])
-            if 'StudySamples Exclusion Details' in sampleSummary:
-                print('Table 2: Summary of samples excluded')
-                display(sampleSummary['StudySamples Exclusion Details'])
+            print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
 
         ## Overall feature quantification parameters
-        item['FeatureQuantParamTableOverall'] = tData.featureMetadata.loc[:, quantParamColumns]
+        
+        # TODO - adapt this to include RSD table values
+        featureSummaryTable = tData.featureMetadata.loc[:, quantParamColumns]
+#        featureSummaryTable.set_index('Feature Name', inplace=True)
+        
+ #       pdb.set_trace()
+
+        ## Append table with Feature Accuracy Precision, or RSD
+        try:
+            tempTable = _getAccuracyPrecisionTable(tData, table='both')
+            if tempTable.empty:
+                withAccPrec = False
+            else:
+                # TODO add on to featureSummaryTable
+                withAccPrec = True
+                import pdb
+                pdb.set_trace()
+        
+        except:
+            pass
+
+        try:
+            tempTable = _getRSDTable(tData)
+            tempTable.rename(columns={SampleType.StudyPool: 'RSD Study Pool', SampleType.StudySample: 'RSD Study Sample'}, inplace=True)
+            tempTable.columns.names = [None]
+            tempTable.index.names = [None]
+            featureSummaryTable = featureSummaryTable.join(tempTable, on='Feature Name')
+            withRSD = True
+             
+        except:
+            pass
+        
+        # TODO - sort by quantification type
+        
+        item['FeatureQuantParamTableOverall'] = featureSummaryTable
+        
         if not destinationPath:
             print('Feature Summary')
             display(item['FeatureQuantParamTableOverall'])
             print('\n')
 
 
-        ## Figure 1: Acquisition structure colored by limits of quantification
-        nBatchCollect = len((numpy.unique(
-            tData.sampleMetadata['Batch'].values[~numpy.isnan(tData.sampleMetadata['Batch'].values)])).astype(int))
-        if nBatchCollect == 1:
-            item['nBatchesCollect'] = '1 batch'
-        else:
-            item['nBatchesCollect'] = str(nBatchCollect) + ' batches'
-        start = pandas.to_datetime(str(tData.sampleMetadata['Acquired Time'].loc[tData.sampleMetadata['Run Order'] == min(tData.sampleMetadata['Run Order'][tData.sampleMask])].values[0]))
-        end = pandas.to_datetime(str(tData.sampleMetadata['Acquired Time'].loc[tData.sampleMetadata['Run Order'] == max(tData.sampleMetadata['Run Order'][tData.sampleMask])].values[0]))
-        item['start'] = start.strftime('%d/%m/%y')
-        item['end'] = end.strftime('%d/%m/%y')
-
-
-        if destinationPath:
-            item['AcquisitionStructure'] = os.path.join(graphicsPath, item['Name'] + '_AcquisitionStructure.' + tData.Attributes['figureFormat'])
-            saveAs = item['AcquisitionStructure']
-        else:
-            print('Acquisition Structure')
-            print('\n\tSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
-            print('\nFigure 1: Acquisition structure colored by Limits Of Quantification.')
-
-        plotLOQRunOrder(tData,
-                        addCalibration=True,
-                        compareBatch=True,
-                        title='',
-                        savePath=saveAs,
-                        figureFormat=tData.Attributes['figureFormat'],
-                        dpi=tData.Attributes['dpi'],
-                        figureSize=tData.Attributes['figureSize'])
-
         ## Iterate over Quantification Types (Quant parameters table, Acc Prec plots, Acc Prec tables)
         for i in range(0, item['NQType']):
 
             # Subset only the features of interest
             tmpData = copy.deepcopy(tData)
+            tmpData.featureMetadata = featureSummaryTable
             tmpData.updateMasks(filterSamples=False, filterFeatures=True, quantificationTypes=[item['QType'][i]])
             tmpData.applyMasks()
+            
+            # Set up figure sub-indexing
+            figLetter = ['a', 'b', 'c', 'd', 'e']
+            figLetterIX = 0
 
             # Title
             if destinationPath is None:
                 print('\033[1m' + 'Features ' + item['TextQType'][i] + ' (' + item['CountQType'][i] + ')' + '\033[0m')
-
-            ## Table 2: Feature quantification parameters
-            item['FeatureQuantParamTable'].append(tmpData.featureMetadata.loc[:, quantParamColumns])
-            if not destinationPath:
-                print('\nTable ' + item['figTabNumber']['2'][i] + ': Quantification parameters for features ' + item['TextQType'][i] + '.')
-                display(item['FeatureQuantParamTable'][i])
-                print('\n')
-
-            ## Figure 2: Feature Accuracy Plot
+                
+            # Table: summary (only if multiple quantification types)
+            if item['NQType'] > 1:
+                            
+                item['FeatureQuantParamTable'].append(tmpData.featureMetadata)
+                if not destinationPath:
+                    print('\nTable ' + str(figNo) + ': Quantification parameters for features ' + item['TextQType'][i] + '.')
+                    display(item['FeatureQuantParamTable'][i])
+                    print('\n')
+                
+            ## Figure: Feature Accuracy Plot
             if withAccPrec:
+                
+                ## Figure: Feature Accuracy Plot
                 if destinationPath:
                     item['FeatureAccuracyPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureAccuracy' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureAccuracyPlot'][i]
                 else:
-                    print('\nFigure ' + item['figTabNumber']['2'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
+                    print('\nFigure ' + str(figNo) + figLetter[figLetterIX] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
+                    figLetterIX = figLetterIX+1
+                    
                 plotAccuracyPrecision(tmpData,
                                       accuracy=True,
                                       percentRange=percentRange,
@@ -618,18 +582,15 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
                                       figureFormat=tmpData.Attributes['figureFormat'],
                                       dpi=tmpData.Attributes['dpi'],
                                       figureSize=tmpData.Attributes['figureSize'])
-            else:
-                if not destinationPath:
-                    print('Figure ' + item['figTabNumber']['2'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
-                    print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
-            ## Figure 3: Feature Precision Plot, or RSD Plot
-            if withAccPrec:
+                ## Figure: Feature Precision Plot, or RSD Plot
                 if destinationPath:
                     item['FeaturePrecisionPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeaturePrecision' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeaturePrecisionPlot'][i]
                 else:
-                    print('\nFigure ' + item['figTabNumber']['3'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
+                    print('\nFigure ' + str(figNo) + figLetter[figLetterIX] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
+                    figLetterIX = figLetterIX+1
+                
                 plotAccuracyPrecision(tmpData,
                                       accuracy=False,
                                       percentRange=percentRange,
@@ -637,63 +598,58 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
                                       figureFormat=tmpData.Attributes['figureFormat'],
                                       dpi=tmpData.Attributes['dpi'],
                                       figureSize=tmpData.Attributes['figureSize'])
+                
+            
+            ## Figure: Feature Precision Plot, or RSD Plot
             elif withRSD:
                 if destinationPath:
                     item['FeatureRSDPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureRSD' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
                     saveAs = item['FeatureRSDPlot'][i]
                 else:
-                    print('\nFigure ' + item['figTabNumber']['3'][i] + ': Measurements RSD for features ' + item['TextQType'][i] + ' in all samples (by sample type).')
+                    print('\nFigure ' + str(figNo) + figLetter[figLetterIX] + ': Measurements RSD for features ' + item['TextQType'][i] + ' in all samples (by sample type).')
+                    figLetterIX = figLetterIX+1
+                    
                 plotRSDs(tmpData,
                          ratio=False,
                          logx=True,
                          color='matchReport',
                          featName=True,
+                         featureName = 'Feature Name',
                          savePath=saveAs,
                          figureFormat=tmpData.Attributes['figureFormat'],
                          dpi=tmpData.Attributes['dpi'],
                          figureSize=(tmpData.Attributes['figureSize'][0], tmpData.Attributes['figureSize'][1] * (tmpData.noFeatures / 35)))
-            else:
-                if not destinationPath:
-                    print('Figure ' + item['figTabNumber']['3'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
-                    print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
-            ## Figure 4: Measured concentrations distribution, split by sample types.
+            ## Figure: Measured concentrations distribution, split by sample types.
+            temp = dict()
             if destinationPath:
-                item['FeatureConcentrationDistribution'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i]))
-                saveAs = item['FeatureConcentrationDistribution'][i]
+                temp['FeatureConcentrationDistribution'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution_')
+                saveAs = temp['FeatureConcentrationDistribution']
             else:
                 item['FeatureConcentrationDistribution'].append(None)
-                print('\nFigure ' + item['figTabNumber']['4'][i] + ': Measured concentration distributions, split by sample types, for features ' + item['TextQType'][i] + '.')
-            item['FeatureConcentrationDistribution'][i] = plotFeatureLOQ(tmpData,
-                           splitByBatch=True,
-                           plotBatchLOQ=False,
-                           zoomLOQ=False,
-                           logY=False,
-                           tightYLim=True,
-                           nbPlotPerRow=numberPlotPerRowFeature,
-                           savePath=saveAs,
-                           figureFormat=tmpData.Attributes['figureFormat'],
-                           dpi=tmpData.Attributes['dpi'],
-                           figureSize=tmpData.Attributes['figureSize'])
-
-            ## Table 3: Feature Accuracy Precision Table, or RSD Table
-            if withAccPrec:
-                item['FeatureAccPreTable'].append(_getAccuracyPrecisionTable(tmpData, table='both'))
-                if not destinationPath:
-                    print('\nTable ' + item['figTabNumber']['3'][i] + ': Measurement accuracy (%) and precision (% RSD) for features ' + item['TextQType'][i] + '.')
-                    display(item['FeatureAccPreTable'][i])
-                    print('\n')
-            elif withRSD:
-                item['FeatureRSDTable'].append(_getRSDTable(tmpData))
-                if not destinationPath:
-                    print('\nTable ' + item['figTabNumber']['2'][i] + ': RSD for features ' + item['TextQType'][i] + '.')
-                    display(item['FeatureRSDTable'][i])
-                    print('\n')
-            else:
-                if not destinationPath:
-                    print('Table ' + item['figTabNumber']['3'][i] + ': Measurement accuracy (%) and precision (% RSD) for features ' + item['TextQType'][i] + '.')
-                    print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
-        # End iterate over Quantification Types
+                print('\nFigure ' + str(figNo) + figLetter[figLetterIX] + ': Measured concentration distributions, split by sample types, for features ' + item['TextQType'][i] + '.')
+                figLetterIX = figLetterIX+1
+                
+            figuresFeatureDistribution = OrderedDict()
+            
+            figuresFeatureDistribution = plotTargetedFeatureDistribution(
+                    tData,
+                    logx=False,
+                    figures=figuresFeatureDistribution,
+                    savePath=saveAs,
+                    figureFormat=tData.Attributes['figureFormat'],
+                    dpi=tData.Attributes['dpi'],
+                    figureSize=tData.Attributes['figureSize'])
+            
+            
+            for key in figuresFeatureDistribution:
+                if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistribution[key]):
+                    figuresFeatureDistribution[key] = re.sub('.*graphics', 'graphics', figuresFeatureDistribution[key])
+        
+            item['FeatureConcentrationDistribution'] = figuresFeatureDistribution
+            
+            
+            figNo = figNo+1
 
 
         ## Figure 5 and 6: (if available) PCA scores and loadings plots by sample type
@@ -709,30 +665,14 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
                     pcaPath = destinationPath
                 else:
                     pcaPath = None
-                pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=6, destinationPath=pcaPath, fileNamePrefix='')
-
-            #if destinationPath:
-            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, destinationPath=saveAs)
-            #else:
-            #    item['pcaPlots'] = generateBasicPCAReport(pcaModel, tData, figureCounter=5, destinationPath=destinationPath)
+                pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=figNo, destinationPath=pcaPath, fileNamePrefix='')
 
 
-        ## Add final tables of excluded/missing study samples
+        # Table: Summary of missing/excluded study samples
         if not destinationPath:
-
-            if (('SamplesMissingInfo' in item) | ('SamplesExcludedInfo' in item)):
-
-                print('Samples Missing from Acquisition\n')
-
-                if 'SamplesMissingInfo' in item:
-                    print('Samples unavailable for acquisition (' + item['SamplesMissingNo'] + ')')
-                    display(item['SamplesMissingInfo'])
-                    print('\n')
-
-                if 'SamplesExcludedInfo' in item:
-                    print('Samples excluded on analytical criteria (' + item['SamplesExcludedNo'] + ')')
-                    display(item['SamplesExcludedInfo'])
-                    print('\n')
+            if 'StudySamples Exclusion Details' in sampleSummary:
+                print('Missing/Excluded Study Samples')
+                display(sampleSummary['StudySamples Exclusion Details'])
 
 
     # Generate HTML report
