@@ -13,10 +13,6 @@ def plotTargetedFeatureDistribution(dataset, logx=False, figures=None, savePath=
 	:param dict figures: If not ``None``, saves location of each figure for output in html report (see _generateMSReport.py)
 	"""
 
-	# Check inputs
-	if not isinstance(dataset, MSDataset):
-		raise TypeError('dataset must be an instance of MSDataset')
-
 	# Set up for plotting in subplot figures 1x2
 	nax = 3 # number of axis per figure
 	nv = sum(dataset.featureMask)
