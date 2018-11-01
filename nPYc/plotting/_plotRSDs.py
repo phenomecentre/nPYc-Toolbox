@@ -14,7 +14,7 @@ from ..utilities import rsd
 from ._plotVariableScatter import plotVariableScatter
 
 
-def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, savePath=None, color=None, featName=False, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=True, sortOrder=True, savePath=None, color=None, featName=False, hLines=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotRSDs(dataset, ratio=False, savePath=None, color=None \*\*kwargs)
 
@@ -30,13 +30,15 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	:param bool logx: If ``True`` plot RSDs on a log10 scaled axis
 	:param xlim: Tuple of (min, max) RSD values to plot
 	:type xlim: None or tuple(float, float)
+	:param hLines: None or list of y positions at which to plot an horizontal line. Features are positioned from 1 to nFeat
+	:type hLines: None or list
 	:param savePath: If ``None`` plot interactively, otherwise save the figure to the path specified
 	:type savePath: None or str
 	:param color: Allows the default colour pallet to be overridden
 	:type color: None or seaborn.palettes._ColorPalette
 	:param bool featName: If ``True`` y-axis label is the feature Name, if ``False`` features are numbered.
 	"""
-	rsdTable = _plotRSDsHelper(dataset, featureName=featureName, ratio=ratio)
+	rsdTable = _plotRSDsHelper(dataset, featureName=featureName, ratio=ratio, withExclusions=withExclusions, sortOrder=sortOrder)
 
 	# Plot
 	if xlim:
@@ -58,7 +60,7 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	else:
 		ylab = 'Feature Number'
 
-	plotVariableScatter(rsdTable, logX=logx, xLim=xLim, xLabel=xlab, yLabel=ylab, sampletypeColor=True, hLines=None, vLines=None, savePath=savePath, figureFormat=figureFormat, dpi=dpi, figureSize=figureSize)
+	plotVariableScatter(rsdTable, logX=logx, xLim=xLim, xLabel=xlab, yLabel=ylab, sampletypeColor=True, hLines=hLines, vLines=None, savePath=savePath, figureFormat=figureFormat, dpi=dpi, figureSize=figureSize)
 
 
 def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=True):
@@ -147,7 +149,8 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 	return figure
 
 
-def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False):
+def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclusions=True, sortOrder=True):  
+	
 	if not dataset.VariableType == VariableType.Discrete:
 		raise ValueError('Only datasets with discreetly sampled variables are supported.')
 
@@ -161,12 +164,18 @@ def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False):
 	precRefMask = numpy.logical_and(precRefMask, dataset.sampleMask)
 	sTypes = list(set(dataset.sampleMetadata.loc[precRefMask, 'SampleType'].values))
 
-	rsdVal['Feature Name'] = dataset.featureMetadata.loc[dataset.featureMask, featureName].values
-
-	rsdVal[SampleType.StudyPool] = dataset.rsdSP[dataset.featureMask]
-	ssMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & dataset.sampleMask
-	rsdList = rsd(dataset.intensityData[ssMask, :])
-	rsdVal[SampleType.StudySample] = rsdList[dataset.featureMask]
+	if withExclusions:   
+		rsdVal['Feature Name'] = dataset.featureMetadata.loc[dataset.featureMask, featureName].values
+		rsdVal[SampleType.StudyPool] = dataset.rsdSP[dataset.featureMask]
+		ssMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & dataset.sampleMask
+		rsdList = rsd(dataset.intensityData[ssMask, :])
+		rsdVal[SampleType.StudySample] = rsdList[dataset.featureMask]
+	else:		
+		rsdVal['Feature Name'] = dataset.featureMetadata.loc[:, featureName].values
+		rsdVal[SampleType.StudyPool] = dataset.rsdSP
+		ssMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & dataset.sampleMask
+		rsdList = rsd(dataset.intensityData[ssMask, :])
+		rsdVal[SampleType.StudySample] = rsdList		
 
 	# Only keep features with finite values for SP and SS
 	finiteMask = (rsdVal[SampleType.StudyPool] < numpy.finfo(numpy.float64).max)
@@ -181,23 +190,27 @@ def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False):
 			# minimum 3 points needed
 			if sum(sTypeMask) >= 3:
 				rsdList = rsd(dataset.intensityData[sTypeMask, :])
-				rsdVal[sType] = rsdList[dataset.featureMask]
+				if withExclusions:
+					rsdVal[sType] = rsdList[dataset.featureMask]
+				else:
+					rsdVal[sType] = rsdList
 				finiteMask = finiteMask & (rsdVal[sType] < numpy.finfo(numpy.float64).max)
 
 	## apply finiteMask
 	for sType in rsdVal.keys():
 		rsdVal[sType] = rsdVal[sType][finiteMask]
 
-	# reorder from largest to smallest RSD in Study Pool
-	sortIndex = reversed(numpy.argsort(rsdVal[SampleType.StudyPool]))
-
 	if ratio:
 		rsdSP = copy.deepcopy(rsdVal[SampleType.StudyPool])
 		for sType in sTypes:
 			rsdVal[sType] = numpy.divide(rsdVal[sType], rsdSP)
 
-	# Prepare data for plotting
-	rsdTable = pandas.DataFrame(rsdVal).reindex(sortIndex)
-	rsdTable.reset_index(drop=True, inplace=True)
+	# reorder from largest to smallest RSD in Study Pool
+	if sortOrder:
+		sortIndex = reversed(numpy.argsort(rsdVal[SampleType.StudyPool]))
+		rsdTable = pandas.DataFrame(rsdVal).reindex(sortIndex)
+		rsdTable.reset_index(drop=True, inplace=True)
+	else:
+		rsdTable = pandas.DataFrame(rsdVal)
 
 	return rsdTable

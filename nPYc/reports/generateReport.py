@@ -5,7 +5,6 @@ from ..reports._generateSampleReport import _generateSampleReport
 from ..reports._generateReportNMR import _generateReportNMR
 from ..reports._generateReportTargeted import _generateReportTargeted
 
-
 def generateReport(data, reportType, destinationPath=None, **kwargs):
 	"""
 	Generates one of a range of reports visualising different qualities of the dataset. Reports can be plotted interactively, or saved to disk.
@@ -49,7 +48,7 @@ def generateReport(data, reportType, destinationPath=None, **kwargs):
 		raise TypeError('data must be an instance of nPYc.Dataset')
 
 	if isinstance(data, MSDataset):
-		acceptAllOptions = {'sample summary', 'feature summary', 'correlation to dilution', 'batch correction assessment', 'batch correction summary', 'feature selection', 'final report', 'final report abridged', 'final report targeted abridged'}
+		acceptAllOptions = {'sample summary', 'feature summary', 'correlation to dilution', 'batch correction assessment', 'batch correction summary', 'feature selection', 'final report', 'final report abridged', 'final report peakpanther'}
 	elif isinstance(data, NMRDataset):
 		acceptAllOptions = {'sample summary', 'feature summary', 'final report'}
 	elif isinstance(data, TargetedDataset):

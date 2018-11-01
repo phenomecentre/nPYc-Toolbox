@@ -461,6 +461,8 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
 
         # Final Summary
+        import pdb
+        pdb.set_trace()
 
         if not destinationPath:
             print('Final Dataset for: ' + item['Name'])
@@ -497,6 +499,9 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
         ## Overall feature quantification parameters
         
         featureSummaryTable = tData.featureMetadata.loc[:, quantParamColumns]
+        
+        import pdb
+        pdb.set_trace()
 
         ## Append table with Feature Accuracy Precision, or RSD
         try:
@@ -517,6 +522,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
                 if tempTable.empty:
                     withRSD = False
                 else:
+                    # This needs to be defensive programming if etc
                     tempTable.rename(columns={SampleType.StudyPool: 'RSD Study Pool', SampleType.StudySample: 'RSD Study Sample'}, inplace=True)
                     tempTable.columns.names = [None]
                     tempTable.index.names = [None]
