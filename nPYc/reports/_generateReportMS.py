@@ -21,6 +21,7 @@ from ..utilities._internal import _vcorrcoef
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..enumerations import AssayRole, SampleType
 from ._generateBasicPCAReport import generateBasicPCAReport
+from ..reports._finalReportPeakPantheR import _finalReportPeakPantheR
 
 
 from ..__init__ import __version__ as version
@@ -56,7 +57,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
                          'batch correction assessment',
                          'batch correction summary', 'feature selection',
 						 'final report', 'final report abridged',
-						 'final report targeted abridged'}
+						 'final report peakpanther'}
 
     # Check inputs
     if not isinstance(dataset, MSDataset):
@@ -115,9 +116,10 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
         _batchCorrectionAssessmentReport(msData, destinationPath)
     elif reportType.lower() == 'batch correction summary':
         _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath)
-    elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged') or (reportType.lower() == 'final report targeted abridged'):
+    elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged'):
         _finalReport(msData, destinationPath, pcaModel, reportType=reportType)
-
+    elif (reportType.lower() == 'final report peakpanther'):
+        _finalReportPeakPantheR(msData, destinationPath)
 
 def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final report'):
     """
@@ -180,10 +182,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     # Generate sample summary
 
     sampleSummary = _generateSampleReport(dataset, withExclusions=True, destinationPath=None, returnOutput=True)
-    
+
     # Tidy table for final report format
     sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
-    
+
     if hasattr(sampleSummary['Acquired'], 'Already Excluded'):
         sampleSummary['Acquired'].rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
 

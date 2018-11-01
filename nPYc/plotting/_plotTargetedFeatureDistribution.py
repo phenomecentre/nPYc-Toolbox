@@ -1,10 +1,10 @@
-from ..objects import MSDataset
 import matplotlib.pyplot as plt
 from ..plotting._violinPlot import _violinPlotHelper
 from ..enumerations import AssayRole, SampleType
 import math
+import copy
 
-def plotTargetedFeatureDistribution(dataset, logx=False, figures=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name', featureMask=None, logx=False, figures=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	Plot the distribution (violin plots) of a set of features, e.g., peakPantheR outputs, coloured by sample type
 
@@ -12,10 +12,16 @@ def plotTargetedFeatureDistribution(dataset, logx=False, figures=None, savePath=
 	:param bool logx: If ``True`` log-scale the x-axis
 	:param dict figures: If not ``None``, saves location of each figure for output in html report (see _generateMSReport.py)
 	"""
+   
+	# Apply sample/feature masks if exclusions to be applied	
+	dataset = copy.deepcopy(datasetOriginal)    
+	if featureMask is not None:
+		dataset.featureMask = featureMask
+		dataset.applyMasks()
 
 	# Set up for plotting in subplot figures 1x2
 	nax = 3 # number of axis per figure
-	nv = sum(dataset.featureMask)
+	nv = sum(featureMask)
 	nf = math.ceil(nv/nax)
 	plotNo = 0
 
@@ -57,11 +63,6 @@ def plotTargetedFeatureDistribution(dataset, logx=False, figures=None, savePath=
 
 				_violinPlotHelper(axIXs[axNo], dataset.intensityData[:,plotNo], sampleMasks, None, 'Sample Type', palette=palette, logy=False)
 
-				# TODO: Remove this trick when cpdName from pp gets uniformised.
-				if 'cpdName' in dataset.featureMetadata.columns:
-					featureName = 'cpdName'
-				else:
-					featureName = 'FeatureName'
 				axIXs[axNo].set_title(dataset.featureMetadata.loc[plotNo, featureName])
 
 			# Advance plotNo
