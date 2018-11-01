@@ -57,7 +57,12 @@ def plotTargetedFeatureDistribution(dataset, logx=False, figures=None, savePath=
 
 				_violinPlotHelper(axIXs[axNo], dataset.intensityData[:,plotNo], sampleMasks, None, 'Sample Type', palette=palette, logy=False)
 
-				axIXs[axNo].set_title(dataset.featureMetadata.loc[plotNo, 'cpdName'])
+				# TODO: Remove this trick when cpdName from pp gets uniformised.
+				if 'cpdName' in dataset.featureMetadata.columns:
+					featureName = 'cpdName'
+				else:
+					featureName = 'FeatureName'
+				axIXs[axNo].set_title(dataset.featureMetadata.loc[plotNo, featureName])
 
 			# Advance plotNo
 			plotNo = plotNo+1
