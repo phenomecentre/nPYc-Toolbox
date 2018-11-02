@@ -26,7 +26,7 @@ import operator
 from ..__init__ import __version__ as version
 
 
-def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinationPath=None, msDataCorrected=None, pcaModel=None):
+def _finalReportPeakPantheR(dataset, destinationPath=None):
     """
     Summarise different aspects of an MS dataset
 
@@ -68,6 +68,10 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
         graphicsPath = None
         saveAs = None
 
+    # Ensure we have 'Passing Selection' column in dataset object
+    if not hasattr(dataset.featureMetadata, 'Passing Selection'):
+        dataset.saveFeatureMask()
+
 	# Use cpdName (targeted) to label RSD plot if available
     if (hasattr(dataset.featureMetadata, 'cpdName')):
         featureName = 'cpdName'
@@ -94,9 +98,9 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
     item['ReportType'] = 'feature summary' # TODO check what this means!
     item['Nsamples'] = dataset.intensityData.shape[0]
     item['Nfeatures'] = dataset.intensityData.shape[1]
-    if len(dataset.featureMask) > sum(dataset.featureMask):
-        item['NfeaturesPassing'] = sum(dataset.featureMask)
-        item['NfeaturesFailing'] = item['Nfeatures'] - item['NfeaturesPassing']
+    item['NfeaturesPassing'] = sum(dataset.featureMetadata['Passing Selection'])
+    item['NfeaturesFailing'] = item['Nfeatures'] - item['NfeaturesPassing']
+    if item['NfeaturesFailing'] != 0:
         hLine = [item['NfeaturesFailing']]
     else:
         hLine = None
@@ -113,7 +117,7 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
         print('Final Dataset\n')
         print(str(item['Nsamples']) + ' samples')
         print(str(item['Nfeatures']) + ' features')
-        if len(dataset.featureMask) > sum(dataset.featureMask):
+        if item['NfeaturesFailing'] != 0:
             print('\t' + str(item['NfeaturesPassing']) + ' detected and passing feature selection')
             print('\t' + str(item['NfeaturesFailing']) + ' not detected or not present in sufficient concentration to be measured accurately')
 
@@ -121,7 +125,7 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
 
     # Generate sample summary
 
-    sampleSummary = _generateSampleReport(dataset, withExclusions=withExclusions, destinationPath=None, returnOutput=True)
+    sampleSummary = _generateSampleReport(dataset, destinationPath=None, returnOutput=True)
 
     # Tidy table for final report format
     sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
@@ -138,7 +142,7 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
 
     if not destinationPath:
         print('\n\nSample Summary')
-        print('\nTable 1: Summary of samples present')
+        print('\nTable 1: Sample summary table.')
         display(sampleSummary['Acquired'])
         print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
@@ -162,23 +166,48 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
                                 'RSD of SS Samples > RSD of SP Samples'], columns=['Value Applied']))
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
-
+    
+    
+    nBatchCollect = len((numpy.unique(dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
+    if nBatchCollect == 1:
+        item['nBatchesCollect'] = '1 batch'
+    else:
+        item['nBatchesCollect'] = str(nBatchCollect) + ' batches'
+    
+    if hasattr(dataset, 'fit'):
+        nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
+        if nBatchCorrect == 1:
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SP samples in 1 batch)'
+        else:
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SP samples in ' + str(nBatchCorrect) + ' batches)'
+    else:
+        item['batchesCorrect'] =  'Run-order and batch correction not required' 
+ 
+    start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+    end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+    item['start'] = start.strftime('%d/%m/%y')
+    item['end'] = end.strftime('%d/%m/%y')
+    
     if not destinationPath:
         print('\nFeature Summary')
-        print('\nTable 2: Features selected based on:')
-        display(item['FeatureSelectionTable'])
-        if len(dataset.featureMask) > sum(dataset.featureMask):
-            print('\n*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured accurately, thus results should be interpreted accordingly')
 
+        print('\nSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
+        print(item['batchesCorrect']) 
+        
+        print('\nTable 2: Features selected based on the following criteria:')
+        display(item['FeatureSelectionTable'])
+        if item['NfeaturesFailing'] != 0:
+            print('\n*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured accurately, thus results should be interpreted accordingly')
+         
     
     # Separate into features passing and failing feature selection for rest of report
 
     # Sort features by featureMask then by rsdSR
-    dataset.featureMetadata['featureMask'] = dataset.featureMask
     dataset.featureMetadata['rsdSP'] = dataset.rsdSP
-    dataset.featureMetadata.sort_values(by=['featureMask', 'rsdSP'], ascending=[False, True], inplace=True)
+    dataset.featureMetadata.sort_values(by=['Passing Selection', 'rsdSP'], ascending=[False, True], inplace=True)
     orderNew = dataset.featureMetadata.index
     dataset._intensityData = dataset._intensityData[:,orderNew]
+    dataset.featureMetadata.drop('rsdSP', axis=1, inplace=True)
 
     # Figure: Distribution of RSDs in SP and SS
     if destinationPath:
@@ -186,7 +215,7 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
     else:
-        print('\n\nFigure ' + str(figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type)')
+        print('\n\nFigure ' + str(figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).')
         figNo = figNo+1
 
     plotRSDs(dataset,
@@ -194,7 +223,7 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
             ratio=False,
             logx=True,
             sortOrder=False,
-            withExclusions=withExclusions,
+            withExclusions=False,
             color='matchReport',
             featName=featName,
             hLines=hLine,
@@ -204,7 +233,7 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
             figureSize=figureSize)
     
     if not destinationPath:
-          if len(dataset.featureMask) > sum(dataset.featureMask):
+          if item['NfeaturesFailing'] != 0:
             print('\n*Features sorted by RSD in SP samples; with features passing selection (i.e., able to be accurately measured) above the line and those failing (i.e., not able to be accurately measured) below the line')
       
 
@@ -214,27 +243,26 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
     else:
-        print('Figure ' + str(figNo) + ': Feature intensity histogram for all samples and all features passing selection (i.e., able to be accurately measured) in final dataset (by sample type)')
+        print('\n\nFigure ' + str(figNo) + ': Feature intensity histogram for all samples and all features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).')
         figNo = figNo+1
 
     _plotAbundanceBySampleType(dataset, SSmask, SPmask, ERmask, saveAs)
 
-
     
     # Figures: Distributions for each feature PASSING SELECTION
-    
     figuresFeatureDistributionPassing = OrderedDict()
     temp = dict()
     if destinationPath:
         temp['FeatureConcentrationDistributionPassing'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistributionPassing_')
         saveAs = temp['FeatureConcentrationDistributionPassing']
     else:
-        print('Figure ' + str(figNo) + ': Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) split by sample types')
+        print('Figure ' + str(figNo) + ': Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).')
         figNo = figNo+1
 
     figuresFeatureDistributionPassing = plotTargetedFeatureDistribution(
                dataset,
-               featureMask=dataset.featureMask,
+               featureMask=dataset.featureMetadata['Passing Selection'],
+               featureName=featureName,
                logx=False,
                figures=figuresFeatureDistributionPassing,
                savePath=saveAs,
@@ -250,22 +278,20 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
     
     
     # Figures: Distributions for each feature FAILING SELECTION 
-#    import pdb
-#    pdb.set_trace()
-    
-    if len(dataset.featureMask) > sum(dataset.featureMask): 
+    if item['NfeaturesFailing'] != 0:
         figuresFeatureDistributionFailing = OrderedDict()
         temp = dict()
         if destinationPath:
             temp['FeatureConcentrationDistributionFailing'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistributionFailing_')
             saveAs = temp['FeatureConcentrationDistributionFailing']
         else:
-            print('Figure ' + str(figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) split by sample types')
+            print('Figure ' + str(figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) in final dataset (by sample type).')
             figNo = figNo+1
     
         figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(
                    dataset,
-                   featureMask=numpy.asarray(list(map(operator.not_, dataset.featureMask))),
+                   featureMask=dataset.featureMetadata['Passing Selection']==False,
+                   featureName=featureName,
                    logx=False,
                    figures=figuresFeatureDistributionFailing,
                    savePath=saveAs,
@@ -287,6 +313,7 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
             print('\nTable 3: Details of missing/excluded study samples')
             display(sampleSummary['StudySamples Exclusion Details'])
 
+
     # Write HTML if saving
     if destinationPath:
 
@@ -299,24 +326,15 @@ def _finalReportPeakPantheR(dataset, reportType, withExclusions=False, destinati
         from jinja2 import Environment, FileSystemLoader
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-
-        if reportType.lower() == 'final report':
-            template = env.get_template('MS_FinalSummaryReport.html')
-
-        elif reportType.lower() == 'final report abridged':
-            template = env.get_template('MS_FinalSummaryReport_Abridged.html')
-
-        elif reportType.lower() == 'final report targeted abridged':
-            template = env.get_template('MS_Targeted_FinalSummaryReport_Abridged.html')
-
+ 
+        template = env.get_template('MS_peakPantheR_FinalSummaryReport.html')
         filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
 
         f = open(filename,'w')
         f.write(template.render(item=item,
                                 attributes=dataset.Attributes,
                                 version=version,
-                                graphicsPath=graphicsPath,
-                                pcaPlots=pcaModel))
+                                graphicsPath=graphicsPath))
         f.close()
         copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
