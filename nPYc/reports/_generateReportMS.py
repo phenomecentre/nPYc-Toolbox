@@ -119,7 +119,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
     elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged'):
         _finalReport(msData, destinationPath, pcaModel, reportType=reportType)
     elif (reportType.lower() == 'final report peakpanther'):
-        _finalReportPeakPantheR(msData, destinationPath)
+        _finalReportPeakPantheR(msData, destinationPath=destinationPath)
 
 def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final report'):
     """
@@ -229,46 +229,45 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
             columns=['Value Applied']))
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
-
+    
+    nBatchCollect = len((numpy.unique(dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
+    if nBatchCollect == 1:
+        item['batchesCollect'] = '1 batch'
+    else:
+        item['batchesCollect'] = str(nBatchCollect) + ' batches'
+    
+    if hasattr(dataset, 'fit'):
+        nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
+        if nBatchCorrect == 1:
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SP samples in 1 batch'
+        else:
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SP samples in ' + str(nBatchCorrect) + ' batches'
+    else:
+        item['batchesCorrect'] =  'Run-order and batch correction not required' 
+ 
+    start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+    end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+    item['start'] = start.strftime('%d/%m/%y')
+    item['end'] = end.strftime('%d/%m/%y')
+    
     if not destinationPath:
         print('\nFeature Summary')
-        print('\nTable 2: Features selected based on:')
+        
+        print('\nSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
+        print(item['batchesCorrect'])      
+        
+        print('\nTable 2: Features selected based on the following criteria:')
         display(item['FeatureSelectionTable'])
-        print('\n')
-
+        
+        
     # ONLY 'final report': plot TIC by batch and TIC
     if (reportType.lower() == 'final report'):
 
 	    # Figure 1: Acquisition Structure, TIC by sample and batch
-	    nBatchCollect = len((numpy.unique(
-	        dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
-	    if nBatchCollect == 1:
-	        item['nBatchesCollect'] = '1 batch'
-	    else:
-	        item['nBatchesCollect'] = str(nBatchCollect) + ' batches'
-
-	    nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[
-	                                          ~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
-	    if nBatchCorrect == 1:
-		        item['nBatchesCorrect'] = '1 batch'
-	    else:
-	        item['nBatchesCorrect'] = str(nBatchCorrect) + ' batches'
-
-	    start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(
-	            dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
-	    end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(
-	            dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
-	    item['start'] = start.strftime('%d/%m/%y')
-	    item['end'] = end.strftime('%d/%m/%y')
-
 	    if destinationPath:
-	        item['finalTICbatches'] = os.path.join(graphicsPath,
-	                                               item['Name'] + '_finalTICbatches.' + dataset.Attributes['figureFormat'])
+	        item['finalTICbatches'] = os.path.join(graphicsPath, item['Name'] + '_finalTICbatches.' + dataset.Attributes['figureFormat'])
 	        saveAs = item['finalTICbatches']
 	    else:
-	        print('\nSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
-	        print('\nBatch correction applied (LOESS regression fitted to SP samples in ' + item[
-	            'nBatchesCorrect'] + ') for run-order correction and batch alignment\n')
 	        print('Figure ' + str(figNo) + ': Acquisition Structure')
 	        figNo = figNo+1
 

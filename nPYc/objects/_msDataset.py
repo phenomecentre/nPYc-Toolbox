@@ -383,6 +383,21 @@ class MSDataset(Dataset):
 																																							', '.join("{!s}={!r}".format(key,val) for (key,val) in kwargs.items()))])
 
 
+	def saveFeatureMask(self):
+		"""
+		Updates featureMask and saves as 'Passing Selection' in self.featureMetadata
+		"""
+ 
+		# Updates featureMask       
+		self.updateMasks(filterSamples=False, filterFeatures=True)
+        
+		# Save featureMask as 'Passing Selection' column in self.featureMetadata
+		self.featureMetadata['Passing Selection'] = self.featureMask
+
+		# Reset featureMask
+		self.initialiseMasks()
+        
+        
 	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`~Dataset.sampleMetadata` table.

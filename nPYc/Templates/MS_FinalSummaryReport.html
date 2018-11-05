@@ -31,10 +31,11 @@
 <h2>Feature Summary</h2>
 
 <div class='content'>
+	<p>Samples acquired in {{ item['nBatchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
+	<p>{{ item['batchesCorrect'] }})</p>
+	
 	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
 	{{ item['FeatureSelectionTable'].to_html() }}
-	<p>Samples acquired in {{ item['nBatchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
-	<p>Batch correction applied (LOESS regression fitted to SR samples in {{ item['nBatchesCorrect'] }}) for run-order correction and batch alignment</p>
 	<p></p>
 </div>
 
