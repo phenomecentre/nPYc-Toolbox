@@ -1,0 +1,94 @@
+{% extends "base_QC.html" %}
+
+{% import 'sampleReportChunk.html' as sampleReport %}
+
+{% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
+
+{% block content %}
+
+<!--Overall Summary_______________________________________________________________________________________________________________-->
+<h2>Final Dataset</h2>
+
+<div class='content'>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	{% if 'NfeaturesPassing' in item %}
+	<ul>
+		<li>{{ item['NfeaturesPassing'] }} detected and passing feature selection</li>
+		<li>{{ item['NfeaturesFailing'] }} not detected or not present in sufficient concentration to be measured accurately</li>
+	</ul>
+	{% endif %}	
+	<p></p>
+</div>
+
+<!--Sample Details________________________________________________________________________________________________________________-->
+<h2>Sample Summary</h2>
+
+<!--Summary of samples in final dataset-->
+<div class='content'>
+	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
+	{{ item.sampleSummary['Acquired'].to_html() }}
+	<p>*Details of any missing/excluded study samples given at the end of the report.</p>
+	<p></p>
+</div>
+
+<!--Feature Summary______________________________________________________________________________________________________________-->
+<h2>Feature Summary</h2>
+<div class='content'>
+	<p>Samples acquired in {{ item['nBatchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
+	<p>{{ item['batchesCorrect'] }}</p>
+	
+	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
+	{{ item['FeatureSelectionTable'].to_html() }}
+	
+	{% if 'FeatureConcentrationDistributionFailing' in item %}
+		<p>*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured accurately, thus results should be interpreted accordingly.</p>
+	{% endif %}
+	<p></p>
+</div>
+
+
+<!--Figure: RSD for all samples and features passing selection-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).</p>
+	<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
+	{% if 'NfeaturesPassing' in item %}
+		<p>*Features sorted by RSD in SP samples; with features passing selection (i.e., able to be accurately measured) above the line and those failing (i.e., not able to be accurately measured) below the line.</p>
+	{% endif %}
+</div>
+
+<!--Figure: Feature intensity histogram-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Feature intensity histogram for all samples and all features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).</p>
+	<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature Intensity histogram for all samples and all features in final dataset (by sample type).">
+</div>	
+
+<!--Figures: Measured concentrations distribution, for features passing selection, split by sample types.-->
+<p class="caption"><span class="heading">Figure&nbsp;3.</span> Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).</p>
+<div class='figure'>	
+	
+	{% for key, value in item['FeatureConcentrationDistributionPassing'].items() %}
+		<img src="{{ value|e }}" alt="Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).">
+	{% endfor %}
+</div>
+
+<!--Figures: Measured concentrations distribution, for features failing selection, split by sample types.-->
+{% if 'FeatureConcentrationDistributionFailing' in item %}
+	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) in final dataset (by sample type).</p>
+	<div class='figure'>	
+	
+		{% for key, value in item['FeatureConcentrationDistributionFailing'].items() %}
+			<img src="{{ value|e }}" alt="Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) in final dataset (by sample type).">
+			{% endfor %}
+	</div>
+{% endif %}
+
+
+<!--Details of any missing/excluded samples-->
+{% if 'StudySamples Exclusion Details' in item.sampleSummary %}
+	<h2>Missing/Excluded Study Samples</h2>
+	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
+	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
+{% endif %}
+
+{% endblock %}
