@@ -149,3 +149,21 @@ class QuantificationType(enum.Enum):
 	QuantAltLabeledAnalogue = 'Quantified and validated with alternative labeled analogue'
 	QuantOther = 'Other quantification'
 	Monitored = 'Monitored for relative information'
+
+class AnalyticalPlatform(enum.Enum):
+	"""
+	Enumeration of analytical platform types.
+
+	* *NMR* for Nuclear Magnetic Resonance Spectroscopy
+	* *MS* for Mass Spectrometry
+	* *Other* placeholder for any other type of instrumentation
+	"""
+	def __repr__(self):
+		return '<%s.%s>' % (self.__class__.__name__, self.name)
+
+	def __str__(self):
+		return '%s' % self._value_
+
+	NMR = 'NuclearMagneticResonanceSpectroscopy'
+	MS = 'MassSpectrometry'
+	Other = 'Other'

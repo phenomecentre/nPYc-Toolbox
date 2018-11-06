@@ -13,7 +13,7 @@ import warnings
 from .._toolboxPath import toolboxPath
 from ._dataset import Dataset
 from ..utilities import normalisation, rsd
-from ..enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod
+from ..enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod, AnalyticalPlatform
 
 
 class TargetedDataset(Dataset):
@@ -199,12 +199,14 @@ class TargetedDataset(Dataset):
             self._loadTargetLynxDataset(datapath, **kwargs)
             # Finalise object
             self.VariableType = VariableType.Discrete
+            self.AnalyticalPlatform = AnalyticalPlatform.MS
             self.initialiseMasks()
         elif fileType == 'Bruker Quantification':
             # Read files, clean object
             self._loadBrukerXMLDataset(datapath, **kwargs)
             # Finalise object
             self.VariableType = VariableType.Discrete
+            self.AnalyticalPlatform = AnalyticalPlatform.NMR
             self.initialiseMasks()
         elif fileType == 'empty':
             # Build empty object for testing
@@ -217,7 +219,9 @@ class TargetedDataset(Dataset):
             validDataset = self.validateObject(verbose=False, raiseError=False, raiseWarning=False)
             if not validDataset['BasicTargetedDataset']:
                 raise ValueError('Import Error: The imported dataset does not satisfy to the Basic TargetedDataset definition')
-        self.Attributes['Log'].append([datetime.now(),'%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
+        self.Attributes['Log'].append([datetime.now(),
+                                       '%s instance initiated, with %d samples, %d features, from %s'
+                                       % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
         # Check later
         if 'Metadata Available' not in self.sampleMetadata:
             self.sampleMetadata['Metadata Available'] = False

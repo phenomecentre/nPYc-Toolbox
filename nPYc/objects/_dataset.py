@@ -100,6 +100,7 @@ class Dataset:
 		"""
 
 		self.VariableType = None
+		self.AnalyticalPlatform = None
 		""":py:class:`~nPYc.enumerations.VariableType` enum specifying the type of data represented."""
 
 		self.Attributes['Log'] = list()
