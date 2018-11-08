@@ -1755,6 +1755,8 @@ class TargetedDataset(Dataset):
         if any(u_counts > 1):
             warnings.warn('Warning: The following \'Sample File Name\' are present more than once: ' + str(u_ids[u_counts>1].tolist()))
 
+        if self.AnalyticalPlatform != other.AnalyticalPlatform:
+            raise ValueError('Can only add Targeted datasets with the same AnalyticalPlatform Attribute')
 
         ## Initialise an empty TargetedDataset to overwrite
         targetedData = TargetedDataset(datapath='', fileType='empty')
@@ -1773,6 +1775,8 @@ class TargetedDataset(Dataset):
 
         ## VariableType
         targetedData.VariableType = copy.deepcopy(self.VariableType)
+
+        targetedData.AnalyticalPlatform = copy.deepcopy(self.AnalyticalPlatform)
 
         ## _name
         targetedData.name = self.name+'-'+other.name
@@ -1929,7 +1933,7 @@ class TargetedDataset(Dataset):
 
 
         ## unexpected attributes
-        expectedAttr = {'Attributes', 'VariableType', '_Normalisation', '_name', 'fileName', 'filePath',
+        expectedAttr = {'Attributes', 'VariableType', 'AnalyticalPlatform', '_Normalisation', '_name', 'fileName', 'filePath',
                         '_intensityData', 'sampleMetadata', 'featureMetadata', 'expectedConcentration','sampleMask',
                         'featureMask', 'calibration', 'sampleMetadataExcluded', 'intensityDataExcluded',
                         'featureMetadataExcluded', 'expectedConcentrationExcluded', 'excludedFlag'}

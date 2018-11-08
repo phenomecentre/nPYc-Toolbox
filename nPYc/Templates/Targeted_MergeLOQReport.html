@@ -3,11 +3,9 @@
 {% import 'pcaReport.html' as pca %}
 {% import 'sampleReportChunk.html' as sampleReport %}
 
-{% block title %}{{ Limits Of Quantification Assessment Report }} For: {{ item.Name }} {% endblock %}
+{% block title %}{{ 'Limits Of Quantification Assessment Report' }} For: {{ item.Name }} {% endblock %}
 
 {% block content %}
-
-
 <!-- Batch corection assessment report  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
     <!--Intro only present monitored features-->
@@ -25,14 +23,14 @@
     <p class="caption"><span class="heading">Table 3.</span> Number of sample measurements greater than the Upper Limit of Quantification, pre and post merging to the lowest common denominator.</p>
     {{ item['ULOQSummaryTable'].to_html() }}
 
-    <!--Figure 1: Measured concentrations pre and post LOQ-->
-    <p class="caption"><span class="heading">Figure 1.</span> Measured concentrations pre and post LOQ merge, split by batch and sample types.</p>
-    <div class='figure'>
-        <div class='figure'>
-            {% for value in item.ConcentrationPrePostMergeLOQ %}
-                <img src="{{ value }}" alt="Measured concentrations pre and post LOQ merge, split by batch and sample types.">
-            {% endfor %}
-		</div>
+	<!--Figure 1: Measured concentrations pre and post LOQ-->
+	<p class="caption"><span class="heading">Figure 1.</span> Measured concentrations pre and post LOQ merge, split by batch and sample types.</p>
+	<div class='figure'>
+		<div class='figure'>
+			{% for value in item.ConcentrationPrePostMergeLOQ %}
+				<img src="{{ value }}" alt="Measured concentrations pre and post LOQ merge, split by batch and sample types.">
+			{% endfor %}
+
 	</div>
 
 {% endblock %}

@@ -86,22 +86,6 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
 	sns.set_style("whitegrid")
 
-	if destinationPath is not None:
-		reportTypeCases = {'feature summary': 'featureSummary',
-						   'merge loq assessment': 'mergeLoqAssessment',
-						   'final report': 'finalSummary'}
-
-		if not os.path.exists(destinationPath):
-			os.makedirs(destinationPath)
-		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
-			os.makedirs(os.path.join(destinationPath, 'graphics'))
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_' + reportTypeCases[reportType])
-		if not os.path.exists(graphicsPath):
-			os.makedirs(graphicsPath)
-	else:
-		graphicsPath = None
-
-	# Apply sample/feature masks if exclusions to be applied
 	tData = copy.deepcopy(tDataIn)
 	if withExclusions:
 		tData.applyMasks()
@@ -152,23 +136,36 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 	sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
 
 	if reportType.lower() == 'feature summary':
-		item = _featureReport(tData, item, destinationPath, graphicsPath, reportType='featureSummary', numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
+		item = _featureReport(tData, item, destinationPath, numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
 	elif reportType.lower() == 'merge loq assessment':
-		item = _mergeLOQAssessemnt(tData, item, destinationPath, graphicsPath, reportType='mergeLoqAssessment',
+		item = _mergeLOQAssessemnt(tData, item, destinationPath,
 								   numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
 	elif (reportType.lower() == 'final report') and (tData.AnalyticalPlatform == AnalyticalPlatform.MS):
-		item = _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel, reportType='finalSummary',
+		item = _finalReportMS(tData, item, destinationPath, pcaModel, withAccPrec=False, withRSD=True,
 							  numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
 	elif (reportType.lower() == 'final report') and (tData.AnalyticalPlatform == AnalyticalPlatform.NMR):
-		item = _finalReportNMR(tData, item, destinationPath, graphicsPath, pcaModel, reportType='finalSummary')
+		item = _finalReportNMR(tData, item, destinationPath, pcaModel)
 
-	template_options = {'featureSummary':'Targeted_FeatureSummaryReport.html',
-						'mergeLoqAssessment':'Targeted_MergeLOQReport.html',
+	template_options = {'featureSummary': 'Targeted_FeatureSummaryReport.html',
+						'mergeLoqAssessment': 'Targeted_MergeLOQReport.html',
 						'finalSummary': 'Targeted_FinalReport.html'}
 
 	if destinationPath is not None:
 		# Generate report
 		from jinja2 import Environment, FileSystemLoader
+
+		reportTypeCases = {'feature summary': 'featureSummary',
+								   'merge loq assessment': 'mergeLoqAssessment',
+								   'final report': 'finalSummary'}
+		if not os.path.exists(destinationPath):
+			os.makedirs(destinationPath)
+		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+			os.makedirs(os.path.join(destinationPath, 'graphics'))
+		graphicsPath = os.path.join(destinationPath, 'graphics')
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
+
+		# Apply sample/feature masks if exclusions to be applied
 
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 		template = env.get_template(template_options[reportTypeCases[reportType]])
@@ -184,7 +181,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 		copyBackingFiles(toolboxPath(), graphicsPath)
 
 
-def _featureReport(tData, item, destinationPath, graphicsPath, reportType, numberPlotPerRowLOQ=3,
+def _featureReport(tData, item, destinationPath, numberPlotPerRowLOQ=3,
 				   numberPlotPerRowFeature=2, percentRange=20):
 	"""
 	Generates feature summary report, present the acquisition structure.
@@ -200,12 +197,26 @@ def _featureReport(tData, item, destinationPath, graphicsPath, reportType, numbe
 	:param percentRange:
 	:return:
 	"""
+	item['reportType'] = 'featureSummary'
+	reportType = 'featureSummary'
 
-	item['ReportType'] = reportType
+	if destinationPath is not None:
+		if not os.path.exists(destinationPath):
+			os.makedirs(destinationPath)
+		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+			os.makedirs(os.path.join(destinationPath, 'graphics'))
+		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_' + reportType)
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
+	else:
+		graphicsPath = None
+
 
 	nQType = item['nQType']
 	# Prepare numbering for iteration over quantificationTypes
+
 	figTabNumber = dict({'1': ['1'], '2': ['2'], '3': ['3'], '4': ['4']})
+
 	if nQType > 1:
 		allSuffix = ['-A', '-B', '-C', '-D', '-E']
 		suffix = allSuffix[0:nQType]
@@ -215,7 +226,7 @@ def _featureReport(tData, item, destinationPath, graphicsPath, reportType, numbe
 		suffix = ['']
 
 	item['figTabNumber'] = figTabNumber
-
+	# TODO split this report for an MS and NMR version as well!
 	item['FeatureQuantParamTable'] = []
 	item['FeatureConcentrationDistribution'] = []
 	# Accuracy and precision data is present
@@ -273,24 +284,6 @@ def _featureReport(tData, item, destinationPath, graphicsPath, reportType, numbe
 		display(item['FeatureQuantParamTableOverall'])
 		print('\n')
 
-	# Figure 1: Acquisition structure colored by limits of quantification
-	if destinationPath:
-		item['AcquisitionStructure'] = os.path.join(graphicsPath, item['Name'] + '_AcquisitionStructure.' + tData.Attributes['figureFormat'])
-		saveAs = item['AcquisitionStructure']
-	else:
-		print('Figure 1: Acquisition structure colored by Limits Of Quantification.')
-		saveAs = None
-
-	plotLOQRunOrder(tData,
-					addCalibration=True,
-					compareBatch=True,
-					title='',
-					savePath=saveAs,
-					figureFormat=tData.Attributes['figureFormat'],
-					dpi=tData.Attributes['dpi'],
-					figureSize=tData.Attributes['figureSize'])
-
-
 	## Iterate over Quantification Types
 	for i in range(0, item['nQType']):
 
@@ -312,13 +305,13 @@ def _featureReport(tData, item, destinationPath, graphicsPath, reportType, numbe
 			display(item['FeatureQuantParamTable'][i])
 			print('\n')
 
-		# Figure 2: Feature Accuracy Plot
+		# Figure 1: Feature Accuracy Plot
 		if withAccPrec:
 			if destinationPath:
 				item['FeatureAccuracyPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureAccuracy' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
 				saveAs = item['FeatureAccuracyPlot'][i]
 			else:
-				print('\nFigure ' + item['figTabNumber']['2'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
+				print('\nFigure ' + item['figTabNumber']['1'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
 				saveAs = None
 			plotAccuracyPrecision(tmpData,
 								  accuracy=True,
@@ -329,17 +322,17 @@ def _featureReport(tData, item, destinationPath, graphicsPath, reportType, numbe
 								  figureSize=tmpData.Attributes['figureSize'])
 		else:
 			if not destinationPath:
-				print('Figure ' + item['figTabNumber']['2'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
+				print('Figure ' + item['figTabNumber']['1'][i] + ': Measurements accuracy for features ' + item['TextQType'][i] + '.')
 				print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
 
-		# Figure 3: Feature Precision Plot, or RSD Plot
+		# Figure 2: Feature Precision Plot, or RSD Plot
 		if withAccPrec:
 			if destinationPath:
 				item['FeaturePrecisionPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeaturePrecision' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
 				saveAs = item['FeaturePrecisionPlot'][i]
 			else:
-				print('\nFigure ' + item['figTabNumber']['3'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
+				print('\nFigure ' + item['figTabNumber']['2'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
 				saveAs = None
 
 			plotAccuracyPrecision(tmpData,
@@ -354,7 +347,7 @@ def _featureReport(tData, item, destinationPath, graphicsPath, reportType, numbe
 				item['FeatureRSDPlot'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureRSD' + suffix[i] + '.' + tmpData.Attributes['figureFormat']))
 				saveAs = item['FeatureRSDPlot'][i]
 			else:
-				print('\nFigure ' + item['figTabNumber']['3'][i] + ': Measurements RSD for features ' + item['TextQType'][i] + ' in all samples (by sample type).')
+				print('\nFigure ' + item['figTabNumber']['2'][i] + ': Measurements RSD for features ' + item['TextQType'][i] + ' in all samples (by sample type).')
 				saveAs = None
 
 			plotRSDs(tmpData,
@@ -368,17 +361,17 @@ def _featureReport(tData, item, destinationPath, graphicsPath, reportType, numbe
 					 figureSize=(tmpData.Attributes['figureSize'][0], tmpData.Attributes['figureSize'][1] * (tmpData.noFeatures / 35)))
 		else:
 			if not destinationPath:
-				print('Figure ' + item['figTabNumber']['3'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
+				print('Figure ' + item['figTabNumber']['2'][i] + ': Measurements precision for features ' + item['TextQType'][i] + '.')
 				print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
 
-		# Figure 4: Measured concentrations distribution, split by sample types.
+		# Figure 3: Measured concentrations distribution, split by sample types.
 		if destinationPath:
 			item['FeatureConcentrationDistribution'].append(os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution' + suffix[i]))
 			saveAs = item['FeatureConcentrationDistribution'][i]
 		else:
 			item['FeatureConcentrationDistribution'].append(None)
-			print('\nFigure ' + item['figTabNumber']['4'][i] + ': Measured concentration distributions, split by sample types, for features ' + item['TextQType'][i] + '.')
+			print('\nFigure ' + item['figTabNumber']['3'][i] + ': Measured concentration distributions, split by sample types, for features ' + item['TextQType'][i] + '.')
 			saveAs = None
 
 		item['FeatureConcentrationDistribution'][i] = plotFeatureLOQ(tmpData,
@@ -411,30 +404,44 @@ def _featureReport(tData, item, destinationPath, graphicsPath, reportType, numbe
 			if not destinationPath:
 				print('Table ' + item['figTabNumber']['2'][i] + ': Measurement accuracy (%) and precision (% RSD) for features ' + item['TextQType'][i] + '.')
 				print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
+
 	# Generate HTML report
-	if destinationPath:
+	#if destinationPath:
 
 		# Make paths for graphics local not absolute for use in the HTML.
-		for key in item:
-			if isinstance(item[key], list):
-				for i in range(0, len(item[key])):
-					if isinstance(item[key][i], list):
-						for j in range(0, len(item[key][i])):
-							item[key][i][j] = re.sub('.*graphics', 'graphics', item[key][i][j])
-					elif os.path.join(destinationPath, 'graphics') in str(item[key][i]):
-						item[key][i] = re.sub('.*graphics', 'graphics', item[key][i])
-			elif os.path.join(destinationPath, 'graphics') in str(item[key]):
-				item[key] = re.sub('.*graphics', 'graphics', item[key])
+	#	for key in item:
+	#		if isinstance(item[key], list):
+	#			for i in range(0, len(item[key])):
+	#				if isinstance(item[key][i], list):
+	#					for j in range(0, len(item[key][i])):
+	#						item[key][i][j] = re.sub('.*graphics', 'graphics', item[key][i][j])
+	#				elif os.path.join(destinationPath, 'graphics') in str(item[key][i]):
+	#					item[key][i] = re.sub('.*graphics', 'graphics', item[key][i])
+	#		elif os.path.join(destinationPath, 'graphics') in str(item[key]):
+	#			item[key] = re.sub('.*graphics', 'graphics', item[key])
 
 	return item
 
 
-def _mergeLOQAssessemnt(tData, item, destinationPath, graphicsPath, reportType, numberPlotPerRowLOQ=3,
+def _mergeLOQAssessemnt(tData, item, destinationPath, numberPlotPerRowLOQ=3,
 				   numberPlotPerRowFeature=2, percentRange=20):
 	"""
 	Generates a report before :py:meth:`~TargetedData.mergeLimitsOfQuantification`, highlighting the impact of updating limits of quantification across batch. List and plot limits of quantification that are altered, number of samples impacted.
 	"""
-	item['ReportType'] = reportType
+
+	item['reportType'] = 'mergeLoqAssessment'
+	reportType = 'mergeLoqAssessment'
+
+	if destinationPath is not None:
+		if not os.path.exists(destinationPath):
+			os.makedirs(destinationPath)
+		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+			os.makedirs(os.path.join(destinationPath, 'graphics'))
+		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_' + reportType)
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
+	else:
+		graphicsPath = None
 
 	# pre-mergeLOQ dataset with post-mergeLOQ limits
 	mergeLOQData = _postMergeLOQDataset(tData)
@@ -480,31 +487,44 @@ def _mergeLOQAssessemnt(tData, item, destinationPath, graphicsPath, reportType, 
 		print('Figure 1: Measured concentrations pre and post LOQ merge, split by batch and sample types.')
 		saveAs = None
 
-		item['ConcentrationPrePostMergeLOQ'] = plotFeatureLOQ(mergeLOQData,
-				   splitByBatch=True,
-				   plotBatchLOQ=True,
-				   zoomLOQ=True,
-				   logY=False,
-				   tightYLim=False,
-				   nbPlotPerRow=numberPlotPerRowLOQ,
-				   savePath=saveAs,
-				   figureFormat=tData.Attributes['figureFormat'],
-				   dpi=tData.Attributes['dpi'],
-				   figureSize=tData.Attributes['figureSize'])
+	item['ConcentrationPrePostMergeLOQ'] = plotFeatureLOQ(mergeLOQData,
+			   splitByBatch=True,
+			   plotBatchLOQ=True,
+			   zoomLOQ=True,
+			   logY=False,
+			   tightYLim=False,
+			   nbPlotPerRow=numberPlotPerRowLOQ,
+			   savePath=saveAs,
+			   figureFormat=tData.Attributes['figureFormat'],
+			   dpi=tData.Attributes['dpi'],
+			   figureSize=tData.Attributes['figureSize'])
+
 	return item
 
-def _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel=None,
-                    numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20):
+def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True,
+				   numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20):
 	"""
 	Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
 	"""
+
+	item['reportType'] = 'finalSummary'
+	reportType = 'finalSummary'
+
+	if destinationPath is not None:
+		if not os.path.exists(destinationPath):
+			os.makedirs(destinationPath)
+		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+			os.makedirs(os.path.join(destinationPath, 'graphics'))
+		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_' + reportType)
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
+	else:
+		graphicsPath = None
 
 	# Prepare numbering for iteration over quantificationTypes
 	figNo = 1
 	item['FeatureQuantParamTable'] = []
 	item['FeatureConcentrationDistribution'] = []
-	withAccPrec = False
-	withRSD = True
 
 	# Feature quantification parameters
 	# add number of <LLOQ >ULOQ and percentage
@@ -528,6 +548,15 @@ def _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel=None,
 			if (col in tData.featureMetadata.columns) and (col not in quantParamColumns):
 				quantParamColumns.append(col)
 
+	# For MS dataset, always try to calculate Accuracy and precision
+	if  _getAccuracyPrecisionTable(tData, table='accuracy').shape[0] != 0:
+		withAccPrec = True
+		item['FeatureAccuracyPlot'] = []
+		item['FeaturePrecisionPlot'] = []
+		item['FeatureAccPreTable'] = []
+	else:
+		withAccPrec = False
+
 
 	# Final Summary
 	if not destinationPath:
@@ -538,9 +567,7 @@ def _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel=None,
 
 
 	# Table 1: Sample summary
-
 	# Generate sample summary
-
 	sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
 
 	# Tidy table for final report format
@@ -566,7 +593,6 @@ def _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel=None,
 
 	featureSummaryTable = tData.featureMetadata.loc[:, quantParamColumns]
 
-
 	## Append table with Feature Accuracy Precision, or RSD
 	try:
 		tempTable = _getAccuracyPrecisionTable(tData, table='both')
@@ -580,7 +606,6 @@ def _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel=None,
 			featureSummaryTable = featureSummaryTable.join(tempTable, on='Feature Name')
 			withAccPrec = True
 	except:
-
 		try:
 			tempTable = _getRSDTable(tData)
 			if tempTable.empty:
@@ -595,7 +620,6 @@ def _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel=None,
 		except:
 			pass
 
-	# TODO - sort by quantification type
 
 	item['FeatureQuantParamTableOverall'] = featureSummaryTable
 
@@ -668,7 +692,6 @@ def _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel=None,
 								  dpi=tmpData.Attributes['dpi'],
 								  figureSize=tmpData.Attributes['figureSize'])
 
-
 		## Figure: Feature Precision Plot, or RSD Plot
 		elif withRSD:
 			if destinationPath:
@@ -720,7 +743,6 @@ def _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel=None,
 
 		item['FeatureConcentrationDistribution'] = figuresFeatureDistribution
 
-
 		figNo = figNo+1
 
 
@@ -749,30 +771,16 @@ def _finalReportMS(tData, item, destinationPath, graphicsPath, pcaModel=None,
 				pcaPath = None
 			pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=figNo, destinationPath=pcaPath, fileNamePrefix='')
 
-
 	# Table: Summary of missing/excluded study samples
 	if not destinationPath:
 		if 'StudySamples Exclusion Details' in sampleSummary:
 			print('Missing/Excluded Study Samples')
 			display(sampleSummary['StudySamples Exclusion Details'])
 
-	if destinationPath:
-
-		# Make paths for graphics local not absolute for use in the HTML.
-		for key in item:
-			if isinstance(item[key], list):
-				for i in range(0, len(item[key])):
-					if isinstance(item[key][i], list):
-						for j in range(0, len(item[key][i])):
-							item[key][i][j] = re.sub('.*graphics', 'graphics', item[key][i][j])
-					elif os.path.join(destinationPath, 'graphics') in str(item[key][i]):
-						item[key][i] = re.sub('.*graphics', 'graphics', item[key][i])
-			elif os.path.join(destinationPath, 'graphics') in str(item[key]):
-				item[key] = re.sub('.*graphics', 'graphics', item[key])
 	return item
 
 
-def _finalReportNMR(tData, item, destinationPath, graphicsPath, reportType='finalReport'):
+def _finalReportNMR(tData, item, destinationPath):
 	return item
 
 
