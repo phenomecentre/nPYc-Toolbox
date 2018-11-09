@@ -25,14 +25,15 @@ def _violinPlotHelper(ax, values, sampleMasks, xlabel, ylabel, palette=None, yli
 	for key, mask in sampleMasks:
 		localDFpre.loc[mask, key] = values[mask]
 
+	# Replace infs and -inf used to represent LLOQ and ULOQ in targeted assays.
+	#localDFpre.replace([numpy.inf, -numpy.inf], numpy.nan)
 	localDFpre.dropna(axis='columns', how='all', inplace=True) # remove empty columns
-	
 	sns.set_color_codes(palette='deep')
 
 	if palette is not None:
-		sns.violinplot(data=localDFpre, scale='width', bw=.2, cut=0, ax=ax, palette=palette)
+		sns.violinplot(data=localDFpre, scale='width', bw=.2, cut=0, ax=ax, palette=palette, dropna=True)
 	else:
-		sns.violinplot(data=localDFpre, scale='width', bw=.2, cut=0, ax=ax)
+		sns.violinplot(data=localDFpre, scale='width', bw=.2, cut=0, ax=ax, dropna=True)
 
 	# ax formatting
 	if ylimits:

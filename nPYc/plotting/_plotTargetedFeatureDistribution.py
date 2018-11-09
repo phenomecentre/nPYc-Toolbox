@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from ..plotting._violinPlot import _violinPlotHelper
 from ..enumerations import AssayRole, SampleType
+import numpy
 import math
 import copy
 
@@ -21,7 +22,7 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 
 	# Set up for plotting in subplot figures 1x2
 	nax = 3 # number of axis per figure
-	nv = sum(featureMask)
+	nv = dataset.featureMetadata.shape[0]
 	nf = math.ceil(nv/nax)
 	plotNo = 0
 
@@ -60,8 +61,13 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 			else:
 
 				# Plot distribution of feature by sample type
+				# Remove infinites and - infinites for targeted dataset.
+				valid_values = numpy.isfinite(dataset.intensityData[:,plotNo])
+				currentFeatureSampleMasks = list()
+				for maskIndex in range(len(sampleMasks)):
+					currentFeatureSampleMasks.append((sampleMasks[maskIndex][0], sampleMasks[maskIndex][1] & valid_values))
 
-				_violinPlotHelper(axIXs[axNo], dataset.intensityData[:,plotNo], sampleMasks, None, 'Sample Type', palette=palette, logy=False)
+				_violinPlotHelper(axIXs[axNo], dataset.intensityData[:, plotNo], currentFeatureSampleMasks, None, 'Sample Type', palette=palette, logy=False)
 
 				axIXs[axNo].set_title(dataset.featureMetadata.loc[plotNo, featureName])
 

@@ -36,21 +36,6 @@
     <p></p>
 </div>
 
-<!--Acquisition Structure-->
-<h3>Sample Acquisition Structure</h3>
-
-<div class='content'>
-    <p>Samples acquired in {{ item['nBatchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
-    <p></p>
-</div>
-
-<!--Figure 1: Acquisition structure colored by Limits Of Quantification-->
-<p class="caption"><span class="heading">Figure 1.</span> Acquisition structure colored by Limits Of Quantification.</p>
-<div class='figure'>
-    <img src="{{ item.AcquisitionStructure }}" alt="Acquisition structure colored by Limits Of Quantification.">
-</div>
-
-
 <!-- Feature details -->
 <h2>Feature Summary</h2>
 
@@ -66,12 +51,12 @@
 
 
     <!--Table 2: Feature quantification parameters-->
-    <p class="caption"><span class="heading">Table {{ item['figTabNumber']['2'][i] }}.</span> Quantification parameters for features {{ item['TextQType'][i] }}.</p>
+    <p class="caption"><span class="heading">Table {{ item['figTabNumber']['1'][i] }}.</span> Quantification parameters for features {{ item['TextQType'][i] }}.</p>
     {{ item['FeatureQuantParamTable'][i].to_html() }}
 
 
     <!--Figure 2: Feature Accuracy Plot-->
-    <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements accuracy for features {{ item['TextQType'][i] }}.</p>
+    <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['1'][i] }}.</span> Measurements accuracy for features {{ item['TextQType'][i] }}.</p>
     {% if 'FeatureAccuracyPlot' in item %}
         <div class='figure'>
             <img src="{{ item.FeatureAccuracyPlot[i] }}" alt="Measurements accuracy for features {{ item['TextQType'][i] }}.">
@@ -83,23 +68,23 @@
 
     <!--Figure 3: Feature Precision Plot-->
     {% if 'FeaturePrecisionPlot' in item %}
-        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['3'][i] }}.</span> Measurements precision for features {{ item['TextQType'][i] }}.</p>
+        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements precision for features {{ item['TextQType'][i] }}.</p>
         <div class='figure'>
             <img src="{{ item.FeaturePrecisionPlot[i] }}" alt="Measurements precision for features {{ item['TextQType'][i] }}.">
         </div>
     {% elif 'FeatureRSDPlot' in item %}
-        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['3'][i] }}.</span> Measurements RSD for features {{ item['TextQType'][i] }} in all samples (by sample type).</p>
+        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements RSD for features {{ item['TextQType'][i] }} in all samples (by sample type).</p>
         <div class='figure'>
             <img src="{{ item.FeatureRSDPlot[i] }}" alt="Measurements RSD for features {{ item['TextQType'][i] }} in all samples (by sample type).">
         </div>
     {% else %}
-        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['3'][i] }}.</span> Measurements precision for features {{ item['TextQType'][i] }}.</p>
+        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements precision for features {{ item['TextQType'][i] }}.</p>
         <p>Unable to calculate (not enough samples with expected concentrations present in dataset).</p>
     {% endif %}
 
 
     <!--Figure 4: Measured concentrations distribution, split by sample types.-->
-    <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['4'][i] }}.</span> Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.</p>
+    <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['3'][i] }}.</span> Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.</p>
     <div class='figure'>
         {% for value in item.FeatureConcentrationDistribution[i] %}
             <img src="{{ value }}" alt="Measured concentrations pre and post LOQ merge, split by batch and sample types.">
@@ -109,13 +94,13 @@
 
     <!--Table 3: Feature Accuracy Precision Table-->
     {% if 'FeatureAccPreTable' in item %}
-        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['3'][i] }}.</span> Measurement accuracy (%) and precision (% RSD) for features {{ item['TextQType'][i] }}.</p>
+        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['2'][i] }}.</span> Measurement accuracy (%) and precision (% RSD) for features {{ item['TextQType'][i] }}.</p>
         {{ item['FeatureAccPreTable'][i].to_html() }}
     {% elif 'FeatureRSDTable' in item %}
-        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['3'][i] }}.</span> RSD for features {{ item['TextQType'][i] }}.</p>
+        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['2'][i] }}.</span> RSD for features {{ item['TextQType'][i] }}.</p>
         {{ item['FeatureRSDTable'][i].to_html() }}
     {% else %}
-        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['3'][i] }}.</span> Measurement accuracy (%) and precision (% RSD) for features {{ item['TextQType'][i] }}.</p>
+        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['2'][i] }}.</span> Measurement accuracy (%) and precision (% RSD) for features {{ item['TextQType'][i] }}.</p>
         <p>Unable to calculate (not enough samples with expected concentrations present in dataset).</p>
     {% endif %}
 

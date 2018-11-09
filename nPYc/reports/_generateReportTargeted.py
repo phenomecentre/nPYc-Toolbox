@@ -141,7 +141,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 		item = _mergeLOQAssessemnt(tData, item, destinationPath,
 								   numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
 	elif (reportType.lower() == 'final report') and (tData.AnalyticalPlatform == AnalyticalPlatform.MS):
-		item = _finalReportMS(tData, item, destinationPath, pcaModel, withAccPrec=False, withRSD=True,
+		item = _finalReportMS(tData, item, destinationPath, pcaModel, withAccPrec=True,
 							  numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
 	elif (reportType.lower() == 'final report') and (tData.AnalyticalPlatform == AnalyticalPlatform.NMR):
 		item = _finalReportNMR(tData, item, destinationPath, pcaModel)
@@ -522,6 +522,18 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 		graphicsPath = None
 
 	# Prepare numbering for iteration over quantificationTypes
+	nQType = item['nQType']
+	figTabNumber = dict({'1': ['1'], '2': ['2'], '3': ['3'], '4': ['4']})
+	if nQType > 1:
+		allSuffix = ['-A', '-B', '-C', '-D', '-E']
+		suffix = allSuffix[0:nQType]
+		for i in figTabNumber.keys():
+			figTabNumber[i] = [i + x for x in suffix]
+	else:
+		suffix = ['']
+	item['figTabNumber'] = figTabNumber
+
+	# Prepare numbering for iteration over quantificationTypes
 	figNo = 1
 	item['FeatureQuantParamTable'] = []
 	item['FeatureConcentrationDistribution'] = []
@@ -549,13 +561,27 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 				quantParamColumns.append(col)
 
 	# For MS dataset, always try to calculate Accuracy and precision
-	if  _getAccuracyPrecisionTable(tData, table='accuracy').shape[0] != 0:
+	# Accuracy and precision data is present
+	if _getAccuracyPrecisionTable(tData, table='both').shape[0] != 0:
 		withAccPrec = True
+		withRSD = False
 		item['FeatureAccuracyPlot'] = []
 		item['FeaturePrecisionPlot'] = []
 		item['FeatureAccPreTable'] = []
 	else:
-		withAccPrec = False
+		# check safely RSD can be calculated
+		try:
+			tmpRSD = _getRSDTable(tData)
+		except ValueError:
+			tmpRSD = pandas.DataFrame(None)
+		if tmpRSD.shape[0] != 0:
+			withAccPrec = False
+			withRSD = True
+			item['FeatureRSDPlot'] = []
+			item['FeatureRSDTable'] = []
+		else:
+			withAccPrec = False
+			withRSD = False
 
 
 	# Final Summary
@@ -593,41 +619,12 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 	featureSummaryTable = tData.featureMetadata.loc[:, quantParamColumns]
 
-	## Append table with Feature Accuracy Precision, or RSD
-	try:
-		tempTable = _getAccuracyPrecisionTable(tData, table='both')
-		if tempTable.empty:
-			withAccPrec = False
-		else:
-			# TODO add on to featureSummaryTable
-			tempTable.rename(columns={SampleType.StudyPool: 'RSD Study Pool', SampleType.StudySample: 'RSD Study Sample'}, inplace=True)
-			tempTable.columns.names = [None]
-			tempTable.index.names = [None]
-			featureSummaryTable = featureSummaryTable.join(tempTable, on='Feature Name')
-			withAccPrec = True
-	except:
-		try:
-			tempTable = _getRSDTable(tData)
-			if tempTable.empty:
-				withRSD = False
-			else:
-				# This needs to be defensive programming if etc
-				tempTable.rename(columns={SampleType.StudyPool: 'RSD Study Pool', SampleType.StudySample: 'RSD Study Sample'}, inplace=True)
-				tempTable.columns.names = [None]
-				tempTable.index.names = [None]
-				featureSummaryTable = featureSummaryTable.join(tempTable, on='Feature Name')
-				withRSD = True
-		except:
-			pass
-
-
 	item['FeatureQuantParamTableOverall'] = featureSummaryTable
 
 	if not destinationPath:
 		print('Feature Summary')
 		display(item['FeatureQuantParamTableOverall'])
 		print('\n')
-
 
 	## Iterate over Quantification Types (Quant parameters table, Acc Prec plots, Acc Prec tables)
 	for i in range(0, item['nQType']):
@@ -720,7 +717,6 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 			temp['FeatureConcentrationDistribution'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution_')
 			saveAs = temp['FeatureConcentrationDistribution']
 		else:
-			item['FeatureConcentrationDistribution'].append(None)
 			print('\nFigure ' + str(figNo) + figLetter[figLetterIX] + ': Measured concentration distributions, split by sample types, for features ' + item['TextQType'][i] + '.')
 			figLetterIX = figLetterIX+1
 			saveAs = None
@@ -728,7 +724,7 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 		figuresFeatureDistribution = OrderedDict()
 
 		figuresFeatureDistribution = plotTargetedFeatureDistribution(
-				tData,
+				tmpData,
 				logx=False,
 				figures=figuresFeatureDistribution,
 				savePath=saveAs,
