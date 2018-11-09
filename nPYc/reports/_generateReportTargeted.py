@@ -148,7 +148,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 
 	template_options = {'featureSummary': 'Targeted_FeatureSummaryReport.html',
 						'mergeLoqAssessment': 'Targeted_MergeLOQReport.html',
-						'finalSummary': 'Targeted_FinalReport.html'}
+						'finalSummary': 'Targeted_FinalReportMS.html'}
 
 	if destinationPath is not None:
 		# Generate report
@@ -713,15 +713,15 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 		## Figure: Measured concentrations distribution, split by sample types.
 		temp = dict()
+		figuresFeatureDistribution= OrderedDict()
 		if destinationPath:
-			temp['FeatureConcentrationDistribution'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution_')
+			temp['FeatureConcentrationDistribution'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution_' + str(item['QType'][i]) + '_')
 			saveAs = temp['FeatureConcentrationDistribution']
 		else:
 			print('\nFigure ' + str(figNo) + figLetter[figLetterIX] + ': Measured concentration distributions, split by sample types, for features ' + item['TextQType'][i] + '.')
 			figLetterIX = figLetterIX+1
 			saveAs = None
 
-		figuresFeatureDistribution = OrderedDict()
 
 		figuresFeatureDistribution = plotTargetedFeatureDistribution(
 				tmpData,
@@ -737,7 +737,7 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 			if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistribution[key]):
 				figuresFeatureDistribution[key] = re.sub('.*graphics', 'graphics', figuresFeatureDistribution[key])
 
-		item['FeatureConcentrationDistribution'] = figuresFeatureDistribution
+		item['FeatureConcentrationDistribution'].append(figuresFeatureDistribution)
 
 		figNo = figNo+1
 

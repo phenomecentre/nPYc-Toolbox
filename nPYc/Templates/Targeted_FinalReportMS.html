@@ -82,27 +82,14 @@
         <p>Unable to calculate (not enough samples with expected concentrations present in dataset).</p>
     {% endif %}
 
-
     <!--Figure 4: Measured concentrations distribution, split by sample types.-->
     <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['3'][i] }}.</span> Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.</p>
     <div class='figure'>
         {% for value in item.FeatureConcentrationDistribution[i] %}
-            <img src="{{ value }}" alt="Measured concentrations pre and post LOQ merge, split by batch and sample types.">
+            <img src="{{ item.FeatureConcentrationDistribution[i][value] }}">
         {% endfor %}
     </div>
 
-
-    <!--Table 3: Feature Accuracy Precision Table-->
-    {% if 'FeatureAccPreTable' in item %}
-        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['2'][i] }}.</span> Measurement accuracy (%) and precision (% RSD) for features {{ item['TextQType'][i] }}.</p>
-        {{ item['FeatureAccPreTable'][i].to_html() }}
-    {% elif 'FeatureRSDTable' in item %}
-        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['2'][i] }}.</span> RSD for features {{ item['TextQType'][i] }}.</p>
-        {{ item['FeatureRSDTable'][i].to_html() }}
-    {% else %}
-        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['2'][i] }}.</span> Measurement accuracy (%) and precision (% RSD) for features {{ item['TextQType'][i] }}.</p>
-        <p>Unable to calculate (not enough samples with expected concentrations present in dataset).</p>
-    {% endif %}
 
 {% endfor %}
 
