@@ -150,6 +150,9 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 						'mergeLoqAssessment': 'Targeted_MergeLOQReport.html',
 						'finalSummary': 'Targeted_FinalReportMS.html'}
 
+	if tData.AnalyticalPlatform == AnalyticalPlatform.NMR:
+		template_options['finalSummary'] ='Targeted_FinalReportNMR.html'
+
 	if destinationPath is not None:
 		# Generate report
 		from jinja2 import Environment, FileSystemLoader
