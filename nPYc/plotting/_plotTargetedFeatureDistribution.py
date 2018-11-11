@@ -5,7 +5,7 @@ import numpy
 import math
 import copy
 
-def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name', featureMask=None, logx=False, figures=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name', featureMask=None, sampleTypes=['SS', 'SP', 'ER'], logx=False, figures=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	Plot the distribution (violin plots) of a set of features, e.g., peakPantheR outputs, coloured by sample type
 
@@ -38,13 +38,13 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 					   SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
 
 	# Plot data coloured by sample type
-	if sum(SSmask > 0):
+	if sum(SSmask > 0) and 'SS' in sampleTypes:
 		sampleMasks.append(('SS', SSmask))
 		palette['SS'] = sTypeColourDict[SampleType.StudySample]
-	if sum(SPmask > 0):
+	if sum(SPmask > 0) and 'SP' in sampleTypes:
 		sampleMasks.append(('SP', SPmask))
 		palette['SP'] = sTypeColourDict[SampleType.StudyPool]
-	if sum(ERmask > 0):
+	if sum(ERmask > 0) and 'ER' in sampleTypes:
 		sampleMasks.append(('ER', ERmask))
 		palette['ER'] = sTypeColourDict[SampleType.ExternalReference]
 

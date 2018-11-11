@@ -3062,7 +3062,11 @@ class TargetedDataset(Dataset):
         super().applyMasks()
 
 
-    def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool], assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], quantificationTypes=[QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantOther, QuantificationType.Monitored], calibrationMethods=[CalibrationMethod.backcalculatedIS, CalibrationMethod.noIS, CalibrationMethod.noCalibration, CalibrationMethod.otherCalibration], **kwargs):
+    def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
+                    assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference],
+                    quantificationTypes=[QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantOther, QuantificationType.Monitored],
+                    calibrationMethods=[CalibrationMethod.backcalculatedIS, CalibrationMethod.noIS, CalibrationMethod.noCalibration, CalibrationMethod.otherCalibration],
+                    rsdThreshold=30.0, **kwargs):
         """
         Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to QC parameters.
 
@@ -3109,6 +3113,10 @@ class TargetedDataset(Dataset):
             raise TypeError('quantificationTypes must be QuantificationType enums.')
         if not all(isinstance(item, CalibrationMethod) for item in calibrationMethods):
             raise TypeError('calibrationMethods must be CalibrationMethod enums.')
+        if rsdThreshold is None:
+            rsdThreshold = self.Attributes['rsdThreshold']
+        if rsdThreshold is not None and not isinstance(rsdThreshold, (float, int)):
+            raise TypeError('rsdThreshold should either be a float or None')
 
         # Feature Exclusions
         if filterFeatures:
@@ -3118,6 +3126,10 @@ class TargetedDataset(Dataset):
             featureMask = numpy.logical_and(quantTypeMask, calibMethodMask).values
 
             self.featureMask = numpy.logical_and(featureMask, self.featureMask)
+            if rsdThreshold is not None:
+                self.featureMask &= self.rsdSP <= rsdThreshold
+
+            self.featureMetadata['Passing Selection'] = self.featureMask
 
         # Sample Exclusions
         if filterSamples:
