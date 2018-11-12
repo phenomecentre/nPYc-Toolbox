@@ -38,7 +38,10 @@
 	<p>Samples acquired in {{ item['nBatchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
 	<p>{{ item['batchesCorrect'] }}</p>
 
-	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
+	<p class="caption"><span class="heading">Table 2.</span>Feature summary table: </p>
+	{{ item['FeatureQuantParamTableOverall'].to_html() }}
+
+	<p class="caption"><span class="heading">Table&nbsp;3.</span> Features selected based on the following criteria:</p>
 	{{ item['FeatureSelectionTable'].to_html() }}
 
 	{% if 'FeatureConcentrationDistributionFailing' in item %}
@@ -57,14 +60,8 @@
 	{% endif %}
 </div>
 
-<!--Figure: Feature intensity histogram-->
-<div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Feature intensity histogram for all samples and all features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).</p>
-	<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature Intensity histogram for all samples and all features in final dataset (by sample type).">
-</div>
-
 <!--Figures: Measured concentrations distribution, for features passing selection, split by sample types.-->
-<p class="caption"><span class="heading">Figure&nbsp;3.</span> Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).</p>
+<p class="caption"><span class="heading">Figure&nbsp;2.</span> Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).</p>
 <div class='figure'>
 
 	{% for key, value in item['FeatureConcentrationDistributionPassing'].items() %}
@@ -74,7 +71,7 @@
 
 <!--Figures: Measured concentrations distribution, for features failing selection, split by sample types.-->
 {% if 'FeatureConcentrationDistributionFailing' in item %}
-	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) in final dataset (by sample type).</p>
+	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) in final dataset (by sample type).</p>
 	<div class='figure'>
 
 		{% for key, value in item['FeatureConcentrationDistributionFailing'].items() %}
@@ -83,11 +80,15 @@
 	</div>
 {% endif %}
 
+<!--Multivariate -->
+{% if pcaPlots %}
+	{{ pca.basicPCAReport(pcaPlots) }}
+{% endif %}
 
 <!--Details of any missing/excluded samples-->
 {% if 'StudySamples Exclusion Details' in item.sampleSummary %}
 	<h2>Missing/Excluded Study Samples</h2>
-	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
+	<p class="caption"><span class="heading">Table&nbsp;4.</span> Details of missing/excluded study samples.</p>
 	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
 {% endif %}
 

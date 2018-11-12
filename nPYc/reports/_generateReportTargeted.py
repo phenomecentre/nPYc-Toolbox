@@ -842,7 +842,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 			 (tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
 
 	# Modify the required fields in item
-	item['NfeaturesPassing'] = tData.featureMetadata['Passing Selection'].shape[0]
+	item['NfeaturesPassing'] = numpy.where(tData.featureMetadata['Passing Selection'])[0].shape[0]
 	item['NfeaturesFailing'] = int(item['Nfeatures']) - item['NfeaturesPassing']
 	if item['NfeaturesFailing'] != 0:
 		hLine = [item['NfeaturesFailing']]
@@ -884,7 +884,29 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 		display(sampleSummary['Acquired'])
 		print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
-	# Table 2: Feature Selection parameters
+	# reporting columns
+	quantParamColumns = ['Feature Name', 'Unit', 'LOD', 'Lower Reference Percentile', 'Lower Reference Value',
+						 'Upper Reference Percentile', 'Upper Reference Value']
+	quantParamColumns.extend(tData.Attributes['externalID'])
+	# add method specific quantification parameter columns
+	if 'additionalQuantParamColumns' in tData.Attributes.keys():
+		for col in tData.Attributes['additionalQuantParamColumns']:
+			if (col in tData.featureMetadata.columns) and (col not in quantParamColumns):
+				quantParamColumns.append(col)
+
+	# Feature Summary
+	if destinationPath is None:
+		print('\nFeature Summary')
+	# Summary table
+	item['FeatureQuantParamTableOverall'] = tData.featureMetadata.loc[:, quantParamColumns]
+	if not destinationPath:
+		print('\nTable 2: Feature summary table')
+		display(item['FeatureQuantParamTableOverall'])
+		print('\nData consists of ' + item['Nfeatures'] + ' features.')
+		print('\n')
+
+
+	# Table 3: Feature Selection parameters
 	FeatureSelectionTable = pandas.DataFrame(data=['yes', tData.Attributes['rsdThreshold'], 'yes'],
 						 index=['Relative Standard Devation (RSD)', 'RSD of SP Samples: Threshold',
 								'RSD of SS Samples > RSD of SP Samples'], columns=['Value Applied'])
@@ -907,12 +929,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	item['end'] = end.strftime('%d/%m/%y')
 
 	if not destinationPath:
-		print('\nFeature Summary')
-
-		print('\nSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
-		print(item['batchesCorrect'])
-
-		print('\nTable 2: Features selected based on the following criteria:')
+		print('\nTable 3: Features selected based on the following criteria:')
 		display(item['FeatureSelectionTable'])
 		if item['NfeaturesFailing'] != 0:
 			print(
@@ -936,6 +953,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 		print('\n\nFigure ' + str(
 			figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).')
 		figNo = figNo + 1
+		saveAs = None
 
 	plotRSDs(tData,
 			 featureName=featureName,
@@ -957,18 +975,6 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 				'\n*Features sorted by RSD in SP samples; with features passing selection (i.e., able to be '
 				'accurately measured) above the line and those failing (i.e., not able '
 				'to be accurately measured) below the line')
-
-	# Figure: Histogram of log mean abundance by sample type
-	if destinationPath:
-		item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_finalFeatureIntensityHist.' +
-														 tData.Attributes['figureFormat'])
-		saveAs = item['finalFeatureIntensityHist']
-	else:
-		print('\n\nFigure ' + str(
-			figNo) + ': Feature intensity histogram for all samples and all features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).')
-		figNo = figNo + 1
-
-	_plotAbundanceBySampleType(tData, SSmask, SPmask, ERmask, saveAs)
 
 	# Figures: Distributions for each feature PASSING SELECTION
 	figuresFeatureDistributionPassing = OrderedDict()
@@ -1012,6 +1018,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 			print('Figure ' + str(
 				figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) in final dataset (by sample type).')
 			figNo = figNo + 1
+			saveAs = None
 
 		figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(
 			tData,
@@ -1035,8 +1042,27 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	if not destinationPath:
 		if 'StudySamples Exclusion Details' in sampleSummary:
 			print('Missing/Excluded Study Samples')
-			print('\nTable 3: Details of missing/excluded study samples')
+			print('\nTable 4: Details of missing/excluded study samples')
 			display(sampleSummary['StudySamples Exclusion Details'])
+
+
+	## Figure 5 and 6: (if available) PCA scores and loadings plots by sample type
+	if pcaModel is not None:
+
+		tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+		tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+		tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
+		tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+
+
+		if destinationPath:
+			pcaPath = destinationPath
+		else:
+			pcaPath = None
+
+		pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=6, destinationPath=pcaPath,
+										fileNamePrefix='')
+		item['pcaPlots'] = pcaModel
 
 	return item
 
