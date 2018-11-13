@@ -900,7 +900,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 		print('\nFeature Summary')
 	# Summary table
 	tData.featureMetadata['RSD in Study Reference'] = tData.rsdSP
-	tData.featureMetadata['RSD  Study Samples'] = tData.rsdSS
+	tData.featureMetadata['RSD in Study Samples'] = tData.rsdSS
 	item['FeatureQuantParamTableOverall'] = tData.featureMetadata.loc[:, quantParamColumns]
 	if not destinationPath:
 		print('\nTable 2: Feature summary table')

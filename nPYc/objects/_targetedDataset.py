@@ -246,6 +246,24 @@ class TargetedDataset(Dataset):
 
         return rsd(self._intensityData[mask & self.sampleMask])
 
+    @property
+    def rsdSS(self):
+        """
+        Returns percentage :term:`relative standard deviations<RSD>` for each feature in the dataset, calculated on samples with the Assay Role :py:attr:`~nPYc.enumerations.AssayRole.Assay` and Sample Type :py:attr:`~nPYc.enumerations.SampleType.StudySample` in :py:attr:`~Dataset.sampleMetadata`.
+
+        :return: Vector of feature RSDs
+        :rtype: numpy.ndarray
+        """
+        # Check we have Study Reference samples defined
+        if not ('AssayRole' in self.sampleMetadata.keys() or 'SampleType' in self.sampleMetadata.keys()):
+            raise ValueError('Assay Roles and Sample Types must be defined to calculate RSDs.')
+        if not sum(self.sampleMetadata['AssayRole'].values == AssayRole.Assay) > 1:
+            raise ValueError('More than one assay sample is required to calculate RSDs.')
+
+        mask = numpy.logical_and(self.sampleMetadata['AssayRole'].values == AssayRole.Assay,
+                                 self.sampleMetadata['SampleType'].values == SampleType.StudySample)
+
+        return rsd(self._intensityData[mask & self.sampleMask])
 
     def _loadTargetLynxDataset(self, datapath, calibrationReportPath, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False, **kwargs):
         """
