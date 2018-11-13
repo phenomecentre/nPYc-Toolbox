@@ -232,9 +232,9 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     
     nBatchCollect = len((numpy.unique(dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
     if nBatchCollect == 1:
-        item['batchesCollect'] = '1 batch'
+        item['nBatchesCollect'] = '1 batch'
     else:
-        item['batchesCollect'] = str(nBatchCollect) + ' batches'
+        item['nBatchesCollect'] = str(nBatchCollect) + ' batches'
     
     if hasattr(dataset, 'fit'):
         nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
