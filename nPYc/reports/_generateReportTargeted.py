@@ -886,7 +886,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 	# reporting columns
 	quantParamColumns = ['Feature Name', 'Unit', 'LOD', 'Lower Reference Percentile', 'Lower Reference Value',
-						 'Upper Reference Percentile', 'Upper Reference Value']
+						 'Upper Reference Percentile', 'Upper Reference Value', 'RSD in Study Reference',
+						 'RSD in Study Samples']
 	quantParamColumns.extend(tData.Attributes['externalID'])
 	# add method specific quantification parameter columns
 	if 'additionalQuantParamColumns' in tData.Attributes.keys():
@@ -898,6 +899,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	if destinationPath is None:
 		print('\nFeature Summary')
 	# Summary table
+	tData.featureMetadata['RSD in Study Reference'] = tData.rsdSP
+	tData.featureMetadata['RSD  Study Samples'] = tData.rsdSS
 	item['FeatureQuantParamTableOverall'] = tData.featureMetadata.loc[:, quantParamColumns]
 	if not destinationPath:
 		print('\nTable 2: Feature summary table')
@@ -908,7 +911,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 	# Table 3: Feature Selection parameters
 	FeatureSelectionTable = pandas.DataFrame(data=['yes', tData.Attributes['rsdThreshold'], 'yes'],
-						 index=['Relative Standard Devation (RSD)', 'RSD of SP Samples: Threshold',
+						 index=['Relative Standard Deviation (RSD)', 'RSD of SP Samples: Threshold',
 								'RSD of SS Samples > RSD of SP Samples'], columns=['Value Applied'])
 
 	item['FeatureSelectionTable'] = FeatureSelectionTable
