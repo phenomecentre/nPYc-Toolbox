@@ -170,9 +170,9 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     
     nBatchCollect = len((numpy.unique(dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
     if nBatchCollect == 1:
-        item['nBatchesCollect'] = '1 batch'
+        item['batchesCollect'] = '1 batch'
     else:
-        item['nBatchesCollect'] = str(nBatchCollect) + ' batches'
+        item['batchesCollect'] = str(nBatchCollect) + ' batches'
     
     if hasattr(dataset, 'fit'):
         nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
@@ -191,7 +191,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     if not destinationPath:
         print('\nFeature Summary')
 
-        print('\nSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
+        print('\nSamples acquired in ' + item['batchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
         print(item['batchesCorrect']) 
         
         print('\nTable 2: Features selected based on the following criteria:')

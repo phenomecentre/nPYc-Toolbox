@@ -253,7 +253,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     if not destinationPath:
         print('\nFeature Summary')
         
-        print('\nSamples acquired in ' + item['nBatchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
+        print('\nSamples acquired in ' + item['batchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
         print(item['batchesCorrect'])      
         
         print('\nTable 2: Features selected based on the following criteria:')
