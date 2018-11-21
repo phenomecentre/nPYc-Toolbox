@@ -1067,6 +1067,12 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 										fileNamePrefix='')
 		item['pcaPlots'] = pcaModel
 
+	if destinationPath:
+		# Make paths for graphics local not absolute for use in the HTML.
+		for key in item:
+			if os.path.join(destinationPath, 'graphics') in str(item[key]):
+				item[key] = re.sub('.*graphics', 'graphics', item[key])
+
 	return item
 
 

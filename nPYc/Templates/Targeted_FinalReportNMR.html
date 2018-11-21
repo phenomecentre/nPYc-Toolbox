@@ -54,7 +54,7 @@
 <!--Figure: RSD for all samples and features passing selection-->
 <div class='figure'>
 	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).</p>
-	<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
+	<img src={{ item.finalRSDdistributionFigure }} alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
 	{% if 'NfeaturesPassing' in item %}
 		<p>*Features sorted by RSD in SP samples; with features passing selection (i.e., able to be accurately measured) above the line and those failing (i.e., not able to be accurately measured) below the line.</p>
 	{% endif %}
