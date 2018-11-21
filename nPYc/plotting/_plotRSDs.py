@@ -39,6 +39,12 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	:param bool featName: If ``True`` y-axis label is the feature Name, if ``False`` features are numbered.
 	"""
 	rsdTable = _plotRSDsHelper(dataset, featureName=featureName, ratio=ratio, withExclusions=withExclusions, sortOrder=sortOrder)
+    
+	# if RSD not able to be calculated for some features - rsdTable size will be less than dataset.featureMetadata
+	if hLines is not None:
+		if  dataset.featureMetadata.shape[0] != rsdTable.shape[0]:
+			temp = [x for x in rsdTable['Feature Name'].values.tolist() if x in dataset.featureMetadata[featureName][dataset.featureMetadata['Passing Selection'] == False].values.tolist()]
+			hLines = [len(temp)]
 
 	# Plot
 	if xlim:
