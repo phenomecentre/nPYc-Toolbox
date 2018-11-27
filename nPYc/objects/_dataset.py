@@ -1885,7 +1885,7 @@ class Dataset:
 		for sample in sampleList:
 			if sample in self.sampleMetadata[on].unique():
 				self.sampleMask[self.sampleMetadata[self.sampleMetadata[on] == sample].index] = False
-				if (self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'].values == ''):
+				if (self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'].values in ['', None]):
 					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] = message
 				else:
 					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] = \

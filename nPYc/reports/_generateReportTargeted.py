@@ -133,6 +133,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 	item['QTypeIter'] = list(range(0, item['nQType']))
 	item['TextQType'] = textQType
 	item['CountQType'] = countQType
+	item['pcaModel'] = None
 
 	sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
 
@@ -179,7 +180,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 								version=version,
 								graphicsPath=graphicsPath,
 								sampleSummary=sampleSummary,
-								pcaPlots=pcaModel))
+								pcaPlots=item['pcaModel']))
 		f.close()
 
 		copyBackingFiles(toolboxPath(), graphicsPath)
@@ -784,32 +785,32 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=True,
 				   numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20):
 	"""
-    Summarise different aspects of an MS dataset
+	Summarise different aspects of an MS dataset
 
-    Generate reports for ``feature summary``, ``correlation to dilution``, ``batch correction assessment``, ``batch correction summary``, ``feature selection``, ``final report``, ``final report abridged``, or ``final report targeted abridged``
+	Generate reports for ``feature summary``, ``correlation to dilution``, ``batch correction assessment``, ``batch correction summary``, ``feature selection``, ``final report``, ``final report abridged``, or ``final report targeted abridged``
 
-    * **'feature summary'** Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
-    * **'correlation to dilution'** Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
-    * **'batch correction assessment'** Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
-    * **'batch correction summary'** Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
-    * **'feature selection'** Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
-    * **'final report'** Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
-    * **'final report abridged'** Generates an abridged summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
-    * **'final report targeted abridged'** Generates an abridged summary of the final targeted (peakPantheR) dataset, lists sample numbers present, a selection of figures summarising dataset quality, feature distributions, and a final list of samples missing from acquisition.
+	* **'feature summary'** Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
+	* **'correlation to dilution'** Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
+	* **'batch correction assessment'** Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
+	* **'batch correction summary'** Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
+	* **'feature selection'** Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
+	* **'final report'** Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
+	* **'final report abridged'** Generates an abridged summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
+	* **'final report targeted abridged'** Generates an abridged summary of the final targeted (peakPantheR) dataset, lists sample numbers present, a selection of figures summarising dataset quality, feature distributions, and a final list of samples missing from acquisition.
 
-    :param MSDataset msDataTrue: MSDataset to report on
-    :param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection``, ``final report``, ``final report abridged``, or ``final report targeted abridged``
-    :param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
-    :param None or bool withArtifactualFiltering: If ``None`` use the value from ``Attributes['artifactualFilter']``. If ``True`` apply artifactual filtering to the ``feature selection`` report and ``final report``
-    :param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
-    :type destinationPath: None or str
-    :param MSDataset msDataCorrected: Only if ``batch correction``, if msDataCorrected included will generate report post correction
-    :param PCAmodel pcaModel: Only if ``final report``, if PCAmodel object is available PCA scores plots coloured by sample type will be added to report
-    """
+	:param MSDataset msDataTrue: MSDataset to report on
+	:param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection``, ``final report``, ``final report abridged``, or ``final report targeted abridged``
+	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
+	:param None or bool withArtifactualFiltering: If ``None`` use the value from ``Attributes['artifactualFilter']``. If ``True`` apply artifactual filtering to the ``feature selection`` report and ``final report``
+	:param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
+	:type destinationPath: None or str
+	:param MSDataset msDataCorrected: Only if ``batch correction``, if msDataCorrected included will generate report post correction
+	:param PCAmodel pcaModel: Only if ``final report``, if PCAmodel object is available PCA scores plots coloured by sample type will be added to report
+	"""
 
 	"""
-    Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
-    """
+	Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
+	"""
 	# Ensure we have 'Passing Selection' column in dataset object - test here without the specific method
 	if not hasattr(tData.featureMetadata, 'Passing Selection'):
 		tData.updateMasks(filterSamples=False, filterFeatures=True)
@@ -1066,7 +1067,9 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 		pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=4, destinationPath=pcaPath,
 										fileNamePrefix='')
-		item['pcaPlots'] = pcaModel
+		item['pcaModel'] = pcaModel
+	else:
+		item['pcaModel'] = None
 
 	if destinationPath:
 		# Make paths for graphics local not absolute for use in the HTML.
