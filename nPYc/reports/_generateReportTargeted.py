@@ -885,8 +885,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 		print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
 	# reporting columns
-	quantParamColumns = ['Feature Name', 'Unit', 'LOD', 'Lower Reference Percentile', 'Lower Reference Value',
-						 'Upper Reference Percentile', 'Upper Reference Value', 'RSD in Study Reference',
+	quantParamColumns = ['Feature Name', 'Unit', 'LOD', 'RSD in Study Reference',
 						 'RSD in Study Samples']
 	quantParamColumns.extend(tData.Attributes['externalID'])
 	# add method specific quantification parameter columns
@@ -902,6 +901,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	tData.featureMetadata['RSD in Study Reference'] = tData.rsdSP
 	tData.featureMetadata['RSD in Study Samples'] = tData.rsdSS
 	item['FeatureQuantParamTableOverall'] = tData.featureMetadata.loc[:, quantParamColumns]
+	item['FeatureQuantParamTableOverall'].rename(columns={'LOD': 'LOD (in mmol/mol Creatinine)'}, inplace=True)
+	item['FeatureQuantParamTableOverall'].dropna(axis=1, how='all', inplace=True)
 	if not destinationPath:
 		print('\nTable 2: Feature summary table')
 		display(item['FeatureQuantParamTableOverall'])
@@ -1063,7 +1064,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 		else:
 			pcaPath = None
 
-		pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=6, destinationPath=pcaPath,
+		pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=4, destinationPath=pcaPath,
 										fileNamePrefix='')
 		item['pcaPlots'] = pcaModel
 
