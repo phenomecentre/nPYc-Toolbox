@@ -820,8 +820,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	reportType = 'finalSummary'
 
 	featureName = 'Feature Name'
-	featName = False
-	figureSize = tData.Attributes['figureSize']
+	featName = True
+	figureSize = (tData.Attributes['figureSize'][0], tData.Attributes['figureSize'][1] * (tData.noFeatures / 35))
 
 	if destinationPath is not None:
 		if not os.path.exists(destinationPath):
