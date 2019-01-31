@@ -44,4 +44,4 @@ __all__ = ['histogram', 'plotBatchAndROCorrection', 'plotTIC', 'plotTICinteracti
 		   'plotLoadings', 'plotLoadingsInteractive', 'plotDiscreteLoadings', 'plotFeatureRanges', 'plotMetadataDistribution', 'plotLOQRunOrder', 
 		   'plotFeatureLOQ', 'plotVariableScatter', 'plotAccuracyPrecision', 'plotCalibrationInteractive', 'plotLineWidth', 'plotLineWidthInteractive',
 		   'plotBaseline', 'plotBaselineInteractive', 'plotWaterResonance', 'plotWaterResonanceInteractive', 'plotSpectraInteractive', 'plotIonMapInteractive',
-		   'plotSpectralVarianceInteractive', 'correlationSpectroscopyInteractive', '_plotTargetedFeatureDistribution']
+		   'plotSpectralVarianceInteractive', 'correlationSpectroscopyInteractive', 'plotTargetedFeatureDistribution']

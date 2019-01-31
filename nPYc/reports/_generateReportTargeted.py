@@ -811,6 +811,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	"""
 	Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
 	"""
+    
 	# Ensure we have 'Passing Selection' column in dataset object - test here without the specific method
 	if not hasattr(tData.featureMetadata, 'Passing Selection'):
 		tData.updateMasks(filterSamples=False, filterFeatures=True)
@@ -940,7 +941,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 			print(
 				'\n*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured accurately, thus results should be interpreted accordingly')
 
-	# Separate into features passing and failing feature selection for rest of report
+	# Separate into features passing and failing feature selection for rest of report 
 
 	# Sort features by featureMask then by rsdSR
 	tData.featureMetadata['rsdSP'] = tData.rsdSP
@@ -948,6 +949,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	orderNew = tData.featureMetadata.index
 	tData._intensityData = tData._intensityData[:, orderNew]
 	tData.featureMetadata.drop('rsdSP', axis=1, inplace=True)
+	tData.featureMetadata.reset_index(drop=True, inplace=True)
 
 	# Figure: Distribution of RSDs in SP and SS
 	if destinationPath:

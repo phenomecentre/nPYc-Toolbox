@@ -208,7 +208,8 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     orderNew = dataset.featureMetadata.index
     dataset._intensityData = dataset._intensityData[:,orderNew]
     dataset.featureMetadata.drop('rsdSP', axis=1, inplace=True)
-
+    dataset.featureMetadata.reset_index(drop=True, inplace=True)
+    
     # Figure: Distribution of RSDs in SP and SS
     if destinationPath:
         item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
