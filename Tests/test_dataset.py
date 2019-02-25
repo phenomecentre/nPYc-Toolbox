@@ -1215,18 +1215,19 @@ class test_dataset_loadsop(unittest.TestCase):
 
 		with self.subTest(msg='Checking null return for \'Generic\' SOP.'):
 			attributes = {'Log': self.data.Attributes['Log'],
-						'dpi': 300,
-						'figureFormat': 'png',
-						'figureSize': [11, 7],
-						'histBins': 100,
-						'noFiles': 10,
-						'quantiles': [25, 75],
-						'sampleMetadataNotExported': ["Exclusion Details"],
-						'featureMetadataNotExported': [],
-						"analyticalMeasurements":{},
-						"excludeFromPlotting":[],
-						"sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
-						}
+						  "methodName": "Unknown",
+						  'dpi': 300,
+						  'figureFormat': 'png',
+						  'figureSize': [11, 7],
+						  'histBins': 100,
+						  'noFiles': 10,
+						  'quantiles': [25, 75],
+						  'sampleMetadataNotExported': ["Exclusion Details"],
+						  'featureMetadataNotExported': [],
+						  "analyticalMeasurements":{},
+						  "excludeFromPlotting":[],
+						  "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
+						  }
 
 			self.assertEqual(self.data.Attributes, attributes)
 
@@ -1236,18 +1237,19 @@ class test_dataset_loadsop(unittest.TestCase):
 		data = nPYc.Dataset(figureFormat='svg', squids=True)
 
 		attributes = {'Log': data.Attributes['Log'],
-					'dpi': 300,
-					'figureFormat': 'svg',
-					'figureSize': [11, 7],
-					'histBins': 100,
-					'noFiles': 10,
-					'quantiles': [25, 75],
-					'squids': True,
-					'sampleMetadataNotExported': ["Exclusion Details"],
-					'featureMetadataNotExported': [],
-					"analyticalMeasurements":{},
-					"excludeFromPlotting":[],
-					"sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
+					  'methodName': 'Unknown',
+					  'dpi': 300,
+					  'figureFormat': 'svg',
+					  'figureSize': [11, 7],
+					  'histBins': 100,
+					  'noFiles': 10,
+					  'quantiles': [25, 75],
+					  'squids': True,
+					  'sampleMetadataNotExported': ["Exclusion Details"],
+					  'featureMetadataNotExported': [],
+					  "analyticalMeasurements":{},
+					  "excludeFromPlotting":[],
+					  "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
 					}
 
 		self.assertEqual(data.Attributes, attributes)
