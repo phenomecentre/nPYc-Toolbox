@@ -4585,6 +4585,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		tmpDataset = nPYc.TargetedDataset('', fileType='empty')
 		self.expectedQuantUR['Attributes'] = {'methodName':"Bruker Quant-UR Data",
 										'dpi': tmpDataset.Attributes['dpi'],
+										'rsdThreshold':30,
 										'figureFormat': tmpDataset.Attributes['figureFormat'],
 										'figureSize': tmpDataset.Attributes['figureSize'],
 										'histBins': tmpDataset.Attributes['histBins'],
@@ -5032,7 +5033,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		# Attributes
 		tmpDataset = nPYc.TargetedDataset('', fileType='empty')
 		self.expectedBILISA['Attributes'] = copy.deepcopy(self.expectedQuantUR['Attributes'])
-		self.expectedBILISA['Attributes']['methodName'] = 'Bruker BI-LISA Data'
+		self.expectedBILISA['Attributes']['methodName'] = 'NMR Bruker BI-LISA'
 
 
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
