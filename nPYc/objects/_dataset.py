@@ -2073,7 +2073,7 @@ class Dataset:
 
 		# Export sample metadata
 		sampleMetadata.to_csv(destinationPath + '_sampleMetadata.csv',
-							  encoding='utf-8', date_format='%Y-%m-%d')
+							  encoding='utf-8', date_format=self._timestampFormat)
 
 		# Export feature metadata
 		featureMetadata.to_csv(destinationPath + '_featureMetadata.csv',

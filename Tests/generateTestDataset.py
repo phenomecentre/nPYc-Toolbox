@@ -62,6 +62,8 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata['Classes'] = numpy.random.choice(classNames, size=noSamp, p=classProbabilties)
 
 	data.sampleMetadata['Acquired Time'] = [d for d in datetime_range(datetime.now(), noSamp, timedelta(minutes=15))]
+	#Ensure seconds are not recorded, otherwise its impossible to test datasets read with datasets recorded on the fly.
+	data.sampleMetadata['Acquired Time'] = [datetime.strptime(d.strftime("%Y-%m-%d %H:%M"), "%Y-%m-%d %H:%M") for d in data.sampleMetadata['Acquired Time']]
 	data.sampleMetadata['Acquired Time'] = data.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 
 	data.sampleMetadata.iloc[::10, 1] = nPYc.enumerations.SampleType.StudyPool

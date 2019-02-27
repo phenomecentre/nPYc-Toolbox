@@ -2590,16 +2590,16 @@ class test_msdataset_initialiseFromCSV(unittest.TestCase):
 
 			pathName = os.path.join(tmpdirname, 'Testing_sampleMetadata.csv')
 
-			rebuitData = nPYc.MSDataset(pathName, fileType='CSV Export')
+			rebuiltData = nPYc.MSDataset(pathName, fileType='CSV Export')
 
-			numpy.testing.assert_array_equal(rebuitData.intensityData, dataset.intensityData)
+			numpy.testing.assert_array_equal(rebuiltData.intensityData, dataset.intensityData)
 
 			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
-				pandas.util.testing.assert_series_equal(rebuitData.sampleMetadata[column], dataset.sampleMetadata[column])
-			for column in rebuitData.featureMetadata.columns:
-				pandas.util.testing.assert_series_equal(rebuitData.featureMetadata[column], dataset.featureMetadata[column])
+				pandas.util.testing.assert_series_equal(rebuiltData.sampleMetadata[column], dataset.sampleMetadata[column])
+			for column in rebuiltData.featureMetadata.columns:
+				pandas.util.testing.assert_series_equal(rebuiltData.featureMetadata[column], dataset.featureMetadata[column])
 
-			self.assertEqual(rebuitData.name, dataset.name)
+			self.assertEqual(rebuiltData.name, dataset.name)
 
 
 if __name__ == '__main__':
