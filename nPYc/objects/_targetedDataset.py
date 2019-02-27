@@ -2069,8 +2069,6 @@ class TargetedDataset(Dataset):
         """
         Calls :py:meth:`~Dataset.exportDataset` and raises a warning if normalisation is employed as :py:class:`TargetedDataset` :py:attr:`intensityData` can be left-censored.
         """
-        if True:
-            warnings.warn('TODO - fix for new normalisation scheme')
         # handle the dilution due to method... These lines are left here commented - as hopefully this will be handled more
         # elegantly through the intensityData getter
         # Export dataset...
