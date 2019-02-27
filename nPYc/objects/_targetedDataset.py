@@ -853,7 +853,7 @@ class TargetedDataset(Dataset):
                 finalSampleMetadata.loc[i, 'Acquired Time'] = datetime.strptime(str(finalSampleMetadata.loc[i, 'Acqu Date']) + " " + str(finalSampleMetadata.loc[i, 'Acqu Time']),'%d-%b-%y %H:%M:%S')
             except ValueError:
                 pass
-        finalSampleMetadata['Acquired Time'] = finalSampleMetadata['Acquired Time'].astype(datetime)
+        finalSampleMetadata['Acquired Time'] = finalSampleMetadata['Acquired Time'].dt.to_pydatetime()
         # Add Run Order
         finalSampleMetadata['Order'] = finalSampleMetadata.sort_values(by='Acquired Time').index
         finalSampleMetadata['Run Order'] = finalSampleMetadata.sort_values(by='Order').index
