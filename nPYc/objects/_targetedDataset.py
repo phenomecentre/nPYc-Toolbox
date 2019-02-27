@@ -3267,7 +3267,7 @@ class TargetedDataset(Dataset):
 
         # Map dilution series names to dilution level
         fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract('(?:.+_?)(SRD\d\d)(?:_?.*)', expand=False).replace(self.Attributes['dilutionMap'])
-
+        fileNameParts['Dilution'] = fileNameParts['Dilution'].astype(float)
         # Blank out NAs for neatness
         fileNameParts['reruns'].fillna('', inplace=True)
         fileNameParts['extraInjections'].fillna('', inplace=True)

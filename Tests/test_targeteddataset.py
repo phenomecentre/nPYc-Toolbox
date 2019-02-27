@@ -4583,7 +4583,8 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		self.expectedQuantUR['excludedFlag'] = []
 		# Attributes
 		tmpDataset = nPYc.TargetedDataset('', fileType='empty')
-		self.expectedQuantUR['Attributes'] = {'dpi': tmpDataset.Attributes['dpi'],
+		self.expectedQuantUR['Attributes'] = {'methodName':"Bruker Quant-UR Data",
+										'dpi': tmpDataset.Attributes['dpi'],
 										'figureFormat': tmpDataset.Attributes['figureFormat'],
 										'figureSize': tmpDataset.Attributes['figureSize'],
 										'histBins': tmpDataset.Attributes['histBins'],
