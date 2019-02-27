@@ -1008,8 +1008,7 @@ class test_utilities_linewidth(unittest.TestCase):
 
 	def test_lineWidth_sf(self):
 		from nPYc.utilities._lineWidth import lineWidth
-
-		sf = (1000 - 200) * numpy.random.random_sample() + 200
+		sf = numpy.random.uniform(200, 1000)
 		trueLineWidth = 2
 		trueLineWidth = trueLineWidth / sf
 
