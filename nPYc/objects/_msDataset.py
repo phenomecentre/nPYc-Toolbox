@@ -1165,8 +1165,8 @@ class MSDataset(Dataset):
 		meanIntensity = self._intensityData.mean(axis=0)
 
 		# make graphs
-		g	  = networkx.from_pandas_edgelist(df=tmpLinkage, source='node1', target='node2', edge_attr=True)
-		graphs = list((g.subgraph(c).copy() for c in networkx.connected_components(g)))		  # a list of clusters
+		g = networkx.from_pandas_edgelist(df=tmpLinkage, source='node1', target='node2') #, edge_attr=True)
+		graphs = list((g.subgraph(c).copy() for c in networkx.connected_components(g)))  # a list of clusters
 
 		# update FeatureMask with features to remove (all but max intensity)
 		for i in range(0,len(graphs)):
