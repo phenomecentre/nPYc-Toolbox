@@ -418,7 +418,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 																'Subject ID': ['', '', ''], 'Sampling ID': ['', '', ''],
 																'Sample Base Name': ['', '', ''],
 																'Exclusion Details': ['', '', '']})
-		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].astype(datetime)
+		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 		self.targetedDataset.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2'],
 																 'TargetLynx Feature ID': [1, 2],
 																 'calibrationMethod': [

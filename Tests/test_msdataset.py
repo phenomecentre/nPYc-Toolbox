@@ -2590,7 +2590,7 @@ class test_msdataset_initialiseFromCSV(unittest.TestCase):
 
 			pathName = os.path.join(tmpdirname, 'Testing_sampleMetadata.csv')
 
-			rebuitData =  nPYc.MSDataset(pathName, fileType='CSV Export')
+			rebuitData = nPYc.MSDataset(pathName, fileType='CSV Export')
 
 			numpy.testing.assert_array_equal(rebuitData.intensityData, dataset.intensityData)
 

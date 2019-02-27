@@ -52,7 +52,7 @@ class test_plotting(unittest.TestCase):
 																'Subject ID': ['', '', ''], 'Sampling ID': ['', '', ''],
 																'Sample Base Name': ['', '', ''],
 																'Exclusion Details': ['', '', '']})
-		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].astype(datetime)
+		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 		self.targetedDataset.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2'], 'TargetLynx Feature ID': [1, 2],'calibrationMethod': [CalibrationMethod.backcalculatedIS,CalibrationMethod.backcalculatedIS],'quantificationType': [QuantificationType.QuantAltLabeledAnalogue,QuantificationType.QuantAltLabeledAnalogue],'unitCorrectionFactor': [1., 1],'Unit': ['a Unit', 'pg/uL'],'Cpd Info': ['info cpd1', 'info cpd2'],'LLOQ_batch1': [5., 20.],'LLOQ_batch2': [20., 5.],'ULOQ_batch1': [80., 100.],'ULOQ_batch2': [100., 80.],'LLOQ': [20., 20.], 'ULOQ': [80., 80.],'extID1': ['F1', 'F2'],'extID2': ['ID1', 'ID2']})
 		self.targetedDataset._intensityData = numpy.array([[10., 10.], [90., 90.], [25., 70.]])
 		self.targetedDataset.expectedConcentration = pandas.DataFrame(numpy.array([[40., 60.], [40., 60.], [40., 60.]]), columns=self.targetedDataset.featureMetadata['Feature Name'].values.tolist())

@@ -1672,7 +1672,7 @@ class test_dataset_initialiseFromCSV(unittest.TestCase):
 			numpy.testing.assert_array_equal(intensityData, dataset.intensityData)
 
 			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
-				pandas.util.testing.assert_series_equal(sampleMetadata[column], dataset.sampleMetadata[column])
+				pandas.util.testing.assert_almost_equal(sampleMetadata[column], dataset.sampleMetadata[column])
 			for column in featureMetadata.columns:
 				pandas.util.testing.assert_series_equal(featureMetadata[column], dataset.featureMetadata[column])
 

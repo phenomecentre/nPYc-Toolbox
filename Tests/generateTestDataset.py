@@ -62,7 +62,7 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata['Classes'] = numpy.random.choice(classNames, size=noSamp, p=classProbabilties)
 
 	data.sampleMetadata['Acquired Time'] = [d for d in datetime_range(datetime.now(), noSamp, timedelta(minutes=15))]
-	data.sampleMetadata['Acquired Time'] = data.sampleMetadata['Acquired Time'].astype(datetime)
+	data.sampleMetadata['Acquired Time'] = data.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 
 	data.sampleMetadata.iloc[::10, 1] = nPYc.enumerations.SampleType.StudyPool
 	data.sampleMetadata.iloc[::10, 2] = nPYc.enumerations.AssayRole.PrecisionReference
