@@ -5305,11 +5305,6 @@ class test_targeteddataset_exportdataset(unittest.TestCase):
 				warnings.simplefilter("always")
 				# warning
 				self.targeted.exportDataset(destinationPath=targetFolder, saveFormat='CSV')
-				# check
-				assert issubclass(w[0].category, UserWarning)
-
-				assert "TODO - fix for new normalisation scheme" in str(w[0].message)
-
 
 	def test_exportdataset_ISATAB_raise_notimplemented(self):
 		with tempfile.TemporaryDirectory() as tmpdirname:
