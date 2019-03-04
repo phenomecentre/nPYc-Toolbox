@@ -417,7 +417,8 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 																'Correction Batch': [numpy.nan, numpy.nan, numpy.nan],
 																'Subject ID': ['', '', ''], 'Sampling ID': ['', '', ''],
 																'Sample Base Name': ['', '', ''],
-																'Exclusion Details': ['', '', '']})
+																'Exclusion Details': ['', '', ''],
+																'Metadata Available': [True, True, True]})
 		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 		self.targetedDataset.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2'],
 																 'TargetLynx Feature ID': [1, 2],
@@ -509,6 +510,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		self.tDataAccPrec.sampleMetadata['Subject ID'] = ['', '', '', '', '', '', '', '']
 		self.tDataAccPrec.sampleMetadata['Sampling ID'] = ['', '', '', '', '', '', '', '']
 		self.tDataAccPrec.sampleMetadata['Sample Base Name'] = ['', '', '', '', '', '', '', '']
+		self.tDataAccPrec.sampleMetadata['Metadata Available'] = True
 		self.tDataAccPrec.sampleMetadata['Exclusion Details'] = ['', '', '', '', '', '', '', '']
 		self.tDataAccPrec.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2','Feature3']})
 		self.tDataAccPrec.featureMetadata['calibrationMethod'] = [CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS]
