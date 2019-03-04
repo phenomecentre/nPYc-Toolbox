@@ -193,15 +193,11 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'TestData_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_finalFeatureBLWPplots1.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_linewidthBoxplot.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_finalFeatureBLWPplots3.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_spectraWaterPeakRegion.png')
 			self.assertTrue(os.path.exists(expectedPath))
-
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_peakWidthBoxplot.png')
-			self.assertTrue(os.path.exists(expectedPath))
-
 
 	def test_report_nmr_raises(self):
 

@@ -315,7 +315,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 	# Water Peak plot
 	##
 	if destinationPath:
-		item['spectraWaterPeakRegion'] = os.path.join(graphicsPath, item['Name'] + '_spectraWaterPeakRegion' + dataset.Attributes['figureFormat'])
+		item['spectraWaterPeakRegion'] = os.path.join(graphicsPath, item['Name'] + '_spectraWaterPeakRegion.' + dataset.Attributes['figureFormat'])
 		saveAs = item['spectraWaterPeakRegion']
 		
 		plotWaterResonance(dataset,	
