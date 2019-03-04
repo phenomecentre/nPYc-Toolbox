@@ -5033,7 +5033,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		# Attributes
 		tmpDataset = nPYc.TargetedDataset('', fileType='empty')
 		self.expectedBILISA['Attributes'] = copy.deepcopy(self.expectedQuantUR['Attributes'])
-		self.expectedBILISA['Attributes']['methodName'] = 'NMR Bruker BI-LISA'
+		self.expectedBILISA['Attributes']['methodName'] = 'NMR Bruker - BI-LISA'
 
 
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
