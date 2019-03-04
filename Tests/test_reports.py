@@ -13,7 +13,7 @@ import warnings
 
 sys.path.append("..")
 import nPYc
-from nPYc.enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod
+from nPYc.enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod, AnalyticalPlatform
 from nPYc.reports._generateReportTargeted import _postMergeLOQDataset, _prePostMergeLOQSummaryTable, _getAccuracyPrecisionTable
 from pyChemometrics import ChemometricsPCA
 from datetime import datetime, timedelta
@@ -553,7 +553,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		rowIdx = pandas.MultiIndex.from_tuples(tuplesRow, names=['Feature', 'Sample Type'])
 		self.resAccPre.index = rowIdx
 		self.resAccPre.fillna(value='', inplace=True)
-
+		self.tDataAccPrec.AnalyticalPlatform = AnalyticalPlatform.MS
 
 	def test_report_postMergeLOQDataset(self):
 		# Expected
