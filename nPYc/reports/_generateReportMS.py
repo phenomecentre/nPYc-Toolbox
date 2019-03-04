@@ -1643,20 +1643,11 @@ def batchCorrectionTest(dataset, nFeatures=10, window=11):
                 dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
     sampleMask = (SSmask | SPmask | ERmask | LRmask) & (dataset.sampleMask == True).astype(bool)
 
-    # Select subset of features (passing on correlation to dilution)
-
-    # Correlation to dilution
-    if not hasattr(dataset, 'corrMethod'):
-        dataset.correlationToDilution
-
-    # Exclude features failing correlation to dilution
-    passMask = dataset.correlationToDilution >= dataset.Attributes['corrThreshold']
-
     # Exclude features with zero values
     zeroMask = sum(dataset.intensityData[sampleMask, :] == 0)
     zeroMask = zeroMask == 0
 
-    passMask = passMask & zeroMask
+    passMask = zeroMask
 
     # Select subset of features on which to perform batch correction
     maskNum = [i for i, x in enumerate(passMask) if x]
