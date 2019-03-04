@@ -3082,7 +3082,7 @@ class TargetedDataset(Dataset):
                     assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference],
                     quantificationTypes=[QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantOther, QuantificationType.Monitored],
                     calibrationMethods=[CalibrationMethod.backcalculatedIS, CalibrationMethod.noIS, CalibrationMethod.noCalibration, CalibrationMethod.otherCalibration],
-                    rsdThreshold=30.0, **kwargs):
+                    rsdThreshold=None, **kwargs):
         """
         Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to QC parameters.
 
@@ -3130,7 +3130,10 @@ class TargetedDataset(Dataset):
         if not all(isinstance(item, CalibrationMethod) for item in calibrationMethods):
             raise TypeError('calibrationMethods must be CalibrationMethod enums.')
         if rsdThreshold is None:
-            rsdThreshold = self.Attributes['rsdThreshold']
+            if 'rsdThreshold' in self.Attributes:
+                rsdThreshold = self.Attributes['rsdThreshold']
+            else:
+                rsdThreshold = None
         if rsdThreshold is not None and not isinstance(rsdThreshold, (float, int)):
             raise TypeError('rsdThreshold should either be a float or None')
 

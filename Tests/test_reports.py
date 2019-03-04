@@ -639,7 +639,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png', 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
+			testFiles = ['unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png', 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', testFile)
@@ -683,11 +683,10 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['unittest_AcquisitionStructure.png',
-						 'unittest_FeatureAccuracy-A.png',
+			testFiles = ['unittest_FeatureAccuracy-A.png',
 						 'unittest_FeatureAccuracy-B.png',
-						 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png',
-						 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png',
+						 'unittest_FeatureConcentrationDistribution_Quantified and validated with own labeled analogue_featureDistribution_0.png',
+						 'unittest_FeatureConcentrationDistribution_Quantified and validated with alternative labeled analogue_featureDistribution_0.png',
 						 'unittest_FeaturePrecision-A.png',
 						 'unittest_FeaturePrecision-B.png']
 
