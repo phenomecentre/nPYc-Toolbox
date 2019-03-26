@@ -18,14 +18,15 @@ Contents:
    tutorials/tutorial
 
    objects
-   enumerations
+   samplemetadata
    reports
    plots
    utilities
    configuration/configuration
    batchAndROCorrection
    multivariate
-   nomenclature
+   enumerations
+   glossary
 
 
 Using the nPYc toolbox

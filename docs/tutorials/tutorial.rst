@@ -1,8 +1,50 @@
 Using the nPYc toolbox
 ----------------------
 
+The nPYc-Toolbox is a general Python 3 implementation of the MRC-NIHR National Phenome Centre toolchain for the import, quality-control, and preprocessing of metabolic profiling datasets.
+
+
+Getting started
+===============
+
+Ensure that the Anaconda with Python 3.5 or above, and the nPYc-Toolbox are installed. The nPYc-Toolbox can be installed by using the Anaconda Prompt and typing ‘pip install nPYc’. This will install the toolbox alongside any required dependency, and make it available as a general python package.
+
+The folder NMR contains all the raw NMR data for this tutorial. The tutorial dataset can also be downloaded from the MetaboLights database (www.ebi.ac.uk/metabolights), study ID: MTBLS694.
+
+After installing all the necessary requirements (Anaconda with Python 3.x), follow these instructions to start a Jupyter Notebook session:
+
+On Windows:
+Option 1: Graphical User Interface: UI
+•	Open the Anaconda explorer software and change the current directory to the directory containing the tutorials code and dataset. Launch a Jupyter Notebook session.
+ 
+Option 2: Command line	
+•	Alternatively, open the Anaconda prompt console, navigate to the folder where you want to initialize the notebook.
+•	Then type “jupyter notebook” on the console. This will open the Jupyter Notebook session in the browser.
+
+In Linux/Mac:
+•	Open a terminal/console and navigate to the folder containing the tutorial code and dataset and type ‘jupyter notebook’ in the console.
+
+
+Preprocessing and quality control of NMR data with the nPYc-Toolbox
+===================================================================
+
+link to this
+
+Preprocessing and quality control of LC-MS data with the nPYc-Toolbox
+=====================================================================
+
+link to this
+
+Preprocessing and quality control of NMR targeted data with the nPYc-Toolbox
+============================================================================
+
+link to this
+
+
 Importing datasets *&* mapping metadata
 =======================================
+
+
 
 Datasets in the nPYc toolbox are represented by instances of sub-classes of the :py:class:`~nPYc.objects.Dataset` class. Each instance of a :py:class:`~nPYc.objects.Dataset` represents the measured abundances of features, plus sample and feature metadata, in a metabolic profiling experiment.
 
@@ -27,55 +69,6 @@ Or directly inspect the sample or feature metadata, and the raw measurements::
 	dataset.intensityData
 
 Additional study design parameters or sample metadata may be mapped into the Dataset using the :py:meth:`~nPYc.objects.Dataset.addSampleInfo` method. For the purpose of standardising QC filtering procedures, the nPYc toolbox defines a small set of terms for describing reference sample types and design elements, as listed in :doc:`nomenclature<../nomenclature>`.
-
-In brief, :term:`precision reference` assays are acquired to characterise analytical variability, while :term:`linearity reference` assays provide a measure of a samples response to changes in abundance. These measurements may be made on :term:`synthetic reference mixtures<method reference>`, repeatedly measured samples of a :term:`representative matrix<external reference>`, or a :term:`pool<study reference>` of the samples in the study.
-
-For basic experimental designs, the 'Basic CSV' format (see :doc:`here<SampleMetadata>` for details) specifies a simple method for matching analytical data to metadata::
-
-	datasetObject.addSampleInfo(descriptionFormat='Basic CSV', filePath='~/path to basic csv file')
-
-`ISA-TAB <http://isa-tools.org>`_ format study design documents provide a method for mapping rich experimental design parameters into the object::
-
-	datasetObject.addSampleInfo(descriptionFormat='ISATAB', filePath='~/path to study file.csv')
-
-The 'Basic CSV' file matches based on the entries in the 'Sample File Name' column to the 'Sample File Name' in the :py:attr:`~nPYc.objects.Dataset.sampleMetadata` table. :term:`Sample types<sample type>` and :term:`assay roles<assay role>` can be described using the values defined in the :py:mod:`~nPYc.enumerations` module. Where 'Include Sample' is ``False``, the :py:attr:`~nPYc.objects.Dataset.sampleMask` for that sample will be set to ``False``. By default samples that cannot be matched to entries in the basic ; file are also masked.
-
-.. table:: Minimal structure of a basic csv file
-   :widths: auto
-   
-   =========== ============================== ================== ================= ======== ==============
-   Sampling ID Sample File Name               AssayRole          SampleType        Dilution Include Sample
-   =========== ============================== ================== ================= ======== ==============
-   Dilution 1  UnitTest1_LPOS_ToF02_B1SRD01   LinearityReference StudyPool         1        TRUE
-   Dilution 2  UnitTest1_LPOS_ToF02_B1SRD02   LinearityReference StudyPool         50       TRUE
-   Sample 1    UnitTest1_LPOS_ToF02_S1W07     Assay              StudySample       100      TRUE
-   Sample 2    UnitTest1_LPOS_ToF02_S1W08_x   Assay              StudySample       100      TRUE
-   LTR         UnitTest1_LPOS_ToF02_S1W11_LTR PrecisionReference ExternalReference 100      TRUE
-   SR          UnitTest1_LPOS_ToF02_S1W12_SR  PrecisionReference StudyPool         100      TRUE
-   Sample 3    UnitTest1_LPOS_ToF02_S1W09_x   Assay              StudySample       100      FALSE
-   Blank 1     UnitTest1_LPOS_ToF02_Blank01   Assay              ProceduralBlank   0        TRUE
-   =========== ============================== ================== ================= ======== ==============
-
-Any additional columns in the basic csv file will be appended to the :py:attr:`~nPYc.objects.Dataset.sampleMetadata` table as additional sample metadata.
-
-Where analytical file names have been generated according to a standard that allows study design parameters to be parsed out, this can be accomplished be means of a regular expression that captures paramaters in named groups::
-
-	datasetObject.addSampleInfo(descriptionFormat='Filenames', filenameSpec='regular expression string')
-
-Mapping metadata into an object is an accumulative operation, so multiple calls can be used to map metadata from several sources\:
-
-.. code-block:: python
-
-	# Load analytical data to sample ID mappings
-	datasetObject.addSampleInfo(descriptionFormat='NPCLIMS', filePath='~/path to LIMS file')
-	
-	# Use the mappings to map in sample metadata
-	datasetObject.addSampleInfo(descriptionFormat='NPC Subject Info', filePath='~/path to Subject Info file')
-	
-	# Get samples info from filenames
-	datasetObject.addSampleInfo(descriptionFormat='filenames')
-
-When adding multiple rounds of metadata, the content of columns already present in :py:attr:`~nPYc.objects.Dataset.sampleMetadata` will be overwritten by any column with the same name in the metadata being added. See the documentation for :py:meth:`~nPYc.objects.Dataset.addSampleInfo` for possible options.
 
 
 Assessing Analytical Quality

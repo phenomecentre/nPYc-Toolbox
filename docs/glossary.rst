@@ -1,44 +1,5 @@
-Nomenclature
-------------
-
-The :mod:`nPYc` toolbox uses the following nomenclature when defining sample types and analytical study design elements. Certain terms are defined and controlled in the :mod:`~nPYc.enumerations` module.
-
-.. figure:: _static/samplingNomenclature.svg
-	:width: 70%
-	:align: center
-	:alt: Generation of samples
-
-	The hierarchy of sample generation, :term:`Study samples<study sample>` are generated from :term:`participants<participant>` at one or more :term:`sampling events<sampling event>`. These sample are then :term:`assayed<assay>` by one or more methods, generating a :term:`unique<Sample Base Name>` dataset for each :term:`sample assay`.
-
-Units
-=====
-
-.. table:: Where unspecified units used in the nPYc toolbox are as follows
-   :widths: auto
-   
-   ===================================== ============================= ======================================= ============================================
-   Variable                              Unit                          Datatype                                Interpretation
-   ===================================== ============================= ======================================= ============================================
-   Sample inclusion                                                     ``bool``                               ``True`` == included, ``False`` == excluded
-   Feature inclusion                                                    ``bool``                               ``True`` == included, ``False`` == excluded
-   :term:`Run order`                                                    ``int``                                Ascending rank order
-   Times & Dates                                                        :class:`~datetime.datetime`            Export / import as :rfc:`3339`
-   Fluid volumes                         Milliliters (ml)               ``float``
-   Ionisation Mode                                                      :class:`~nPYc.enumerations.Polarity`
-   Ionisation Type                                                      :class:`~nPYc.enumerations.Ionisation`
-   :term:`Retention Time`                Seconds (s)                    ``float``
-   Atomic Mass                           Unified atomic mass units (u)  ``float``
-   :term:`NMR Chemical Shift<ppm (NMR)>` :term:`PPM<ppm (NMR)>`         ``float``
-   Collision Energy                      Volts (v)                      ``float``
-   ===================================== ============================= ======================================= ============================================
-
-Notations
-=========
-
-Matrices are set :math:`UPPERCASE`, vectors :math:`lowercase`, and scalar values :math:`\mathit{italic}`.
-
 Glossary
-========
+--------
 
 .. glossary::
 	:sorted:
@@ -96,6 +57,9 @@ Glossary
 
 	Matrix
 		The source of a :term:`specimen<Study Sample>`, for example, urine, blood-plasma, or serum.
+	
+	Notation conventions (code)
+		Matrices are set :math:`UPPERCASE`, vectors :math:`lowercase`, and scalar values :math:`\mathit{italic}`.
 
 	Nuclear Magnetic Resonance Spectroscopy
 	NMR
@@ -200,3 +164,22 @@ Glossary
 	Ultra-Perfomance Liquid Chromatography Mass-Spectrometry
 	UPLC-MS
 		Analytical technology for :term:`assaying<Assay>` samples, coupling chromatographic separation with :term:`mass detection<MS>`.
+		
+**Units**
+		
+		Where unspecified units used in the nPYc toolbox are as follows
+	===================================== ============================== ======================================= ============================================
+	Variable                              Unit                           Datatype                                Interpretation
+	===================================== ============================== ======================================= ============================================
+	Sample inclusion                                                     ``bool``                                ``True`` == included, ``False`` == excluded
+	Feature inclusion                                                    ``bool``                                ``True`` == included, ``False`` == excluded
+	:term:`Run order`                                                    ``int``                                 Ascending rank order
+	Times & Dates                                                        :class:`~datetime.datetime`             Export / import as :rfc:`3339`
+	Fluid volumes                         Milliliters (ml)               ``float``
+	Ionisation Mode                                                      :class:`~nPYc.enumerations.Polarity`
+	Ionisation Type                                                      :class:`~nPYc.enumerations.Ionisation`
+	:term:`Retention Time`                Seconds (s)                    ``float``
+	Atomic Mass                           Unified atomic mass units (u)  ``float``
+	:term:`NMR Chemical Shift<ppm (NMR)>` :term:`PPM<ppm (NMR)>`         ``float``
+	Collision Energy                      Volts (v)                      ``float``
+	===================================== ============================== ======================================= ============================================
