@@ -25,6 +25,8 @@ Contents:
    configuration/configuration
    batchAndROCorrection
    multivariate
+   normalisation
+   exportingdata
    enumerations
    glossary
 
