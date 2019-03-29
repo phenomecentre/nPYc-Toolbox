@@ -1095,6 +1095,7 @@ class Dataset:
 			if sum(self.featureMask) != len(self.featureMask):
 
 				# Save excluded features
+				# Save excluded features
 				self.featureMetadataExcluded.append(self.featureMetadata[:][self.featureMask == False])
 				self.intensityDataExcluded.append(self._intensityData[:, self.featureMask == False])
 				self.sampleMetadataExcluded.append(self.sampleMetadata)
@@ -1117,16 +1118,20 @@ class Dataset:
 
 		Possible options:
 
-		* **'NPC LIMS'** NPC LIMS files mapping files names of raw analytical data to sample IDs
-		* **'NPC Subject Info'** Map subject metadata from a NPC sample manifest file (format defined in 'PCSOP.082')
+		* **'Basic CSV'** Joins the :py:attr:`sampleMetadata` table with the data in the ``csv`` file at *filePath=*, matching on the 'Sample File Name' column in both (see :doc:`samplemetadata`).
+		* **'Filenames'** Parses sample information out of the filenames, based on the named capture groups in the regex passed in *filenamespec*
 		* **'Raw Data'** Extract analytical parameters from raw data files
 		* **'ISATAB'** ISATAB study designs
-		* **'Filenames'** Parses sample information out of the filenames, based on the named capture groups in the regex passed in *filenamespec*
-		* **'Basic CSV'** Joins the :py:attr:`sampleMetadata` table with the data in the ``csv`` file at *filePath=*, matching on the 'Sample File Name' column in both (see :doc:`tutorials/SampleMetadata`).
 
 		:param str descriptionFormat: Format of metadata to be added
 		:param str filePath: Path to the additional data to be added
 		:raises NotImplementedError: if the descriptionFormat is not understood
+		"""
+
+		"""
+		Extra options for internal NPC use:
+		* **'NPC LIMS'** NPC LIMS files mapping files names of raw analytical data to sample IDs
+		* **'NPC Subject Info'** Map subject metadata from a NPC sample manifest file (format defined in 'PCSOP.082')
 		"""
 		if descriptionFormat == 'Basic CSV':
 			self._matchBasicCSV(filePath)
@@ -1150,6 +1155,7 @@ class Dataset:
 		Possible options:
 
 		* **'Reference Ranges'** JSON file specifying upper and lower reference ranges for a feature.
+
 		:param str filePath: Path to the additional data to be added
 		:param str descriptionFormat:
 		:param str featureId: Unique feature Id field in the metadata file provided to match with internal Feature Name
@@ -1927,9 +1933,10 @@ class Dataset:
 		:param str destinationPath: Save data into the directory specified here
 		:param str format: File format for saved data, defaults to CSV.
 		:param dict detailsDict: Contains several key: value pairs required to for exporting ISATAB.
+
 		detailsDict should have the format:
 		detailsDict = {
-		    'investigation_identifier' : "i1",
+			'investigation_identifier' : "i1",
 		    'investigation_title' : "Give it a title",
 		    'investigation_description' : "Add a description",
 		    'investigation_submission_date' : "2016-11-03",
@@ -1946,6 +1953,7 @@ class Dataset:
 		    'study_public_release_date' : "2016-11-03",
 		    'assay_filename' : "my_ms_assay"
 		}
+
 		:param bool withExclusions: If ``True`` mask features and samples will be excluded
 		:param bool escapeDelimiters: If ``True`` remove characters commonly used as delimiters in csv files from metadata
 		:param bool filterMetadata: If ``True`` does not export the sampleMetadata and featureMetadata columns listed in self.Attributes['sampleMetadataNotExported'] and self.Attributes['featureMetadataNotExported']

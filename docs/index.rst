@@ -15,8 +15,7 @@ Contents:
    :includehidden:
    :glob:
 
-   tutorials/tutorial
-
+   tutorial
    objects
    samplemetadata
    reports
@@ -33,7 +32,7 @@ Contents:
 
 Using the nPYc toolbox
 ======================
-The :doc:`tutorial <tutorials/tutorial>` introduces the basic process of using the nPYc toolbox to load, perform quality-control on, and basic interpretation of a metabolic profiling dataset.
+The :doc:`tutorial <tutorial>` introduces the basic process of using the nPYc toolbox to load, perform quality-control on, and basic interpretation of different types of metabolic profiling datasets.
 
 
 The :py:class:`~nPYc.objects.Dataset` classes

@@ -40,13 +40,3 @@ Preprocessing and quality control of NMR targeted data with the nPYc-Toolbox
 ============================================================================
 
 link to this
-
-
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-
-   SampleMetadata
-   nmrdataset
-   msdataset
-   targeteddataset

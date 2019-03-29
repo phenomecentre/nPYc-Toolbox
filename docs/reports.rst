@@ -15,17 +15,17 @@ The nPYc toolbox incorporates the concept of analytical quality directly into th
 
 Parameters for the quality control procedure can be specified in a :doc:`SOP JSON<../configuration/configurationSOPs>` file as the Dataset object is created, and amended after creation by modifying the relevant entry of the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
 
-Each object type supports its own QC tests, see :doc:`nmrdataset`, :doc:`msdataset`, and :doc:`targeteddataset` for specific details.
+Each object type supports its own QC tests, see the tutorials for more details :doc:`tutorial`.
 
 Saving reports
 ==============
 
-Report generated interactively by the :py:mod:`~nPYc.reports` module can be saved as html documents with static images by supplying a path in which to save the report and figures to the *output=* parameter of the :py:func:`~nPYc.reports.generateReport` function.
+Report generated interactively by the :py:mod:`~nPYc.reports` module can be saved as html documents with static images by supplying a path in which to save the report and figures to the *output=* parameter of the :py:mod:`~nPYc.reports.generateReport` function.
 
 
 Templates
 =========
-Reporting :doc:`templates` used when saving reports as HTML are based on Jinja2, and may be customised by modifying the template documents in the `Templates` directory.
+Reporting used when saving reports as HTML are based on Jinja2, and may be customised by modifying the template documents in the `Templates` directory.
 
 
 Sample Report

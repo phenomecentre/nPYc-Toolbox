@@ -14,12 +14,13 @@ from ._conditionalJoin import *
 
 def extractParams(filepath, filetype, pdata=1):
 	"""
-	Extract analytical parameters from raw data files
+	Extract analytical parameters from raw data files for Bruker and Waters .RAW data only.
 
 	:param filepath: Look for data in all the directories under this location.
 	:type searchDirectory: string
 	:param filetype: Search for this type of data
 	:type filetype: string
+	:param int pdata: pdata folder for Bruker data
 	:return: Analytical parameters, indexed by file name.
 	:rtype: pandas.Dataframe
 	"""
@@ -108,6 +109,7 @@ def extractWatersRAWParams(filePath, queryItems):
 
 	:param filePath: Path to .RAW folder
 	:type filePath: str
+	:param dict queryItems: names of parameters to extract values for
 	:returns: Dictionary of extracted parameters
 	:rtype: dict
 	"""
@@ -158,7 +160,14 @@ def extractWatersRAWParams(filePath, queryItems):
 
 def extractBrukerparams(path, queryItems, acqTimeRE):
 	"""
+	Read parameters defined in *queryItems* for Bruker data.
 
+	:param filePath: Path to raw data folder
+	:type filePath: str
+	:param dict queryItems: names of parameters to extract values for
+	:param str acqTimeRE: regular expression used to extract acquisition time
+	:returns: Dictionary of extracted parameters
+	:rtype: dict
 	"""
 
 	pathComponents = []

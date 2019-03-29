@@ -10,9 +10,15 @@ By default new :py:class:`~nPYc.objects.Dataset` objects have a :py:class:`~nPYc
 
 will cause all calls to :py:attr:`~nPYc.objects.Dataset.intensityData` to return values transformed by the normaliser.
 
+There are three built-in normalisation objects:
 
-Normalisation
-=============
+- Null normaliser (:py:class:`~nPYc.utilities.normalisation.NullNormaliser`): no normalisation performed
+- Probabilistic quotient normaliser (:py:class:`~nPYc.utilities.normalisation.ProbabilisticQuotientNormaliser`): performs probabilistic quotient normalisation (Dieterle *et al.* [pqn]_ )
+- Total area normaliser (:py:class:`~nPYc.utilities.normalisation.TotalAreaNormaliser`): performs normalisation where each row (sample) is divided by the total sum of its variables (columns)
+
+
+Normalisation objects
+=====================
 
 .. automodule:: nPYc.utilities.normalisation
    :members:

@@ -5,11 +5,11 @@ nPYc-Toolbox Dataset Objects
 Dataset classes
 ===============
 
-The nPYc toolbox is built around a core :py:class:`Dataset` class, that represents a collection of measurements, with biological and analytical metadata associated with each sample, and analytical and chemical metadata associated with the observations.
+The nPYc toolbox is built around a core :py:class:`~nPYc.objects.Dataset` class, that represents a collection of measurements, with biological and analytical metadata associated with each sample, and analytical and chemical metadata associated with the observations.
 
 Instances of the Dataset class and its subclasses are capable of instantiating themselves from common data types, including certain raw data formats, common interchange formats, and the outputs of popular data-processing tools.
 
-The Dataset family of class include methods for mapping additional metadata into the object (see :py:meth:`~Dataset.addSampleInfo`), as well exporting a representation of themself in a variety of formats (see the :py:meth:`~Dataset.exportDataset` method)
+The Dataset family of class include methods for mapping additional metadata into the object (see :py:meth:`~nPYc.objects.Dataset.addSampleInfo`), as well exporting a representation of themself in a variety of formats (see the :py:meth:`~nPYc.objects.Dataset.exportDataset` method)
 
 All children of **Dataset** have three primary attributes:
 
@@ -22,9 +22,9 @@ All children of **Dataset** have three primary attributes:
 .. figure:: _static/Dataset_structure.svg
 	:alt: Structure of the key attributes of a dataset
 	
-	Structure of the key attributes of a :py:class:`Dataset` object. Of note, rows in the :py:attr:`~Dataset.featureMetadata` Dataframe correspond to columns in the :py:attr:`~Dataset.intensityData` matrix.
+	Structure of the key attributes of a :py:class:`~nPYc.objects.Dataset` object. Of note, rows in the :py:attr:`~nPYc.objects.Dataset.featureMetadata` Dataframe correspond to columns in the :py:attr:`~nPYc.objects.Dataset.intensityData` matrix.
 
-When initialised, :py:class:`Dataset` objects can be configured by loading :doc:`SOP parameters<configuration/configurationSOPs>` from JSON files specified in *sop*. The parameters are then stored in the :py:attr:`~Dataset.Attributes` dictionary.
+When initialised, :py:class:`Dataset` objects can be configured by loading :doc:`SOP parameters<configuration/configurationSOPs>` from JSON files specified in *sop*. The parameters are then stored in the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
 
 Once created, you can query the number of features or samples it contains::
 
@@ -38,13 +38,13 @@ Or directly inspect the sample or feature metadata, and the raw measurements::
 
 	dataset.intensityData
 
-Additional study design parameters or sample metadata may be mapped into the Dataset using the :py:meth:`~nPYc.objects.Dataset.addSampleInfo` method. For the purpose of standardising QC filtering procedures, the nPYc toolbox defines a small set of terms for describing reference sample types and design elements, as listed in :doc:`nomenclature<../nomenclature>`.
+Additional study design parameters or sample metadata may be mapped into the Dataset using the :py:meth:`~nPYc.objects.Dataset.addSampleInfo` method. For the purpose of standardising QC filtering procedures, the nPYc toolbox defines a small set of terms for describing reference sample types and design elements, as listed in :doc:`Adding Sample Metadata<../samplemetadata>`.
 
 
 Sample and Feature Masks
 ========================
 
-nPYc-Toolbox Dataset objects contains two internal `mask` vectors, the :py:attr:`~Dataset.sampleMask` and the :py:attr:`~Dataset.featureMask`. They store whether a sample or feature, respectively, should be used when calculating QC metrics, in the visualizations in the report functions and when exporting the datasets.
+nPYc-Toolbox Dataset objects contains two internal `mask` vectors, the :py:attr:`~nPYc.objects.Dataset.sampleMask` and the :py:attr:`~nPYc.objects.Dataset.featureMask`. They store whether a sample or feature, respectively, should be used when calculating QC metrics, in the visualizations in the report functions and when exporting the datasets.
 
 There are several functions which modify these internal masks:
 
