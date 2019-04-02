@@ -2,7 +2,6 @@
 Module to encompass various tools for the manipulation of feature-extracted MS data sets.
 """
 
-import scipy
 import os
 import inspect
 import numpy
@@ -2085,135 +2084,42 @@ class MSDataset(Dataset):
 
 	def __add__(self, other):
 		"""
-		Implements the concatenation of 2 :py:class:`msDataset`
+		Implements the addition of the features of 2 :py:class:`msDataset` for a shared set of samples.
 
-		`msDataset = msDatasetBatch1 + msDatasetBatch2`
+		`msDataset = 'leftDataset' + 'rightDataset`
 
 		`msDataset = sum([msDatasetBatch1, msDatasetBatch2`, msDatasetBatch3])'
 
-		:py:attr:`sampleMetadata` are concatenated, :py:attr:`featureMetadata` are merged and :py:attr:`intensityData` match it.
-		In :py:attr:`featureMetadata`, non pre-defined columns names get the suffix '_batchX' appended.
-		Excluded features and samples are listed in the same order as the 'Batch'.
-
-		:raises ValueError: if an object doesn't pass validation before merge
-		:raises ValueError: if the merge object doesn't pass validation
+		:py:attr:`sampleMetadata` for the shared samples is kept as in the 'leftDataset'.
+		:py:attr:`featureMetadata` and :py:attr:`intensityData` are concatenated. If there are repeated features on both
+		datasets, only the values from the 'leftDataset' are used.
 		"""
-
-		import collections
-		import warnings
-
-		def flatten(x):
-			""" Always provide a single level list, from a list of lists and or str """
-			result = []
-			for el in x:
-				if isinstance(x, collections.Iterable) and not (isinstance(el, str) | isinstance(el, dict)):
-					result.extend(flatten(el))
-				else:
-					result.append(el)
-			return result
-
-		def reNumber(oldSeries, startNb):
-			""" reindex a series of int between the startNB and startNb + number of unique values """
-			oldNb = oldSeries.unique().tolist()
-			newNb = numpy.arange(startNb, startNb + len(oldNb)).tolist()
-			newSeries = pandas.Series(numpy.repeat(numpy.nan, oldSeries.shape[0]))
-			for i in range(0, len(oldNb)):
-				newSeries[oldSeries == oldNb[i]] = newNb[i]
-			changes = dict(zip(oldNb, newNb))
-			return newSeries.astype('int64'), changes
-
-		def batchListReNumber(oldList, numberChange, untouchedValues):
-			"""
-			Rename list values; if no '_batchX' suffix present in list value, append one (the lowest key in numberChange).
-			Then scan all '_batchX' suffix and update X to all members following numberChange.
-
-			:param list oldList: values to which append and update _batchX
-			:param dict numberChanges: dict with old batch number as keys and new batch number as values
-			:param list untouchedValues: list of values to leave untouched
-			:return: list with appended/updated batch values
-			"""
-			import re
-
-			newList = copy.deepcopy(oldList)
-
-			## Append'_batchX' with X the smallest original 'Batch' if none already present
-			for i in range(len(newList)):
-				if (newList[i] not in untouchedValues) & (newList[i].find('_batch') == -1):
-					newList[i] = newList[i] + '_batch' + str(min(numberChange.keys()))
-
-			## Update X in all '_batchX' column names (look for previous batch numbers and replace)
-			for batchNum in numberChange.keys():
-				# exact match with end of string ($)
-				query = '.+?(?=_batch' + str(batchNum) + '$)'
-				for j in range(len(newList)):
-					if newList[j] not in untouchedValues:
-						# string without _batchX
-						searchRes = re.search(query, newList[j])  # if no match returns None
-						if searchRes:
-							newList[j] = searchRes.group() + '_batch' + str(numberChange[batchNum])
-
-			return newList
-
-		def concatenateList(list1, list2):
-			"""
-			Concatenate two lists, always return a list of list
-			"""
-			outputList = []
-
-			## list1
-			# if it's an empty list
-			if len(list1) == 0:
-				outputList.append(list1)
-			# if it's already a list of list (from previous __add__)
-			elif isinstance(list1[0], list):
-				for i in range(len(list1)):
-					outputList.append(list1[i])
-			# first use of __add__, not a list of list
-			else:
-				outputList.append(list1)
-
-			## list2
-			# if it's an empty list
-			if len(list2) == 0:
-				outputList.append(list2)
-			# if it's already a list of list (from previous __add__)
-			elif isinstance(list2[0], list):
-				for i in range(len(list2)):
-					outputList.append(list2[i])
-			# first use of __add__, not a list of list
-			else:
-				outputList.append(list2)
-
-			return outputList
-
-		## Input checks
-		# Run validator (checks for duplicates in featureMetadata['Feature Name']). No check for AssayRole and SampleType as sample info data might not have been imported yet
-		#validSelfDataset = self.validateObject(verbose=False, raiseError=False, raiseWarning=False)
-		#validOtherDataset = other.validateObject(verbose=False, raiseError=False, raiseWarning=False)
-
-		#if not validSelfDataset['BasicMSDataset']:
-		#	raise ValueError('self does not satisfy to the Basic MSDataset definition, check with self.validateObject(verbose=True, raiseError=False)')
-		#if not validOtherDataset['BasicMSDataset']:
-		#		raise ValueError('other does not satisfy to the Basic MSDataset definition, check with other.validateObject(verbose=True, raiseError=False)')
 		# Warning if duplicate 'Sample File Name' in sampleMetadata
 
-		if 'Sampling ID' in self.samplemMetadata.columns:
+		if 'Sampling ID' in self.sampleMetadata.columns:
 			mergeVar = 'Sampling ID'
 		else:
 			mergeVar = 'Sample File Name'
 
-		u_ids, u_counts = numpy.unique(
-			pandas.concat([self.sampleMetadata[mergeVar], other.sampleMetadata[mergeVar]], ignore_index=True, sort=False), return_counts=True)
-		if any(u_counts > 1):
-			warnings.warn('Warning: The following \'{0}\' values are present more than once: {1}'.format(mergeVar, str(u_ids[u_counts > 1].tolist())))
+		commonSamples = set(self.sampleMetadata[mergeVar]).intersection(set(other.sampleMetadata[mergeVar]))
 
-		## Initialise an empty msDataset to overwrite
-		msData = MSDataset(datapath='', fileType='empty')
+		if any(~self.sampleMetadata[mergeVar].isin(commonSamples)) or any(~other.sampleMetadata[mergeVar].isin(commonSamples)):
+			which_unique = [x for x in self.sampleMetadata[mergeVar]
+							if x not in commonSamples] + [x for x in other.sampleMetadata[mergeVar] if x not in commonSamples]
+			warnings.warn('Warning: The following \'{0}\' values are unique to only one of the datasets{1}'.format(mergeVar, which_unique))
+
+		commonFeatures = self.featureMetadata['Feature Metadata'].isin(other.featureMetadata['Feature Metadata'])
+
+		if len(commonFeatures) > 0:
+			warnings.warn('Warning: The following features are present in both datasets: {0} \n '
+				'Only the values in *left* dataset will be kept'.format(commonFeatures))
+
+		## to do - Test copy vs initialise an empty msDataset to overwrite
+		msData = copy.deepcopy(self)
 
 		## Attributes
-
 		# copy from the first (mainly dataset parameters, methodName, chromatography and ionisation)
-		msData.Attributes = copy.deepcopy(self.Attributes)
+
 		# append both logs
 		msData.Attributes['Log'] = self.Attributes['Log'] + other.Attributes['Log']
 
@@ -2226,189 +2132,76 @@ class MSDataset(Dataset):
 		## _name
 		msData.name = self.name + '-' + other.name
 
+		# fileName and filePath definition do not make sense for this case
 		## fileName
-		msData.fileName = flatten([self.fileName, other.fileName])
-
+		msData.fileName = None
 		## filePath
-		msData.filePath = flatten([self.filePath, other.filePath])
+		msData.filePath = None
 
-		## sampleMetadata
-		tmpSampleMetadata1 = copy.deepcopy(self.sampleMetadata)
-		tmpSampleMetadata2 = copy.deepcopy(other.sampleMetadata)
-		# reindex the 'Batch' value across both msDataset (self starts at 1, other at max(self)+1)
-		tmpSampleMetadata1['Batch'], batchChangeSelf = reNumber(tmpSampleMetadata1['Batch'], 1)
-		tmpSampleMetadata2['Batch'], batchChangeOther = reNumber(tmpSampleMetadata2['Batch'], tmpSampleMetadata1['Batch'].values.max() + 1)
+		leftDatasetSampleIdx = self.sampleMetadata[self.sampleMetadata[mergeVar] == commonSamples].idx
+		rightDatasetSampleIdx = other.sampleMetadata[other.sampleMetadata[mergeVar] == commonSamples].idx
 
-		# Concatenate samples and reinitialise index
-		sampleMetadata = pandas.concat([tmpSampleMetadata1, tmpSampleMetadata2], ignore_index=True, sort=False)
-		# Update Run Order
-		sampleMetadata['Order'] = sampleMetadata.sort_values(by='Acquired Time').index
-		sampleMetadata['Run Order'] = sampleMetadata.sort_values(by='Order').index
-		sampleMetadata.drop('Order', axis=1, inplace=True)
+		# Use the Sample Metadata from 'left' dataset as the + operation focuses on shared samples
+		sampleMetadata = self.sampleMetadata.loc[leftDatasetSampleIdx]
+
+		# Drop analytical and run order information that no longer makes sense
+		sampleMetadata.drop('Run Order', axis=1, inplace=True)
+		sampleMetadata.drop('Acquisition Batch', axis=1, inplace=True)
+		sampleMetadata.drop('Batch', axis=1, inplace=True)
+		sampleMetadata.drop(self.Attributes['sampleMetadataNotExported'], axis=1, inplace=True)
 		# new sampleMetadata
 		msData.sampleMetadata = copy.deepcopy(sampleMetadata)
 
-		samplesMsDataset = set(msData.sampleMetadata[mergeVar].values)
-		samplesOther = set(other.sampleMetadata[mergeVar].values)
+		# Grab unique number of features
+		unionFeatures = set(self.featureMetadata['Feature Name'].values).union(
+			other.featureMetadata['Feature Name'].values)
+		totalNumFeatures = len(unionFeatures)
 
-		uniqueSamplesMsDataset = samplesMsDataset - samplesOther
-		uniqueSamplesOther = samplesOther - uniqueSamplesMsDataset
+		if totalNumFeatures > (self.featureMetadata.shape[0] + other.featureMetadata.shape[0]):
+			repeatedFeat = other.featureMetadata['Feature Name'].isin(self.featureMetadata['Feature Name'])
 
-		commonSamples = samplesMsDataset & samplesOther
-
-		indexCommonMSDataset = numpy.where(self.sampleMetadata[mergeVar].isin(commonSamples))[0]
-		indexCommonOtherDataset = numpy.where(other.sampleMetadata[mergeVar].isin(commonSamples))[0]
-
-		indexUniqueMSDataset = numpy.where(self.sampleMetadata[mergeVar].isin(uniqueSamplesMsDataset))[0]
-		indexUniqueOtherDataset = numpy.where(other.sampleMetadata[mergeVar].isin(uniqueSamplesOther))[0]
-
-		nUniqueSamples = len(uniqueSamplesMsDataset) + len(uniqueSamplesOther)
-		nUniqueSamplesMSDataset = len(uniqueSamplesMsDataset)
-		nUniqueSamplesOther = len(uniqueSamplesOther)
-		nCommonSamples = len(commonSamples)
+			repeatedFeatLoc = other.featureMetadata[other.featureMetadata['Feature Name'] == repeatedFeat].idx
+			warnings.warn('{0}'.format(repeatedFeat))
+		else:
+			repeatedFeatLoc = numpy.zeros([other.featureMetadata.shape[0]], dtype=bool)
 
 		## featureMetadata
-
-		# From that point onward no variable should exist without a '_batchX'
-		# Apply to '_batchX' the batchChangeSelf and batchChangeOther to align it with the 'Batch'
-		mergeCol = ['Feature Name']
-
-		tmpFeatureMetadata1 = copy.deepcopy(self.featureMetadata)
-
-		updatedCol1 = batchListReNumber(tmpFeatureMetadata1.columns.tolist(), batchChangeSelf, mergeCol)
-
-		tmpFeatureMetadata1.columns = updatedCol1
-		tmpFeatureMetadata2 = copy.deepcopy(other.featureMetadata)
-
-		updatedCol2 = batchListReNumber(tmpFeatureMetadata2.columns.tolist(), batchChangeOther, mergeCol)
-		tmpFeatureMetadata2.columns = updatedCol2
-		# Merge featureMetadata on the mergeCol, no columns with identical name exist
-		tmpFeatureMetadata = tmpFeatureMetadata1.merge(tmpFeatureMetadata2, how='outer', on=mergeCol,
-													   left_on=None,
-													   right_on=None, left_index=False, right_index=False,
-													   sort=False,
-													   copy=True, indicator=False)
+		# Keep all features in 'left' dataset and all features which are non repeated from 'right'
+		tmpFeatureMetadata = pandas.concat([self.featureMetadata, other.featureMetadata.loc[~repeatedFeatLoc]], axis=0)
 		msData.featureMetadata = copy.deepcopy(tmpFeatureMetadata)
-
-		## featureMetadataNotExported
-		# add _batchX to the column names to exclude. The expected columns are 'mergeCol' from featureMetadata. No modification for sampleMetadataNotExported which has been copied with the other Attributes (and is an SOP parameter)
-		notExportedSelf = batchListReNumber(self.Attributes['featureMetadataNotExported'], batchChangeSelf,
-											mergeCol)
-		notExportedOther = batchListReNumber(other.Attributes['featureMetadataNotExported'], batchChangeOther,
-											 mergeCol)
-		msData.Attributes['featureMetadataNotExported'] = list(set().union(notExportedSelf, notExportedOther))
 
 		## _intensityData
 		# a new data matrix with a nrows = number of unique samples in both datasets and number of rows = number of merged features
-		# is generated
+		# is generated by concatenation
+		intensityDataLeft = self._intensityData[leftDatasetSampleIdx, :]
+		intensityDataRight = other._intensityData[rightDatasetSampleIdx, ~repeatedFeatLoc]
 
-		newIntensityData = numpy.full([nCommonSamples + nUniqueSamples, msData.featureMetadata.shape[0]], numpy.nan)
-		newFeatureMask = numpy.ones((msData.featureMetadata.shape[0]), dtype=bool)
-		# iterate over the merged features
-
-		for i in range(msData.featureMetadata.shape[0]):
-			featureName = msData.featureMetadata.loc[i, 'Feature Name']
-			featurePosition1 = self.featureMetadata['Feature Name'] == featureName
-			featurePosition2 = other.featureMetadata['Feature Name'] == featureName
-
-			# If a feature is present in both datasets...
-			if (sum(featurePosition1) == 1) and (sum(featurePosition2) == 1):
-				# ... check if that feature has a non NA measurement on both datasets (ambiguous measurement for feature)
-				nonNanIdxMSDataset = numpy.where(~numpy.isnan(self._intensityData[:, featurePosition1]))[0]
-				nonNanIdxOther = numpy.where(~numpy.isnan(other._intensityData[:, featurePosition2]))[0]
-				common_samples = len(set(self.sampleMetadata[mergeVar][nonNanIdxMSDataset]) & set(other.sampleMetadata[mergeVar][nonNanIdxOther]))
-				if len(set(self.sampleMetadata[mergeVar][nonNanIdxMSDataset]) & set(other.sampleMetadata[mergeVar][nonNanIdxOther])) > 0:
-					raise ValueError('The feature \'{0}\' is already present for the samples shared by both MSDatasets'.format(featureName))
-			# Feature is in 'self' Dataset
-			if sum(featurePosition1) == 1:
-				# Write common samples
-				newIntensityData[0:nCommonSamples, i] = self._intensityData[indexCommonMSDataset, featurePosition1].ravel()
-				# Write Unique Samples from 'self' dataset
-				newIntensityData[nCommonSamples:(nCommonSamples + nUniqueSamplesMSDataset), i] = self._intensityData[indexUniqueMSDataset, featurePosition1].ravel()
-				# Write Unique Samples other dataset
-				newFeatureMask[i] = self.featureMask[i]
-
-			elif sum(featurePosition1) > 1:
-				raise ValueError('Duplicate feature name in first input: ' + featureName)
-
-			if sum(featurePosition2) == 1:
-				newIntensityData[0:nCommonSamples, i] = other._intensityData[indexCommonOtherDataset, featurePosition2].ravel()
-				newIntensityData[(nCommonSamples + nUniqueSamplesMSDataset):, i] = other._intensityData[indexUniqueOtherDataset, featurePosition2].ravel()
-				newFeatureMask[i] = other.featureMask[i]
-			elif sum(featurePosition2) > 1:
-				raise ValueError('Duplicate feature name in second input: ' + featureName)
-
-		#intensityData = numpy.concatenate([intensityData1, intensityData2], axis=0)
+		newIntensityData = numpy.concatenate([intensityDataLeft, intensityDataRight], axis=0)
 
 		msData._intensityData = copy.deepcopy(newIntensityData)
 
 		msData.initialiseMasks()
 
-		msData.featureMask = newFeatureMask
-
-		## Masks
-		msData.initialiseMasks()
-		# sampleMask
-		msData.sampleMask = numpy.concatenate([self.sampleMask, other.sampleMask], axis=0)
-
-		msData.sampleMask = numpy.ones(shape=(nCommonSamples + nUniqueSamples), dtype=bool)
-
-		# featureMask
-		# if featureMask agree in both, keep that value. Otherwise let the default True value. If feature exist only in one, use that value.
-		if (sum(~self.featureMask) != 0) | (sum(~other.featureMask) != 0):
-			warnings.warn("Warning: featureMask are not empty, they will be merged. If both featureMasks do not agree, the default \'True\' value will be set. If the feature is only present in one dataset, the corresponding featureMask value will be kept.")
-		for i in range(msData.featureMetadata.shape[0]):
-			featureName = msData.featureMetadata.loc[i, 'Feature Name']
-			featurePosition1 = self.featureMetadata['Feature Name'] == featureName
-			featurePosition2 = other.featureMetadata['Feature Name'] == featureName
-			# if both exist
-			if (sum(featurePosition1) == 1) & (sum(featurePosition2) == 1):
-				# only False if both are False (otherwise True, same as default)
-				msData.featureMask[i] = self.featureMask[featurePosition1] | other.featureMask[featurePosition2]
-			# if feature only exist in first input
-			elif sum(featurePosition1 == 1):
-				msData.featureMask[i] = self.featureMask[featurePosition1]
-			# if feature only exist in second input
-			elif sum(featurePosition2 == 1):
-				msData.featureMask[i] = other.featureMask[featurePosition2]
-
+		## featureMetadataNotExported
+		# Keep the options as defined in the 'left' dataset
+		msData.Attributes['featureMetadataNotExported'] = self.Attributes['featureMetadataNotExported']
 
 		## Excluded data with applyMask()
-		# attribute doesn't exist the first time. From one round of __add__ onward the attribute is created and the length matches the number and order of 'Batch'
-		if hasattr(self, 'sampleMetadataExcluded') & hasattr(other, 'sampleMetadataExcluded'):
-			msData.sampleMetadataExcluded = concatenateList(self.sampleMetadataExcluded,
-															other.sampleMetadataExcluded)
-			msData.featureMetadataExcluded = concatenateList(self.featureMetadataExcluded,
-															 other.featureMetadataExcluded)
-			msData.intensityDataExcluded = concatenateList(self.intensityDataExcluded,
-														   other.intensityDataExcluded)
-			msData.excludedFlag = concatenateList(self.excludedFlag, other.excludedFlag)
-		# add expectedConcentrationExcluded here too!
-		elif hasattr(self, 'sampleMetadataExcluded'):
-			msData.sampleMetadataExcluded = concatenateList(self.sampleMetadataExcluded, [])
-			msData.featureMetadataExcluded = concatenateList(self.featureMetadataExcluded, [])
-			msData.intensityDataExcluded = concatenateList(self.intensityDataExcluded, [])
-			msData.excludedFlag = concatenateList(self.excludedFlag, [])
-		elif hasattr(other, 'sampleMetadataExcluded'):
-			msData.sampleMetadataExcluded = concatenateList([], other.sampleMetadataExcluded)
-			msData.featureMetadataExcluded = concatenateList([], other.featureMetadataExcluded)
-			msData.intensityDataExcluded = concatenateList([], other.intensityDataExcluded)
-			msData.excludedFlag = concatenateList([], other.excludedFlag)
-		else:
-			msData.sampleMetadataExcluded = concatenateList([], [])
-			msData.featureMetadataExcluded = concatenateList([], [])
-			msData.intensityDataExcluded = concatenateList([], [])
-			msData.excludedFlag = concatenateList([], [])
+		## All logs of sampleMetadataExcluded get removed when adding features
+		msData.sampleMetadataExcluded = []
+		msData.featureMetadataExcluded = []
+		msData.intensityDataExcluded = []
+		msData.excludedFlag = []
 		# Regenerate the correlation to Dilution, corrExclusions and artefactual masks
 		msData._correlationToDilution = numpy.empty(shape=())
 
-		# Trigger recalculation of dilution and reset of artifactual linkage mAtrix
+		# Trigger recalculation of dilution and reset of artifactual linkage matrix
 		msData.corrExclusions = None
 		msData.__corrMethod = self.Attributes['corrMethod']
 		msData.correlationToDilution
 		delattr(msData, 'artifactualLinkageMatrix')
 
-		## unexpected attributes
+		## Parse expected and unexpected attributes
 		expectedAttr = {'Attributes', 'VariableType', '_Normalisation', '_name', 'fileName', 'filePath',
 						'_intensityData', 'sampleMetadata', 'featureMetadata', 'sampleMask', 'featureMask',
 						'sampleMetadataExcluded', 'intensityDataExcluded', 'featureMetadataExcluded', 'excludedFlag',
@@ -2440,11 +2233,13 @@ class MSDataset(Dataset):
 			for m in onlyOtherAttr:
 				setattr(msData, m, [None, getattr(other, m)])
 
-		## run validation on the merged dataset
+		## run validation on the merged dataset - for msDataset the object is not supposed to pass as a
+		# lot of metadata has to be dropped
 		#validMergedDataset = msData.validateObject(verbose=False, raiseError=False, raiseWarning=False)
-		#if not validMergedDataset['BasicMSDataset']:
-	   #	raise ValueError('The merged dataset does not satisfy to the Basic MSDataset definition')
+		# if not validMergedDataset['BasicMSDataset']:
+	    # raise ValueError('The merged dataset does not satisfy to the Basic MSDataset definition')
 		## Log
+
 		msData.Attributes['Log'].append([datetime.now(),
 										 'Concatenated datasets %s (%i samples and %i features) and %s (%i samples and %i features), to a dataset of %i samples and %i features.' % (
 											 self.name, self.noSamples, self.noFeatures, other.name,
@@ -2471,6 +2266,7 @@ class MSDataset(Dataset):
 
 def main():
 	print("Implementation of " + os.path.split(os.path.dirname(inspect.getfile(nPYc)))[1])
+
 
 if __name__=='__main__':
 	main()

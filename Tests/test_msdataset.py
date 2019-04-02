@@ -774,6 +774,86 @@ class test_msdataset_synthetic(unittest.TestCase):
 			dataset.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
 			self.assertRaises(KeyError, dataset._MSDataset__correlateToDilution)
 
+	def test_add_dataset(self):
+
+		self.otherDataset = nPYc.MSDataset('', fileType='empty')
+		self.otherDataset.sampleMetadata = pandas.DataFrame(
+			{'Sample File Name': ['Unittest_file_004', 'Unittest_file_005', 'Unittest_file_006'],
+			 'Sample Base Name': ['Unittest_file_004', 'Unittest_file_005', 'Unittest_file_006'],
+			 'AssayRole': [AssayRole.Assay, AssayRole.PrecisionReference, AssayRole.PrecisionReference],
+			 'SampleType': [SampleType.StudySample, SampleType.StudyPool, SampleType.ExternalReference],
+			 'Sample Name': ['Sample1', 'Sample2', 'Sample3'], 'Acqu Date': ['26-May-17', '26-May-17', '26-May-17'],
+			 'Acqu Time': ['16:42:57', '16:58:49', '17:14:41'], 'Vial': ['1:A,1', '1:A,2', '1:A,3'],
+			 'Instrument': ['XEVO-TOF#UnitTest', 'XEVO-TOF#UnitTest', 'XEVO-TOF#UnitTest'],
+			 'Acquired Time': [datetime(2017, 5, 26, 16, 42, 57), datetime(2017, 5, 26, 16, 58, 49),
+							   datetime(2017, 5, 26, 17, 14, 41)], 'Run Order': [0, 1, 2], 'Batch': [1, 1, 2],
+			 'Correction Batch': [numpy.nan, 1, 2], 'Matrix': ['U', 'U', 'U'],
+			 'Subject ID': ['subject1', 'subject1', 'subject2'], 'Sampling ID': ['sample1', 'sample2', 'sample3'],
+			 'Dilution': [numpy.nan, '60.0', '100.0'],'Exclusion Details': ['','','']})
+		self.otherDataset.featureMetadata = pandas.DataFrame(
+			{'Feature Name': ['Feature4', 'Feature5', 'Feature6'], 'Retention Time': [6.2449, 2.7565, 5.0564],
+			 'm/z': [249.124281, 381.433191, 471.132083]})
+		self.otherDataset._intensityData = numpy.array([[20.2, 11.33, 52.1], [100.5, 9.4, 30.71], [0.065, 150.83, 3.7]])
+		# Attributes
+		self.otherDataset.Attributes['FeatureExtractionSoftware'] = 'UnitTestSoftware'
+		# excluded data
+		self.otherDataset.sampleMetadataExcluded = []
+		self.otherDataset.intensityDataExcluded = []
+		self.otherDataset.featureMetadataExcluded = []
+		self.otherDataset.excludedFlag = []
+		self.otherDataset.sampleMetadataExcluded.append(self.msData.sampleMetadata[[True, False, False]])
+		self.otherDataset.intensityDataExcluded.append(self.msData._intensityData[0, :])
+		self.otherDataset.featureMetadataExcluded.append(self.msData.featureMetadata)
+		self.otherDataset.excludedFlag.append('Samples')
+		self.otherDataset.featureMetadataExcluded.append(self.msData.featureMetadata[[True, False, False]])
+		self.otherDataset.intensityDataExcluded.append(self.msData._intensityData[:, 0])
+		self.otherDataset.sampleMetadataExcluded.append(self.msData.sampleMetadata)
+		self.otherDataset.excludedFlag.append('Features')
+		# finish
+		self.otherDataset.VariableType = VariableType.Discrete
+		self.otherDataset.initialiseMasks()
+
+		self.expectedMerge = {'intensityData': numpy.array([[10.2, 20.95, 30.37],
+															[10.1, 20.03, 30.74],
+															[3.065, 15.83, 30.16],
+															[20.2, 11.33, 52.1],
+															[100.5, 9.4, 30.71],
+															[0.065, 150.83, 3.7]]),
+							  'sampleMetadata': pandas.DataFrame({'Sample File Name': ['Unittest_file_001',
+																					   'Unittest_file_002',
+																					   'Unittest_file_003', 'Unittest_file_004',
+																					   'Unittest_file_005', 'Unittest_file_006'],
+			 'Sample Base Name': ['Unittest_file_001', 'Unittest_file_002', 'Unittest_file_003',
+								  'Unittest_file_004', 'Unittest_file_005', 'Unittest_file_006'],
+			 'AssayRole': [AssayRole.Assay, AssayRole.PrecisionReference, AssayRole.PrecisionReference,
+						   AssayRole.Assay, AssayRole.PrecisionReference, AssayRole.PrecisionReference],
+			 'SampleType': [SampleType.StudySample, SampleType.StudyPool, SampleType.ExternalReference,
+							SampleType.StudySample, SampleType.StudyPool, SampleType.ExternalReference],
+			 'Sample Name': ['Sample1', 'Sample2', 'Sample3', 'Sample4', 'Sample5', 'Sample6'],
+			 'Acqu Date': ['26-May-17', '26-May-17', '26-May-17', '26-May-17', '26-May-17', '26-May-17'],
+			 'Acqu Time': ['16:42:57', '16:58:49', '17:14:41', '16:42:57', '16:58:49', '17:14:41'],
+			'Vial': ['1:A,1', '1:A,2', '1:A,3', '1:A,1', '1:A,2', '1:A,3'],
+			 'Instrument': ['XEVO-TOF#UnitTest', 'XEVO-TOF#UnitTest', 'XEVO-TOF#UnitTest',
+							'XEVO-TOF#UnitTest', 'XEVO-TOF#UnitTest', 'XEVO-TOF#UnitTest'],
+			 'Acquired Time': [datetime(2017, 5, 26, 16, 42, 57), datetime(2017, 5, 26, 16, 58, 49),
+							   datetime(2017, 5, 26, 17, 14, 41),datetime(2017, 5, 26, 16, 42, 57), datetime(2017, 5, 26, 16, 58, 49),
+							   datetime(2017, 5, 26, 17, 14, 41)], 'Run Order': [0, 1, 2, 4, 5, 6], 'Batch': [1, 1, 2, 1,1,2],
+			 'Correction Batch': [numpy.nan, 1, 2, numpy.nan, 1, 2], 'Matrix': ['U', 'U', 'U', 'U', 'U', 'U'],
+			 'Subject ID': ['subject1', 'subject1', 'subject2', 'subject1', 'subject1', 'subject2'],
+		     'Sampling ID': ['sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6'],
+			 'Dilution': [numpy.nan, '60.0', '100.0', numpy.nan, '60.0', '100.0'],'Exclusion Details': ['','','','','','']})
+		}
+
+		with self.subTest(msg='Test __add__'):
+			mergedDataset = self.msData + self.otherDataset
+
+			self.assertEqual(mergedDataset._intensityData, self.expectedMerge['intensityData'])
+
+		with self.subTest(msg='raise error when no valid features to merge'):
+			mergedDataset = self.msData + self.otherDataset
+
+		with self.subTest(msg='raise error when second dataset has repeated features'):
+			mergedDataset = self.msData + self.otherDataset
 
 	def test_validateObject(self):
 		with self.subTest(msg='validateObject successful on correct dataset'):
