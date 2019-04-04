@@ -15,7 +15,7 @@ See :doc:`tutorial` for details.
 Datasets
 ========
 
-The nPYc-Toolbox is built around a core :py:class:`~nPYc.objects.Dataset` class, that represents a collection of measurements, with biological and analytical metadata associated with each sample, and analytical and chemical metadata associated with each feature.
+The nPYc-Toolbox is built around a core :py:class:`~nPYc.objects.Dataset` class, that represents a collection of measurements, with biological and analytical metadata associated with each sample, and analytical and chemical metadata associated with each feature. This section gives details of importing data into a Dataset, and describes key Dataset attributes.
 
 See :doc:`objects` for details.
 
@@ -23,7 +23,7 @@ See :doc:`objects` for details.
 Sample Metadata
 ===============
 
-Additional study design parameters or sample metadata may be mapped into the Dataset using the :py:meth:`~nPYc.objects.Dataset.addSampleInfo` method.
+Additional study design parameters or sample metadata may be mapped into the Dataset, this section describes the nomenclature and formats for adding data in order to maximise the utility of the toolbox for quality control.
 
 See :doc:`samplemetadata` for details.
 
@@ -31,7 +31,7 @@ See :doc:`samplemetadata` for details.
 Reports
 =======
 
-.. automodule:: nPYc.reports
+The nPYc-Toolbox offers a series of `reports`, pre-set visualisations comprised of text, figures and tables to describe and summarise the characteristics of the dataset, and help the user assess the overall impact of quality control decisions, these are described in this section.
 
 See :doc:`reports` for details.
 
@@ -39,15 +39,15 @@ See :doc:`reports` for details.
 Batch *&* Run-Order Correction
 ==============================
 
-Functions for detecting and correcting longitudinal run-order trends and batch effects in datasets.
+This section describes the tools available to detect, assess and correct longitudinal run-order trends and batch effects in LC-MS datasets.
 
 See :doc:`batchAndROCorrection` for details.
 
 
-Multivariate analysis
+Multivariate Analysis
 =====================
 
-Functions for generating and working multivariate models of profling datasets.
+The nPYc-Toolbox provides the capacity to generate a PCA model of the data, and subesquently, to use this to assess data quality, identify potential sample and feature outliers, and determine any potential analytical associations with the main sources of variance in the data.
 
 See :doc:`multivariate` for details.
 
@@ -55,7 +55,7 @@ See :doc:`multivariate` for details.
 Normalisation
 =============
 
-Funtion for normalising data to correct for dilution effects on global sample intensity.
+This section describes the process for normalising data to correct for dilution effects on global sample intensity.
 
 See :doc:`normalisation` for details.
 
@@ -63,7 +63,7 @@ See :doc:`normalisation` for details.
 Exporting Data
 ==============
 
-Function for exporting the data (measurements, and feature and sample related metadata).
+This section describes how to export your data (measurements, and feature and sample related metadata).
 
 See :doc:`exportingdata` for details.
 
@@ -71,7 +71,7 @@ See :doc:`exportingdata` for details.
 Configuration Files
 ===================
 
-Behaviour of many aspects of the toobox can be modified in a repeatable manner by creating configuration files.
+Behaviour of many aspects of the toobox can be modified in a repeatable manner by creating configuration files, this section describes the default configuration files and thier parameters across the different methods, and gives information on how to create your own configuration SOPs.
 
 See :doc:`configuration/configuration` for details.
 
@@ -79,21 +79,23 @@ See :doc:`configuration/configuration` for details.
 Enumerations
 ============
 
-The :py:mod:`~nPYc.enumerations` module defines a set of enums classes for common types and roles used to describe samples and assays in experiments.
+The nPYc-Toolbox uses a set of enumerations (complete listings of all possible items in a collection) for common types referenced in profiling experiments, these are described in this section.
+
+See :doc:`enumerations` for details.
 
 
 Utility Funtions
 ================
 
-Utility functions for working with profling datasets, see :doc:`utilities` for an overview.
+This section contains information on the nPYc-Toolbox utility functions, useful functions for working with profiling datasets.
 
-The :py:mod:`~nPYc.utilities.normalisation` module defines objects that allows for the intensity normalisation of data matrices.
+See :doc:`utilities` for details.
 
 
 Plotting Functions
 ==================
 
-The :py:mod:`~nPYc.plotting` module defines functions to generate common plots, both interactive and static version of many plots exist, suitable for use in an interactive setting such as a `Jupyter notebook <http://jupyter.org>`_, or saving figures for later use.
+The :doc:`plots` sections describes the common plots available, both interactive and static version of many plots exist, suitable for use in an interactive setting such as a *Jupyter notebook*, or saving figures for later use.
 
 See the :doc:`Plot Gallery<plotsGallery>` for a visual overview.
 

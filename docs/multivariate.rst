@@ -1,7 +1,7 @@
 Multivariate Analysis
 ---------------------
 
-
+The nPYc-Toolbox provides the capacity to generate a PCA model of the data, and subesquently, to use this to assess data quality, identify potential sample and feature outliers, and determine any potential analytical associations with the main sources of variance in the data.
 
 Basic Multivariate Visualisation
 ================================
