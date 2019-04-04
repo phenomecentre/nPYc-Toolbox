@@ -9,7 +9,7 @@ Tutorials
 
 This section provides detailed examples of using the nPYc-Toolbox to import, perform quality-control, and preprocess various types of metabolic profiling datasets.
 
-See :doc:`Using the nPYc-Toolbox<tutorial>` for details.
+See :doc:`tutorial` for details.
 
 
 Datasets
@@ -19,19 +19,56 @@ The nPYc-Toolbox is built around a core :py:class:`~nPYc.objects.Dataset` class,
 
 See :doc:`objects` for details.
 
+
 Sample Metadata
 ===============
 
-ADD SOME TEXT HERE
+Additional study design parameters or sample metadata may be mapped into the Dataset using the :py:meth:`~nPYc.objects.Dataset.addSampleInfo` method.
+
+See :doc:`samplemetadata` for details.
+
 
 Reports
 =======
 
 .. automodule:: nPYc.reports
 
-See :doc:`reports`
+See :doc:`reports` for details.
 
 
+Batch *&* run-order correction
+==============================
+
+Functions for detecting and correcting longitudinal run-order trends and batch effects in datasets.
+
+See :doc:`batchAndROCorrection` for details.
+
+
+Multivariate analysis
+=====================
+
+Functions for generating and working multivariate models of profling datasets.
+
+See :doc:`multivariate` for details.
+
+
+Normalisation
+=============
+
+ADD TEXT
+
+
+Exporting Data
+==============
+
+ADD TEXT
+
+
+
+Configuration Files
+===================
+
+Behaviour of many aspects of the toobox can be modified in a repeatable manner by creating configuration files, see :doc:`configuration/builtinSOPs` and :doc:`configuration/targetedSOPs` for examples.
 
 
 Enumerations
@@ -40,6 +77,12 @@ Enumerations
 The :py:mod:`~nPYc.enumerations` module defines a set of enums classes for common types and roles used to describe samples and assays in experiments.
 
 
+Utility Funtions
+================
+
+Utility functions for working with profling datasets, see :doc:`utilities` for an overview.
+
+The :py:mod:`~nPYc.utilities.normalisation` module defines objects that allows for the intensity normalisation of data matrices.
 
 
 Plotting Functions
@@ -47,33 +90,7 @@ Plotting Functions
 
 The :py:mod:`~nPYc.plotting` module defines functions to generate common plots, both interactive and static version of many plots exist, suitable for use in an interactive setting such as a `Jupyter notebook <http://jupyter.org>`_, or saving figures for later use.
 
-See the :doc:`gallery<plotsGallery>` for a visual overview.
+See the :doc:`Plot Gallery<plotsGallery>` for a visual overview.
 
-Utilities
-=========
 
-Utility functions for working with profling datasets, see :doc:`utilities` for an overview.
 
-The :py:mod:`~nPYc.utilities.normalisation` module defines objects that allows for the intensity normalisation of data matrices.
-
-Configuration
-=============
-
-Behaviour of many aspects of the toobox can be modified in a repeatable manner by creating configuration files, see :doc:`configuration/builtinSOPs` and :doc:`configuration/targetedSOPs` for examples.
-
-Batch *&* run-order correction
-==============================
-
-Functions for detecting and correcting longitudinal run-order trends and batch effects in datasets.
-
-See :doc:`batchAndROCorrection`
-
-Multivariate analysis
-=====================
-
-Functions for generating and working multivariate models of profling datasets.
-
-See :doc:`multivariate`
-
-Indices and tables
-==================

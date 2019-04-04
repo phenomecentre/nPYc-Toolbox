@@ -20,14 +20,15 @@ Contents:
    objects
    samplemetadata
    reports
-   plots
    batchAndROCorrection
    multivariate
    normalisation
    exportingdata
    configuration/configuration
+   enumerations   
    utilities
-   enumerations
+   plots
+   plotsGallery
    glossary
 
 * :ref:`genindex`
