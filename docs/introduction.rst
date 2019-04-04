@@ -44,6 +44,14 @@ This section describes the tools available to detect, assess and correct longitu
 See :doc:`batchAndROCorrection` for details.
 
 
+Feature Filtering
+=================
+
+Feature filtering describes the removal of certain low-quality or uninformative features from the dataset. How and which features are removed is method specific, and described in this section.
+
+See :doc:`featurefiltering` for details.
+
+
 Multivariate Analysis
 =====================
 

@@ -32,7 +32,7 @@ Assay Roles are described in detail here :py:class:`~nPYc.enumerations.AssayRole
 
 - 'Assay' form the core of an analysis
 - 'Precision Reference' acquired to characterise analytical variability
-- 'Linearity Reference' samples used assess the linearity of response (intenity response to changes in abundance) in the dataset
+- 'Linearity Reference' samples used assess the linearity of response (intensity responses to changes in abundance) in the dataset
 
 Common combinations of *Sample Type* and *Assay Role* are defined within the nPYc-Toolbox and used to characterise data quality, these include:
 

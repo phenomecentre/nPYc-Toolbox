@@ -21,6 +21,7 @@ Contents:
    samplemetadata
    reports
    batchAndROCorrection
+   featurefiltering
    multivariate
    normalisation
    exportingdata
