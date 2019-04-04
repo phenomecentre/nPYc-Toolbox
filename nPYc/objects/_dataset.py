@@ -83,7 +83,7 @@ class Dataset:
 
 		self.Attributes = dict()
 		"""
-		Dictionary of object configuration attributes, including those loaded from :doc:`SOP files<configuration/configurationSOPs>`.
+		Dictionary of object configuration attributes, including those loaded from :doc:`SOP files<configuration/builtinSOPs>`.
 
 		Defined attributes are as follows\:
 

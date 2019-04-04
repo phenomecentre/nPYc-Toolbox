@@ -1,5 +1,5 @@
-Reporting functions
--------------------
+Reports
+-------
 
 The nPYc-Toolbox offers a series of `reports`, pre-set visualizations comprised of text, figures and tables to describe and summarize the characteristics of the dataset, and help the user assess the overall impact of quality control decisions (ie, excluding samples or features and changing filtering criteria).
 
@@ -13,7 +13,7 @@ The main reports available are:
 
 The nPYc toolbox incorporates the concept of analytical quality directly into the subclasses of :py:class:`~nPYc.objects.Dataset`. Depending on the analytical platform and protocol, quality metrics may be judged on the basis of sample-by-sample or feature-by-feature comparisons, or both.
 
-Parameters for the quality control procedure can be specified in a :doc:`SOP JSON<../configuration/configurationSOPs>` file as the Dataset object is created, and amended after creation by modifying the relevant entry of the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
+Parameters for the quality control procedure can be specified in a :doc:`SOP JSON<../configuration/builtinSOPs>` file as the Dataset object is created, and amended after creation by modifying the relevant entry of the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
 
 Each object type supports its own QC tests, see the tutorials for more details :doc:`tutorial`.
 

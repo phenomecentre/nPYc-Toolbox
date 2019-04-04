@@ -1,8 +1,5 @@
-Using the nPYc toolbox
-----------------------
-
-The nPYc-Toolbox is a general Python 3 implementation of the MRC-NIHR National Phenome Centre toolchain for the import, quality-control, and preprocessing of metabolic profiling datasets.
-
+Tutorials
+---------
 
 Getting started
 ===============

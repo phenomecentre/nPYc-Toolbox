@@ -1,18 +1,5 @@
-Configuration SOPs
-==================
-
-Default parameters for :py:class:`~nPYc.objects.Dataset` objects can be configured as they are initialised by suppling a SOP file containing the desired parameters.
-
-SOP parameters include aesthetic factors such as figure sizes and formats as well as QC and analytical parameters.
-
-By default SOPS are read from the :file:`nPYc/StudyDesigns/SOP/` directory, but this can be overridden by the directory specified in *sopPath=*, that will be searched before the builtin SOP directory.
-
-SOP files are simple `JSON <http://www.json.org>`_ format files, that's contnets are used to populate the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary. See the default files in :file:`nPYc/StudyDesigns/SOP/` for examples.
-
-.. literalinclude:: ../../nPYc/StudyDesigns/SOP/generic.json
-   :caption: The default SOP loaded by all datasets includes settings for figure aesthetics
-
-|
+Built-in Configuration SOPs
+===========================
 
 .. table::  Required SOP parameters for all :py:class:`~nPYc.objects.Dataset` objects
 	:widths: auto
@@ -50,7 +37,7 @@ SOP files are simple `JSON <http://www.json.org>`_ format files, that's contnets
 	============================= ============ ========================== ==================================================================================
 	Parameter                     Type    	   Default value              Role
 	============================= ============ ========================== ==================================================================================            
-	'corrThreshold'                float       0.7                        When filtering features by :term:`linearity reference`, the correlation must be above this
+	'corrThreshold'                float       0.7                        When filtering features by correlation to dilution using the :term:`Serial Dilution Sample`, the correlation must be above this
 	'corrMethod'                   str         'pearson'                  Type of correlation to linearity to calculate, must be 'pearson' or 'spearman'
 	'rsdThreshold'                 float       30                         When filtering features by :term:`RSD`, the RSD must be below this
 	'varianceRatio'                float       1.1                        When filtering features RSD in Study Samples must be at least RSD in Precision Reference * this value

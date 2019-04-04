@@ -1,21 +1,29 @@
-nPYc-Toolbox Dataset Objects
-----------------------------
+Datasets
+--------
 
 
 Dataset classes
 ===============
 
-The nPYc toolbox is built around a core :py:class:`~nPYc.objects.Dataset` class, that represents a collection of measurements, with biological and analytical metadata associated with each sample, and analytical and chemical metadata associated with the observations.
+The nPYc toolbox is built around a core :py:class:`~nPYc.objects.Dataset` class, that represents a collection of measurements, with biological and analytical metadata associated with each sample, and analytical and chemical metadata associated with each feature.
 
-Instances of the Dataset class and its subclasses are capable of instantiating themselves from common data types, including certain raw data formats, common interchange formats, and the outputs of popular data-processing tools.
+A Dataset class can be set up from a number of common data types, including certain raw data formats, common interchange formats, and the outputs of popular data-processing tools. There are three main Dataset derived subclasses, each specific for a certain data type:
+ 
+* :py:class:`~nPYc.objects.MSDataset` for LC-MS profiling data
+* :py:class:`~nPYc.objects.NMRDataset` for NMR profiling data
+* :py:class:`~nPYc.objects.TargetedDataset` for targeted datasets
 
-The Dataset family of class include methods for mapping additional metadata into the object (see :py:meth:`~nPYc.objects.Dataset.addSampleInfo`), as well exporting a representation of themself in a variety of formats (see the :py:meth:`~nPYc.objects.Dataset.exportDataset` method)
+When setting up the Dataset classes, default parameters are loaded from their associated :doc:`Configuration files<configuration/configuration>` (see :doc:`tutorial` for details on how to modify these), and subsequently saved in the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
 
-All children of **Dataset** have three primary attributes:
+Dataset classes have three primary :
 
-* :py:attr:`~Dataset.sampleMetadata`: A :math:`n` × :math:`p` dataframe of sample identifiers and metadata
-* :py:attr:`~Dataset.featureMetadata`: A :math:`m` × :math:`q`  pandas dataframe of feature identifiers and metadata
-* :py:attr:`~Dataset.intensityData`: A :math:`n` × :math:`m` numpy matrix of measurements
+* :py:attr:`~Dataset.sampleMetadata`: A :math:`n` × :math:`p` a pandas dataframe of sample identifiers and sample associated metadata (each row here corresponds to a row in the intensityData file)
+* :py:attr:`~Dataset.featureMetadata`: A :math:`m` × :math:`q`  a pandas dataframe of feature identifiers and feature associated metadata (each row here corresponds to a column in the intensityData file)
+* :py:attr:`~Dataset.intensityData`: A :math:`n` × :math:`m` a numpy matrix of measurements, where each row and column respectively correspond to a the measured intensity of a specific sample and feature
+
+It is possible to add additional study design parameters or sample metadata into the Dataset using the :py:meth:`~nPYc.objects.Dataset.addSampleInfo` method. 
+
+
 * :py:attr:`~Dataset.sampleMask`: A :math:`n` numpy boolean vector where `True` and `False` mean include and exclude corresponding sample respectively
 * :py:attr:`~Dataset.featureMask`: A :math:`m` numpy boolean vector where `True` and `False` mean include and exclude corresponding feature respectively
 
@@ -24,7 +32,7 @@ All children of **Dataset** have three primary attributes:
 	
 	Structure of the key attributes of a :py:class:`~nPYc.objects.Dataset` object. Of note, rows in the :py:attr:`~nPYc.objects.Dataset.featureMetadata` Dataframe correspond to columns in the :py:attr:`~nPYc.objects.Dataset.intensityData` matrix.
 
-When initialised, :py:class:`Dataset` objects can be configured by loading :doc:`SOP parameters<configuration/configurationSOPs>` from JSON files specified in *sop*. The parameters are then stored in the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
+When initialised, :py:class:`Dataset` objects can be configured by loading :doc:`SOP parameters<configuration/builtinSOPs>` from JSON files specified in *sop*. The parameters are then stored in the 
 
 Once created, you can query the number of features or samples it contains::
 
@@ -35,16 +43,18 @@ Or directly inspect the sample or feature metadata, and the raw measurements::
 
 	dataset.sampleMetadata
 	dataset.featureMetadata
-
 	dataset.intensityData
 
-Additional study design parameters or sample metadata may be mapped into the Dataset using the :py:meth:`~nPYc.objects.Dataset.addSampleInfo` method. For the purpose of standardising QC filtering procedures, the nPYc toolbox defines a small set of terms for describing reference sample types and design elements, as listed in :doc:`Adding Sample Metadata<../samplemetadata>`.
+Additional For the purpose of standardising QC filtering procedures, the nPYc toolbox defines a small set of terms for describing reference sample types and design elements, as listed in :doc:`Adding Sample Metadata<../samplemetadata>`.
+
+For 
+The Dataset family of class include methods for mapping additional metadata into the object (see :py:meth:`~nPYc.objects.Dataset.addSampleInfo`), as well exporting a representation of themself in a variety of formats (see the :py:meth:`~nPYc.objects.Dataset.exportDataset` method)
 
 
 Sample and Feature Masks
 ========================
 
-nPYc-Toolbox Dataset objects contains two internal `mask` vectors, the :py:attr:`~nPYc.objects.Dataset.sampleMask` and the :py:attr:`~nPYc.objects.Dataset.featureMask`. They store whether a sample or feature, respectively, should be used when calculating QC metrics, in the visualizations in the report functions and when exporting the datasets.
+Dataset classes also contains two internal `mask` vectors, the :py:attr:`~nPYc.objects.Dataset.sampleMask` and the :py:attr:`~nPYc.objects.Dataset.featureMask`. They store whether a sample or feature, respectively, should be used when calculating QC metrics, in the visualizations in the report functions and when exporting the datasets.
 
 There are several functions which modify these internal masks:
 

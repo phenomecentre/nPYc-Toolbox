@@ -1,4 +1,4 @@
-Exporting data
+Exporting Data
 --------------
 
 Datasets can be exported in a variety of formats with the :py:meth:`~nPYc.objects.Dataset.exportDataset` method. 
