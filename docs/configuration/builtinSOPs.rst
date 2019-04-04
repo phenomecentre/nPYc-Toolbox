@@ -1,6 +1,11 @@
 Built-in Configuration SOPs
 ===========================
 
+The following tables list, define and give default values for all of the SOP parameters for each method.
+
+All Dataset Objects
+^^^^^^^^^^^^^^^^^^^
+
 .. table::  Required SOP parameters for all :py:class:`~nPYc.objects.Dataset` objects
 	:widths: auto
 
@@ -15,8 +20,6 @@ Built-in Configuration SOPs
 	'quantiles'      list of float                             [25, 75]              When calculating percentiles, use this default range
 	================ ========================================= ===================== ============
 
-|
-
 .. table::  Optional SOP parameters for all :py:class:`~nPYc.objects.Dataset` objects
 	:widths: auto
 
@@ -29,7 +32,9 @@ Built-in Configuration SOPs
 	'featureMetadataNotExported'    list of str   []                    Column names in :py:attr:`~nPYc.objects.Dataset.featureMetadata` to exclude from data export    
 	=============================== ============= ===================== ============
 
-|
+
+MSDataset Objects
+^^^^^^^^^^^^^^^^^
 
 .. table:: SOP parameters for all :py:class:`~nPYc.objects.MSDataset` objects
 	:widths: auto
@@ -49,7 +54,9 @@ Built-in Configuration SOPs
 	'filenameSpec'                 str (regex) see 'GenericMS.json'       Regular expression to pull out information from raw MS data filenames (as per NPC standard naming conventions)
 	============================= ============ ========================== ==================================================================================
 
-|
+
+NMRDataset Objects
+^^^^^^^^^^^^^^^^^^
 
 .. table:: SOP parameters for all :py:class:`~nPYc.objects.NMRDataset` objects
 	:widths: auto

@@ -15,7 +15,7 @@ See :doc:`tutorial` for details.
 Datasets
 ========
 
-The nPYc-Toolbox is built around a core :py:class:`~nPYc.objects.Dataset` class, that represents a collection of measurements, with biological and analytical metadata associated with each sample, and analytical and chemical metadata associated with the observations.
+The nPYc-Toolbox is built around a core :py:class:`~nPYc.objects.Dataset` class, that represents a collection of measurements, with biological and analytical metadata associated with each sample, and analytical and chemical metadata associated with each feature.
 
 See :doc:`objects` for details.
 
@@ -36,7 +36,7 @@ Reports
 See :doc:`reports` for details.
 
 
-Batch *&* run-order correction
+Batch *&* Run-Order Correction
 ==============================
 
 Functions for detecting and correcting longitudinal run-order trends and batch effects in datasets.
@@ -55,20 +55,25 @@ See :doc:`multivariate` for details.
 Normalisation
 =============
 
-ADD TEXT
+Funtion for normalising data to correct for dilution effects on global sample intensity.
+
+See :doc:`normalisation` for details.
 
 
 Exporting Data
 ==============
 
-ADD TEXT
+Function for exporting the data (measurements, and feature and sample related metadata).
 
+See :doc:`exportingdata` for details.
 
 
 Configuration Files
 ===================
 
-Behaviour of many aspects of the toobox can be modified in a repeatable manner by creating configuration files, see :doc:`configuration/builtinSOPs` and :doc:`configuration/targetedSOPs` for examples.
+Behaviour of many aspects of the toobox can be modified in a repeatable manner by creating configuration files.
+
+See :doc:`configuration/configuration` for details.
 
 
 Enumerations

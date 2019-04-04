@@ -57,7 +57,7 @@ There are several functions which modify these internal masks:
 - :py:meth:`~nPYc.objects.Dataset.initialiseMasks` resets the masks to include all samples/features.
 - :py:meth:`~nPYc.objects.Dataset.applyMasks` completely excludes from the dataset all samples and features which have been previously masked. After calling this command the excluded features are and the masks are re-initialized so that all reaming samples and features are unmasked. This method should be used only when it is absolutely certain that the masked features and samples are to be removed, as the excluded data will have to be re-imported.
 
-For examples of how these masks are used during the import and preprocessing of data see :doc:`tutorial`.
+For examples of how these masks are used during the import and preprocessing of specific datasets see :doc:`tutorial`.
 
 
 Dataset

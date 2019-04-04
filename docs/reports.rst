@@ -1,7 +1,7 @@
 Reports
 -------
 
-The nPYc-Toolbox offers a series of `reports`, pre-set visualizations comprised of text, figures and tables to describe and summarise the characteristics of the dataset, and help the user assess the overall impact of quality control decisions (e.g. whether to exclude samples or features or change filtering criteria).
+The nPYc-Toolbox offers a series of `reports`, pre-set visualisations comprised of text, figures and tables to describe and summarise the characteristics of the dataset, and help the user assess the overall impact of quality control decisions (e.g. whether to exclude samples or features or change filtering criteria).
 
 There are four reports available for all data types:
 
@@ -14,7 +14,12 @@ These can be generated using (e.g. for the Feature Summary Report)::
 
 	nPYc.reports.generateReport(dataset, 'feature summary')
 	
-In addition, there are a number of method-specific reports, see the method-specific sections below and :doc:`tutorial` for full details.
+In addition, there are a number of method-specific reports:
+
+- For specfic reports available for each method, see the sections below
+- For implementation of these with explainations, see :doc:`tutorial`
+- For batch and run-order correction specific reports for :py:class:`~nPYc.objects.MSDataset`, see :doc:`batchAndROCorrection`
+- For analytical multivariate quality control reports, see :doc:`multivariate`
 
 
 Quality Control
@@ -66,10 +71,4 @@ Targeted Reports
 ================
 
 .. autoclass:: nPYc.reports._generateReportTargeted
-  :members:
-  
-Multivariate Report
-===================
-
-.. autoclass:: nPYc.reports.multivariateReport
   :members:

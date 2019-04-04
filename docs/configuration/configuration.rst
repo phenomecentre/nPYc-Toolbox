@@ -19,6 +19,6 @@ SOP files are simple `JSON <http://www.json.org>`_ format files, that's contnets
 .. literalinclude:: ../../nPYc/StudyDesigns/SOP/generic.json
    :caption: The default SOP loaded by all datasets includes settings for figure aesthetics
 
-The nPYc-Toolbox comes with a built-in set of configuration SOP files for each dataset type, for examples of these see :doc:`builtinSOPs` 
+The nPYc-Toolbox comes with a built-in set of configuration SOP files for each dataset type, for full details see :doc:`builtinSOPs`.
 
-and :doc:`targetedSOPs` for examples.
+New pre-definined TargetLynx SOP files can also be created, for full details see :doc:`targetedSOPs`.
