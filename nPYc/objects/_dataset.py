@@ -1005,9 +1005,9 @@ class Dataset:
 
 		self.Attributes['Log'].append([datetime.now(), "Masks Initialised to True.\n"])
 
-	def updateMasks(self, filterSamples=True, filterFeatures=False,
-					sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
-					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], **kwargs):
+	def updateMasks(self, filterSamples=True, filterFeatures=True,
+					sampleTypes=list(SampleType),
+					assayRoles=list(AssayRole), **kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 

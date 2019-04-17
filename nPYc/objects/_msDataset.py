@@ -245,8 +245,9 @@ class MSDataset(Dataset):
 		del(self.correlationToDilution)
 
 
-	def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
-					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference],
+	def updateMasks(self, filterSamples=True, filterFeatures=True, 
+					sampleTypes=list(SampleType),#[SampleType.StudySample, SampleType.StudyPool],
+					assayRoles=list(AssayRole),#[AssayRole.Assay, AssayRole.PrecisionReference],
 					correlationThreshold=None, rsdThreshold=None, varianceRatio=None,
 					withArtifactualFiltering=None, deltaMzArtifactual=None, overlapThresholdArtifactual=None,
 					corrThresholdArtifactual=None, blankThreshold=None, aggregateRedundantFeatures=False, **kwargs):
