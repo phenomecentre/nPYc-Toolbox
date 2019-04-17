@@ -245,6 +245,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 	item = dict()
 	item['Name'] = dataset.name
 	item['Nsamples'] = dataset.noSamples
+	item['Nfeatures'] = dataset.noFeatures
 
 	item['start'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
 	item['end'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
@@ -270,7 +271,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
-		print('Sample Summary')
+		print('Final Dataset')
+		print('\n' + str(item['Nsamples']) + ' samples')        
+		print(str(item['Nfeatures']) + ' features')     
+		print('\nSample Summary')      
 		print('\nTable 1: Summary of samples present.')
 		display(sampleSummary['Acquired'])
 		print('\nDetails of any missing/excluded study samples given at the end of the report\n')
