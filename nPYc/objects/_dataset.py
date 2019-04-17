@@ -1195,6 +1195,7 @@ class Dataset:
 		"""
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
+        
 		csvData = pandas.read_csv(filePath)
 		currentMetadata = self.sampleMetadata.copy()
 
@@ -1307,8 +1308,8 @@ class Dataset:
 			#  If not in the new CSV, but previously there, keep it and don't mask
 			if len(metadataNotAvailable) > 0:
 				joinedTable.loc[metadataNotAvailable, 'Metadata Available'] = False
-				self.sampleMask[metadataNotAvailable] = False
-				joinedTable.loc[metadataNotAvailable, 'Exclusion Details'] = 'No Metadata in CSV'
+#				self.sampleMask[metadataNotAvailable] = False
+#				joinedTable.loc[metadataNotAvailable, 'Exclusion Details'] = 'No Metadata in CSV'
 
 		# 1) ACQ and in "include Sample" - drop and set mask to false
 		#  Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe

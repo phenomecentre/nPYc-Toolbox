@@ -466,8 +466,8 @@ class MSDataset(Dataset):
 
 		self.initialiseMasks()
 
-		self.sampleMetadata['AssayRole'] = AssayRole.Assay
-		self.sampleMetadata['SampleType'] = SampleType.StudySample
+		self.sampleMetadata['AssayRole'] = None#AssayRole.Assay
+		self.sampleMetadata['SampleType'] = None#SampleType.StudySample
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
 
@@ -525,8 +525,8 @@ class MSDataset(Dataset):
 		self.featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
 		self.featureMetadata.insert(0, 'Feature Name', name)
 
-		self.sampleMetadata['AssayRole'] = AssayRole.Assay
-		self.sampleMetadata['SampleType'] = SampleType.StudySample
+		self.sampleMetadata['AssayRole'] = None#AssayRole.Assay
+		self.sampleMetadata['SampleType'] = None#SampleType.StudySample
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
 
@@ -592,8 +592,8 @@ class MSDataset(Dataset):
 		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float) / 60.0
 		self.featureMetadata['m/z'] = self.featureMetadata['m/z'].astype(float)
 
-		self.sampleMetadata['AssayRole'] = AssayRole.Assay
-		self.sampleMetadata['SampleType'] = SampleType.StudySample
+		self.sampleMetadata['AssayRole'] = None#AssayRole.Assay
+		self.sampleMetadata['SampleType'] = None#SampleType.StudySample
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
 
@@ -739,8 +739,8 @@ class MSDataset(Dataset):
 		featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T, columns=featureMetadata.keys())
 		sampleMetadata = pandas.DataFrame(numpy.concatenate([sampleMetadata[c] for c in sampleMetadata.keys()], axis=0), columns=sampleMetadata.keys())
 
-		sampleMetadata['AssayRole'] = AssayRole.Assay
-		sampleMetadata['SampleType'] = SampleType.StudySample
+		sampleMetadata['AssayRole'] = None#AssayRole.Assay
+		sampleMetadata['SampleType'] = None#SampleType.StudySample
 		sampleMetadata['Dilution'] = 100
 
 		# Put Feature Names first
