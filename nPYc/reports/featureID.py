@@ -164,8 +164,8 @@ def _msIDreport(msData, feature, outputDir='', rawData=None, dbConnection=None, 
 	SPmask = (localDF['SampleType'].values == SampleType.StudyPool) & (localDF['AssayRole'].values == AssayRole.PrecisionReference)
 	ERmask = (localDF['SampleType'].values == SampleType.ExternalReference) & (localDF['AssayRole'].values == AssayRole.PrecisionReference)
 	localDF.loc[SSmask, 'Sample Type'] = 'Study Sample'
-	localDF.loc[SPmask, 'Sample Type'] = 'Study Pool'
-	localDF.loc[ERmask, 'Sample Type'] = 'External Reference'
+	localDF.loc[SPmask, 'Sample Type'] = 'Study Reference'
+	localDF.loc[ERmask, 'Sample Type'] = 'Long-Term Reference'
 	localDF.loc[SPmask | ERmask, 'Reference Samples'] = 'Reference Sample'
 
 	localDF[feature] = pandas.Series(numpy.squeeze(msData.intensityData[:, localMetadata.index]), index=localDF.index)
@@ -200,7 +200,7 @@ def _msIDreport(msData, feature, outputDir='', rawData=None, dbConnection=None, 
 			palette = [palette[2]]
 	elif refCount == 2:
 		split = True	
-		hue_order = ['Study Pool', 'External Reference']
+		hue_order = ['Study Reference', 'Long-Term Reference']
 		palette = [palette[1], palette[2]]
 
 	# Left hand plot

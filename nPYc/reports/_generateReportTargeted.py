@@ -763,8 +763,8 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 		tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
 		tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-		tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-		tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+		tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
+		tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
 
 		if pcaModel:
 			if destinationPath:
@@ -914,8 +914,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 	# Table 3: Feature Selection parameters
 	FeatureSelectionTable = pandas.DataFrame(data=['yes', tData.Attributes['rsdThreshold'], 'yes'],
-						 index=['Relative Standard Deviation (RSD)', 'RSD of SP Samples: Threshold',
-								'RSD of SS Samples > RSD of SP Samples'], columns=['Value Applied'])
+						 index=['Relative Standard Deviation (RSD)', 'RSD of SR Samples: Threshold',
+								'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied'])
 
 	item['FeatureSelectionTable'] = FeatureSelectionTable
 
@@ -979,7 +979,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	if not destinationPath:
 		if item['NfeaturesFailing'] != 0:
 			print(
-				'\n*Features sorted by RSD in SP samples; with features passing selection (i.e., able to be '
+				'\n*Features sorted by RSD in SR samples; with features passing selection (i.e., able to be '
 				'accurately measured) above the line and those failing (i.e., not able '
 				'to be accurately measured) below the line')
 
@@ -1058,8 +1058,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 		tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
 		tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-		tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-		tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+		tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
+		tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
 
 
 		if destinationPath:

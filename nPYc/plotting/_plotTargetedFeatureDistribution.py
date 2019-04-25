@@ -42,11 +42,11 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 		sampleMasks.append(('SS', SSmask))
 		palette['SS'] = sTypeColourDict[SampleType.StudySample]
 	if sum(SPmask > 0) and 'SP' in sampleTypes:
-		sampleMasks.append(('SP', SPmask))
-		palette['SP'] = sTypeColourDict[SampleType.StudyPool]
+		sampleMasks.append(('SR', SPmask))
+		palette['SR'] = sTypeColourDict[SampleType.StudyPool]
 	if sum(ERmask > 0) and 'ER' in sampleTypes:
-		sampleMasks.append(('ER', ERmask))
-		palette['ER'] = sTypeColourDict[SampleType.ExternalReference]
+		sampleMasks.append(('LTR', ERmask))
+		palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
 
 	# Plot
 	for figNo in range(nf):

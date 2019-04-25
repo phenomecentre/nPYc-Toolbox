@@ -351,6 +351,12 @@ class MSDataset(Dataset):
 
 			featureMask = numpy.logical_and(featureMask, blankMask)
 
+			# Save for reporting
+			if (blankThreshold is not None) & (sum(self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank) > 2):
+				self.Attributes['blankFilter'] = False
+			else:
+				self.Attributes['blankFilter'] = True
+
 			# Artifactual filtering
 			if withArtifactualFiltering:
 				if (deltaMzArtifactual is not None) | (corrThresholdArtifactual is not None) | (overlapThresholdArtifactual is not None):
@@ -471,6 +477,7 @@ class MSDataset(Dataset):
 		self.sampleMetadata['SampleType'] = None#SampleType.StudySample
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
+		self.sampleMetadata['Exclusion Details'] = None
 
 		self.Attributes['Log'].append([datetime.now(), 'Progenesis QI dataset loaded from %s' % (path)])
 
@@ -530,6 +537,7 @@ class MSDataset(Dataset):
 		self.sampleMetadata['SampleType'] = None#SampleType.StudySample
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
+		self.sampleMetadata['Exclusion Details'] = None
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -597,6 +605,7 @@ class MSDataset(Dataset):
 		self.sampleMetadata['SampleType'] = None#SampleType.StudySample
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
+		self.sampleMetadata['Exclusion Details'] = None
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -666,6 +675,7 @@ class MSDataset(Dataset):
 		self.featureMetadata.insert(0, 'Feature Name', names)
 
 		self.sampleMetadata['Metadata Available'] = False
+		self.sampleMetadata['Exclusion Details'] = None
 		self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'Biocrates dataset loaded from %s' % (path)])

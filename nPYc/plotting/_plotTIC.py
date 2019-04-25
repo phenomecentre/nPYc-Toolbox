@@ -111,21 +111,21 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 			if sum(SSmask != 0):
 				sc = ax.scatter(acqTime[SSmask], tic[SSmask], marker='o', c=detectorDiff[SSmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Sample', edgecolors='grey')
 			if sum(SPmask != 0):
-				sc = ax.scatter(acqTime[SPmask], tic[SPmask], marker='v', s=30, linewidth=0.9, c=detectorDiff[SPmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Pool', edgecolors='grey')
+				sc = ax.scatter(acqTime[SPmask], tic[SPmask], marker='v', s=30, linewidth=0.9, c=detectorDiff[SPmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Reference', edgecolors='grey')
 			if sum(ERmask != 0):
-				sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, linewidth=0.9, c=detectorDiff[ERmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='External Reference', edgecolors='grey')
+				sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, linewidth=0.9, c=detectorDiff[ERmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Long-Term Reference', edgecolors='grey')
 			if sum(LRmask != 0):
-				sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', c=detectorDiff[LRmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Linearity Reference', edgecolors='grey')
+				sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', c=detectorDiff[LRmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Serial Dilution', edgecolors='grey')
 		# For the specific case where there is no detector voltage and colorscale collapses
 		else:
 			if sum(SSmask != 0):
 				sc = ax.scatter(acqTime[SSmask], tic[SSmask], marker='o', c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Sample', edgecolors='grey')
 			if sum(SPmask != 0):
-				sc = ax.scatter(acqTime[SPmask], tic[SPmask], marker='v', s=30, linewidth=0.9, c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Pool', edgecolors='grey')
+				sc = ax.scatter(acqTime[SPmask], tic[SPmask], marker='v', s=30, linewidth=0.9, c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Reference', edgecolors='grey')
 			if sum(ERmask != 0):
-				sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, linewidth=0.9, c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='External Reference', edgecolors='grey')
+				sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, linewidth=0.9, c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Long-Term Reference', edgecolors='grey')
 			if sum(LRmask != 0):
-				sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Linearity Reference', edgecolors='grey')
+				sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Serial Dilution', edgecolors='grey')
 	# Colour by sample type
 	else:
 
@@ -133,11 +133,11 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		if sum(SSmask != 0):
 			ax.plot_date(msData.sampleMetadata.loc[SSmask, 'Acquired Time'].values, tic[SSmask], c=sTypeColourDict[SampleType.StudySample], fmt='o', ms=6, label='Study Sample') # c='y',
 		if sum(SPmask != 0):
-			ax.plot_date(msData.sampleMetadata.loc[SPmask, 'Acquired Time'].values, tic[SPmask], c=sTypeColourDict[SampleType.StudyPool], fmt='v', ms=8, label='Study Pool') # c='m',
+			ax.plot_date(msData.sampleMetadata.loc[SPmask, 'Acquired Time'].values, tic[SPmask], c=sTypeColourDict[SampleType.StudyPool], fmt='v', ms=8, label='Study Reference') # c='m',
 		if sum(ERmask != 0):
-			ax.plot_date(msData.sampleMetadata.loc[ERmask, 'Acquired Time'].values, tic[ERmask], c=sTypeColourDict[SampleType.ExternalReference], fmt='^', ms=8, label='External Reference')
+			ax.plot_date(msData.sampleMetadata.loc[ERmask, 'Acquired Time'].values, tic[ERmask], c=sTypeColourDict[SampleType.ExternalReference], fmt='^', ms=8, label='Long-Term Reference')
 		if sum(LRmask != 0):
-			ax.plot_date(msData.sampleMetadata.loc[LRmask, 'Acquired Time'].values, tic[LRmask], c=sTypeColourDict[SampleType.MethodReference], fmt='s', ms=6, label='Linearity Reference')
+			ax.plot_date(msData.sampleMetadata.loc[LRmask, 'Acquired Time'].values, tic[LRmask], c=sTypeColourDict[SampleType.MethodReference], fmt='s', ms=6, label='Serial Dilution')
 
 	# Shade by automatically defined batches (if required)
 	if addBatchShading:
@@ -188,14 +188,14 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 			sampleMasks.append(('SS', SSmask))
 			palette['SS'] = sTypeColourDict[SampleType.StudySample]
 		if sum(SPmask)>0:
-			sampleMasks.append(('SP', SPmask))
-			palette['SP'] = sTypeColourDict[SampleType.StudyPool]
+			sampleMasks.append(('SR', SPmask))
+			palette['SR'] = sTypeColourDict[SampleType.StudyPool]
 		if sum(ERmask)>0:
-			sampleMasks.append(('ER', ERmask))
-			palette['ER'] = sTypeColourDict[SampleType.ExternalReference]
+			sampleMasks.append(('LTR', ERmask))
+			palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
 		if sum(LRmask)>0:
-			sampleMasks.append(('LR', LRmask))
-			palette['LR'] = sTypeColourDict[SampleType.MethodReference]
+			sampleMasks.append(('SRD', LRmask))
+			palette['SRD'] = sTypeColourDict[SampleType.MethodReference]
 
 		limits = ax.get_ylim()
 

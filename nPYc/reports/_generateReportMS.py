@@ -22,6 +22,7 @@ from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..enumerations import AssayRole, SampleType
 from ._generateBasicPCAReport import generateBasicPCAReport
 from ..reports._finalReportPeakPantheR import _finalReportPeakPantheR
+from ..utilities._filters import blankFilter
 
 
 from ..__init__ import __version__ as version
@@ -218,8 +219,11 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
             pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied']))
     FeatureSelectionTable = FeatureSelectionTable.append(
         pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
-                         index=['Relative Standard Devation (RSD)', 'RSD of SP Samples: Threshold',
-                                'RSD of SS Samples > RSD of SP Samples'], columns=['Value Applied']))
+                         index=['Relative Standard Devation (RSD)', 'RSD of SR Samples: Threshold',
+                                'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied']))
+    if (dataset.Attributes['blankFilter'] == 'True'):
+        FeatureSelectionTable = FeatureSelectionTable.append(
+            pandas.DataFrame(data=['yes'], index=['Blank Filtering'], columns=['Value Applied']))
     if (dataset.Attributes['artifactualFilter'] == 'True'):
         FeatureSelectionTable = FeatureSelectionTable.append(pandas.DataFrame(
             data=['yes', dataset.Attributes['deltaMzArtifactual'], dataset.Attributes['overlapThresholdArtifactual'],
@@ -239,9 +243,9 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     if hasattr(dataset, 'fit'):
         nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
         if nBatchCorrect == 1:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SP samples in 1 batch'
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in 1 batch'
         else:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SP samples in ' + str(nBatchCorrect) + ' batches'
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in ' + str(nBatchCorrect) + ' batches'
     else:
         item['batchesCorrect'] =  'Run-order and batch correction not required' 
  
@@ -301,7 +305,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         item['finalRsdHist'] = os.path.join(graphicsPath,item['Name'] + '_rsdSP.' + dataset.Attributes['figureFormat'])
         saveAs = item['finalRsdHist']
     else:
-        print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) histogram for study pool samples and all features in final dataset, segmented by abundance percentiles.')
+        print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) histogram for study reference samples and all features in final dataset, segmented by abundance percentiles.')
         figNo = figNo+1
 
     histogram(dataset.rsdSP,
@@ -405,8 +409,8 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         if not 'Plot Sample Type' in dataset.sampleMetadata.columns:
             dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
             dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-            dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-            dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+            dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
+            dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
 
         if destinationPath:
             pcaPath = destinationPath
@@ -596,7 +600,7 @@ def _featureReport(dataset, destinationPath=None):
                                                  item['Name'] + '_TICinLR.' + dataset.Attributes['figureFormat'])
             saveAs = item['TICinLRfigure']
         else:
-            print('Figure 5: TIC of linearity reference (LR) samples coloured by sample dilution.')
+            print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.')
 
         plotLRTIC(dataset,
                   sampleMask=LRmask,
@@ -609,10 +613,10 @@ def _featureReport(dataset, destinationPath=None):
         if not destinationPath:
             print('Figure 4: Histogram of ' + item[
                 'corrMethod'] + ' correlation of features to serial dilution, segmented by percentile.')
-            print('Unable to calculate (no linearity reference samples present in dataset).\n')
+            print('Unable to calculate (no serial dilution samples present in dataset).\n')
 
-            print('Figure 5: TIC of linearity reference (LR) samples coloured by sample dilution')
-            print('Unable to calculate (no linearity reference samples present in dataset).\n')
+            print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution')
+            print('Unable to calculate (no serial dilution samples present in dataset).\n')
 
     # Figure 6: Histogram of RSD in SP samples by abundance percentiles
     if destinationPath:
@@ -621,7 +625,7 @@ def _featureReport(dataset, destinationPath=None):
         saveAs = item['RsdByPercFigure']
     else:
         print(
-            'Figure 6: Histogram of Residual Standard Deviation (RSD) in study pool (SP) samples, segmented by abundance percentiles.')
+            'Figure 6: Histogram of Residual Standard Deviation (RSD) in study reference (SR) samples, segmented by abundance percentiles.')
 
     histogram(dataset.rsdSP,
               xlabel='RSD',
@@ -752,29 +756,16 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-    SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
+    SRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
+    SRDmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+    Blankmask = dataset.sampleMetadata['SampleType'] == SampleType.ProceduralBlank
 
-    # Set up template item and save required info
-    item = dict()
-    item['Name'] = dataset.name
-    item['ReportType'] = 'feature summary'
-    item['Nfeatures'] = dataset.intensityData.shape[1]
-    item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(SSmask))
-    item['SPcount'] = str(sum(SPmask))
-    item['ERcount'] = str(sum(ERmask))
-    item['LRcount'] = str(sum(LRmask))
-    item['corrMethod'] = dataset.Attributes['corrMethod']
+    # Define passmask as current featureMask
+    passMask = dataset.featureMask
 
-
-    ##
-    # Report stats
-    ##
+    # Set up path to save
     if destinationPath is not None:
         if not os.path.exists(destinationPath):
             os.makedirs(destinationPath)
@@ -787,46 +778,53 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
         graphicsPath = None
 
     # Feature selection parameters and numbers passing
-
-    # rsdSP <= rsdSS
-    rsdSS = rsd(dataset.intensityData[SSmask, :])
-    item['rsdSPvsSSvarianceRatio'] = str(dataset.Attributes['varianceRatio'])
-    item['rsdSPvsSSPassed'] = sum((dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS)
+    item = dict()
+    item['Name'] = dataset.name
+    item['Nfeatures'] = dataset.intensityData.shape[1]
 
     # Correlation to dilution
     item['corrMethod'] = dataset.Attributes['corrMethod']
     item['corrThreshold'] = dataset.Attributes['corrThreshold']
+
     if sum(dataset.corrExclusions) != dataset.noSamples:
         item['corrExclusions'] = str(
             dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
     else:
         item['corrExclusions'] = 'none'
-    item['corrPassed'] = sum(dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
 
-    # rsdSP
+    if sum(SRDmask) > 0:
+        item['corrPassed'] = str(sum(dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])) + ' passed selection.'
+        passMask = numpy.logical_and(passMask, dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
+    else:
+        item['corrPassed'] = 'Not applied (no SRD samples present).'
+
+    # RSD in SR samples, and RSD in SS samples > RSD in SR samples
     item['rsdThreshold'] = dataset.Attributes['rsdThreshold']
-    item['rsdPassed'] = sum(dataset.rsdSP <= dataset.Attributes['rsdThreshold'])
+    item['rsdSPvsSSvarianceRatio'] = str(dataset.Attributes['varianceRatio'])
+    rsdSS = rsd(dataset.intensityData[SSmask, :])
 
-    # Artifactual filtering
-    passMask = (dataset.correlationToDilution >= dataset.Attributes['corrThreshold']) & (
-                dataset.rsdSP <= dataset.Attributes['rsdThreshold']) & (
-                           (dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS) & (dataset.featureMask == True)
-    if withArtifactualFiltering:
-        passMask = dataset.artifactualFilter(featMask=passMask)
+    if sum(SRmask) > 0:
+        item['rsdPassed'] = str(sum(dataset.rsdSP <= dataset.Attributes['rsdThreshold'])) + ' passed selection.'
+        item['rsdSPvsSSPassed'] = str(sum((dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS)) + ' passed selection.'
+        passMask = numpy.logical_and(passMask, dataset.rsdSP <= dataset.Attributes['rsdThreshold'], (dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS)
+    else:
+        item['rsdPassed'] = 'Not applied (no SR samples present).'
+        item['rsdSPvsSSPassed'] = 'Not applied (no SR samples present).'
 
-    if 'blankThreshold' in dataset.Attributes.keys():
-        from ..utilities._filters import blankFilter
-
-        blankThreshold = dataset.Attributes['blankThreshold']
+    # Blank mask
+    if ('blankThreshold' in dataset.Attributes.keys()) & (sum(Blankmask) > 2):
 
         blankMask = blankFilter(dataset)
-
         passMask = numpy.logical_and(passMask, blankMask)
 
         item['BlankPassed'] = sum(blankMask)
+        item['BlankThreshold'] = dataset.Attributes['blankThreshold']
 
+    # Artifactual filtering
     if withArtifactualFiltering:
+        passMask = dataset.artifactualFilter(featMask=passMask)
         item['artifactualPassed'] = sum(passMask)
+
     item['featuresPassed'] = sum(passMask)
 
     # Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds
@@ -837,7 +835,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     featureNos = numpy.zeros(rValsRep.shape, dtype=numpy.int)
     if withArtifactualFiltering:
         # with blankThreshold in heatmap
-        if 'blankThreshold' in dataset.Attributes.keys():
+        if 'BlankThreshold' in item:
             for rsdNo in range(rValsRep.shape[1]):
                 featureNos[0, rsdNo] = sum(dataset.artifactualFilter(featMask=(
                             (dataset.correlationToDilution >= rValsRep[0, rsdNo]) & (
@@ -854,7 +852,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
                                         dataset.featureMask == True))))
     else:
         # with blankThreshold in heatmap
-        if 'blankThreshold' in dataset.Attributes.keys():
+        if 'BlankThreshold' in item:
             for rsdNo in range(rValsRep.shape[1]):
                 featureNos[0, rsdNo] = sum(
                     (dataset.correlationToDilution >= rValsRep[0, rsdNo]) & (dataset.rsdSP <= rsdValsRep[0, rsdNo]) & (
@@ -873,6 +871,12 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
 
     fig, ax = plt.subplots(1, figsize=dataset.Attributes['figureSize'], dpi=dataset.Attributes['dpi'])
     sns.heatmap(test, annot=True, fmt='g', cbar=False)
+    x_format = ax.xaxis.get_major_formatter()
+    x_format.seq = ["{:0.0f}".format(float(s)) for s in x_format.seq]
+    y_format = ax.yaxis.get_major_formatter()
+    y_format.seq = ["{:0.2f}".format(float(s)) for s in y_format.seq]
+    ax.xaxis.set_major_formatter(x_format)
+    ax.yaxis.set_major_formatter(y_format)
     plt.tight_layout()
 
     if destinationPath:
@@ -882,24 +886,19 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
         plt.close()
 
     else:
-        print(
-            'Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds')
+        print('Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds')
         plt.show()
 
         print('Summary of current feature filtering parameters and number of features passing at each stage\n')
-        print('Number of features in original dataset: ' + str(item['Nfeatures']) + '\n\n' +
-              'Features filtered on:\n' +
-              'Correlation (' + item['corrMethod'] + ', exclusions: ' + item[
-                  'corrExclusions'] + ') to dilution greater than ' + str(item['corrThreshold']) + ': ' + str(
-            item['corrPassed']) + ' passed selection\n' +
-              'Relative Standard Deviation (RSD) in study pool (SP) samples below ' + str(
-            item['rsdThreshold']) + ': ' + str(item['rsdPassed']) + ' passed selection\n' +
-              'RSD in study samples (SS) * ' + item['rsdSPvsSSvarianceRatio'] + ' >= RSD in SP samples: ' + str(
-            item['rsdSPvsSSPassed']) + ' passed selection')
-        if blankThreshold:
-            print('%i features above blank threshold.' % (item['BlankPassed']))
+        print('Number of features in original dataset: ' + str(item['Nfeatures']) + '\n')
+        print('Features filtered on:')
+        print('Correlation (' + item['corrMethod'] + ', exclusions: ' + item['corrExclusions'] + ') to dilution greater than ' + str(item['corrThreshold']) + ': ' + item['corrPassed'])
+        print('Relative Standard Deviation (RSD) in study reference (SR) samples below ' + str(item['rsdThreshold']) + ': ' + item['rsdPassed'])
+        print('RSD in study samples (SS) * ' + item['rsdSPvsSSvarianceRatio'] + ' >= RSD in SR samples: ' + item['rsdSPvsSSPassed'])
+        if 'BlankThreshold' in item:
+            print('Mean intensity in SS > 95 % intensity * ' + str(item['BlankThreshold']) + ' in sampleBlanks: ' + str(item['BlankPassed']) + ' features passed selection.')
         if withArtifactualFiltering:
-            print('Artifactual features filtering: ' + str(item['artifactualPassed']) + ' passed selection')
+            print('Artifactual features filtering: ' + str(item['artifactualPassed']) + ' passed selection.')
         print('\nTotal number of features after filtering: ' + str(item['featuresPassed']))
 
     # Write HTML if saving
@@ -1182,7 +1181,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
         saveAs = item['RsdByPercFigurePRE']
     else:
         print(
-            'Figure 3: Histogram of Residual Standard Deviation (RSD) in study pool (SP) samples, segmented by abundance percentiles.')
+            'Figure 3: Histogram of Residual Standard Deviation (RSD) in study reference (SR) samples, segmented by abundance percentiles.')
         print('Pre-correction.')
 
     histogram(dataset.rsdSP,
@@ -1551,12 +1550,12 @@ def _plotAbundanceBySampleType(intensityData, SSmask, SPmask, ERmask, saveAs, da
     if sum(SPmask) != 0:
         temp = numpy.nanmean(intensityData[SPmask,:], axis=0)
         temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Study Pool'] = temp
+        meanIntensities['Study Reference'] = temp
         colour.append(sTypeColourDict[SampleType.StudyPool])
     if sum(ERmask) != 0:
         temp = numpy.nanmean(intensityData[ERmask,:], axis=0)
         temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['External Reference'] = temp
+        meanIntensities['Long-Term Reference'] = temp
         colour.append(sTypeColourDict[SampleType.ExternalReference])
 
     histogram(meanIntensities,

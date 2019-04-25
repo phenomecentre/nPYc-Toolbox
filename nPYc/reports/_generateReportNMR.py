@@ -74,8 +74,8 @@ def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath
 	if not 'Plot Sample Type' in nmrData.sampleMetadata.columns:
 		nmrData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
 		nmrData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-		nmrData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-		nmrData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+		nmrData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
+		nmrData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
 
 	if reportType.lower() == 'feature summary':
 		_featureReport(nmrData, destinationPath=destinationPath)

@@ -6,8 +6,8 @@
 
 <!--Figure 1: Histogram of log mean abundance in SP samples-->
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Histogram of log of mean abundance of {{ item['No Features'] }} features in {{ item.SPcount }} study pool samples.</p>
-	<img src="{{ item.FeatureIntensityFigure }}" alt="Histogram of log of mean abundance of {{ item['No Features'] }} features in {{ item.SPcount }} study pool samples.">
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Histogram of log of mean abundance of {{ item['No Features'] }} features in {{ item.SPcount }} study reference samples.</p>
+	<img src="{{ item.FeatureIntensityFigure }}" alt="Histogram of log of mean abundance of {{ item['No Features'] }} features in {{ item.SPcount }} study reference samples.">
 </div>
 
 <!--Figure 2: Sample intensity TIC and distribution by sample type-->
@@ -34,19 +34,19 @@
 
 
 <!--Figure 5: TIC of linearity reference (LR) samples coloured by sample dilution-->
-<p class="caption"><span class="heading">Figure&nbsp;5.</span> Total Ion Count (TIC) of linearity reference (LR) samples coloured by sample dilution.</p>
+<p class="caption"><span class="heading">Figure&nbsp;5.</span> Total Ion Count (TIC) of serial dilution (SRD) samples coloured by sample dilution.</p>
 {% if 'TICinLRfigure' in item %}
 	<div class='figure'>
-		<img src="{{ item.TICinLRfigure}}" alt="TIC of linearity reference (LR) samples coloured by sample dilution.">
+		<img src="{{ item.TICinLRfigure}}" alt="TIC of serial dilution (SRD) samples coloured by sample dilution.">
 	</div>
 {% else %}
-	<p>Unable to calculate (no linearity reference samples present in dataset).</p>
+	<p>Unable to calculate (no serial dilution samples present in dataset).</p>
 {% endif %}
 
 <!--Figure 6: Histogram of RSD in SP samples, segmented by abundance percentiles-->
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;6.</span> Histogram of Residual Standard Deviation (RSD) in {{ item.SPcount }} study pool (SP) samples, segmented by percentile.</p>
-	<img src="{{ item.RsdByPercFigure }}" alt="Histogram of RSD in {{ item.SPcount }} study pool (SP) samples, segmented by percentile.">
+	<p class="caption"><span class="heading">Figure&nbsp;6.</span> Histogram of Residual Standard Deviation (RSD) in {{ item.SPcount }} study reference (SR) samples, segmented by percentile.</p>
+	<img src="{{ item.RsdByPercFigure }}" alt="Histogram of RSD in {{ item.SPcount }} study reference (SR) samples, segmented by percentile.">
 </div>
 
 <!--Figure 7: Scatterplot of RSD vs correlation to dilution-->

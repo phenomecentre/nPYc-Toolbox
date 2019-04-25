@@ -365,12 +365,12 @@ def _plotAbundanceBySampleType(dataset, SSmask, SPmask, ERmask, saveAs):
     if sum(SPmask) != 0:
         temp = numpy.nanmean(intensityData[SPmask, :], axis=0)
         temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Study Pool'] = temp
+        meanIntensities['Study Reference'] = temp
         colour.append(sTypeColourDict[SampleType.StudyPool])
     if sum(ERmask) != 0:
         temp = numpy.nanmean(intensityData[ERmask, :], axis=0)
         temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['External Reference'] = temp
+        meanIntensities['Long-Term Reference'] = temp
         colour.append(sTypeColourDict[SampleType.ExternalReference])
 
     histogram(meanIntensities,

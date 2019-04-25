@@ -63,7 +63,7 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 
 	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param pandas.Series classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
-	:param str classType: Type of data in ``classes``, either 'Plot Sample Type', 'categorical' or 'continuous', must be specified if classes is not ``None``. If ``classType`` is 'Plot Sample Type', ``classes`` expects 'Study Sample', 'Study Pool', 'External Reference', 'Linearity Reference' or 'Sample'.
+	:param str classType: Type of data in ``classes``, either 'Plot Sample Type', 'categorical' or 'continuous', must be specified if classes is not ``None``. If ``classType`` is 'Plot Sample Type', ``classes`` expects 'Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution' or 'Sample'.
 	:param components: If ``None`` plots all components in model, else plots those specified in components
 	:type components: tuple (int, int)
 	:param float alpha: Significance value for plotting Hotellings ellipse
@@ -164,12 +164,12 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 			sns.set_color_codes(palette='deep')
 			if any(classes == 'Study Sample'):
 				ax.scatter(values[classes.values == 'Study Sample', components[i]], values[classes.values == 'Study Sample', components[j]], c=sTypeColourDict[SampleType.StudySample], label='Study Sample')
-			if any(classes == 'Study Pool'):
-				ax.scatter(values[classes.values == 'Study Pool', components[i]], values[classes.values == 'Study Pool', components[j]], c=sTypeColourDict[SampleType.StudyPool], label='Study Pool')
+			if any(classes == 'Study Reference'):
+				ax.scatter(values[classes.values == 'Study Reference', components[i]], values[classes.values == 'Study Reference', components[j]], c=sTypeColourDict[SampleType.StudyPool], label='Study Reference')
 			if any(classes == 'External Reference'):
-				ax.scatter(values[classes.values == 'External Reference', components[i]], values[classes.values == 'External Reference', components[j]], c=sTypeColourDict[SampleType.ExternalReference], label='External Reference')
+				ax.scatter(values[classes.values == 'Long-Term Reference', components[i]], values[classes.values == 'Long-Term Reference', components[j]], c=sTypeColourDict[SampleType.ExternalReference], label='Long-Term Reference')
 			if any(classes == 'Linearity Reference'):
-				ax.scatter(values[classes.values == 'Linearity Reference', components[i]], values[classes.values == 'Linearity Reference', components[j]], c=sTypeColourDict[SampleType.MethodReference], label='Linearity Reference')
+				ax.scatter(values[classes.values == 'Serial Dilution', components[i]], values[classes.values == 'Serial Dilution', components[j]], c=sTypeColourDict[SampleType.MethodReference], label='Serial Dilution')
 			if any(classes == 'Sample'):
 				ax.scatter(values[classes.values == 'Sample', components[i]], values[classes.values == 'Sample', components[j]], c=sTypeColourDict['Other'], label='Sample')
 			ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
@@ -297,7 +297,7 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
 
 	:param numpy.array values: dModX or sum of scores, measure of 'fit' for each sample
 	:param numpy.array runOrder: Order of sample acquisition (samples are plotted in this order)
-	:param pandas.Series sampleType: Sample type of each sample, must be from 'Study Sample', 'Study Pool', 'External Reference', or 'Sample' (see multivariateReport.py)
+	:param pandas.Series sampleType: Sample type of each sample, must be from 'Study Sample', 'Study Reference', 'Long-Term Reference', or 'Sample' (see multivariateReport.py)
 	:param bool addViolin: If True adds a violin plot of distribution of values
 	:param float Fcrit: If not none, plots a line at Fcrit
 	:param float FcritAlpha: Alpha value for Fcrit (for legend)
@@ -358,14 +358,14 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
 		ax.scatter(runOrder[sampleType.values == 'Study Sample'], values[sampleType.values == 'Study Sample'], c=sTypeColourDict[SampleType.StudySample], label='Study Sample')
 		sampleMasks.append(('SS', sampleType.values=='Study Sample'))
 		palette['SS'] = sTypeColourDict[SampleType.StudySample]
-	if any(sampleType == 'Study Pool'):
-		ax.scatter(runOrder[sampleType.values == 'Study Pool'], values[sampleType.values == 'Study Pool'], c=sTypeColourDict[SampleType.StudyPool], label='Study Pool')
-		sampleMasks.append(('SP', sampleType.values=='Study Pool'))
-		palette['SP'] = sTypeColourDict[SampleType.StudyPool]
-	if any(sampleType == 'External Reference'):
-		ax.scatter(runOrder[sampleType.values == 'External Reference'], values[sampleType.values == 'External Reference'], c=sTypeColourDict[SampleType.ExternalReference], label='External Reference')
-		sampleMasks.append(('ER', sampleType.values=='External Reference'))
-		palette['ER'] = sTypeColourDict[SampleType.ExternalReference]
+	if any(sampleType == 'Study Reference'):
+		ax.scatter(runOrder[sampleType.values == 'Study Reference'], values[sampleType.values == 'Study Reference'], c=sTypeColourDict[SampleType.StudyPool], label='Study Reference')
+		sampleMasks.append(('SR', sampleType.values=='Study Reference'))
+		palette['SR'] = sTypeColourDict[SampleType.StudyPool]
+	if any(sampleType == 'Long-Term Reference'):
+		ax.scatter(runOrder[sampleType.values == 'Long-Term Reference'], values[sampleType.values == 'Long-Term Reference'], c=sTypeColourDict[SampleType.ExternalReference], label='Long-Term Reference')
+		sampleMasks.append(('LTR', sampleType.values=='Long-Term Reference'))
+		palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
 	if any(sampleType == 'Sample'):
 		ax.scatter(runOrder[sampleType.values == 'Sample'], values[sampleType.values == 'Sample'], c=sTypeColourDict['Other'], label='Sample')
 		sampleMasks.append(('Sample', sampleType.values=='Sample'))
