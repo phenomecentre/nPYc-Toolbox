@@ -10,5 +10,5 @@
 	"featureMetadataNotExported":[],
 	"analyticalMeasurements":{},
 	"excludeFromPlotting":[],
-	"sampleTypeColours":{"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
+	"sampleTypeColours":{"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey", "Study Sample": "b", "Study Reference": "g", "Long-Term Reference": "r", "Method Reference": "m", "Blank": "c", "Unspecified SampleType or AssayRole": "grey"}
 }

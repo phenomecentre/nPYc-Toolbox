@@ -89,26 +89,27 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 
 	reversedIndex =  numpy.arange(len(rsdTable)-1,-1, -1)
 	data = []
-	studySamples = go.Scatter(
-		x = rsdTable[SampleType.StudySample].values,
-		y = reversedIndex,
-		mode = 'markers',
-		text = rsdTable['Feature Name'],
-		name = str(SampleType.StudySample),
-		marker = dict(
-			color = 'rgba(89, 117, 164, .8)',
-		),
-		hoverinfo = 'x+text',
-	)
-	data.append(studySamples)
-
-	if SampleType.ExternalReference in rsdTable.columns:
-		externalRef = go.Scatter(
-			x = rsdTable[SampleType.ExternalReference].values,
+	if SampleType.StudySample in rsdTable.columns:
+		studySamples = go.Scatter(
+			x = rsdTable['Study Sample'].values,
 			y = reversedIndex,
 			mode = 'markers',
 			text = rsdTable['Feature Name'],
-			name = str(SampleType.ExternalReference),
+			name = 'Study Sample',
+			marker = dict(
+				color = 'rgba(89, 117, 164, .8)',
+			),
+			hoverinfo = 'x+text',
+		)
+		data.append(studySamples)
+
+	if SampleType.ExternalReference in rsdTable.columns:
+		externalRef = go.Scatter(
+			x = rsdTable['Long-Term Reference'].values,
+			y = reversedIndex,
+			mode = 'markers',
+			text = rsdTable['Feature Name'],
+			name = 'Long-Term Reference',
 			marker = dict(
 				color = 'rgba(181, 93, 96, .8)',
 			),
@@ -116,18 +117,20 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 		)
 		data.append(externalRef)
 
-	studyPool = go.Scatter(
-		x = rsdTable[SampleType.StudyPool].values,
-		y = reversedIndex,
-		mode = 'markers',
-		text = rsdTable['Feature Name'],
-		name = str(SampleType.StudyPool),
-		 marker = dict(
-			color = 'rgba(95, 158, 110, .8)',
-		),
-		hoverinfo = 'x+text',
-	)
-	data.append(studyPool)
+	if SampleType.StudyPool in rsdTable.columns:
+		studyPool = go.Scatter(
+			x = rsdTable['Study Reference'].values,
+			y = reversedIndex,
+			mode = 'markers',
+			text = rsdTable['Feature Name'],
+			name = 'Study Reference',
+			 marker = dict(
+				color = 'rgba(95, 158, 110, .8)',
+			),
+			hoverinfo = 'x+text',
+		)
+		data.append(studyPool)
+
 	if logx:
 		xaxis = dict(
 					type='log',
@@ -155,7 +158,7 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 	return figure
 
 
-def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclusions=True, sortOrder=True):  
+def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder=True):
 	
 	if not dataset.VariableType == VariableType.Discrete:
 		raise ValueError('Only datasets with discreetly sampled variables are supported.')

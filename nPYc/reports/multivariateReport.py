@@ -26,7 +26,7 @@ from warnings import warn
 
 from ..__init__ import __version__ as version
 
-def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=False, biologicalMeasurements=None, dModX_criticalVal=None, dModX_criticalVal_type=None, scores_criticalVal=None, kw_threshold=0.05, r_threshold=0.3, hotellings_alpha=0.05, excludeFields=None, destinationPath=None):
+def multivariateQCreport(dataTrue, pcaModel, reportType='analytical', withExclusions=False, biologicalMeasurements=None, dModX_criticalVal=None, dModX_criticalVal_type=None, scores_criticalVal=None, kw_threshold=0.05, r_threshold=0.3, hotellings_alpha=0.05, excludeFields=None, destinationPath=None):
 	"""
 	PCA based analysis of a dataset. A PCA model is generated for the data object, then potential associations between the scores and any sample metadata determined by correlation (continuous data) or a Kruskal-Wallis test (categorical data).
 
@@ -160,8 +160,8 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 	item['OTHERcount'] = str(ns - sum(SSmask) - sum(SPmask) - sum(ERmask))
 	data.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
 	data.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-	data.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-	data.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
+	data.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
+	data.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
 
 	item['Normalisation'] = str(dataTrue.Normalisation)
 
@@ -261,8 +261,8 @@ def multivariateQCreport(dataTrue, pcaModel, reportType='all', withExclusions=Fa
 		print('\033[1m' + 'Dataset' + '\033[0m')
 		print('\nOriginal data consists of ' + item['Nsamples'] + ' samples and ' + item['Nfeatures'] + ' features')
 		print('\t' + item['SScount'] + ' Study Samples')
-		print('\t' + item['SPcount'] + ' Study Pool Samples')
-		print('\t' + item['ERcount'] + ' External Reference Samples')
+		print('\t' + item['SPcount'] + ' Study Reference Samples')
+		print('\t' + item['ERcount'] + ' Long-Term Reference Samples')
 		print('\t' + item['OTHERcount'] + ' Other Samples')
 		
 		print('\033[1m' + '\nPCA Analysis' + '\033[0m')

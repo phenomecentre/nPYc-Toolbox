@@ -217,8 +217,8 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 	import plotly.graph_objs as go
 	from ..utilities import generateLRmask
 
-	if not isinstance(plottype, str) & (plottype in {'Sample Type', 'Linearity Reference'}):
-		raise ValueError('plottype must be == \'Sample Type\', \'Linearity Reference\'')
+	if not isinstance(plottype, str) & (plottype in {'Sample Type', 'Serial Dilution'}):
+		raise ValueError('plottype must be == \'Sample Type\', \'Serial Dilution\'')
 
 	# Generate TIC
 	tempFeatureMask = numpy.sum(numpy.isfinite(msData.intensityData), axis=0)
@@ -252,7 +252,7 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 				color = 'rgb(63, 158, 108)',
 				symbol = 'cross'
 				),
-			name = 'Study Pool',
+			name = 'Study Reference',
 			text = msData.sampleMetadata['Run Order'][SPmask]
 			)
 			
@@ -264,7 +264,7 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 				color = 'rgb(198, 83, 83)',
 				symbol = 'cross'
 				),
-			name = 'External Reference',
+			name = 'Long-Term Reference',
 			text = msData.sampleMetadata['Run Order'][ERmask]
 			)
 		

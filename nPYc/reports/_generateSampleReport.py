@@ -117,7 +117,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 	# Convert to dataframe
 	sampleSummary['Acquired'] = pandas.DataFrame(data = temp,
-		index = ['All', 'Study Sample', 'Study Pool', 'External Reference', 'Serial Dilution', 'Blank Sample', 'Unspecified SampleType or AssayRole'],
+		index = ['All', 'Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution', 'Blank', 'Unspecified SampleType or AssayRole'],
 		columns = ['Total', 'Marked for Exclusion'])
 
 	# Marked for exclusion - details

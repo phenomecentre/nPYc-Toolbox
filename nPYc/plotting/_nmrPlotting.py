@@ -6,11 +6,11 @@ import seaborn as sns
 import numpy
 import pandas as pd
 from os.path import basename
-from nPYc.enumerations import SampleType
 import copy
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import plotly.graph_objs as go
+from ..enumerations import AssayRole, SampleType
 
 
 def plotPW(nmrData, savePath=None, title='Line with values (Hz)', figureFormat='png', dpi=72, figureSize=(11,7)):
@@ -41,26 +41,43 @@ def plotPW(nmrData, savePath=None, title='Line with values (Hz)', figureFormat='
 				sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
 	else:
 		sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-						   SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
+						SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey',
+						'Study Sample': 'b', 'Study Reference': 'g', 'Long-Term Reference': 'r',
+						'Method Reference': 'm', 'Blank': 'c', 'Unspecified SampleType or AssayRole': 'grey'}
 
-	sns.set_color_codes(palette='deep')	
+
+	sns.set_color_codes(palette='deep')
 	fig, ax = plt.subplots(1, figsize=figureSize, dpi=dpi)
+
+	# Masks for different sample categories
+	SSmask = (nmrData.sampleMetadata['SampleType'] == SampleType.StudySample) & (nmrData.sampleMetadata['AssayRole'] == AssayRole.Assay)
+	SPmask = (nmrData.sampleMetadata['SampleType'] == SampleType.StudyPool) & (nmrData.sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
+	ERmask = (nmrData.sampleMetadata['SampleType'] == SampleType.ExternalReference) & (nmrData.sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
+	SRDmask = (nmrData.sampleMetadata['SampleType'] == SampleType.StudyPool) & (nmrData.sampleMetadata['AssayRole'] == AssayRole.LinearityReference)
+	Blankmask = nmrData.sampleMetadata['SampleType'] == SampleType.ProceduralBlank
+	UnclearRolemask = (SSmask==False) & (SPmask==False) & (ERmask==False) & (SRDmask == False) & (Blankmask==False)
+
+
 	#all the pw values
-	pw_ER = nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].values == SampleType.ExternalReference]['Line Width (Hz)']
-	pw_SP = nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].values == SampleType.StudyPool]['Line Width (Hz)']
-	pw_SS = nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].values == SampleType.StudySample]['Line Width (Hz)']
-	pw_unknown = nmrData.sampleMetadata.iloc[nmrData.sampleMetadata['SampleType'].isnull().values]['Line Width (Hz)']#this is the ones that either had missing info or for what ever reason the status column has a nan or null value and cannot identify as ltr, sr etc
-	tempDF = pd.concat([pw_SS, pw_SP, pw_ER, pw_unknown], axis=1)#put them all together in a new df
-	tempDF.columns = [SampleType.StudySample, SampleType.StudyPool, SampleType.ExternalReference, 'Other']
+	pw_ER = nmrData.sampleMetadata[ERmask]['Line Width (Hz)']
+	pw_SP = nmrData.sampleMetadata[SPmask]['Line Width (Hz)']
+	pw_SS = nmrData.sampleMetadata[SSmask]['Line Width (Hz)']
+	pw_SRD = nmrData.sampleMetadata[SRDmask]['Line Width (Hz)']
+	pw_Blank = nmrData.sampleMetadata[Blankmask]['Line Width (Hz)']
+	pw_Unknown = nmrData.sampleMetadata[UnclearRolemask]['Line Width (Hz)']
+	tempDF = pd.concat([pw_SS, pw_SP, pw_ER, pw_SRD, pw_Blank, pw_Unknown], axis=1)#put them all together in a new df
+	tempDF.columns = ['Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution', 'Blank', 'Unspecified SampleType or AssayRole']
 	tempDF.dropna(axis='columns', how='all', inplace=True) # remove empty columns
 	
-		#all the outliers only
+	#all the outliers only
 	pw_ER = pw_ER.where(pw_ER>nmrData.Attributes['PWFailThreshold'], numpy.nan) #anything smaller than pw threshold set to NaN so doesnt plot
 	pw_SP = pw_SP.where(pw_SP>nmrData.Attributes['PWFailThreshold'], numpy.nan)
 	pw_SS = pw_SS.where(pw_SS>nmrData.Attributes['PWFailThreshold'], numpy.nan)
-	pw_unknown = pw_unknown.where(pw_unknown>nmrData.Attributes['PWFailThreshold'], numpy.nan)
-	tempDF_outliers = pd.concat([pw_SS, pw_SP, pw_ER, pw_unknown], axis=1)#put them all together in a new df
-	tempDF_outliers.columns = ['SS', 'SP','ER', 'Unknown(missing status)']
+	pw_SRD = pw_SRD.where(pw_SRD>nmrData.Attributes['PWFailThreshold'], numpy.nan)
+	pw_Blank = pw_Blank.where(pw_Blank>nmrData.Attributes['PWFailThreshold'], numpy.nan)
+	pw_Unknown = pw_Unknown.where(pw_Unknown>nmrData.Attributes['PWFailThreshold'], numpy.nan)
+	tempDF_outliers = pd.concat([pw_SS, pw_SP, pw_ER, pw_SRD, pw_Blank, pw_Unknown], axis=1)#put them all together in a new df
+	tempDF_outliers.columns = ['Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution', 'Blank', 'Unspecified SampleType or AssayRole']
 	tempDF_outliers.dropna(axis='columns', how='all', inplace=True) # remove empty columns
 	
 	#plot fail threshold line only if there exists values greater than the fail (normally 1.4 set in SOP)
