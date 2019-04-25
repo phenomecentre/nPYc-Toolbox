@@ -22,6 +22,7 @@ from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..enumerations import AssayRole, SampleType
 from ._generateBasicPCAReport import generateBasicPCAReport
 from ..reports._finalReportPeakPantheR import _finalReportPeakPantheR
+from ..utilities._filters import blankFilter
 
 
 from ..__init__ import __version__ as version
@@ -220,6 +221,9 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
                          index=['Relative Standard Devation (RSD)', 'RSD of SR Samples: Threshold',
                                 'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied']))
+    if (dataset.Attributes['blankFilter'] == 'True'):
+        FeatureSelectionTable = FeatureSelectionTable.append(
+            pandas.DataFrame(data=['yes'], index=['Blank Filtering'], columns=['Value Applied']))
     if (dataset.Attributes['artifactualFilter'] == 'True'):
         FeatureSelectionTable = FeatureSelectionTable.append(pandas.DataFrame(
             data=['yes', dataset.Attributes['deltaMzArtifactual'], dataset.Attributes['overlapThresholdArtifactual'],
@@ -752,30 +756,16 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-    SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
+    SRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
+    SRDmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
     Blankmask = dataset.sampleMetadata['SampleType'] == SampleType.ProceduralBlank
 
-    # Set up template item and save required info
-    item = dict()
-    item['Name'] = dataset.name
-    item['ReportType'] = 'feature summary'
-    item['Nfeatures'] = dataset.intensityData.shape[1]
-    item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(SSmask))
-    item['SPcount'] = str(sum(SPmask))
-    item['ERcount'] = str(sum(ERmask))
-    item['LRcount'] = str(sum(LRmask))
-    item['corrMethod'] = dataset.Attributes['corrMethod']
+    # Define passmask as current featureMask
+    passMask = dataset.featureMask
 
-
-    ##
-    # Report stats
-    ##
+    # Set up path to save
     if destinationPath is not None:
         if not os.path.exists(destinationPath):
             os.makedirs(destinationPath)
@@ -788,45 +778,53 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
         graphicsPath = None
 
     # Feature selection parameters and numbers passing
-
-    # rsdSP <= rsdSS
-    rsdSS = rsd(dataset.intensityData[SSmask, :])
-    item['rsdSPvsSSvarianceRatio'] = str(dataset.Attributes['varianceRatio'])
-    item['rsdSPvsSSPassed'] = sum((dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS)
+    item = dict()
+    item['Name'] = dataset.name
+    item['Nfeatures'] = dataset.intensityData.shape[1]
 
     # Correlation to dilution
     item['corrMethod'] = dataset.Attributes['corrMethod']
     item['corrThreshold'] = dataset.Attributes['corrThreshold']
+
     if sum(dataset.corrExclusions) != dataset.noSamples:
         item['corrExclusions'] = str(
             dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
     else:
         item['corrExclusions'] = 'none'
-    item['corrPassed'] = sum(dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
 
-    # rsdSP
+    if sum(SRDmask) > 0:
+        item['corrPassed'] = str(sum(dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])) + ' passed selection.'
+        passMask = numpy.logical_and(passMask, dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
+    else:
+        item['corrPassed'] = 'Not applied (no SRD samples present).'
+
+    # RSD in SR samples, and RSD in SS samples > RSD in SR samples
     item['rsdThreshold'] = dataset.Attributes['rsdThreshold']
-    item['rsdPassed'] = sum(dataset.rsdSP <= dataset.Attributes['rsdThreshold'])
+    item['rsdSPvsSSvarianceRatio'] = str(dataset.Attributes['varianceRatio'])
+    rsdSS = rsd(dataset.intensityData[SSmask, :])
 
-    # Artifactual filtering
-    passMask = (dataset.correlationToDilution >= dataset.Attributes['corrThreshold']) & (
-                dataset.rsdSP <= dataset.Attributes['rsdThreshold']) & (
-                           (dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS) & (dataset.featureMask == True)
-    if withArtifactualFiltering:
-        passMask = dataset.artifactualFilter(featMask=passMask)
+    if sum(SRmask) > 0:
+        item['rsdPassed'] = str(sum(dataset.rsdSP <= dataset.Attributes['rsdThreshold'])) + ' passed selection.'
+        item['rsdSPvsSSPassed'] = str(sum((dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS)) + ' passed selection.'
+        passMask = numpy.logical_and(passMask, dataset.rsdSP <= dataset.Attributes['rsdThreshold'], (dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS)
+    else:
+        item['rsdPassed'] = 'Not applied (no SR samples present).'
+        item['rsdSPvsSSPassed'] = 'Not applied (no SR samples present).'
 
+    # Blank mask
     if ('blankThreshold' in dataset.Attributes.keys()) & (sum(Blankmask) > 2):
-        from ..utilities._filters import blankFilter
 
         blankMask = blankFilter(dataset)
-
         passMask = numpy.logical_and(passMask, blankMask)
 
         item['BlankPassed'] = sum(blankMask)
         item['BlankThreshold'] = dataset.Attributes['blankThreshold']
 
+    # Artifactual filtering
     if withArtifactualFiltering:
+        passMask = dataset.artifactualFilter(featMask=passMask)
         item['artifactualPassed'] = sum(passMask)
+
     item['featuresPassed'] = sum(passMask)
 
     # Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds
@@ -873,6 +871,12 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
 
     fig, ax = plt.subplots(1, figsize=dataset.Attributes['figureSize'], dpi=dataset.Attributes['dpi'])
     sns.heatmap(test, annot=True, fmt='g', cbar=False)
+    x_format = ax.xaxis.get_major_formatter()
+    x_format.seq = ["{:0.0f}".format(float(s)) for s in x_format.seq]
+    y_format = ax.yaxis.get_major_formatter()
+    y_format.seq = ["{:0.2f}".format(float(s)) for s in y_format.seq]
+    ax.xaxis.set_major_formatter(x_format)
+    ax.yaxis.set_major_formatter(y_format)
     plt.tight_layout()
 
     if destinationPath:
@@ -882,20 +886,15 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
         plt.close()
 
     else:
-        print(
-            'Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds')
+        print('Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds')
         plt.show()
 
         print('Summary of current feature filtering parameters and number of features passing at each stage\n')
-        print('Number of features in original dataset: ' + str(item['Nfeatures']) + '\n\n' +
-              'Features filtered on:\n' +
-              'Correlation (' + item['corrMethod'] + ', exclusions: ' + item[
-                  'corrExclusions'] + ') to dilution greater than ' + str(item['corrThreshold']) + ': ' + str(
-            item['corrPassed']) + ' passed selection.\n' +
-              'Relative Standard Deviation (RSD) in study reference (SR) samples below ' + str(
-            item['rsdThreshold']) + ': ' + str(item['rsdPassed']) + ' passed selection.\n' +
-              'RSD in study samples (SS) * ' + item['rsdSPvsSSvarianceRatio'] + ' >= RSD in SR samples: ' + str(
-            item['rsdSPvsSSPassed']) + ' passed selection.')
+        print('Number of features in original dataset: ' + str(item['Nfeatures']) + '\n')
+        print('Features filtered on:')
+        print('Correlation (' + item['corrMethod'] + ', exclusions: ' + item['corrExclusions'] + ') to dilution greater than ' + str(item['corrThreshold']) + ': ' + item['corrPassed'])
+        print('Relative Standard Deviation (RSD) in study reference (SR) samples below ' + str(item['rsdThreshold']) + ': ' + item['rsdPassed'])
+        print('RSD in study samples (SS) * ' + item['rsdSPvsSSvarianceRatio'] + ' >= RSD in SR samples: ' + item['rsdSPvsSSPassed'])
         if 'BlankThreshold' in item:
             print('Mean intensity in SS > 95 % intensity * ' + str(item['BlankThreshold']) + ' in sampleBlanks: ' + str(item['BlankPassed']) + ' features passed selection.')
         if withArtifactualFiltering:

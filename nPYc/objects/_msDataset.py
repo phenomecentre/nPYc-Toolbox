@@ -351,6 +351,12 @@ class MSDataset(Dataset):
 
 			featureMask = numpy.logical_and(featureMask, blankMask)
 
+			# Save for reporting
+			if (blankThreshold is not None) & (sum(self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank) > 2):
+				self.Attributes['blankFilter'] = False
+			else:
+				self.Attributes['blankFilter'] = True
+
 			# Artifactual filtering
 			if withArtifactualFiltering:
 				if (deltaMzArtifactual is not None) | (corrThresholdArtifactual is not None) | (overlapThresholdArtifactual is not None):
