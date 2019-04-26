@@ -85,7 +85,9 @@ class NMRDataset(Dataset):
 			##
 			# Set up additional metadata columns
 			##
-			self.sampleMetadata['Acquired Time'] = pandas.to_datetime(self.sampleMetadata['Acquired Time'], utc=True).dt.to_pydatetime()
+			self.sampleMetadata['Acquired Time'] = pandas.to_datetime(self.sampleMetadata['Acquired Time'], utc=True).dt.tz_localize(None)
+			self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+
 			self.sampleMetadata['AssayRole'] = None#AssayRole.Assay
 			self.sampleMetadata['SampleType'] = None#SampleType.StudySample
 			self.sampleMetadata['Dilution'] = 100

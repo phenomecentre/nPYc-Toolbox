@@ -43,7 +43,7 @@ def plotPW(nmrData, savePath=None, title='Line with values (Hz)', figureFormat='
 		sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
 						SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey',
 						'Study Sample': 'b', 'Study Reference': 'g', 'Long-Term Reference': 'r',
-						'Method Reference': 'm', 'Blank': 'c', 'Unspecified SampleType or AssayRole': 'grey'}
+						'Method Reference': 'm', 'Blank': 'c', 'Unspecified SampleType \n or AssayRole': 'grey'}
 
 
 	sns.set_color_codes(palette='deep')
