@@ -43,7 +43,7 @@ def plotPW(nmrData, savePath=None, title='Line with values (Hz)', figureFormat='
 		sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
 						SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey',
 						'Study Sample': 'b', 'Study Reference': 'g', 'Long-Term Reference': 'r',
-						'Method Reference': 'm', 'Blank': 'c', 'Unspecified SampleType \n or AssayRole': 'grey'}
+						'Method Reference': 'm', 'Blank': 'c', 'Unspecified SampleType or AssayRole': 'grey'}
 
 
 	sns.set_color_codes(palette='deep')
@@ -87,7 +87,8 @@ def plotPW(nmrData, savePath=None, title='Line with values (Hz)', figureFormat='
 
 	if numpy.size(tempDF_outliers) > 0:#we dont attempt to plot if their is no outliers
 		sns.stripplot(data=tempDF_outliers, jitter=True, color="red")#overlay strip plot so can see the data points are outliers
-	sns.violinplot(data=tempDF, cut=0, palette=sTypeColourDict) #cut:Set to 0 to limit the violin range within the range of the observed data
+	ax = sns.violinplot(data=tempDF, cut=0, palette=sTypeColourDict) #cut:Set to 0 to limit the violin range within the range of the observed data
+	ax.set_xticklabels(ax.get_xticklabels(), fontsize=9)
 	plt.suptitle(title)
 	plt.xlabel('')
 	plt.ylabel('Line width (Hz)')		
