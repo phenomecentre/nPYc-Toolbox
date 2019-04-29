@@ -1196,7 +1196,7 @@ class Dataset:
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
         
-		csvData = pandas.read_csv(filePath, dtype={'Sample ID': str})
+		csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str})
 		currentMetadata = self.sampleMetadata.copy()
 
 		if 'Sample File Name' not in csvData.columns:
@@ -1207,8 +1207,7 @@ class Dataset:
 		if any(u_counts > 1):
 			warnings.warn('Check and remove duplicates in CSV file')
 			return
-		# To account for Raw Bruker acquisition numbers
-		csvData['Sample File Name'] = csvData['Sample File Name'].astype(str)
+
 		# Store previous AssayRole and SampleType in case they were parsed using from filename:
 		#
 		oldAssayRole = currentMetadata['AssayRole']

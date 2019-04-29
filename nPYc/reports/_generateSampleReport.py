@@ -45,6 +45,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	if withExclusions:
 		data.applyMasks()
 
+	sampleIdentifier = 'Sample ID' if 'Sample File Name' in data.sampleMetadata else 'Sampling ID'
 	sampleSummary = dict()
 	sampleSummary['Name'] = data.name
 
@@ -77,7 +78,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	# Determine if samples have been excluded
 	try:
 		excludedIX = [i for i, x in enumerate(data.excludedFlag) if x == 'Samples']
-		sampleMetadataExcluded = pandas.DataFrame(columns=['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available', 'Sampling ID'])
+		sampleMetadataExcluded = pandas.DataFrame(columns=['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available', sampleIdentifier])
 		excluded = len(excludedIX)
 	except:
 		excluded = 0
@@ -88,8 +89,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		for i in excludedIX:
 			temp = copy.deepcopy(data.sampleMetadataExcluded[i])
 			
-			if ('Sampling ID' in temp):
-				sampleMetadataExcluded = sampleMetadataExcluded.append(temp[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available', 'Sampling ID']], ignore_index=True)
+			if (sampleIdentifier in temp):
+				sampleMetadataExcluded = sampleMetadataExcluded.append(temp[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available', sampleIdentifier]], ignore_index=True)
 			
 			else:
 				sampleMetadataExcluded = sampleMetadataExcluded.append(temp[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available']], ignore_index=True)
@@ -104,7 +105,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		SRDmaskEx = (sampleMetadataExcluded['AssayRole'] == AssayRole.LinearityReference) & (sampleMetadataExcluded['SampleType'] == SampleType.StudyPool)
 		BlankmaskEx = sampleMetadataExcluded['SampleType'] == SampleType.ProceduralBlank
 		UnclearRolemaskEx = (SSmaskEx==False) & (SPmaskEx==False) & (ERmaskEx==False) & (BlankmaskEx == False) & (SRDmaskEx == False)
-		sampleSummary['Excluded Details'] = sampleMetadataExcluded[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Sampling ID']]
+		sampleSummary['Excluded Details'] = sampleMetadataExcluded[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', sampleIdentifier]]
 
 
 	# Summary table for samples acquired
@@ -122,7 +123,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 	# Marked for exclusion - details
 	if (sum(markedToExclude) != 0):
-		sampleSummary['MarkedToExclude Details'] = data.sampleMetadata[['Sample File Name','Exclusion Details']][markedToExclude]
+		sampleSummary['MarkedToExclude Details'] = data.sampleMetadata[['Sample File Name', 'Exclusion Details']][markedToExclude]
 
 	# Save details of samples of unknown type
 	if (sum(NotInCSVmask) != 0):
@@ -134,9 +135,9 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 	if hasattr(data, 'sampleAbsentMetadata'):
 		if 'Sample File Name' in data.sampleAbsentMetadata.columns:
-			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sample File Name', 'Sample ID']]
+			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sample File Name', sampleIdentifier]]
 		else:
-			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sampling ID', 'Assay data name', 'LIMS Marked Missing']]
+			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[[sampleIdentifier, 'Assay data name', 'LIMS Marked Missing']]
 
 	# Finally - add column of samples already excluded to sampleSummary
 	if excluded != 0:
@@ -145,8 +146,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		# Save field with Study Samples exclusions
 		if (sum(SSmaskEx) != 0):
 			
-			if ('Sampling ID' in sampleMetadataExcluded):
-				sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', 'Sampling ID', 'Exclusion Details']][SSmaskEx]
+			if (sampleIdentifier in sampleMetadataExcluded):
+				sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', sampleIdentifier, 'Exclusion Details']][SSmaskEx]
 
 			else:
 				sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', 'Exclusion Details']][SSmaskEx]
