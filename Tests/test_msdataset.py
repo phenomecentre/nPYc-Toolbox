@@ -36,7 +36,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 			 'Acquired Time': [datetime(2017, 5, 26, 16, 42, 57), datetime(2017, 5, 26, 16, 58, 49),
 							   datetime(2017, 5, 26, 17, 14, 41)], 'Run Order': [0, 1, 2], 'Batch': [1, 1, 2],
 			 'Correction Batch': [numpy.nan, 1, 2], 'Matrix': ['U', 'U', 'U'],
-			 'Subject ID': ['subject1', 'subject1', 'subject2'], 'Sampling ID': ['sample1', 'sample2', 'sample3'],
+			 'Subject ID': ['subject1', 'subject1', 'subject2'], 'Sample ID': ['sample1', 'sample2', 'sample3'],
 			 'Dilution': [numpy.nan, '60.0', '100.0'],'Exclusion Details': ['','','']})
 		self.msData.featureMetadata = pandas.DataFrame(
 			{'Feature Name': ['Feature1', 'Feature2', 'Feature3'], 'Retention Time': [6.2449, 2.7565, 5.0564],
@@ -1200,9 +1200,9 @@ class test_msdataset_synthetic(unittest.TestCase):
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset': True, 'QC': True, 'sampleMetadata': False})
 			self.assertRaises(TypeError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
-		with self.subTest(msg='if self.sampleMetadata[\'Sampling ID\'] is not str'):
+		with self.subTest(msg='if self.sampleMetadata[\'Sample ID\'] is not str'):
 			badDataset = copy.deepcopy(self.msData)
-			badDataset.sampleMetadata['Sampling ID'] = 5.
+			badDataset.sampleMetadata['Sample ID'] = 5.
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset': True, 'QC': True, 'sampleMetadata': False})
 			self.assertRaises(TypeError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -2069,16 +2069,16 @@ class test_msdataset_import_biocrates(unittest.TestCase):
 
 	def test_samples(self):
 
-		with self.subTest(msg='Checking Sampling IDs'):
+		with self.subTest(msg='Checking Sample IDs'):
 			samples = pandas.Series(['UnitTest1_LPOS_ToF02_S1W01', 'UnitTest1_LPOS_ToF02_S1W02',
 									'UnitTest1_LPOS_ToF02_S1W03', 'UnitTest1_LPOS_ToF02_S1W04',
 									'UnitTest1_LPOS_ToF02_S1W05', 'UnitTest1_LPOS_ToF02_S1W06',
 									'UnitTest1_LPOS_ToF02_S1W07', 'UnitTest1_LPOS_ToF02_S1W11_LTR',
 									'UnitTest1_LPOS_ToF02_S1W12_SR'],
-									name='Sampling ID',
+									name='Sample ID',
 									dtype=str)
 
-			pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sampling ID'], samples)
+			pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample ID'], samples)
 
 		with self.subTest(msg='Checking Sample Bar Code'):
 			samples = pandas.Series([1010751983, 1010751983, 1010751983, 1010751983, 1010751983, 1010751998, 1010751998, 1010751998, 1010751998],

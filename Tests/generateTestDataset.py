@@ -51,7 +51,7 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata['Exclusion Details'] = ''
 
 	data.sampleMetadata['Sample File Name'] = [randomword(10) for x in range(0, noSamp)]
-	data.sampleMetadata['Sampling ID'] = [randomword(10) for x in range(0, noSamp)]
+	data.sampleMetadata['Sample ID'] = [randomword(10) for x in range(0, noSamp)]
 	data.sampleMetadata['Dilution'] = numpy.random.rand(noSamp)
 
 	noClasses = numpy.random.randint(2, 5)

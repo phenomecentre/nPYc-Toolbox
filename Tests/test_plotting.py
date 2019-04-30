@@ -49,7 +49,7 @@ class test_plotting(unittest.TestCase):
 																			   SampleType.StudySample],
 																'Dilution': [numpy.nan, numpy.nan, numpy.nan],
 																'Correction Batch': [numpy.nan, numpy.nan, numpy.nan],
-																'Subject ID': ['', '', ''], 'Sampling ID': ['', '', ''],
+																'Subject ID': ['', '', ''], 'Sample ID': ['', '', ''],
 																'Sample Base Name': ['', '', ''],
 																'Exclusion Details': ['', '', '']})
 		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].dt.to_pydatetime()

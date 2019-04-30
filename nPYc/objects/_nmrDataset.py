@@ -95,7 +95,7 @@ class NMRDataset(Dataset):
 			self.sampleMetadata['Correction Batch'] = numpy.nan
 			runOrder = self.sampleMetadata.sort_values(by='Acquired Time').index.values
 			self.sampleMetadata['Run Order'] = numpy.argsort(runOrder)
-			self.sampleMetadata['Sampling ID'] = numpy.nan
+			self.sampleMetadata['Sample ID'] = numpy.nan
 			self.sampleMetadata['Exclusion Details'] = self.sampleMetadata['Warnings']
 			self.sampleMetadata['Metadata Available'] = False
 			self.sampleMetadata.drop('Warnings', inplace=True, axis=1)

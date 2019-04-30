@@ -405,7 +405,7 @@ class TargetedDataset(Dataset):
         self.sampleMetadata['SampleType']        = numpy.nan
         self.sampleMetadata['Dilution']          = numpy.nan
         self.sampleMetadata['Correction Batch']  = numpy.nan
-        self.sampleMetadata['Sampling ID']       = numpy.nan
+        self.sampleMetadata['Sample ID']       = numpy.nan
         self.sampleMetadata['Exclusion Details'] = numpy.nan
         #self.sampleMetadata['Batch']             = numpy.nan #already created
 
@@ -1145,7 +1145,7 @@ class TargetedDataset(Dataset):
         self.sampleMetadata['SampleType'] = numpy.nan
         self.sampleMetadata['Dilution'] = 100
         self.sampleMetadata['Correction Batch'] = numpy.nan
-        self.sampleMetadata['Sampling ID'] = numpy.nan
+        self.sampleMetadata['Sample ID'] = numpy.nan
         self.sampleMetadata['Exclusion Details'] = None
         # add Run Order
         self.sampleMetadata['Order'] = self.sampleMetadata.sort_values(by='Acquired Time').index
@@ -2236,7 +2236,7 @@ class TargetedDataset(Dataset):
         :raises TypeError: if self.sampleMetadata['Sample Base Name'] is not str
         :raises LookupError: if self.sampleMetadata does not have a Subject ID column
         :raises TypeError: if self.sampleMetadata['Subject ID'] is not a str
-        :raises TypeError: if self.sampleMetadata['Sampling ID'] is not a str
+        :raises TypeError: if self.sampleMetadata['Sample ID'] is not a str
         :raises ValueError: if self.featureMetadata does not have the same number of features as self._intensityData
         :raises TypeError: if self.featureMetadata['Feature Name'] is not a str
         :raises ValueError: if self.featureMetadata['Feature Name'] is not unique
@@ -2471,10 +2471,10 @@ class TargetedDataset(Dataset):
                     failure = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tFailure, \'self.sampleMetadata[\'Subject ID\']\' is ' + str(type(self.sampleMetadata['Subject ID'][0]))
                     failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
                 # end self.sampleMetadata['Subject ID']
-                # sampleMetadata['Sampling ID'] is str
-                condition = (self.sampleMetadata['Sampling ID'].dtype == numpy.dtype('O'))
-                success = 'Check self.sampleMetadata[\'Sampling ID\'] is str:\tOK'
-                failure = 'Check self.sampleMetadata[\'Sampling ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sampling ID\']\' is ' + str(type(self.sampleMetadata['Sampling ID'][0]))
+                # sampleMetadata['Sample ID'] is str
+                condition = (self.sampleMetadata['Sample ID'].dtype == numpy.dtype('O'))
+                success = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tOK'
+                failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sampling ID\']\' is ' + str(type(self.sampleMetadata['Sample ID'][0]))
                 failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
             # end self.sampleMetadata number of samples
             # end self.sampleMetadata

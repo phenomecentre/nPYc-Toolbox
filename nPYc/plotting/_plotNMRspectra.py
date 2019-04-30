@@ -4,7 +4,7 @@ import plotly.graph_objs as go
 from ..objects._nmrDataset import NMRDataset
 from ..enumerations import VariableType
 
-def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, sampleLabels='Sampling ID'):
+def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, sampleLabels='Sample ID'):
 	"""
 	Plot spectra from *dataset*.
 

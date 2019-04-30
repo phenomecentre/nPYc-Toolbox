@@ -667,7 +667,7 @@ class MSDataset(Dataset):
 		# Rename sample IDs
 		ids = self.sampleMetadata['Sample Identification']
 		self.sampleMetadata.drop(labels=['Sample Identification'], axis=1, inplace=True)
-		self.sampleMetadata.insert(0, 'Sampling ID', ids)
+		self.sampleMetadata.insert(0, 'Sample ID', ids)
 
 		# Put Feature Names first
 		names = self.featureMetadata['Feature Name']
@@ -1478,7 +1478,7 @@ class MSDataset(Dataset):
 		:raises TypeError: if self.sampleMetadata['Matrix'] is not a str
 		:raises LookupError: if self.sampleMetadata does not have a Subject ID column
 		:raises TypeError: if self.sampleMetadata['Subject ID'] is not a str
-		:raises TypeError: if self.sampleMetadata['Sampling ID'] is not a str
+		:raises TypeError: if self.sampleMetadata['Sample ID'] is not a str
 		:raises ValueError: if self.featureMetadata does not have the same number of features as self._intensityData
 		:raises TypeError: if self.featureMetadata['Feature Name'] is not a str
 		:raises ValueError: if self.featureMetadata['Feature Name'] is not unique
@@ -1905,10 +1905,10 @@ class MSDataset(Dataset):
 					failure = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tFailure, \'self.sampleMetadata[\'Subject ID\']\' is ' + str(type(self.sampleMetadata['Subject ID'][0]))
 					failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
 				# end self.sampleMetadata['Subject ID']
-				# sampleMetadata['Sampling ID'] is str
-				condition = (self.sampleMetadata['Sampling ID'].dtype == numpy.dtype('O'))
-				success = 'Check self.sampleMetadata[\'Sampling ID\'] is str:\tOK'
-				failure = 'Check self.sampleMetadata[\'Sampling ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sampling ID\']\' is ' + str(type(self.sampleMetadata['Sampling ID'][0]))
+				# sampleMetadata['Sample ID'] is str
+				condition = (self.sampleMetadata['Sample ID'].dtype == numpy.dtype('O'))
+				success = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tOK'
+				failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sample ID\']\' is ' + str(type(self.sampleMetadata['Sample ID'][0]))
 				failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
 			# end self.sampleMetadata number of samples
 			# end self.sampleMetadata
