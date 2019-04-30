@@ -186,7 +186,7 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			self.dataset.name = 'TestData'
 			self.dataset.sampleMetadata['Sample Base Name'] = self.dataset.sampleMetadata['Sample File Name']
 			self.dataset.sampleMetadata['BaselineFail'] = False
-			self.dataset.sampleMetadata['WaterPeakFail'] = False
+			self.dataset.sampleMetadata['SolventPeakFail'] = False
 			self.dataset.sampleMetadata['Metadata Available'] = True
 			nPYc.reports.generateReport(self.dataset, 'Final Report', destinationPath=tmpdirname)
 
@@ -196,7 +196,7 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_linewidthBoxplot.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_spectraWaterPeakRegion.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_spectraSolventPeakRegion.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
 	def test_report_nmr_raises(self):
