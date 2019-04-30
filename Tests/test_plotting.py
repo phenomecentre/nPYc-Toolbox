@@ -661,7 +661,7 @@ class test_plotting(unittest.TestCase):
 			self.assertEqual(len(onlyfiles), noPlots)
 
 
-	def test_plotWaterResonace(self):
+	def test_plotSolventResonace(self):
 		dataset = generateTestDataset(10, 1000, dtype='NMRDataset',
 												variableType=VariableType.Continuum,
 												sop='GenericNMRurine')
@@ -672,11 +672,11 @@ class test_plotting(unittest.TestCase):
 		low_area = numpy.array([False, False, True, False, False, False, False, False, False, True], dtype=bool)
 		low_neg = numpy.array([False, False, False, True, False, False, False, False, False, True], dtype=bool)
 
-		dataset.sampleMetadata['WaterPeakFail'] = low_area | low_neg | high_area | high_neg
+		dataset.sampleMetadata['SolventPeakFail'] = low_area | low_neg | high_area | high_neg
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			outputPath = os.path.join(tmpdirname, 'plot')
 
-			nPYc.plotting.plotWaterResonance(dataset, savePath=outputPath)
+			nPYc.plotting.plotSolventResonance(dataset, savePath=outputPath)
 
 			self.assertTrue(os.path.exists(outputPath))
 

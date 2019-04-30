@@ -22,7 +22,7 @@
         "Acquired Time" : "date", "Study" : "categorical", "Rack" : "categorical", "computer":"categorical",
         "AUNM":"categorical", "Technician" : "categorical", "Run Order" : "continuous", "Exclusion Details" : "categorical",
         "LineWidthFail": "categorial", "CalibrationFail": "categorical",
-		"BaselineFail" : "categorical", "WaterPeakFail": "categorical", "Line Width (Hz)" : "continuous",
+		"BaselineFail" : "categorical", "SolventPeakFail": "categorical", "Line Width (Hz)" : "continuous",
 		"Sample position" : "categorical", "Sample batch" : "categorical", "Instrument" : "categorical",
 		"Acquisition batch" : "categorical"},
     "excludeFromPlotting": ["Sample File Name", "Sample Base Name", "Data Present", "Study Reference",
