@@ -220,12 +220,11 @@ class NMRDataset(Dataset):
 
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
-
 	def updateMasks(self, filterSamples=True, filterFeatures=True,
 					sampleTypes=list(SampleType),#[SampleType.StudySample, SampleType.StudyPool],
 					assayRoles=list(AssayRole),#[AssayRole.Assay, AssayRole.PrecisionReference],
 					exclusionRegions=None,
-					sampleQCChecks=['LineWidthFail','CalibrationFail','BaselineFail','WaterPeakFail'],**kwargs):
+					sampleQCChecks=None,**kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
