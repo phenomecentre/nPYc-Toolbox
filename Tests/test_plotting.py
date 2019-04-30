@@ -902,7 +902,7 @@ class test_plotting_interactive(unittest.TestCase):
 			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, plottype='1')
 
 
-	def test_plotWaterResonaceInteractive(self):
+	def test_plotSolventResonaceInteractive(self):
 		dataset = generateTestDataset(10, 1000, dtype='NMRDataset',
 												variableType=VariableType.Continuum,
 												sop='GenericNMRurine')
@@ -913,9 +913,9 @@ class test_plotting_interactive(unittest.TestCase):
 		low_area = numpy.array([False, False, True, False, False, False, False, False, False, True], dtype=bool)
 		low_neg = numpy.array([False, False, False, True, False, False, False, False, False, True], dtype=bool)
 
-		dataset.sampleMetadata['WaterPeakFail'] = low_area | low_neg | high_area | high_neg
+		dataset.sampleMetadata['SolventPeakFail'] = low_area | low_neg | high_area | high_neg
 
-		figure = nPYc.plotting.plotWaterResonanceInteractive(dataset)
+		figure = nPYc.plotting.plotSolventResonanceInteractive(dataset)
 		self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
