@@ -20,7 +20,7 @@ from ._plotting import histogram, plotTICinteractive, plotLRTIC, plotCorrelation
 from ._nmrPlotting import plotPW, plotLineWidthInteractive, plotLineWidth
 from ._plotNMRcalibration import plotCalibration, plotCalibrationInteractive
 from ._plotNMRbaseline import plotBaseline, plotBaselineInteractive
-from ._plotNMRwater import plotWaterResonance, plotWaterResonanceInteractive
+from ._plotNMRsolvent import plotSolventResonance, plotSolventResonanceInteractive
 from ._plotNMRspectra import plotSpectraInteractive
 from ._jointplotRSDvCorrelation import jointplotRSDvCorrelation
 from ._plotRSDs import plotRSDs, plotRSDsInteractive
@@ -43,5 +43,5 @@ __all__ = ['histogram', 'plotBatchAndROCorrection', 'plotTIC', 'plotTICinteracti
 		   'plotIonMap', 'plotRSDs', 'plotRSDsInteractive', 'plotScree', 'plotOutliers', 'plotSpectralVariance', 'plotScores', 'plotScoresInteractive',
 		   'plotLoadings', 'plotLoadingsInteractive', 'plotDiscreteLoadings', 'plotFeatureRanges', 'plotMetadataDistribution', 'plotLOQRunOrder', 
 		   'plotFeatureLOQ', 'plotVariableScatter', 'plotAccuracyPrecision', 'plotCalibrationInteractive', 'plotLineWidth', 'plotLineWidthInteractive',
-		   'plotBaseline', 'plotBaselineInteractive', 'plotWaterResonance', 'plotWaterResonanceInteractive', 'plotSpectraInteractive', 'plotIonMapInteractive',
+		   'plotBaseline', 'plotBaselineInteractive', 'plotSolventResonance', 'plotSolventResonanceInteractive', 'plotSpectraInteractive', 'plotIonMapInteractive',
 		   'plotSpectralVarianceInteractive', 'correlationSpectroscopyInteractive', 'plotTargetedFeatureDistribution']

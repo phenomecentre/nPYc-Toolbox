@@ -15,9 +15,9 @@ from IPython.display import display, HTML
 from ..objects import NMRDataset
 from .._toolboxPath import toolboxPath
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..utilities._nmr import qcCheckBaseline, qcCheckWaterPeak
+from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
 from ._generateSampleReport import _generateSampleReport
-from ..plotting import plotWaterResonance, plotWaterResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive, histogram
+from ..plotting import plotSolventResonance, plotSolventResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive, histogram
 from ._generateBasicPCAReport import generateBasicPCAReport
 from ..enumerations import AssayRole, SampleType
 
@@ -170,7 +170,7 @@ def _featureReport(dataset, destinationPath=None):
 		iplot(figure)
 
 	##
-	# Water Peak plot
+	# Solvent Peak plot
 	##
 	if destinationPath:
 		item['finalFeatureBLWPplots3'] = os.path.join(graphicsPath,
@@ -178,16 +178,16 @@ def _featureReport(dataset, destinationPath=None):
 		saveAs = item['finalFeatureBLWPplots3']
 		
 	else:
-		print('Figure 4: Waterpeak Low and High')
+		print('Figure 4: Solvent peak Low and High')
 		saveAs = None
 
 	if destinationPath:
-		plotWaterResonance(dataset,	savePath=saveAs,
+		plotSolventResonance(dataset,	savePath=saveAs,
 									figureFormat=dataset.Attributes['figureFormat'],
 									dpi=dataset.Attributes['dpi'],
 									figureSize=dataset.Attributes['figureSize'])
 	else:
-		figure = plotWaterResonanceInteractive(dataset)
+		figure = plotSolventResonanceInteractive(dataset)
 		iplot(figure)
 	##
 	# exclusion summary
@@ -195,7 +195,7 @@ def _featureReport(dataset, destinationPath=None):
 	dataset._nmrQCChecks()
 
 	fail_summary = dataset.sampleMetadata.loc[:, ['Sample File Name', 'LineWidthFail',
-												  'CalibrationFail', 'BaselineFail', 'WaterPeakFail']]
+												  'CalibrationFail', 'BaselineFail', 'SolventPeakFail']]
 	fail_summary = fail_summary[(fail_summary.iloc[:, 1::] == 1).any(axis=1, bool_only=True)]
 
 	if not destinationPath:
@@ -283,10 +283,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 	# Table 2: data processed with these parameters
 	dataParametersTable = pandas.DataFrame(
 			data = [dataset.Attributes['calibrateTo'], dataset.Attributes['variableSize'], dataset.Attributes['baselineCheckRegion'],
-				   dataset.Attributes['waterPeakCheckRegion'], dataset.Attributes['LWpeakRange'], dataset.Attributes['LWpeakMultiplicity'],
+				   dataset.Attributes['solventPeakCheckRegion'], dataset.Attributes['LWpeakRange'], dataset.Attributes['LWpeakMultiplicity'],
 				   dataset.Attributes['PWFailThreshold'], dataset.Attributes['exclusionRegions']],
 			index = ['Referenced to (ppm)', 'Spectral Resolution (points)', 'Baseline Region Checked (ppm)', 
-					'Water Suppresion Region Checked (ppm)', 'Line Width: Calculated on', 'Line Width: Peak Multiplicity',
+					'Solvent Suppresion Region Checked (ppm)', 'Line Width: Calculated on', 'Line Width: Peak Multiplicity',
 					'Line Width: Threshold (Hz)', 'Spectral Regions Automatically Removed (ppm)'],
 			columns = ['Value Applied']
 			)
@@ -316,21 +316,21 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 			figureSize=dataset.Attributes['figureSize'])
 
 	##
-	# Water Peak plot
+	# Solvent Peak plot
 	##
 	if destinationPath:
-		item['spectraWaterPeakRegion'] = os.path.join(graphicsPath, item['Name'] + '_spectraWaterPeakRegion.' + dataset.Attributes['figureFormat'])
-		saveAs = item['spectraWaterPeakRegion']
+		item['spectraSolventPeakRegion'] = os.path.join(graphicsPath, item['Name'] + '_spectraSolventPeakRegion.' + dataset.Attributes['figureFormat'])
+		saveAs = item['spectraSolventPeakRegion']
 		
-		plotWaterResonance(dataset,	
+		plotSolventResonance(dataset,
 						 savePath=saveAs,
 						 figureFormat=dataset.Attributes['figureFormat'],
 						 dpi=dataset.Attributes['dpi'],
 						 figureSize=dataset.Attributes['figureSize'])
 				
 	else:
-		print('Figure 2: Distribution in intensity of spectral data around the removed water peak region.')
-		figure = plotWaterResonanceInteractive(dataset, title='')
+		print('Figure 2: Distribution in intensity of spectral data around the removed solvent peak region.')
+		figure = plotSolventResonanceInteractive(dataset, title='')
 		iplot(figure)
 
 	##

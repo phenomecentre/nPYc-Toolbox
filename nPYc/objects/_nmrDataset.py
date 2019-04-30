@@ -10,7 +10,7 @@ from ._dataset import Dataset
 from ..utilities import removeTrailingColumnNumbering
 from .._toolboxPath import toolboxPath
 from ..enumerations import VariableType, AssayRole, SampleType
-from ..utilities._nmr import qcCheckBaseline, qcCheckWaterPeak
+from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
 
 
 class NMRDataset(Dataset):
@@ -530,10 +530,10 @@ class NMRDataset(Dataset):
 
 			self.sampleMetadata['BaselineFail'] = isOutlierBaselineHigh | isOutlierBaselineLow
 
-		if 'waterPeakCheckRegion' in self.Attributes.keys():
+		if 'solventPeakCheckRegion' in self.Attributes.keys():
 			# Water peak check
-			ppmWaterLow = tuple(self.Attributes['waterPeakCheckRegion'][0])
-			ppmWaterHigh = tuple(self.Attributes['waterPeakCheckRegion'][1])
+			ppmWaterLow = tuple(self.Attributes['solventPeakCheckRegion'][0])
+			ppmWaterHigh = tuple(self.Attributes['solventPeakCheckRegion'][1])
 
 			# Obtain the spectral regions - add sample Mask filter??here
 			specsLowWaterPeakRegion = self.getFeatures(ppmWaterLow)[1]
@@ -542,7 +542,7 @@ class NMRDataset(Dataset):
 			isOutlierWaterPeakLow = qcCheckWaterPeak(specsLowWaterPeakRegion, self.Attributes['baseline_alpha'])
 			isOutlierWaterPeakHigh = qcCheckWaterPeak(specsHighWaterPeakRegion, self.Attributes['baseline_alpha'])
 
-			self.sampleMetadata['WaterPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
+			self.sampleMetadata['SolventPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
 
 		return None
 
