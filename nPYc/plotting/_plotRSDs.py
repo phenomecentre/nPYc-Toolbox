@@ -91,7 +91,7 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 	data = []
 	if SampleType.StudySample in rsdTable.columns:
 		studySamples = go.Scatter(
-			x = rsdTable['Study Sample'].values,
+			x = rsdTable[SampleType.StudySample].values,
 			y = reversedIndex,
 			mode = 'markers',
 			text = rsdTable['Feature Name'],
@@ -105,7 +105,7 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 
 	if SampleType.ExternalReference in rsdTable.columns:
 		externalRef = go.Scatter(
-			x = rsdTable['Long-Term Reference'].values,
+			x = rsdTable[SampleType.ExternalReference].values,
 			y = reversedIndex,
 			mode = 'markers',
 			text = rsdTable['Feature Name'],
@@ -119,7 +119,7 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 
 	if SampleType.StudyPool in rsdTable.columns:
 		studyPool = go.Scatter(
-			x = rsdTable['Study Reference'].values,
+			x = rsdTable[SampleType.StudyPool].values,
 			y = reversedIndex,
 			mode = 'markers',
 			text = rsdTable['Feature Name'],

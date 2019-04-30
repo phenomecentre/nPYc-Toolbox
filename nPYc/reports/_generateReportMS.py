@@ -221,9 +221,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
                          index=['Relative Standard Devation (RSD)', 'RSD of SR Samples: Threshold',
                                 'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied']))
-    if (dataset.Attributes['blankFilter'] == 'True'):
-        FeatureSelectionTable = FeatureSelectionTable.append(
-            pandas.DataFrame(data=['yes'], index=['Blank Filtering'], columns=['Value Applied']))
+    if 'blankFilter' in dataset.Attributes:
+        if dataset.Attributes['blankFilter'] == True:
+            FeatureSelectionTable = FeatureSelectionTable.append(
+                pandas.DataFrame(data=['yes'], index=['Blank Filtering'], columns=['Value Applied']))
     if (dataset.Attributes['artifactualFilter'] == 'True'):
         FeatureSelectionTable = FeatureSelectionTable.append(pandas.DataFrame(
             data=['yes', dataset.Attributes['deltaMzArtifactual'], dataset.Attributes['overlapThresholdArtifactual'],

@@ -888,7 +888,7 @@ class test_plotting_interactive(unittest.TestCase):
 			self.assertIsNotNone(data)
 
 		with self.subTest(msg='Linearity Reference Plot'):
-			data = nPYc.plotting.plotTICinteractive(self.dataset, plottype='Linearity Reference')
+			data = nPYc.plotting.plotTICinteractive(self.dataset, plottype='Serial Dilution')
 			self.assertIsNotNone(data)
 
 
@@ -1248,7 +1248,7 @@ class test_plotting_helpers(unittest.TestCase):
 		dataset = generateTestDataset(noSamp, noFeat, dtype='MSDataset', variableType=VariableType.Discrete, sop='Generic')
 
 		with self.subTest(msg='Check sorting'):
-			rsdTable = _plotRSDsHelper(dataset)
+			rsdTable = _plotRSDsHelper(dataset, withExclusions=True)
 			numpy.testing.assert_array_equal(numpy.sort(dataset.rsdSP)[::-1],rsdTable[SampleType.StudyPool].values)
 
 		with self.subTest(msg='Check columns'):
@@ -1258,7 +1258,7 @@ class test_plotting_helpers(unittest.TestCase):
 		with self.subTest(msg='With a feature mask'):
 
 			dataset.featureMask[0:2:noFeat] = False
-			rsdTable = _plotRSDsHelper(dataset)
+			rsdTable = _plotRSDsHelper(dataset, withExclusions=True)
 
 			self.assertEqual(len(rsdTable), sum(dataset.featureMask))
 

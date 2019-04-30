@@ -619,13 +619,13 @@ class test_dataset_synthetic(unittest.TestCase):
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
 			self.assertRaises(LookupError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
-		with self.subTest(msg='if self.sampleMetadata does not have a Sampling ID column'):
+		with self.subTest(msg='if self.sampleMetadata does not have a Sample ID column'):
 			badDataset = copy.deepcopy(testDataset)
-			badDataset.sampleMetadata.drop(['Sampling ID'], axis=1, inplace=True)
+			badDataset.sampleMetadata.drop(['Sample ID'], axis=1, inplace=True)
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
 			self.assertRaises(LookupError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
-		with self.subTest(msg='if self.sampleMetadata does not have a Sampling ID column'):
+		with self.subTest(msg='if self.sampleMetadata does not have a Exclusion Details column'):
 			badDataset = copy.deepcopy(testDataset)
 			badDataset.sampleMetadata.drop(['Exclusion Details'], axis=1, inplace=True)
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
@@ -1331,12 +1331,12 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
 									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
 									 'UT1_S1_s1', 'UT1_S2_s1', 'UT1_S3_s1', 'Not specified', 'UT1_S4_s2', 'UT1_S4_s3', 'UT1_S4_s4', 'UT1_S4_s5',
-									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sampling ID', dtype='str')
+									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sample ID', dtype='str')
 		samplingIDs = samplingIDs.astype(str)
 
 		data = copy.deepcopy(self.Data)
 		data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
-		pandas.util.testing.assert_series_equal(data.sampleMetadata['Sampling ID'], samplingIDs)
+		pandas.util.testing.assert_series_equal(data.sampleMetadata['Sample ID'], samplingIDs)
 
 
 	def test_dataset_load_npc_subjectinfo_columns(self):
@@ -1345,6 +1345,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 		data = copy.deepcopy(self.Data)
 		data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
+		data.addSampleInfo(descriptionFormat='NPC Subject Info', filePath=os.path.join('..','..','npc-standard-project','Project_Description','UnitTest1_metadata_PCDOC.014.xlsx'))
 		data.addSampleInfo(descriptionFormat='NPC Subject Info', filePath=os.path.join('..','..','npc-standard-project','Project_Description','UnitTest1_metadata_PCDOC.014.xlsx'))
 
 		for column in columns:
@@ -1368,7 +1369,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 										  True, True, True, True, True, True, True, False], dtype=bool)
 
 		expectedSampleMetadata = pandas.DataFrame(0, index=numpy.arange(115), columns=['Sample File Name', 'Sample Base Name', 'Batch', 'Correction Batch', 'Acquired Time', 'Run Order',
-																					   'Exclusion Details', 'Metadata Available', 'Sampling ID', 'AssayRole', 'SampleType', 'Dilution'])
+																					   'Exclusion Details', 'Metadata Available', 'Sample ID', 'AssayRole', 'SampleType', 'Dilution'])
 
 		expectedSampleMetadata['Sample File Name'] = ['UnitTest1_LPOS_ToF02_B1SRD01', 'UnitTest1_LPOS_ToF02_B1SRD02', 'UnitTest1_LPOS_ToF02_B1SRD03', 'UnitTest1_LPOS_ToF02_B1SRD04',
 												  'UnitTest1_LPOS_ToF02_B1SRD05', 'UnitTest1_LPOS_ToF02_B1SRD06', 'UnitTest1_LPOS_ToF02_B1SRD07', 'UnitTest1_LPOS_ToF02_B1SRD08',
@@ -1488,7 +1489,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 													   numpy.nan]
 
-		expectedSampleMetadata['Sampling ID'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+		expectedSampleMetadata['Sample ID'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 												 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 												 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 												 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,

@@ -335,8 +335,6 @@ class MSDataset(Dataset):
 
 		if filterFeatures:
 
-			blankMask = blankFilter(self, threshold=blankThreshold)
-
 			# Calculate RSD in SP samples and SS
 			mask = numpy.logical_and(self.sampleMetadata['AssayRole'].values == AssayRole.Assay,
 									 self.sampleMetadata['SampleType'].values == SampleType.StudySample)
@@ -349,13 +347,15 @@ class MSDataset(Dataset):
 			featureMask = (self.correlationToDilution >= correlationThreshold) & \
 						  (self.rsdSP <= rsdThreshold) & ((self.rsdSP * varianceRatio) <= rsdSS) & self.featureMask
 
-			featureMask = numpy.logical_and(featureMask, blankMask)
-
 			# Save for reporting
 			if (blankThreshold is not None) & (sum(self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank) > 2):
-				self.Attributes['blankFilter'] = False
-			else:
+
+				blankMask = blankFilter(self, threshold=blankThreshold)
+				featureMask = numpy.logical_and(featureMask, blankMask)
 				self.Attributes['blankFilter'] = True
+
+			else:
+				self.Attributes['blankFilter'] = False
 
 			# Artifactual filtering
 			if withArtifactualFiltering:

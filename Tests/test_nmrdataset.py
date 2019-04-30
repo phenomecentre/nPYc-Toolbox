@@ -395,9 +395,9 @@ class test_nmrdataset_bruker(unittest.TestCase):
 
 			dataset.addSampleInfo(descriptionFormat='NPC LIMS', filePath=limsFilePath)
 
-			testSeries = ['Sampling ID', 'Status', 'AssayRole', 'SampleType']
+			testSeries = ['Sample ID', 'Status', 'AssayRole', 'SampleType']
 
-			expected['Sampling ID'] = ['UT1_S2_u1', 'UT1_S3_u1', 'UT1_S4_u1', 'UT1_S4_u2', 'UT1_S4_u3',
+			expected['Sample ID'] = ['UT1_S2_u1', 'UT1_S3_u1', 'UT1_S4_u1', 'UT1_S4_u2', 'UT1_S4_u3',
 									   'UT1_S4_u4', 'External Reference Sample', 'Study Pool Sample']
 
 			expected['Status'] = ['Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Long Term Reference', 'Study Reference']
@@ -431,9 +431,9 @@ class test_nmrdataset_bruker(unittest.TestCase):
 
 			dataset.addSampleInfo(descriptionFormat='NPC LIMS', filePath=limsFilePath)
 
-			testSeries = ['Sampling ID', 'Status', 'AssayRole', 'SampleType']
+			testSeries = ['Sample ID', 'Status', 'AssayRole', 'SampleType']
 
-			expected['Sampling ID'] = ['UT3_S7', 'UT3_S8', 'UT3_S6', 'UT3_S5', 'UT3_S4', 'UT3_S3', 'UT3_S2', 'External Reference Sample', 'Study Pool Sample', 'UT3_S1']
+			expected['Sample ID'] = ['UT3_S7', 'UT3_S8', 'UT3_S6', 'UT3_S5', 'UT3_S4', 'UT3_S3', 'UT3_S2', 'External Reference Sample', 'Study Pool Sample', 'UT3_S1']
 
 			expected['Status'] = ['Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Long Term Reference', 'Study Reference', 'nan']
 

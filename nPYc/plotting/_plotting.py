@@ -272,7 +272,7 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 		Xlabel = 'Acquisition Time'
 		title = 'TIC by Sample Type Coloured by Batch'
 	
-	if plottype=='Linearity Reference': # Plot TIC for LR samples coloured by dilution
+	if plottype=='Serial Dilution': # Plot TIC for LR samples coloured by dilution
 
 		LRmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
 		

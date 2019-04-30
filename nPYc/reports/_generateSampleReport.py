@@ -45,7 +45,11 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	if withExclusions:
 		data.applyMasks()
 
-	sampleIdentifier = 'Sample ID' if 'Sample File Name' in data.sampleMetadata else 'Sampling ID'
+	if 'Sample ID' not in data.sampleMetadata:
+		sampleIdentifier = 'Sampling ID'
+	else:
+		sampleIdentifier = 'Sample ID'
+
 	sampleSummary = dict()
 	sampleSummary['Name'] = data.name
 

@@ -2206,11 +2206,11 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
 									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
 									 'UT1_S1_s1', 'UT1_S2_s1', 'UT1_S3_s1', 'Not specified', 'UT1_S4_s2', 'UT1_S4_s3', 'UT1_S4_s4', 'UT1_S4_s5',
-									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sampling ID', dtype='str')
+									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sample ID', dtype='str')
 		samplingIDs = samplingIDs.astype(str)
 
 		self.msData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sampling ID'], samplingIDs)
+		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample ID'], samplingIDs)
 
 
 	def test_msdataset_load_watersraw_metadata(self):

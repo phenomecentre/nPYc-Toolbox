@@ -188,9 +188,9 @@ class NMRDataset(Dataset):
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'SampleType'] = SampleType.ExternalReference
 
 		# Update Sampling ID values using new 'SampleType', special case for Study Pool, External Reference and Procedural Blank
-		self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'Not specified') | (self.sampleMetadata['Sampling ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.StudyPool)).tolist(), 'Sampling ID'] = 'Study Pool Sample'
-		self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'Not specified') | (self.sampleMetadata['Sampling ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ExternalReference)).tolist(), 'Sampling ID'] = 'External Reference Sample'
-		self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'Not specified') | (self.sampleMetadata['Sampling ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sampling ID'] = 'Procedural Blank Sample'
+		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.StudyPool)).tolist(), 'Sample ID'] = 'Study Pool Sample'
+		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ExternalReference)).tolist(), 'Sample ID'] = 'External Reference Sample'
+		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sample ID'] = 'Procedural Blank Sample'
 		# Neater output
 		#self.sampleMetadata.loc[self.sampleMetadata['Sample position'] == 'nan', 'Sample position'] = ''
 

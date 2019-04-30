@@ -52,7 +52,7 @@ class Dataset:
 		================ ========================================= ============
 		"""
 		self.sampleMetadata = pandas.DataFrame(None,
-											   columns=['Sampling ID', 'AssayRole', 'SampleType', 'Sample File Name',
+											   columns=['Sample ID', 'AssayRole', 'SampleType', 'Sample File Name',
 														'Sample Base Name', 'Dilution', 'Batch', 'Correction Batch',
 														'Acquired Time', 'Run Order', 'Exclusion Details', 'Metadata Available'])
 		"""
@@ -63,11 +63,11 @@ class Dataset:
 		================== ========================================= ============
 		Column             dtype                                     Usage
 		================== ========================================= ============
-		Sampling ID        str                                       ID of the :term:`sampling event` generating this sample
+		Sample ID          str                                       ID of the :term:`sampling event` generating this sample
 		AssayRole          :py:class:`~nPYc.enumerations.AssayRole`  Defines the role of this assay
 		SampleType         :py:class:`~nPYc.enumerations.SampleType` Defines the type of sample acquired
 		Sample File Name   str                                       :term:`Unique file name<Sample File Name>` for the analytical data
-		Sample Base Name   str                                       :term:`Common identifier<Sample Base Name>` that links analytical data to the *Sampling ID*
+		Sample Base Name   str                                       :term:`Common identifier<Sample Base Name>` that links analytical data to the *Sample ID*
 		Dilution           float                                     Where *AssayRole* is :py:attr:`~nPYc.enumerations.AssayRole.LinearityReference`, the expected abundance is indicated here
 		Batch              int                                       Acquisition batch
 		Correction Batch   int                                       When detecting and correcting for :term:`batch<Batch Effects>` and :term:`Run-Order<Run-Order Effects>` effects, run-order effects are characterised within samples sharing the same *Correction Batch*, while batch effects are detected between distinct values
@@ -263,7 +263,7 @@ class Dataset:
 		:raises LookupError: if self.sampleMetadata does not have a Batch column
 		:raises LookupError: if self.sampleMetadata does not have a Correction Batch column
 		:raises LookupError: if self.sampleMetadata does not have a Run Order column
-		:raises LookupError: if self.sampleMetadata does not have a Sampling ID column
+		:raises LookupError: if self.sampleMetadata does not have a Sample ID column
 		:raises LookupError: if self.sampleMetadata does not have a Sample Base Name column
 		:raises LookupError: if self.sampleMetadata does not have an Acquired Time column
 		:raises LookupError: if self.sampleMetadata does not have an Exclusion Details column
@@ -670,10 +670,10 @@ class Dataset:
 				failure = 'Check self.sampleMetadata[\'Run Order\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Run Order\' column'
 				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
 											exception=LookupError(failure))
-				# ['Sampling ID']
-				condition = ('Sampling ID' in self.sampleMetadata.columns)
-				success = 'Check self.sampleMetadata[\'Sampling ID\'] exists:\tOK'
-				failure = 'Check self.sampleMetadata[\'Sampling ID\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Sampling ID\' column'
+				# ['Sample ID']
+				condition = ('Sample ID' in self.sampleMetadata.columns)
+				success = 'Check self.sampleMetadata[\'Sample ID\'] exists:\tOK'
+				failure = 'Check self.sampleMetadata[\'Sample ID\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Sample ID\' column'
 				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
 											exception=LookupError(failure))
 				# ['Sample Base Name']
@@ -1371,8 +1371,8 @@ class Dataset:
 			warnings.warn('The LIMS File contains both a Sample ID and Sampling ID Fields')
 
 		# rename 'sample ID' to 'sampling ID' to match sampleMetadata format
-		if any(self.limsFile.columns.str.match('Sample ID')):
-			self.limsFile.rename(columns={'Sample ID': 'Sampling ID'}, inplace=True)
+		if any(self.limsFile.columns.str.match('Sampling ID')):
+			self.limsFile.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
 
 		# Prepare data
 		# Create normalised columns
@@ -1386,6 +1386,7 @@ class Dataset:
 		# Match limsFile to sampleMetdata for samples with data PRESENT
 		# Remove already present columns
 		if 'Sampling ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sampling ID'], axis=1, inplace=True)
+		if 'Sample ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sample ID'], axis=1, inplace=True)
 		if 'Subject ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Subject ID'], axis=1, inplace=True)
 
 		merged_samples = pandas.merge(self.sampleMetadata, self.limsFile, how='inner',left_on='Sample Base Name Normalised',
@@ -1422,7 +1423,7 @@ class Dataset:
 		# Enforce string type on matched data
 		self.sampleMetadata['Assay data name'] = self.sampleMetadata['Assay data name'].astype(str)
 		self.sampleMetadata['Assay data location'] = self.sampleMetadata['Assay data location'].astype(str)
-		self.sampleMetadata['Sampling ID'] = self.sampleMetadata['Sampling ID'].astype(str)
+		self.sampleMetadata['Sample ID'] = self.sampleMetadata['Sample ID'].astype(str)
 		self.sampleMetadata['Status'] = self.sampleMetadata['Status'].astype(str)
 		if hasattr(self.sampleMetadata, 'Sample batch'):
 			self.sampleMetadata['Sample batch'] = self.sampleMetadata['Sample batch'].astype(str)
@@ -1458,20 +1459,20 @@ class Dataset:
 
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
-		# Rename values in Sampling ID, special case for Study Pool, External Reference and Procedural Blank
+		# Rename values in Sample ID, special case for Study Pool, External Reference and Procedural Blank
 		if 'SampleType' in self.sampleMetadata.columns:
-			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (
-						self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata[
-																		  'SampleType'] == SampleType.StudyPool)).tolist(), 'Sampling ID'] = 'Study Pool Sample'
-			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (
-						self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata[
-																		  'SampleType'] == SampleType.ExternalReference)).tolist(), 'Sampling ID'] = 'External Reference Sample'
-			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (
-						self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata[
-																		  'SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sampling ID'] = 'Procedural Blank Sample'
-		self.sampleMetadata.loc[(self.sampleMetadata['Sampling ID'] == 'nan').tolist(), 'Sampling ID'] = 'Not specified'
+			self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'nan') | (
+						self.sampleMetadata['Sample ID'] == '')) & (self.sampleMetadata[
+																		  'SampleType'] == SampleType.StudyPool)).tolist(), 'Sample ID'] = 'Study Pool Sample'
+			self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'nan') | (
+						self.sampleMetadata['Sample ID'] == '')) & (self.sampleMetadata[
+																		  'SampleType'] == SampleType.ExternalReference)).tolist(), 'Sample ID'] = 'External Reference Sample'
+			self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'nan') | (
+						self.sampleMetadata['Sample ID'] == '')) & (self.sampleMetadata[
+																		  'SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sample ID'] = 'Procedural Blank Sample'
+		self.sampleMetadata.loc[(self.sampleMetadata['Sample ID'] == 'nan').tolist(), 'Sample ID'] = 'Not specified'
 		self.sampleMetadata.loc[(self.sampleMetadata[
-									 'Sampling ID'] == '').tolist(), 'Sampling ID'] = 'Present but undefined in the LIMS file'
+									 'Sample ID'] == '').tolist(), 'Sample ID'] = 'Present but undefined in the LIMS file'
 		# Metadata Available field is set to True
 		self.sampleMetadata.loc[merged_indices, 'Metadata Available'] = True
 
@@ -1482,7 +1483,7 @@ class Dataset:
 		"""
 		Match the Sample IDs in :py:attr:`sampleMetadata` to the subject information mapped in the sample manifest file found at *subjectInfoFile*.
 
-		The column *Sampling ID* in :py:attr:`sampleMetadata` is matched to *Sampling ID* in the *Sampling Events* sheet
+		The column *Sample ID* in :py:attr:`sampleMetadata` is matched to *Sample ID* in the *Sampling Events* sheet
 
 		:param str pathToSubjectInfoFile: path to subject information file, an Excel file with sheets 'Subject Info' and 'Sampling Events'
 		"""
