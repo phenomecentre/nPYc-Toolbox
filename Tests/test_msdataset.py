@@ -594,8 +594,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedFeatureMask = numpy.array([True, False, False, False, False], dtype=bool)
 
 			msData2.initialiseMasks()
-			msData2.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilution': True, 'varianceRatio': True,
-											   'artifactualFiltering': False,'blankFilter': True})
+			msData2.updateMasks(featureFilters={'rsdFilter': True, 'correlationToDilution': True, 'varianceRatio': True,
+											   'artifactualFiltering': False, 'blankFilter': False})
 
 			numpy.testing.assert_array_equal(expectedFeatureMask, msData2.featureMask)
 
@@ -605,8 +605,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedTempArtifactualLinkageMatrix = pandas.DataFrame(data=[[0, 1], [3, 4]], columns=['node1', 'node2'])
 
 			msData2.initialiseMasks()
-			msData2.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilution': True, 'varianceRatio': True,
-											   'artifactualFiltering': False,'blankFilter':True})
+			msData2.updateMasks(featureFilters={'rsdFilter': True, 'correlationToDilution': True, 'varianceRatio': True,
+											   'artifactualFiltering': True,'blankFilter':True})
 
 			pandas.util.testing.assert_frame_equal(expectedTempArtifactualLinkageMatrix, msData2._tempArtifactualLinkageMatrix)
 
