@@ -241,7 +241,7 @@ class test_dataset_synthetic(unittest.TestCase):
 								
 
 		with self.subTest(msg='Default Parameters'):
-			expectedSampleMask = numpy.array([False, False, False, False, False,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, False, False], dtype=bool)
+			expectedSampleMask = numpy.array([True, True, True, True, True,  True,  True,  True,  True, True,  True,  True, True,  True,  True,  True, True, True], dtype=bool)
 
 			dataset.initialiseMasks()
 			dataset.updateMasks(withArtifactualFiltering=False, filterFeatures=False)
@@ -1226,7 +1226,11 @@ class test_dataset_loadsop(unittest.TestCase):
 						  'featureMetadataNotExported': [],
 						  "analyticalMeasurements":{},
 						  "excludeFromPlotting":[],
-						  "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
+						  "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m",
+												"ProceduralBlank": "c", "Other": "grey", "Study Sample": "b",
+												"Study Reference": "g", "Long-Term Reference": "r",
+												"Method Reference": "m", "Blank": "c",
+												"Unspecified SampleType or AssayRole": "grey"}
 						  }
 
 			self.assertEqual(self.data.Attributes, attributes)
@@ -1249,7 +1253,11 @@ class test_dataset_loadsop(unittest.TestCase):
 					  'featureMetadataNotExported': [],
 					  "analyticalMeasurements":{},
 					  "excludeFromPlotting":[],
-					  "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
+					  "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m",
+												"ProceduralBlank": "c", "Other": "grey", "Study Sample": "b",
+												"Study Reference": "g", "Long-Term Reference": "r",
+												"Method Reference": "m", "Blank": "c",
+												"Unspecified SampleType or AssayRole": "grey"}
 					}
 
 		self.assertEqual(data.Attributes, attributes)

@@ -654,7 +654,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 
 
 		with self.subTest(msg='Default Parameters'):
-			expectedSampleMask = numpy.array([False, False, False, False, False,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, False, False], dtype=bool)
+			expectedSampleMask = numpy.array([True, True, True, True, True,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, True, True], dtype=bool)
 
 			msData.initialiseMasks()
 			msData.updateMasks(withArtifactualFiltering=False, filterFeatures=False)
