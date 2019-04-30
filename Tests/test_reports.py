@@ -411,7 +411,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 																			   SampleType.StudySample],
 																'Dilution': [numpy.nan, numpy.nan, numpy.nan],
 																'Correction Batch': [numpy.nan, numpy.nan, numpy.nan],
-																'Subject ID': ['', '', ''], 'Sampling ID': ['', '', ''],
+																'Subject ID': ['', '', ''], 'Sample ID': ['', '', ''],
 																'Sample Base Name': ['', '', ''],
 																'Exclusion Details': ['', '', ''],
 																'Metadata Available': [True, True, True]})
@@ -504,7 +504,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		self.tDataAccPrec.sampleMetadata['Dilution'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan]
 		self.tDataAccPrec.sampleMetadata['Correction Batch'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan]
 		self.tDataAccPrec.sampleMetadata['Subject ID'] = ['', '', '', '', '', '', '', '']
-		self.tDataAccPrec.sampleMetadata['Sampling ID'] = ['', '', '', '', '', '', '', '']
+		self.tDataAccPrec.sampleMetadata['Sample ID'] = ['', '', '', '', '', '', '', '']
 		self.tDataAccPrec.sampleMetadata['Sample Base Name'] = ['', '', '', '', '', '', '', '']
 		self.tDataAccPrec.sampleMetadata['Metadata Available'] = True
 		self.tDataAccPrec.sampleMetadata['Exclusion Details'] = ['', '', '', '', '', '', '', '']

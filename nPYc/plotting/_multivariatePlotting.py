@@ -92,8 +92,8 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 	components = numpy.where(components==True)
 	components = components[0]
 	# TODO: fix this so can plot if model only has one component
-	if len(components)==1:
-		temp = numpy.arange(0,nc)
+	if len(components) == 1:
+		temp = numpy.arange(0, nc)
 		components = numpy.append(components, min(temp[temp!=components]))
 	nc = len(components)
 
@@ -130,9 +130,9 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 		if plotAssociation is not None:
 			fig = plt.figure(figsize=figureSize, dpi=dpi)
 			gs = gridspec.GridSpec(2, 10)
-			ax = plt.subplot(gs[:,3:])
-			ax1 = plt.subplot(gs[0,:2])
-			ax2 = plt.subplot(gs[1,:2])
+			ax = plt.subplot(gs[:, 3:])
+			ax1 = plt.subplot(gs[0,: 2])
+			ax2 = plt.subplot(gs[1,: 2])
 		else:
 			fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
 

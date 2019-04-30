@@ -2474,7 +2474,7 @@ class TargetedDataset(Dataset):
                 # sampleMetadata['Sample ID'] is str
                 condition = (self.sampleMetadata['Sample ID'].dtype == numpy.dtype('O'))
                 success = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tOK'
-                failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sampling ID\']\' is ' + str(type(self.sampleMetadata['Sample ID'][0]))
+                failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sample ID\']\' is ' + str(type(self.sampleMetadata['Sample ID'][0]))
                 failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
             # end self.sampleMetadata number of samples
             # end self.sampleMetadata
