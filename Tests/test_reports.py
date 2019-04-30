@@ -673,7 +673,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
-			nPYc.reports.multivariateReport.multivariateQCreport(inputDataset, pcaModel=pcaModel, reportType='analytical', withExclusions=True, destinationPath=tmpdirPCA)
+			nPYc.reports.multivariateReport(inputDataset, pcaModel=pcaModel, reportType='analytical', withExclusions=True, destinationPath=tmpdirPCA)
 			inputDataset.sampleMetadata['Metadata Available'] = True
 			with warnings.catch_warnings():
 				warnings.simplefilter('ignore', UserWarning)
