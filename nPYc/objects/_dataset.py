@@ -1496,30 +1496,32 @@ class Dataset:
 												converters={'Subject ID': str, 'Sampling ID': str})
 		cols = [c for c in self.samplingEvents.columns if c[:7] != 'Unnamed']
 		self.samplingEvents = self.samplingEvents[cols]
+		self.samplingEvents.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
 
 		# Create one overall samplingInfo sheet - combine subjectInfo and samplingEvents for samples present in samplingEvents
 		self.samplingInfo = pandas.merge(self.samplingEvents, self.subjectInfo, left_on='Subject ID',
 										 right_on='Subject ID', how='left', sort=False)
 
+		self.samplingInfo.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
+
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
-
 		# Remove any rows which are just nans
-		self.samplingInfo = self.samplingInfo.loc[self.samplingInfo['Sampling ID'].values != 'nan', :]
+		self.samplingInfo = self.samplingInfo.loc[self.samplingInfo['Sample ID'].values != 'nan', :]
 
 		# Rename 'Sample Type' to 'Biofluid'
 		if hasattr(self.samplingInfo, 'Sample Type'):
 			self.samplingInfo.rename(columns={'Sample Type': 'Biofluid'}, inplace=True)
 
 		# Check no duplicates in sampleInfo
-		u_ids, u_counts = numpy.unique(self.samplingInfo['Sampling ID'], return_counts=True)
+		u_ids, u_counts = numpy.unique(self.samplingInfo['Sample ID'], return_counts=True)
 		if any(u_counts > 1):
 			warnings.warn('Check and remove (non-biofluid related) duplicates in sample manifest file')
 
 		# Match subjectInfo to sampleMetadata for samples with data ABSENT (i.e., samples in sampleAbsentMetadata)
 		if hasattr(self, 'sampleAbsentMetadata'):
 			self.sampleAbsentMetadata = pandas.merge(self.sampleAbsentMetadata, self.samplingInfo,
-													 left_on='Sampling ID', right_on='Sampling ID', how='left',
+													 left_on='Sample ID', right_on='Sample ID', how='left',
 													 sort=False)
 
 			# Remove duplicate columns (these will be appended with _x or _y)
@@ -1531,8 +1533,8 @@ class Dataset:
 			self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
 
 		# Match subjectInfo to sampleMetdata for samples with data PRESENT
-		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.samplingInfo, left_on='Sampling ID',
-										   right_on='Sampling ID', how='left', sort=False)
+		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.samplingInfo, left_on='Sample ID',
+										   right_on='Sample ID', how='left', sort=False)
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		cols = [c for c in self.sampleMetadata.columns if c[-2:] != '_y']
@@ -1544,7 +1546,7 @@ class Dataset:
 
 		# Find samples present in sampleInfo but not in LIMS
 		info_butnotlims = self.samplingInfo.loc[
-						  self.samplingInfo['Sampling ID'].isin(self.limsFile['Sampling ID']) == False, :]
+						  self.samplingInfo['Sample ID'].isin(self.limsFile['Sample ID']) == False, :]
 
 		if info_butnotlims.shape[0] != 0:
 			self.subjectAbsentMetadata = info_butnotlims.copy(deep=True)
