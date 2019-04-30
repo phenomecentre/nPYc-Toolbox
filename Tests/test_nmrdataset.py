@@ -105,7 +105,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 		dataset.Attributes.pop('PWFailThreshold', None)
 		dataset.Attributes.pop('baselineCheckRegion', None)
-		dataset.Attributes.pop('waterPeakCheckRegion', None)
+		dataset.Attributes.pop('solventPeakCheckRegion', None)
 
 		dataset.sampleMetadata['AssayRole'] = pandas.Series([AssayRole.LinearityReference,
 								AssayRole.LinearityReference,
@@ -189,7 +189,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 		dataset.Attributes.pop('PWFailThreshold', None)
 		dataset.Attributes.pop('baselineCheckRegion', None)
-		dataset.Attributes.pop('waterPeakCheckRegion', None)
+		dataset.Attributes.pop('solventPeakCheckRegion', None)
 
 		ppm = numpy.linspace(-10, 10, noFeat)
 		dataset.featureMetadata = pandas.DataFrame(ppm, columns=['ppm'])
@@ -256,7 +256,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 		self.dataset.Attributes.pop('PWFailThreshold', None)
 		self.dataset.Attributes.pop('baselineCheckRegion', None)
-		self.dataset.Attributes.pop('waterPeakCheckRegion', None)
+		self.dataset.Attributes.pop('solventPeakCheckRegion', None)
 
 		with self.subTest('Calibration'):
 			bounds = numpy.std(self.dataset.sampleMetadata['Delta PPM']) * 3
@@ -311,8 +311,8 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			# Commented out assuming the test nmr dataset obtained with generateTestDataset always has these columns
 			#self.assertFalse('WaterPeakFail' in self.dataset.sampleMetadata.columns)
 
-		with self.subTest('Water Peak'):
-			self.dataset.Attributes['waterPeakCheckRegion'] = [(-2, -0.5), (9.5, 12.5)]
+		with self.subTest('Solvent Peak'):
+			self.dataset.Attributes['solventPeakCheckRegion'] = [(-2, -0.5), (9.5, 12.5)]
 
 			self.dataset._nmrQCChecks()
 
@@ -320,7 +320,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			expected[0] = True
 			# expected[2] = True
 
-			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['WaterPeakFail'].values)
+			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['SolventPeakFail'].values)
 
 
 	def test_baselineAreaAndNeg(self):

@@ -224,7 +224,7 @@ class NMRDataset(Dataset):
 					sampleTypes=list(SampleType),#[SampleType.StudySample, SampleType.StudyPool],
 					assayRoles=list(AssayRole),#[AssayRole.Assay, AssayRole.PrecisionReference],
 					exclusionRegions=None,
-					sampleQCChecks=None,**kwargs):
+					sampleQCChecks=[],**kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
@@ -539,8 +539,8 @@ class NMRDataset(Dataset):
 			specsLowWaterPeakRegion = self.getFeatures(ppmWaterLow)[1]
 			specsHighWaterPeakRegion = self.getFeatures(ppmWaterHigh)[1]
 
-			isOutlierWaterPeakLow = qcCheckWaterPeak(specsLowWaterPeakRegion, self.Attributes['baseline_alpha'])
-			isOutlierWaterPeakHigh = qcCheckWaterPeak(specsHighWaterPeakRegion, self.Attributes['baseline_alpha'])
+			isOutlierWaterPeakLow = qcCheckSolventPeak(specsLowWaterPeakRegion, self.Attributes['baseline_alpha'])
+			isOutlierWaterPeakHigh = qcCheckSolventPeak(specsHighWaterPeakRegion, self.Attributes['baseline_alpha'])
 
 			self.sampleMetadata['SolventPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
 
