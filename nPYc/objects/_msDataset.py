@@ -246,11 +246,9 @@ class MSDataset(Dataset):
 
 
 	def updateMasks(self, filterSamples=True, filterFeatures=True, 
-					sampleTypes=list(SampleType),#[SampleType.StudySample, SampleType.StudyPool],
-					assayRoles=list(AssayRole),#[AssayRole.Assay, AssayRole.PrecisionReference],
-					correlationThreshold=None, rsdThreshold=None, varianceRatio=None,
-					withArtifactualFiltering=None, deltaMzArtifactual=None, overlapThresholdArtifactual=None,
-					corrThresholdArtifactual=None, blankThreshold=None, aggregateRedundantFeatures=False, **kwargs):
+					sampleTypes=list(SampleType), assayRoles=list(AssayRole),
+					featureFilters={'rsdFilter':True, 'correlationToDilution':True, 'varianceRatio':True, 'artifactualFiltering': False,
+									'blankFilter':False}, **kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to QC parameters.
 
@@ -282,92 +280,124 @@ class MSDataset(Dataset):
 		:type blankThreshold: None, False, or float
 		"""
 
-		if rsdThreshold is None:
+		if 'rsdThreshold' in kwargs.keys():
+			rsdThreshold = kwargs['rsdThreshold']
+		else:
 			rsdThreshold = self.Attributes['rsdThreshold']
 		if not isinstance(rsdThreshold, numbers.Number):
 			raise TypeError('rsdThreshold must be a number, %s provided' % (type(rsdThreshold)))
 		elif rsdThreshold <= 0:
 			raise ValueError('rsdThreshold must be a positive value, %f provided' % (rsdThreshold))
 
-		if correlationThreshold is None:
+		if 'corrThreshold' in kwargs.keys():
+			correlationThreshold = kwargs['corrThreshold']
+		else:
 			correlationThreshold = self.Attributes['corrThreshold']
 		if not isinstance(correlationThreshold, numbers.Number):
 			raise TypeError('correlationThreshold must be a number in the range -1 to 1, %s provided' % (type(correlationThreshold)))
 		elif (correlationThreshold < -1) or (correlationThreshold > 1):
 			raise ValueError('correlationThreshold must be a number in the range -1 to 1, %f provided' % (correlationThreshold))
 
-		if varianceRatio is None:
+		if 'varianceRatio' in kwargs.keys():
+			varianceRatio = kwargs['varianceRatio']
+		else:
 			varianceRatio = self.Attributes['varianceRatio']
 		if not isinstance(varianceRatio, numbers.Number):
 			raise TypeError('varianceRatio must be a number, %s provided' % (type(varianceRatio)))
 
-		if withArtifactualFiltering is not None:
-			if not isinstance(withArtifactualFiltering, bool):
-				raise TypeError('withArtifactualFiltering must be a bool, %s provided' % (type(withArtifactualFiltering)))
-		if withArtifactualFiltering is None:
-			withArtifactualFiltering = self.Attributes['artifactualFilter']
-		# if self.Attributes['artifactualFilter'] is False, can't/shouldn't apply it. However if self.Attributes['artifactualFilter'] is True, the user can have the choice to not apply it (withArtifactualFilering=False).
-		if (withArtifactualFiltering is True) & (self.Attributes['artifactualFilter'] is False):
-			warnings.warn("Warning: Attributes['artifactualFilter'] set to \'False\', artifactual filtering cannot be applied.")
-			withArtifactualFiltering = False
 
-		if deltaMzArtifactual is not None:
+		if 'blankThreshold' in kwargs.keys():
+			blankThreshold = kwargs['blankThreshold']
+		else:
+			blankThreshold = self.Attributes['blankThreshold']
+		if not isinstance(blankThreshold, numbers.Number):
+			raise TypeError('blankThreshold must be a number, %s provided' % (type(blankThreshold)))
+
+		if featureFilters['artifactualFiltering'] is True:
+			if 'deltaMzArtifactual' in kwargs.keys():
+				deltaMzArtifactual = kwargs['deltaMzArtifactual']
+			else:
+				deltaMzArtifactual = self.Attributes['deltaMzArtifactual']
 			if not isinstance(deltaMzArtifactual, numbers.Number):
 				raise TypeError('deltaMzArtifactual must be a number , %s provided' % (type(deltaMzArtifactual)))
-			self.Attributes['deltaMzArtifactual'] = deltaMzArtifactual
 
-		if corrThresholdArtifactual is not None:
+
+			if 'corrThresholdArtifactual' in kwargs.keys():
+				corrThresholdArtifactual = kwargs['corrThresholdArtifactual']
+			else:
+				corrThresholdArtifactual = self.Attributes['corrThresholdArtifactual']
+
 			if not isinstance(corrThresholdArtifactual, numbers.Number):
 				raise TypeError('corrThresholdArtifactual must be a number in the range 0 to 1, %s provided' % (type(corrThresholdArtifactual)))
 			elif (corrThresholdArtifactual < 0) or (corrThresholdArtifactual > 1):
 				raise ValueError('corrThresholdArtifactual must be a number in the range 0 to 1, %f provided' % (corrThresholdArtifactual))
-			self.Attributes['corrThresholdArtifactual'] = corrThresholdArtifactual
 
-		if overlapThresholdArtifactual is not None:
+			if 'overlapThresholdArtifactual' in kwargs.keys():
+				overlapThresholdArtifactual = kwargs['overlapThresholdArtifactual']
+			else:
+				overlapThresholdArtifactual = self.Attributes['overlapThresholdArtifactual']
 			if not isinstance(overlapThresholdArtifactual, numbers.Number):
 				raise TypeError('overlapThresholdArtifactual must be a number , %s provided' % (type(overlapThresholdArtifactual)))
-			self.Attributes['overlapThresholdArtifactual'] = overlapThresholdArtifactual
 
-		if aggregateRedundantFeatures is True:
-			if self.VariableType != VariableType.Discrete:
-				raise TypeError('aggregateRedundantFeatures is only applicable to MSDataset objects containing data of type \'Discrete\'.')
-			self.Attributes['overlapThresholdArtifactual'] = overlapThresholdArtifactual
+		# under development
+		#if aggregateRedundantFeatures is True:
+			#if self.VariableType != VariableType.Discrete:
+		#		raise TypeError('aggregateRedundantFeatures is only applicable to MSDataset objects containing data of type \'Discrete\'.')
+		#	self.Attributes['overlapThresholdArtifactual'] = overlapThresholdArtifactual
 
 		if filterFeatures:
 
-			# Calculate RSD in SP samples and SS
-			mask = numpy.logical_and(self.sampleMetadata['AssayRole'].values == AssayRole.Assay,
-									 self.sampleMetadata['SampleType'].values == SampleType.StudySample)
+			featureMask = numpy.copy(self.featureMask)
 
-			mask = numpy.logical_and(mask,
-									 self.sampleMask)
+			if (featureFilters['rsdFilter'] is True) or (featureFilters['VarianceRatio'] is True):
+				# Calculate RSD in SP samples and SS
+				mask = numpy.logical_and(self.sampleMetadata['AssayRole'].values == AssayRole.Assay,
+										 self.sampleMetadata['SampleType'].values == SampleType.StudySample)
 
-			rsdSS = rsd(self._intensityData[mask, :])
+				mask = numpy.logical_and(mask, self.sampleMask)
 
-			featureMask = (self.correlationToDilution >= correlationThreshold) & \
-						  (self.rsdSP <= rsdThreshold) & ((self.rsdSP * varianceRatio) <= rsdSS) & self.featureMask
+				rsdSS = rsd(self._intensityData[mask, :])
 
+			if featureFilters['rsdFilter'] is True:
+
+				featureMask &= (self.rsdSP <= rsdThreshold)
+				#self.Attributes['rsdThreshold'] = rsdThreshold
+
+			if featureFilters['varianceRatio'] is True:
+
+				featureMask &= ((self.rsdSP * varianceRatio) <= rsdSS)
+				#self.Attributes['varianceRatio'] = varianceRatio
+
+			if featureFilters['correlationToDilution'] is True:
+				featureMask &= (self.correlationToDilution >= correlationThreshold)
+
+				#self.Attributes['corrThreshold'] = correlationThreshold
 			# Save for reporting
-			if (blankThreshold is not None) & (sum(self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank) > 2):
 
+			if featureFilters['blankFilter'] is True & (sum(self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank) > 2):
 				blankMask = blankFilter(self, threshold=blankThreshold)
-				featureMask = numpy.logical_and(featureMask, blankMask)
+				featureMask &= numpy.logical_and(featureMask, blankMask)
 				self.Attributes['blankFilter'] = True
-
+				#self.Attributes['blankThreshold'] = blankThreshold
 			else:
 				self.Attributes['blankFilter'] = False
 
 			# Artifactual filtering
-			if withArtifactualFiltering:
-				if (deltaMzArtifactual is not None) | (corrThresholdArtifactual is not None) | (overlapThresholdArtifactual is not None):
-					# Linkage update
-					self.updateArtifactualLinkageMatrix()
+			if featureFilters['artifactualFiltering'] is True:
+				# Linkage update
+				self.updateArtifactualLinkageMatrix()
 				featureMask = self.artifactualFilter(featMask=featureMask)
+				self.Attributes['artifactualFilter'] = True
+				self.Attributes['deltaMzArtifactual'] = deltaMzArtifactual
+				self.Attributes['overlapThresholdArtifactual'] = overlapThresholdArtifactual
+				self.Attributes['corrThresholdArtifactual'] = corrThresholdArtifactual
+
+			# under development
+			#if aggregateRedundantFeatures:
+				#pass
 
 			self.featureMask = featureMask
 
-			if aggregateRedundantFeatures:
-				pass
 
 		# Sample Exclusions
 		if filterSamples:

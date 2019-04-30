@@ -15,9 +15,7 @@ def blankFilter(dataset, threshold=None):
 	:rtype: numpy.ndarray
 	"""
 
-	if threshold is None:
-		threshold = dataset.Attributes['blankThreshold']
-	elif not (isinstance(threshold, float) or isinstance(threshold, bool)):
+	if not (isinstance(threshold, float) or isinstance(threshold, bool)):
 		raise TypeError("threshold must be either None, False, or a float, %s provided." % (type(threshold)))
 	elif isinstance(threshold, bool) and threshold:
 		raise TypeError("threshold must be either None, False, or a float, %s provided." % (type(threshold)))
