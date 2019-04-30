@@ -26,7 +26,7 @@ from warnings import warn
 
 from ..__init__ import __version__ as version
 
-def multivariateQCreport(dataTrue, pcaModel, reportType='analytical', withExclusions=False, biologicalMeasurements=None, dModX_criticalVal=None, dModX_criticalVal_type=None, scores_criticalVal=None, kw_threshold=0.05, r_threshold=0.3, hotellings_alpha=0.05, excludeFields=None, destinationPath=None):
+def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusions=False, biologicalMeasurements=None, dModX_criticalVal=None, dModX_criticalVal_type=None, scores_criticalVal=None, kw_threshold=0.05, r_threshold=0.3, hotellings_alpha=0.05, excludeFields=None, destinationPath=None):
 	"""
 	PCA based analysis of a dataset. A PCA model is generated for the data object, then potential associations between the scores and any sample metadata determined by correlation (continuous data) or a Kruskal-Wallis test (categorical data).
 

@@ -878,7 +878,7 @@ class test_reports_multivariate(unittest.TestCase):
 
 			# Report generation
 			with self.subTest(msg='Report generation'):
-				nPYc.reports.multivariateQCreport(self.dataset, pcaModel=pcaModel, reportType='all', destinationPath=tmpdirname)
+				nPYc.reports.multivariateReport(self.dataset, pcaModel=pcaModel, reportType='all', destinationPath=tmpdirname)
 
 				expectedPath = os.path.join(tmpdirname, 'Dataset_report_multivariateAll.html')
 				self.assertTrue(os.path.exists(expectedPath))
@@ -910,7 +910,7 @@ class test_reports_multivariate(unittest.TestCase):
 
 			with self.subTest(msg='Report generation'):
 
-				nPYc.reports.multivariateQCreport(self.dataset, pcaModel=pcaModel, reportType='analytical',
+				nPYc.reports.multivariateReport(self.dataset, pcaModel=pcaModel, reportType='analytical',
 												  destinationPath=tmpdirname)
 
 				expectedPath = os.path.join(tmpdirname, 'Dataset_report_multivariateAnalytical.html')
@@ -930,43 +930,43 @@ class test_reports_multivariate(unittest.TestCase):
 
 		pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(self.dataset)
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, 'not a dataset', pcaModel)
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, 'not a dataset', pcaModel)
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, 'not a pca model' )
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, 'not a pca model' )
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, reportType=1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, reportType=1)
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, withExclusions='not a bool')
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel, withExclusions='not a bool')
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, biologicalMeasurements='not a dict')
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel, biologicalMeasurements='not a dict')
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, reportType=1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, reportType=1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=0.05, dModX_criticalVal_type=None)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=0.05, dModX_criticalVal_type=None)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=-1, dModX_criticalVal_type='Fcrit')
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=-1, dModX_criticalVal_type='Fcrit')
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=101, dModX_criticalVal_type='Fcrit')
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=101, dModX_criticalVal_type='Fcrit')
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal_type = -1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal_type = -1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal_type = 'wrong threshold')
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal_type = 'wrong threshold')
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, scores_criticalVal=-1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, scores_criticalVal=-1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, scores_criticalVal=101)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, scores_criticalVal=101)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, kw_threshold=-1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, kw_threshold=-1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, r_threshold=-1.5)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, r_threshold=-1.5)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, hotellings_alpha=-1.5)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, hotellings_alpha=-1.5)
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, excludeFields='not a list')
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel, excludeFields='not a list')
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, destinationPath=1)
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel, destinationPath=1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=0.05)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=0.05)
 
 
 if __name__ == '__main__':

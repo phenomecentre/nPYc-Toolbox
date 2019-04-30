@@ -3,7 +3,10 @@ The :py:mod:`~nPYc.reports` submodule provides functions to generate a variety o
 """
 from .featureID import generateMSIDrequests
 from .generateReport import generateReport
+from ._generateReportMS import _generateReportMS
+from ._generateReportNMR import _generateReportNMR
+from ._generateReportTargeted import _generateReportTargeted
 from ._generateSampleReport import _generateSampleReport
-from .multivariateReport import multivariateQCreport
+from .multivariateReport import multivariateReport
 
-__all__ = ['generateMSIDrequests', 'generateReport', '_generateSampleReport', 'multivariateQCreport']
+__all__ = ['generateMSIDrequests', 'generateReport', '_generateSampleReport', '_generateReportMS', '_generateReportNMR', '_generateReportTargeted', 'multivariateReport']
