@@ -162,15 +162,13 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 		reportTypeCases = {'feature summary': 'featureSummary',
 								   'merge loq assessment': 'mergeLoqAssessment',
 								   'final report': 'finalSummary'}
+
 		if not os.path.exists(destinationPath):
 			os.makedirs(destinationPath)
-		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
-			os.makedirs(os.path.join(destinationPath, 'graphics'))
+
 		graphicsPath = os.path.join(destinationPath, 'graphics')
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
-
-		# Apply sample/feature masks if exclusions to be applied
 
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 		template = env.get_template(template_options[reportTypeCases[reportType]])
@@ -178,7 +176,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 		f = open(filename, 'w')
 		f.write(template.render(item=item,
 								version=version,
-								graphicsPath=graphicsPath,
+								graphicsPath=destinationPath,
 								sampleSummary=sampleSummary,
 								pcaPlots=item['pcaModel']))
 		f.close()
@@ -411,19 +409,19 @@ def _featureReport(tData, item, destinationPath, numberPlotPerRowLOQ=3,
 				print('Unable to calculate (not enough samples with expected concentrations present in dataset).\n')
 
 	# Generate HTML report
-	#if destinationPath:
+	if destinationPath:
 
 		# Make paths for graphics local not absolute for use in the HTML.
-	#	for key in item:
-	#		if isinstance(item[key], list):
-	#			for i in range(0, len(item[key])):
-	#				if isinstance(item[key][i], list):
-	#					for j in range(0, len(item[key][i])):
-	#						item[key][i][j] = re.sub('.*graphics', 'graphics', item[key][i][j])
-	#				elif os.path.join(destinationPath, 'graphics') in str(item[key][i]):
-	#					item[key][i] = re.sub('.*graphics', 'graphics', item[key][i])
-	#		elif os.path.join(destinationPath, 'graphics') in str(item[key]):
-	#			item[key] = re.sub('.*graphics', 'graphics', item[key])
+		for key in item:
+			if isinstance(item[key], list):
+				for i in range(0, len(item[key])):
+					if isinstance(item[key][i], list):
+						for j in range(0, len(item[key][i])):
+							item[key][i][j] = re.sub('.*graphics', 'graphics', item[key][i][j])
+					elif os.path.join(destinationPath, 'graphics') in str(item[key][i]):
+						item[key][i] = re.sub('.*graphics', 'graphics', item[key][i])
+			elif os.path.join(destinationPath, 'graphics') in str(item[key]):
+				item[key] = re.sub('.*graphics', 'graphics', item[key])
 
 	return item
 

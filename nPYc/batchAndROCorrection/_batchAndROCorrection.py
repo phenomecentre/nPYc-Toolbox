@@ -67,7 +67,7 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 	correctedData.fit = correctedP[1]
 	correctedData.Attributes['Log'].append([datetime.now(),'Batch and run order correction applied'])
 
-	return (correctedData)
+	return correctedData
 
 
 def _batchCorrectionHead(data, runOrder, referenceSamples, batchList, window=11, method='LOWESS', align='median', parallelise=True, savePlots=False):

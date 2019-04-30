@@ -147,6 +147,8 @@ def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='',
             name = 'Study Reference'
         elif wcol == SampleType.ExternalReference:
             name = 'Long-Term Reference'
+        else:
+            name = wcol
 
         # only plot values, no inf or nan
         valueMask = numpy.isfinite(data[wcol].tolist()).tolist()
