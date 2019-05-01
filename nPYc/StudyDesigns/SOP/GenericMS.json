@@ -5,7 +5,6 @@
 	"corrThreshold": 0.7,
 	"corrMethod": "pearson",
 	"rsdThreshold": 30,
-	"artifactualFilter": "False",
 	"deltaMzArtifactual": 0.1,
 	"overlapThresholdArtifactual": 50,
 	"corrThresholdArtifactual": 0.9,
@@ -26,5 +25,6 @@
 		"Detector", "End Mass", "HM Resolution", "Instrument", "Interscan Time (sec)",
 		"LM Resolution", "Resolution", "Sampling Cone", "Scan Time (sec)", "Source Offset",
 		"Source Temperature (°C)", "Start Mass", "TOF"],
-	"featureMetadataNotExported":[]
+	"featureMetadataNotExported":["blankFilter", "blankValue", "artifactualFilter", "rsdFilter", "rsdSP",
+		"correlationToDilution", "correlationToDilutionFilter", "varianceRatioFilter", "rsdSS/rsdSP"]
 }

@@ -72,12 +72,30 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata.iloc[5::10, 1] = nPYc.enumerations.SampleType.ExternalReference
 	data.sampleMetadata.iloc[5::10, 2] = nPYc.enumerations.AssayRole.PrecisionReference
 
-	if dtype == 'MSDataset' or dtype == 'Dataset':
+	if dtype == 'MSDataset':
 		data.featureMetadata = pandas.DataFrame(0, index=numpy.arange(noFeat), columns=['m/z'])
 
 		data.featureMetadata['m/z'] = (800 - 40) * numpy.random.rand(noFeat) + 40
 		data.featureMetadata['Retention Time'] = (720 - 50) * numpy.random.rand(noFeat) + 50
 		data.featureMetadata['Feature Name'] = [randomword(10) for x in range(0, noFeat)]
+
+		data.featureMetadata['Exclusion Details'] = None
+		data.featureMetadata['User Excluded'] = False
+		data.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+							  'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]], index=data.featureMetadata.index)
+
+		data.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=data.featureMetadata.index)
+
+		data.Attributes['Feature Names'] = 'Feature Name'
+
+	elif dtype == 'Dataset':
+		data.featureMetadata = pandas.DataFrame(0, index=numpy.arange(noFeat), columns=['m/z'])
+
+		data.featureMetadata['m/z'] = (800 - 40) * numpy.random.rand(noFeat) + 40
+		data.featureMetadata['Retention Time'] = (720 - 50) * numpy.random.rand(noFeat) + 50
+		data.featureMetadata['Feature Name'] = [randomword(10) for x in range(0, noFeat)]
+
 		data.Attributes['Feature Names'] = 'Feature Name'
 
 	elif dtype == 'NMRDataset':

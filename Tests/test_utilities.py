@@ -205,7 +205,7 @@ class test_utilities_ms(unittest.TestCase):
 	def test_generatesrdmask_raises(self):
 
 		dataset = nPYc.MSDataset('', fileType='empty')
-
+		dataset.corrExclusions = None
 		self.assertRaises(ValueError, nPYc.utilities.ms.generateLRmask, dataset)
 
 
@@ -447,6 +447,14 @@ class test_utilities_filters(unittest.TestCase):
 															['Feature_2', 0.55, 100.04, 0.3],
 															['Feature_3', 0.75, 200., 0.1]],
 															columns=['Feature Name','Retention Time','m/z','Peak Width'])
+		self.msData.featureMetadata['Exclusion Details'] = None
+		self.msData.featureMetadata['User Excluded'] = False
+		self.msData.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+							  'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
+																	   index=self.msData.featureMetadata.index)
+
+		self.msData.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=self.msData.featureMetadata.index)
 
 		self.msData.initialiseMasks()
 
@@ -454,12 +462,12 @@ class test_utilities_filters(unittest.TestCase):
 	def test_blank_filter(self):
 
 		with self.subTest(msg='Default settings'):
-			blankMaskObtained = nPYc.utilities._filters.blankFilter(self.msData)
+			blankMaskObtained, p95 = nPYc.utilities._filters.blankFilter(self.msData, self.msData.Attributes['blankThreshold'])
 			expected = numpy.array([True, False, True])
 			numpy.testing.assert_array_equal(blankMaskObtained, expected)
 
 		with self.subTest(msg='Custom threshold'):
-			blankMaskObtained = nPYc.utilities._filters.blankFilter(self.msData, threshold=2.)
+			blankMaskObtained, p95 = nPYc.utilities._filters.blankFilter(self.msData, threshold=2.)
 			expected = numpy.array([True, False, False])
 			numpy.testing.assert_array_equal(blankMaskObtained, expected)
 
@@ -483,7 +491,7 @@ class test_utilities_filters(unittest.TestCase):
 
 		self.msData.sampleMetadata['SampleType'] = nPYc.enumerations.SampleType.StudySample
 
-		self.assertWarnsRegex(UserWarning, 'No Procedural blank samples present, skipping blank filter\.', nPYc.utilities._filters.blankFilter, self.msData)
+		self.assertWarnsRegex(UserWarning, 'No Procedural blank samples present, skipping blank filter\.', nPYc.utilities._filters.blankFilter, self.msData, self.msData.Attributes['blankThreshold'])
 
 
 class  test_utilities_addReferenceRanges(unittest.TestCase):

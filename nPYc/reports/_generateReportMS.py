@@ -74,11 +74,11 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
         if not isinstance(withArtifactualFiltering, bool):
             raise TypeError('withArtifactualFiltering must be a bool')
     if withArtifactualFiltering is None:
-        withArtifactualFiltering = dataset.Attributes['artifactualFilter']
+        withArtifactualFiltering = dataset.Attributes['featureFilters']['artifactualFilter']
     # if self.Attributes['artifactualFilter'] is False, can't/shouldn't apply it.
     # However if self.Attributes['artifactualFilter'] is True, the user can have the choice to not apply it (withArtifactualFilering=False).
-    if (withArtifactualFiltering is True) & (dataset.Attributes['artifactualFilter'] is False):
-        warnings.warn("Warning: Attributes['artifactualFilter'] set to \'False\', artifactual filtering cannot be applied.")
+    if (withArtifactualFiltering is True) & (dataset.Attributes['featureFilters']['artifactualFilter'] is False):
+        warnings.warn("Warning: Attributes['featureFilters']['artifactualFilter'] set to \'False\', artifactual filtering cannot be applied.")
         withArtifactualFiltering = False
 
     if destinationPath is not None:
@@ -218,17 +218,17 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         FeatureSelectionTable = FeatureSelectionTable.append(
             pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied']))
     FeatureSelectionTable = FeatureSelectionTable.append(
-        pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
+        pandas.DataFrame(data=['yes', dataset.Attributes['filterParameters']['rsdThreshold'], 'yes'],
                          index=['Relative Standard Devation (RSD)', 'RSD of SR Samples: Threshold',
                                 'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied']))
     if 'blankFilter' in dataset.Attributes:
-        if dataset.Attributes['blankFilter'] == True:
+        if dataset.Attributes['featureFilters']['blankFilter'] == True:
             FeatureSelectionTable = FeatureSelectionTable.append(
                 pandas.DataFrame(data=['yes'], index=['Blank Filtering'], columns=['Value Applied']))
-    if (dataset.Attributes['artifactualFilter'] == 'True'):
+    if (dataset.Attributes['featureFilters']['artifactualFilter'] == True):
         FeatureSelectionTable = FeatureSelectionTable.append(pandas.DataFrame(
-            data=['yes', dataset.Attributes['deltaMzArtifactual'], dataset.Attributes['overlapThresholdArtifactual'],
-                  dataset.Attributes['corrThresholdArtifactual']],
+            data=['yes', dataset.Attributes['filterParameters']['deltaMzArtifactual'], dataset.Attributes['filterParameters']['overlapThresholdArtifactual'],
+                  dataset.Attributes['filterParameters']['corrThresholdArtifactual']],
             index=['Artifactual Filtering', 'Artifactual Filtering: Delta m/z',
                    'Artifactual Filtering: Overlap Threshold', 'Artifactual Filtering: Correlation Threshold'],
             columns=['Value Applied']))

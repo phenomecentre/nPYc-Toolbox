@@ -1610,6 +1610,7 @@ class Dataset:
 			for stype in SampleType:
 				sampleMetadata.loc[sampleMetadata['SampleType'].values == str(stype), 'SampleType'] = stype
 
+
 		return (objectName, intensityData, featureMetadata, sampleMetadata)
 
 

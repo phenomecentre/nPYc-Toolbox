@@ -2,6 +2,7 @@ import numpy
 import warnings
 from ..enumerations import SampleType, AssayRole
 
+
 def blankFilter(dataset, threshold=None):
 	"""
 	Generates a boolean mask of the features in *dataset* that is true where the average intensity is greater than that seen in procedural blank injections.
@@ -41,7 +42,8 @@ def blankFilter(dataset, threshold=None):
 
 		mask = numpy.mean(dataset.intensityData[sampleMask,:], axis=0) >= (p95 * threshold)
 
+		return mask, p95
 	else:
 		mask = numpy.squeeze(numpy.ones([dataset.noFeatures, 1], dtype=bool), axis=1)
 
-	return mask
+		return mask

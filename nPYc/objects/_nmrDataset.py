@@ -493,7 +493,6 @@ class NMRDataset(Dataset):
 		else:
 			isatab.dump(isa_obj=investigation, output_path=destinationPath)
 
-
 	def _nmrQCChecks(self):
 		"""
 

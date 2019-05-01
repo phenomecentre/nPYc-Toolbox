@@ -64,6 +64,15 @@ class MSDataset(Dataset):
 
 		self.name = self.fileName
 
+		# Attributes to record which feature filtering procedures and parameters were used
+		self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False,
+											 'correlationToDilutionFilter': False,
+											 'artifactualFilter': False, 'blankFilter': False}
+		self.Attributes['filterParameters'] = {'rsdThreshold': None, 'corrMethod': None, 'corrThreshold': None,
+											   'varianceRatio': None, 'blankThreshold': None,
+											   'overlapThresholdArtifactual': None, 'corrThresholdArtifactual': None,
+											   'deltaMzArtifactual': None}
+
 		# Load the QI output file
 		fileType = fileType.lower()
 		if fileType == 'qi':
@@ -96,12 +105,22 @@ class MSDataset(Dataset):
 			if 'Retention Time' in self.featureMetadata.columns:
 				self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].apply(pandas.to_numeric, errors='ignore')
 			self.VariableType = VariableType.Discrete
-			self.initialiseMasks()
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
 			pass
 		else:
 			raise NotImplementedError
+
+		self.featureMetadata['Exclusion Details'] = None
+		self.featureMetadata['User Excluded'] = False
+		self.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+							  'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
+																	   index=self.featureMetadata.index)
+
+		self.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=self.featureMetadata.index)
+
+		self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), '%s instance inited, with %d samples, %d features, from \%s\'' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
 
@@ -235,19 +254,19 @@ class MSDataset(Dataset):
 
 		# if a change is made to the features, the whole artifactualLinkageMatrix must be updated (feature IDs change), else only correlation calculation
 		super().applyMasks()																			# applyMasks
-		if self.Attributes['artifactualFilter'] == True:
+		if self.Attributes['featureFilters']['artifactualFilter'] == True:
 			if not self._artifactualLinkageMatrix.empty:
 				if changeFeature:
 					self._artifactualLinkageMatrix = self.__generateArtifactualLinkageMatrix()								# change features, recalculate all
 				else:
 					self._artifactualLinkageMatrix = self.__generateArtifactualLinkageMatrix(corrOnly=True)		# change samples, recalculate correlation only
 		# Reset correlations
-		del(self.correlationToDilution)
+		del self.correlationToDilution
 
 
 	def updateMasks(self, filterSamples=True, filterFeatures=True, 
 					sampleTypes=list(SampleType), assayRoles=list(AssayRole),
-					featureFilters={'rsdFilter':True, 'correlationToDilution':True, 'varianceRatio':True, 'artifactualFiltering': False,
+					featureFilters={'rsdFilter':True, 'correlationToDilutionFilter':True, 'varianceRatioFilter':True, 'artifactualFilter': False,
 									'blankFilter':False}, **kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to QC parameters.
@@ -280,6 +299,17 @@ class MSDataset(Dataset):
 		:type blankThreshold: None, False, or float
 		"""
 
+		if any([type(x) is not bool for x in featureFilters.values()]):
+			raise TypeError('Only bool values should be passed in featureFilters')
+
+		# Fill in dictionary provided with default value if no argument is passed
+		default_args = {'rsdFilter': True, 'correlationToDilutionFilter': True, 'varianceRatioFilter': True,
+						'artifactualFilter': False, 'blankFilter':False}
+
+		for key in default_args.keys():
+			if key not in featureFilters:
+				featureFilters[key] = default_args[key]
+
 		if 'rsdThreshold' in kwargs.keys():
 			rsdThreshold = kwargs['rsdThreshold']
 		else:
@@ -294,9 +324,9 @@ class MSDataset(Dataset):
 		else:
 			correlationThreshold = self.Attributes['corrThreshold']
 		if not isinstance(correlationThreshold, numbers.Number):
-			raise TypeError('correlationThreshold must be a number in the range -1 to 1, %s provided' % (type(correlationThreshold)))
+			raise TypeError('corrThreshold must be a number in the range -1 to 1, %s provided' % (type(correlationThreshold)))
 		elif (correlationThreshold < -1) or (correlationThreshold > 1):
-			raise ValueError('correlationThreshold must be a number in the range -1 to 1, %f provided' % (correlationThreshold))
+			raise ValueError('corrThreshold must be a number in the range -1 to 1, %f provided' % (correlationThreshold))
 
 		if 'varianceRatio' in kwargs.keys():
 			varianceRatio = kwargs['varianceRatio']
@@ -305,7 +335,6 @@ class MSDataset(Dataset):
 		if not isinstance(varianceRatio, numbers.Number):
 			raise TypeError('varianceRatio must be a number, %s provided' % (type(varianceRatio)))
 
-
 		if 'blankThreshold' in kwargs.keys():
 			blankThreshold = kwargs['blankThreshold']
 		else:
@@ -313,14 +342,13 @@ class MSDataset(Dataset):
 		if not isinstance(blankThreshold, numbers.Number):
 			raise TypeError('blankThreshold must be a number, %s provided' % (type(blankThreshold)))
 
-		if featureFilters['artifactualFiltering'] is True:
+		if featureFilters['artifactualFilter'] is True:
 			if 'deltaMzArtifactual' in kwargs.keys():
 				deltaMzArtifactual = kwargs['deltaMzArtifactual']
 			else:
 				deltaMzArtifactual = self.Attributes['deltaMzArtifactual']
 			if not isinstance(deltaMzArtifactual, numbers.Number):
 				raise TypeError('deltaMzArtifactual must be a number , %s provided' % (type(deltaMzArtifactual)))
-
 
 			if 'corrThresholdArtifactual' in kwargs.keys():
 				corrThresholdArtifactual = kwargs['corrThresholdArtifactual']
@@ -347,10 +375,29 @@ class MSDataset(Dataset):
 
 		if filterFeatures:
 
-			featureMask = numpy.copy(self.featureMask)
+			self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False,
+												 'correlationToDilutionFilter': False,
+												 'artifactualFilter': False, 'blankFilter': False}
+			self.Attributes['filterParameters'] = {'rsdThreshold': None, 'corrMethod': None, 'corrThreshold': None,
+												   'varianceRatio': None, 'blankThreshold': None,
+												   'overlapThresholdArtifactual': None,
+												   'corrThresholdArtifactual': None,
+												   'deltaMzArtifactual': None}
 
-			if (featureFilters['rsdFilter'] is True) or (featureFilters['VarianceRatio'] is True):
-				# Calculate RSD in SP samples and SS
+			# Keep all manual feature exclusions and regenerate the proper tests
+			featureMask = numpy.copy(~self.featureMetadata['User Excluded'].values)
+
+			if featureFilters['rsdFilter'] is True:
+
+				self.featureMetadata['rsdFilter'] = (self.rsdSP <= rsdThreshold)
+				featureMask &= self.featureMetadata['rsdFilter'].values
+				self.featureMetadata['rsdSP'] = self.rsdSP
+
+				self.Attributes['featureFilters']['rsdFilter'] = True
+				self.Attributes['filterParameters']['rsdThreshold'] = rsdThreshold
+
+			if featureFilters['varianceRatioFilter'] is True:
+
 				mask = numpy.logical_and(self.sampleMetadata['AssayRole'].values == AssayRole.Assay,
 										 self.sampleMetadata['SampleType'].values == SampleType.StudySample)
 
@@ -358,39 +405,42 @@ class MSDataset(Dataset):
 
 				rsdSS = rsd(self._intensityData[mask, :])
 
-			if featureFilters['rsdFilter'] is True:
+				self.featureMetadata['varianceRatioFilter'] = ((self.rsdSP * varianceRatio) <= rsdSS)
+				self.featureMetadata['rsdSS/rsdSP'] = rsdSS/self.rsdSP
+				featureMask &= self.featureMetadata['varianceRatioFilter'].values
+				self.Attributes['featureFilters']['varianceRatioFilter'] = True
+				self.Attributes['filterParameters']['varianceRatio'] = varianceRatio
 
-				featureMask &= (self.rsdSP <= rsdThreshold)
-				#self.Attributes['rsdThreshold'] = rsdThreshold
+			if featureFilters['correlationToDilutionFilter'] is True:
+				self.featureMetadata['correlationToDilutionFilter'] = (self.correlationToDilution >= correlationThreshold)
+				self.featureMetadata['correlationToDilution'] = self.correlationToDilution
 
-			if featureFilters['varianceRatio'] is True:
+				featureMask &= self.featureMetadata['correlationToDilutionFilter'].values
 
-				featureMask &= ((self.rsdSP * varianceRatio) <= rsdSS)
-				#self.Attributes['varianceRatio'] = varianceRatio
+				self.Attributes['featureFilters']['correlationToDilutionFilter'] = True
+				self.Attributes['filterParameters']['corThreshold'] = correlationThreshold
+				self.Attributes['filterParameters']['corrMethod'] = self.Attributes['corrMethod']
 
-			if featureFilters['correlationToDilution'] is True:
-				featureMask &= (self.correlationToDilution >= correlationThreshold)
-
-				#self.Attributes['corrThreshold'] = correlationThreshold
 			# Save for reporting
+			if (featureFilters['blankFilter'] is True) & (sum(self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank) >= 2):
+				blankMask, blankValue = blankFilter(self, threshold=blankThreshold)
 
-			if featureFilters['blankFilter'] is True & (sum(self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank) > 2):
-				blankMask = blankFilter(self, threshold=blankThreshold)
 				featureMask &= numpy.logical_and(featureMask, blankMask)
-				self.Attributes['blankFilter'] = True
+				self.featureMetadata['blankValue'] = blankValue
+				self.Attributes['featureFilters']['blankFilter'] = True
+				self.featureMetadata['blankFilter'] = blankMask
 				#self.Attributes['blankThreshold'] = blankThreshold
-			else:
-				self.Attributes['blankFilter'] = False
 
 			# Artifactual filtering
-			if featureFilters['artifactualFiltering'] is True:
+			if featureFilters['artifactualFilter'] is True:
 				# Linkage update
+				self.Attributes['featureFilters']['artifactualFilter'] = True
+				self.Attributes['filterParameters']['deltaMzArtifactual'] = deltaMzArtifactual
+				self.Attributes['filterParameters']['overlapThresholdArtifactual'] = overlapThresholdArtifactual
+				self.Attributes['filterParameters']['corrThresholdArtifactual'] = corrThresholdArtifactual
+
 				self.updateArtifactualLinkageMatrix()
 				featureMask = self.artifactualFilter(featMask=featureMask)
-				self.Attributes['artifactualFilter'] = True
-				self.Attributes['deltaMzArtifactual'] = deltaMzArtifactual
-				self.Attributes['overlapThresholdArtifactual'] = overlapThresholdArtifactual
-				self.Attributes['corrThresholdArtifactual'] = corrThresholdArtifactual
 
 			# under development
 			#if aggregateRedundantFeatures:
@@ -501,7 +551,8 @@ class MSDataset(Dataset):
 		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float)
 		self.featureMetadata['m/z'] = self.featureMetadata['m/z'].astype(float)
 
-		self.initialiseMasks()
+
+		#self.initialiseMasks()
 
 		self.sampleMetadata['AssayRole'] = None#AssayRole.Assay
 		self.sampleMetadata['SampleType'] = None#SampleType.StudySample
@@ -567,12 +618,14 @@ class MSDataset(Dataset):
 		self.sampleMetadata['SampleType'] = None#SampleType.StudySample
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
+
+
 		self.sampleMetadata['Exclusion Details'] = None
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
 
-		self.initialiseMasks()
+		#self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'CSV dataset loaded from %s' % (path)])
 
@@ -640,7 +693,7 @@ class MSDataset(Dataset):
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
 
-		self.initialiseMasks()
+		#self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'XCMS dataset loaded from %s' % (path)])
 
@@ -706,7 +759,7 @@ class MSDataset(Dataset):
 
 		self.sampleMetadata['Metadata Available'] = False
 		self.sampleMetadata['Exclusion Details'] = None
-		self.initialiseMasks()
+		#self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'Biocrates dataset loaded from %s' % (path)])
 
@@ -777,6 +830,7 @@ class MSDataset(Dataset):
 			featureMetadata['Feature Name'] = dataT['m/z'].apply(lambda mz: str(mz) + 'm/z').values
 
 
+
 		featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T, columns=featureMetadata.keys())
 		sampleMetadata = pandas.DataFrame(numpy.concatenate([sampleMetadata[c] for c in sampleMetadata.keys()], axis=0), columns=sampleMetadata.keys())
 
@@ -789,18 +843,18 @@ class MSDataset(Dataset):
 		featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
 		featureMetadata.insert(0, 'Feature Name', name)
 
+
 		featureMetadata['m/z'] = featureMetadata['m/z'].astype(float)
 
 		if 'Retention Time' in featureMetadata.columns:
 			featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float)
 			featureMetadata['Retention Time Deviation'] = featureMetadata['Retention Time Deviation'].astype(float)
 
-
 		self._intensityData = intensityData
 		self.sampleMetadata = sampleMetadata
 		self.featureMetadata = featureMetadata
 
-		self.initialiseMasks()
+		#self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'Metaboscape dataset loaded from %s' % (path)])
 
@@ -1153,24 +1207,24 @@ class MSDataset(Dataset):
 		# end remove_min_corr_overlap
 
 		# check required info in featureMetadata for artifactual filtering. If missing, sets self.Attributes['artifactualFilter'] to False
-		if self.Attributes['artifactualFilter'] == False:
+		if self.Attributes['featureFilters']['artifactualFilter'] == False:
 			raise ValueError('Attributes[\'artifactualFilter\'] set to \'False\', artifactual filtering cannot be run, use \'updateMasks(withArtifactualFiltering=False)\' and \'generateReport(data, reportType=\'feature selection\', withArtifactualFiltering=False)\'')
 		if 'Feature Name' not in self.featureMetadata.columns:
-			self.Attributes['artifactualFilter'] = False
+			self.Attributes['featureFilters']['artifactualFilter'] = False
 			raise LookupError('Missing feature metadata \"Feature Name\". Artifactual filtering cannot be run, set MSDataset.Attributes[\'artifactualFilter\'] = \'False\', or use \'updateMasks(withArtifactualFiltering=False)\' and \'generateReport(data, reportType=\'feature selection\', withArtifactualFiltering=False)\'')
 		if 'Retention Time' not in self.featureMetadata.columns:
-			self.Attributes['artifactualFilter'] = False
+			self.Attributes['featureFilters']['artifactualFilter'] = False
 			raise LookupError('Missing feature metadata \"Retention Time\". Artifactual filtering cannot be run, set MSDataset.Attributes[\'artifactualFilter\'] = \'False\', or use \'updateMasks(withArtifactualFiltering=False)\' and \'generateReport(data, reportType=\'feature selection\', withArtifactualFiltering=False)\'')
 		if 'm/z' not in self.featureMetadata.columns:
-			self.Attributes['artifactualFilter'] = False
+			self.Attributes['featureFilters']['artifactualFilter'] = False
 			raise LookupError('Missing feature metadata \"m/z\". Artifactual filtering cannot be run, set MSDataset.Attributes[\'artifactualFilter\'] = \'False\', or use \'updateMasks(withArtifactualFiltering=False)\' and \'generateReport(data, reportType=\'feature selection\', withArtifactualFiltering=False)\'')
 		if 'Peak Width' not in self.featureMetadata.columns:
-			self.Attributes['artifactualFilter'] = False
+			self.Attributes['featureFilters']['artifactualFilter'] = False
 			raise LookupError('Missing feature metadata \"Peak Width\". Artifactual filtering cannot be run, set MSDataset.Attributes[\'artifactualFilter\'] = \'False\', or use \'updateMasks(withArtifactualFiltering=False)\' and \'generateReport(data, reportType=\'feature selection\', withArtifactualFiltering=False)\'')
 
 		if ((not corrOnly) | (corrOnly & self._tempArtifactualLinkageMatrix.empty)):
-			self._tempArtifactualLinkageMatrix = find_similar_peakwidth(featureMetadata=self.featureMetadata, deltaMZ=self.Attributes['deltaMzArtifactual'], deltaOverlap=self.Attributes['overlapThresholdArtifactual'])
-		artifactualLinkageMatrix = remove_min_corr_overlap(self._tempArtifactualLinkageMatrix, self._intensityData, self.Attributes['corrThresholdArtifactual'])
+			self._tempArtifactualLinkageMatrix = find_similar_peakwidth(featureMetadata=self.featureMetadata, deltaMZ=self.Attributes['filterParameters']['deltaMzArtifactual'], deltaOverlap=self.Attributes['filterParameters']['overlapThresholdArtifactual'])
+		artifactualLinkageMatrix = remove_min_corr_overlap(self._tempArtifactualLinkageMatrix, self._intensityData, self.Attributes['filterParameters']['corrThresholdArtifactual'])
 
 		return(artifactualLinkageMatrix)
 
@@ -1223,6 +1277,66 @@ class MSDataset(Dataset):
 	def getFuctionNo(self, spectrum):
 		pass
 
+	def excludeFeatures(self, featureList, on='Feature Name', message='User Excluded'):
+		"""
+		Masks the features listed in *featureList* from the dataset.
+
+		:param list featureList: A list of feature IDs to be excluded
+		:param str on: name of the column in :py:attr:`featureMetadata` to match *featureList* against, defaults to 'Feature Name'
+		:param str message: append this message to the 'Exclusion Details' field for each feature excluded, defaults to 'User Excluded'
+		:return: A list of ID passed in *featureList* that could not be matched against the feature IDs present.
+		:rtype: list
+		"""
+
+		# Validate inputs
+		if not on in self.featureMetadata.keys():
+			raise ValueError('%s is not a column in `featureMetadata`' % on)
+		if not isinstance(message, str):
+			raise TypeError('`message` must be a string.')
+
+		notFound = []
+
+		if 'Exclusion Details' not in self.featureMetadata:
+			self.featureMetadata['Exclusion Details'] = ''
+
+		if self.VariableType == VariableType.Discrete:
+			for feature in featureList:
+				if feature in self.featureMetadata[on].unique():
+					self.featureMask[self.featureMetadata[self.featureMetadata[on] == feature].index] = False
+					self.featureMetadata.loc[self.featureMetadata[on == feature], 'User Excluded'] = True
+					if (self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'].values == ''):
+						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = message
+					else:
+						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = \
+						self.featureMetadata.loc[
+							self.featureMetadata[on] == feature, 'Exclusion Details'] + ' AND ' + message
+				else:
+					# AMtched must be unique.
+					notFound.append(feature)
+
+		elif self.VariableType == VariableType.Spectral:
+			for chunk in featureList:
+				start = min(chunk)
+				stop = max(chunk)
+
+				if start == stop:
+					warnings.warn('Low (%.2f) and high (%.2f) bounds are identical, skipping region' % (start, stop))
+					continue
+
+				mask = numpy.logical_or(self.featureMetadata[on] < start,
+										 self.featureMetadata[on] > stop)
+
+				self.featureMask = numpy.logical_and(self.featureMask, mask)
+
+				mask = numpy.logical_not(mask)
+				self.featureMetadata.loc[mask, 'Exclusion Details'] = message
+
+		else:
+			raise ValueError('Unknown VariableType.')
+
+		return notFound
+
+
 	def initialiseMasks(self):
 		"""
 		Re-initialise :py:attr:`featureMask` and :py:attr:`sampleMask` to match the current dimensions of :py:attr:`intensityData`, and include all samples.
@@ -1230,6 +1344,16 @@ class MSDataset(Dataset):
 		super().initialiseMasks()
 		self.corrExclusions = copy.deepcopy(self.sampleMask)
 		self.__corrExclusions = copy.deepcopy(self.corrExclusions)
+		# artifactual filter is a tricky one, and should only be modified by using applyMasks
+		self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False, 'correlationToDilutionFilter': False,
+											 'artifactualFilter': self.Attributes['featureFilters']['artifactualFilter'], 'blankFilter': False}
+
+		self.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+							  'artifactualFilter']] = True
+
+		self.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] = numpy.nan
+		self.featureMetadata['User Excluded'] = False
+		self.featureMetadata['Exclusion Details'] = None
 
 	def _exportISATAB(self, destinationPath, detailsDict):
 		"""
@@ -1659,19 +1783,6 @@ class MSDataset(Dataset):
 				failure = 'Check self.Attributes[\'rsdThreshold\'] is an int or float:\tFailure, \'self.Attributes[\'rsdThreshold\']\' is ' + str(type(self.Attributes['rsdThreshold']))
 				failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=TypeError(failure))
 			# end self.Attributes['rsdThreshold']
-			## artifactualFilter
-			# exist
-			condition = 'artifactualFilter' in self.Attributes
-			success = 'Check self.Attributes[\'artifactualFilter\'] exists:\tOK'
-			failure = 'Check self.Attributes[\'artifactualFilter\'] exists:\tFailure, no attribute \'self.Attributes[\'artifactualFilter\']\''
-			failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=AttributeError(failure))
-			if condition:
-				# is a bool
-				condition = isinstance(self.Attributes['artifactualFilter'], bool)
-				success = 'Check self.Attributes[\'artifactualFilter\'] is a bool:\tOK'
-				failure = 'Check self.Attributes[\'artifactualFilter\'] is a bool:\tFailure, \'self.Attributes[\'artifactualFilter\']\' is ' + str(type(self.Attributes['artifactualFilter']))
-				failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=TypeError(failure))
-			# end self.Attributes['artifactualFilter']
 			## deltaMzArtifactual
 			# exist
 			condition = 'deltaMzArtifactual' in self.Attributes
