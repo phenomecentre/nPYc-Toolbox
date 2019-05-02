@@ -136,6 +136,23 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 		else:
 			fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
 
+		# Add Hotelling's T2
+		hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[i], components[j]]), alpha=alpha)
+
+		# a = numpy.sqrt(numpy.var(values[:,components[i]])*Fval*2*((ns-1)/(ns-2)));
+		# b = numpy.sqrt(numpy.var(values[:,components[j]])*Fval*2*((ns-1)/(ns-2)));
+		ellipse = Ellipse(xy=(0, 0), width=hotelling_ellipse[0] * 2, height=hotelling_ellipse[1] * 2,
+						  edgecolor='k', fc='None', lw=2)
+		ax.add_patch(ellipse)
+
+		xmin = numpy.minimum(min(values[:, components[i]]), -1*hotelling_ellipse[0])
+		xmax = numpy.maximum(max(values[:, components[i]]), hotelling_ellipse[0])
+		ymin = numpy.minimum(min(values[:, components[j]]), -1*hotelling_ellipse[1])
+		ymax = numpy.maximum(max(values[:, components[j]]), hotelling_ellipse[1])
+
+		ax.set_xlim([(xmin + (0.2 * xmin)), xmax + (0.2 * xmax)])
+		ax.set_ylim([(ymin + (0.2 * ymin)), ymax + (0.2 * ymax)])
+
 		# If colouring by Sample Type - use standard reporting colours
 		if classType == 'Plot Sample Type':
 
@@ -253,14 +270,6 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 				ax2.set_xlabel(plotTitle)
 				ax2.set_ylabel('PC' + str(components[j]+1))
 
-		# Add Hotelling's T2
-		hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[i], components[j]]), alpha=alpha)
-
-		#a = numpy.sqrt(numpy.var(values[:,components[i]])*Fval*2*((ns-1)/(ns-2)));
-		#b = numpy.sqrt(numpy.var(values[:,components[j]])*Fval*2*((ns-1)/(ns-2)));
-		ellipse = Ellipse(xy=(0, 0), width=hotelling_ellipse[0]*2, height=hotelling_ellipse[1]*2,
-			edgecolor='k', fc='None', lw=2)
-		ax.add_patch(ellipse)
 
 		# Annotate
 		ylabel = 'PC' + str(components[j]+1) + ' (' + '{0:.2f}'.format(pcaModel.modelParameters['VarExpRatio'][components[j]] * 100) + '%)'
