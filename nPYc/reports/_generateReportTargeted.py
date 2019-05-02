@@ -176,7 +176,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 		f = open(filename, 'w')
 		f.write(template.render(item=item,
 								version=version,
-								graphicsPath=destinationPath,
+								graphicsPath=graphicsPath,
 								sampleSummary=sampleSummary,
 								pcaPlots=item['pcaModel']))
 		f.close()
@@ -208,7 +208,7 @@ def _featureReport(tData, item, destinationPath, numberPlotPerRowLOQ=3,
 			os.makedirs(destinationPath)
 		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
 			os.makedirs(os.path.join(destinationPath, 'graphics'))
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_' + reportType)
+		graphicsPath = os.path.join('graphics', 'report_' + reportType)
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
 	else:
@@ -440,7 +440,7 @@ def _mergeLOQAssessemnt(tData, item, destinationPath, numberPlotPerRowLOQ=3,
 			os.makedirs(destinationPath)
 		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
 			os.makedirs(os.path.join(destinationPath, 'graphics'))
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_' + reportType)
+		graphicsPath = os.path.join('graphics', 'report_' + reportType)
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
 	else:
@@ -518,7 +518,7 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 			os.makedirs(destinationPath)
 		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
 			os.makedirs(os.path.join(destinationPath, 'graphics'))
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_' + reportType)
+		graphicsPath = os.path.join('graphics', 'report_' + reportType)
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
 	else:

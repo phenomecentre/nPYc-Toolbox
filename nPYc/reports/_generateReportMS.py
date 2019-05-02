@@ -778,14 +778,15 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     else:
         graphicsPath = None
 
+
     # Feature selection parameters and numbers passing
     item = dict()
     item['Name'] = dataset.name
     item['Nfeatures'] = dataset.intensityData.shape[1]
 
     # Correlation to dilution
-    item['corrMethod'] = dataset.Attributes['corrMethod']
-    item['corrThreshold'] = dataset.Attributes['corrThreshold']
+    item['corrMethod'] = dataset.Attributes['filterParameters']['corrMethod'] if dataset.Attributes['filterParameters']['corrMethod'] is not None else dataset.Attributes['corrMethod']
+    item['corrThreshold'] = dataset.Attributes['filterParameters']['corrThreshold'] if dataset.Attributes['filterParameters']['corrThreshold'] is not None else dataset.Attributes['corrThreshold']
 
     if sum(dataset.corrExclusions) != dataset.noSamples:
         item['corrExclusions'] = str(
@@ -794,32 +795,32 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
         item['corrExclusions'] = 'none'
 
     if sum(SRDmask) > 0:
-        item['corrPassed'] = str(sum(dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])) + ' passed selection.'
-        passMask = numpy.logical_and(passMask, dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
+        item['corrPassed'] = str(sum(dataset.correlationToDilution >= item['corrThreshold'])) + ' passed selection.'
+        passMask = numpy.logical_and(passMask, dataset.correlationToDilution >= item['corrThreshold'])
     else:
         item['corrPassed'] = 'Not applied (no SRD samples present).'
 
     # RSD in SR samples, and RSD in SS samples > RSD in SR samples
-    item['rsdThreshold'] = dataset.Attributes['rsdThreshold']
-    item['rsdSPvsSSvarianceRatio'] = str(dataset.Attributes['varianceRatio'])
+    item['rsdThreshold'] = dataset.Attributes['filterParameters']['rsdThreshold'] if dataset.Attributes['filterParameters']['rsdThreshold'] is not None else dataset.Attributes['rsdThreshold']
+    item['rsdSPvsSSvarianceRatio'] = dataset.Attributes['filterParameters']['varianceRatio'] if dataset.Attributes['filterParameters']['varianceRatio'] is not None else dataset.Attributes['varianceRatio']
     rsdSS = rsd(dataset.intensityData[SSmask, :])
 
     if sum(SRmask) > 0:
-        item['rsdPassed'] = str(sum(dataset.rsdSP <= dataset.Attributes['rsdThreshold'])) + ' passed selection.'
-        item['rsdSPvsSSPassed'] = str(sum((dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS)) + ' passed selection.'
-        passMask = numpy.logical_and(passMask, dataset.rsdSP <= dataset.Attributes['rsdThreshold'], (dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS)
+        item['rsdPassed'] = str(sum(dataset.rsdSP <= item['rsdThreshold'])) + ' passed selection.'
+        item['rsdSPvsSSPassed'] = str(sum(dataset.rsdSP * item['rsdSPvsSSvarianceRatio'] <= rsdSS)) + ' passed selection.'
+        passMask = numpy.logical_and(passMask, dataset.rsdSP <= item['rsdThreshold'], (dataset.rsdSP * item['rsdSPvsSSvarianceRatio']) <= rsdSS)
     else:
         item['rsdPassed'] = 'Not applied (no SR samples present).'
         item['rsdSPvsSSPassed'] = 'Not applied (no SR samples present).'
 
     # Blank mask
-    if ('blankThreshold' in dataset.Attributes.keys()) & (sum(Blankmask) > 2):
+    if (dataset.Attributes['featureFilters']['blankFilter'] is True) & (sum(Blankmask) >= 2):
+        item['BlankThreshold'] = dataset.Attributes['filterParameters']['blankThreshold'] if dataset.Attributes['filterParameters']['blankThreshold'] is not None else dataset.Attributes['blankThreshold']
 
-        blankMask = blankFilter(dataset)
-        passMask = numpy.logical_and(passMask, blankMask)
+        blankMask = blankFilter(dataset, item['BlankThreshold'])
+        passMask = numpy.logical_and(passMask, blankMask)[0]
 
         item['BlankPassed'] = sum(blankMask)
-        item['BlankThreshold'] = dataset.Attributes['blankThreshold']
 
     # Artifactual filtering
     if withArtifactualFiltering:
@@ -841,7 +842,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
                 featureNos[0, rsdNo] = sum(dataset.artifactualFilter(featMask=(
                             (dataset.correlationToDilution >= rValsRep[0, rsdNo]) & (
                                 dataset.rsdSP <= rsdValsRep[0, rsdNo]) & (
-                                        (dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS) & (
+                                        (dataset.rsdSP * item['rsdSPvsSSvarianceRatio']) <= rsdSS) & (
                                         dataset.featureMask == True) & (blankMask == True))))
         # without blankThreshold
         else:
@@ -849,7 +850,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
                 featureNos[0, rsdNo] = sum(dataset.artifactualFilter(featMask=(
                             (dataset.correlationToDilution >= rValsRep[0, rsdNo]) & (
                                 dataset.rsdSP <= rsdValsRep[0, rsdNo]) & (
-                                        (dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS) & (
+                                        (dataset.rsdSP * item['rsdSPvsSSvarianceRatio']) <= rsdSS) & (
                                         dataset.featureMask == True))))
     else:
         # with blankThreshold in heatmap
@@ -857,14 +858,14 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
             for rsdNo in range(rValsRep.shape[1]):
                 featureNos[0, rsdNo] = sum(
                     (dataset.correlationToDilution >= rValsRep[0, rsdNo]) & (dataset.rsdSP <= rsdValsRep[0, rsdNo]) & (
-                                (dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS) & (
+                                (dataset.rsdSP * item['rsdSPvsSSvarianceRatio']) <= rsdSS) & (
                                 dataset.featureMask == True) & (blankMask == True))
         # without blankThreshold
         else:
             for rsdNo in range(rValsRep.shape[1]):
                 featureNos[0, rsdNo] = sum(
                     (dataset.correlationToDilution >= rValsRep[0, rsdNo]) & (dataset.rsdSP <= rsdValsRep[0, rsdNo]) & (
-                                (dataset.rsdSP * dataset.Attributes['varianceRatio']) <= rsdSS) & (
+                                (dataset.rsdSP * item['rsdSPvsSSvarianceRatio']) <= rsdSS) & (
                                 dataset.featureMask == True))
     test = pandas.DataFrame(data=numpy.transpose(numpy.concatenate([rValsRep, rsdValsRep, featureNos])),
                             columns=['Correlation to dilution', 'RSD', 'nFeatures'])
