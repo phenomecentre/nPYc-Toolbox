@@ -183,7 +183,7 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 				ax.scatter(values[classes.values == 'Study Sample', components[i]], values[classes.values == 'Study Sample', components[j]], c=sTypeColourDict[SampleType.StudySample], label='Study Sample')
 			if any(classes == 'Study Reference'):
 				ax.scatter(values[classes.values == 'Study Reference', components[i]], values[classes.values == 'Study Reference', components[j]], c=sTypeColourDict[SampleType.StudyPool], label='Study Reference')
-			if any(classes == 'External Reference'):
+			if any(classes == 'Long-Term Reference'):
 				ax.scatter(values[classes.values == 'Long-Term Reference', components[i]], values[classes.values == 'Long-Term Reference', components[j]], c=sTypeColourDict[SampleType.ExternalReference], label='Long-Term Reference')
 			if any(classes == 'Linearity Reference'):
 				ax.scatter(values[classes.values == 'Serial Dilution', components[i]], values[classes.values == 'Serial Dilution', components[j]], c=sTypeColourDict[SampleType.MethodReference], label='Serial Dilution')
