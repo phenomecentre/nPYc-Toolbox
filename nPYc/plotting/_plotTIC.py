@@ -67,15 +67,18 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	tempFeatureMask = tempFeatureMask < msData.intensityData.shape[0]
 	tempFeatureMask = (tempFeatureMask==False)
 
-
 	if withExclusions:
 		tempFeatureMask = numpy.logical_and(tempFeatureMask, msData.featureMask)
+		tempSamplesMask = msData.sampleMask
+
+	else:
+		tempSampleMask = numpy.ones(shape=msData.sampleMask.shape, dtype=bool)
 
 	# Define sample types
-	SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-	SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	LRmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+	SSmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)) & tempSamplesMask
+	SPmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSamplesMask
+	ERmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSamplesMask
+	LRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)) & tempSamplesMask
 
 	# X axis limits for formatting
 	minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values

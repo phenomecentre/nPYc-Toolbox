@@ -202,7 +202,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 		plt.show()
 
 
-def plotTICinteractive(msData, plottype='Sample Type'):
+def plotTICinteractive(msData, plottype='Sample Type', withExclusions=True):
 	"""
 	Interactively visualise TIC (coloured by batch and sample type) with plotly, provides tooltips to allow identification of samples.
 
@@ -223,13 +223,18 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 	# Generate TIC
 	tempFeatureMask = numpy.sum(numpy.isfinite(msData.intensityData), axis=0)
 	tempFeatureMask = tempFeatureMask < msData.intensityData.shape[0]
-	tic = numpy.sum(msData.intensityData[:,tempFeatureMask==False], axis=1)	
+	tic = numpy.sum(msData.intensityData[:,tempFeatureMask==False], axis=1)
+
+	if withExclusions:
+		tempSampleMask = msData.sampleMask
+	else:
+		tempSampleMask = numpy.ones(shape=msData.sampleMask.shape, dtype=bool)
 		
 	if plottype=='Sample Type': # Plot TIC for SR samples coloured by batch
 	
-		SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-		SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+		SSmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)) & tempSampleMask
+		SPmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSampleMask
+		ERmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSampleMask
 	
 		SSplot = go.Scatter(
 			x = msData.sampleMetadata['Acquired Time'][SSmask],
@@ -274,7 +279,7 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 	
 	if plottype=='Serial Dilution': # Plot TIC for LR samples coloured by dilution
 
-		LRmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+		LRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)) & tempSampleMask
 		
 		if hasattr(msData, 'corrExclusions'):
 			
