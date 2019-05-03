@@ -52,7 +52,8 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 		raise TypeError("excludeFailures must be a boolean")
 
 	with warnings.catch_warnings():
-		warnings.simplefilter('once')
+		warnings.simplefilter('ignore', category=RuntimeWarning)
+
 		correctedP = _batchCorrectionHead(data.intensityData,
 									 data.sampleMetadata['Run Order'].values,
 									 (data.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
@@ -217,10 +218,11 @@ def _batchCorrection(data, runOrder, QCsamples, batchList, featureIndex, paramet
 				if parameters['method'] == None:
 					# Skip RO correction if method is none
 					pass
-				else:	
+				else:
+
 					(feature[batchMask], fit[batchMask]) = runOrderCompensation(feature[batchMask],
 																			runOrder[batchMask],
-																			QCsamples[batchMask], 
+																			QCsamples[batchMask],
 																			parameters)
 
 				# Correct batch average to overall feature average
