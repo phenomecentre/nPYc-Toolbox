@@ -353,15 +353,17 @@ def _plotAbundanceBySampleType(dataset, SSmask, SPmask, ERmask, saveAs):
     else:
         sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
                             SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-        
-    # Just for features which are passing selection
-    intensityData = dataset.intensityData[:, dataset.featureMask]
 
-    meanIntensities = OrderedDict()
-    temp = numpy.nanmean(intensityData[SSmask, :], axis=0)
-    temp[numpy.isinf(temp)] = numpy.nan
-    meanIntensities['Study Sample'] = temp
-    colour = [sTypeColourDict[SampleType.StudySample]]
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', category=RuntimeWarning)
+        # Just for features which are passing selection
+        intensityData = dataset.intensityData[:, dataset.featureMask]
+        meanIntensities = OrderedDict()
+        temp = numpy.nanmean(intensityData[SSmask, :], axis=0)
+        temp[numpy.isinf(temp)] = numpy.nan
+        meanIntensities['Study Sample'] = temp
+        colour = [sTypeColourDict[SampleType.StudySample]]
+
     if sum(SPmask) != 0:
         temp = numpy.nanmean(intensityData[SPmask, :], axis=0)
         temp[numpy.isinf(temp)] = numpy.nan

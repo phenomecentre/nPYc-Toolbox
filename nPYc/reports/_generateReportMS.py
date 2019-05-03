@@ -24,6 +24,10 @@ from ._generateBasicPCAReport import generateBasicPCAReport
 from ..reports._finalReportPeakPantheR import _finalReportPeakPantheR
 from ..utilities._filters import blankFilter
 
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+
+
 
 from ..__init__ import __version__ as version
 
@@ -478,6 +482,12 @@ def _featureReport(dataset, destinationPath=None):
         featName=False
         figureSize=dataset.Attributes['figureSize']
 
+    item = dict()
+    item['Name'] = dataset.name
+    item['ReportType'] = 'feature summary'
+    item['Nfeatures'] = dataset.intensityData.shape[1]
+    item['Nsamples'] = dataset.intensityData.shape[0]
+
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
@@ -485,19 +495,18 @@ def _featureReport(dataset, destinationPath=None):
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
     ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+
+    try:
+        LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
+                (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+        item['LRcount'] = str(sum(LRmask))
+    except KeyError:
+        pass
 
     # Set up template item and save required info
-    item = dict()
-    item['Name'] = dataset.name
-    item['ReportType'] = 'feature summary'
-    item['Nfeatures'] = dataset.intensityData.shape[1]
-    item['Nsamples'] = dataset.intensityData.shape[0]
     item['SScount'] = str(sum(SSmask))
     item['SPcount'] = str(sum(SPmask))
     item['ERcount'] = str(sum(ERmask))
-    item['LRcount'] = str(sum(LRmask))
     item['corrMethod'] = dataset.Attributes['corrMethod']
 
     ##
