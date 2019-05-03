@@ -1303,7 +1303,7 @@ class MSDataset(Dataset):
 			for feature in featureList:
 				if feature in self.featureMetadata[on].unique():
 					self.featureMask[self.featureMetadata[self.featureMetadata[on] == feature].index] = False
-					self.featureMetadata.loc[self.featureMetadata[on == feature], 'User Excluded'] = True
+					self.featureMetadata.loc[self.featureMetadata[on] == feature, 'User Excluded'] = True
 					if (self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'].values == ''):
 						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = message
 					else:

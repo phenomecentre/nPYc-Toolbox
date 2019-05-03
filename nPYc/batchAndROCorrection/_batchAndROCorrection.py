@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 from ..objects._msDataset import MSDataset
 from ..enumerations import AssayRole, SampleType
 
+
 def correctMSdataset(data, window=11, method='LOWESS', align='median', parallelise=True, excludeFailures=True):
 	"""
 	Conduct run-order correction and batch alignment on the :py:class:`~nPYc.objects.MSDataset` instance *data*, returning a new instance with corrected intensity values.
