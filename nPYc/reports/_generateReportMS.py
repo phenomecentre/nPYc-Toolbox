@@ -896,7 +896,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
         print('Features filtered on:')
         print('Correlation (' + item['corrMethod'] + ', exclusions: ' + item['corrExclusions'] + ') to dilution greater than ' + str(item['corrThreshold']) + ': ' + item['corrPassed'])
         print('Relative Standard Deviation (RSD) in study reference (SR) samples below ' + str(item['rsdThreshold']) + ': ' + item['rsdPassed'])
-        print('RSD in study samples (SS) * ' + item['rsdSPvsSSvarianceRatio'] + ' >= RSD in SR samples: ' + item['rsdSPvsSSPassed'])
+        print('RSD in study samples (SS) * ' + str(item['rsdSPvsSSvarianceRatio']) + ' >= RSD in SR samples: ' + item['rsdSPvsSSPassed'])
         if 'BlankThreshold' in item:
             print('Mean intensity in SS > 95 % intensity * ' + str(item['BlankThreshold']) + ' in sampleBlanks: ' + str(item['BlankPassed']) + ' features passed selection.')
         if withArtifactualFiltering:
