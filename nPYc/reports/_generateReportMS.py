@@ -1071,7 +1071,7 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
 
 def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=None):
     """
-    Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
+    Generates a report post batch correction with pertinent figures (TIC, RSD etc.) before and after.
     """
 
     if (hasattr(dataset.featureMetadata, 'cpdName')):

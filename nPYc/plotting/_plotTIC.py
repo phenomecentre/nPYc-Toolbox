@@ -72,7 +72,7 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		tempSamplesMask = msData.sampleMask
 
 	else:
-		tempSampleMask = numpy.ones(shape=msData.sampleMask.shape, dtype=bool)
+		tempSamplesMask = numpy.ones(shape=msData.sampleMask.shape, dtype=bool)
 
 	# Define sample types
 	SSmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)) & tempSamplesMask
@@ -92,7 +92,7 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		loc = WeekdayLocator(byweekday=(MO, SA))
 	formatter = DateFormatter('%d/%m/%y')
 
-	tic = numpy.sum(msData.intensityData[:,tempFeatureMask==True], axis=1)
+	tic = numpy.sum(msData.intensityData[:, tempFeatureMask==True], axis=1)
 
 	# If colouring by detector voltage
 	if colourByDetectorVoltage:
