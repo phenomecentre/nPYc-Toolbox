@@ -1201,7 +1201,7 @@ class Dataset:
 		"""
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
-        
+
 		csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str})
 		currentMetadata = self.sampleMetadata.copy()
 
@@ -1230,12 +1230,16 @@ class Dataset:
 				currentMetadata.drop(column, axis=1, inplace=True)
 
 		# If AssayRole or SampleType columns are present parse strings into enums
+		#AssayRole
+		csvData['AssayRole'] = csvData['AssayRole'].apply(lambda x:(x.replace(" ", "")).lower())
+		csvData['SampleType'] = csvData['SampleType'].apply(lambda x:(x.replace(" ", "")).lower())
+	
 		if 'AssayRole' in csvData.columns:
 			for role in AssayRole:
-				csvData.loc[csvData['AssayRole'].values == str(role), 'AssayRole'] = role
+				csvData.loc[csvData['AssayRole'].values == (str(role).replace(" ",  "")).lower(), 'AssayRole'] = role
 		if 'SampleType' in csvData.columns:
 			for stype in SampleType:
-				csvData.loc[csvData['SampleType'].values == str(stype), 'SampleType'] = stype
+				csvData.loc[csvData['SampleType'].values == (str(stype).replace(" ", "")).lower(), 'SampleType'] = stype
 
 		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
 		# which are used in some plotting functions
@@ -1984,21 +1988,21 @@ class Dataset:
 		detailsDict should have the format:
 		detailsDict = {
 			'investigation_identifier' : "i1",
-		    'investigation_title' : "Give it a title",
-		    'investigation_description' : "Add a description",
-		    'investigation_submission_date' : "2016-11-03",
-		    'investigation_public_release_date' : "2016-11-03",
-		    'first_name' : "Noureddin",
-		    'last_name' : "Sadawi",
-		    'affiliation' : "University",
-		    'study_filename' : "my_ms_study",
-		    'study_material_type' : "Serum",
-		    'study_identifier' : "s1",
-		    'study_title' : "Give the study a title",
-		    'study_description' : "Add study description",
-		    'study_submission_date' : "2016-11-03",
-		    'study_public_release_date' : "2016-11-03",
-		    'assay_filename' : "my_ms_assay"
+			'investigation_title' : "Give it a title",
+			'investigation_description' : "Add a description",
+			'investigation_submission_date' : "2016-11-03",
+			'investigation_public_release_date' : "2016-11-03",
+			'first_name' : "Noureddin",
+			'last_name' : "Sadawi",
+			'affiliation' : "University",
+			'study_filename' : "my_ms_study",
+			'study_material_type' : "Serum",
+			'study_identifier' : "s1",
+			'study_title' : "Give the study a title",
+			'study_description' : "Add study description",
+			'study_submission_date' : "2016-11-03",
+			'study_public_release_date' : "2016-11-03",
+			'assay_filename' : "my_ms_assay"
 		}
 
 		:param bool withExclusions: If ``True`` mask features and samples will be excluded
