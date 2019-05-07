@@ -94,7 +94,10 @@ class ProbabilisticQuotientNormaliser(Normaliser):
 				featureMask = numpy.logical_and(numpy.isfinite(self._reference),
 												self._reference != 0)
 
-				fold_change_matrix = X[:,featureMask] / self._reference[featureMask]
+				fold_change_matrix = X[:, featureMask] / self._reference[featureMask]
+
+				# Change all 0's to nan so they are ignored
+				fold_change_matrix[fold_change_matrix == 0] = numpy.nan
 
 				self._normalisationcoefficients = numpy.absolute(numpy.nanmedian(fold_change_matrix, axis=1))
 

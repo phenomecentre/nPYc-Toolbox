@@ -2037,7 +2037,6 @@ class Dataset:
 				exportDataset.Attributes['featureMetadataNotExported']))
 			exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1, inplace=True)
 
-
 		if saveFormat == 'CSV':
 			destinationPath = os.path.join(destinationPath, exportDataset.name)
 			exportDataset._exportCSV(destinationPath, escapeDelimiters=escapeDelimiters)
