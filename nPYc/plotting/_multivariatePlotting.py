@@ -792,7 +792,7 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 			# Convert cVect to a value between 0.1 and 1 - to set the alpha of each point relative to loading weight
 			alphas = (((abs(cVect) - numpy.min(abs(cVect))) * (1 - 0.2)) / (maxcol - numpy.min(abs(cVect)))) + 0.2
 
-			LOADSplot = go.Scatter(
+			LOADSplot = go.Scattergl(
 				x = featureMetadata['Retention Time'],
 				y = featureMetadata['m/z'],
 				mode = 'markers',
@@ -851,7 +851,7 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 				)
 
 			# Add line for median spectral intensity
-			LOADSline = go.Scatter(
+			LOADSline = go.Scattergl(
 				x = Xvals,
 				y = numpy.median(dataMasked.intensityData, axis=0),
 				mode = 'lines',
@@ -881,7 +881,7 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 			
 			hovertext = ["Feature: %s; W: %s" % i for i in zip(featureMetadata['Feature Name'][sortOrder], W_str)]  # Text for tooltips
 
-			LOADSplot = go.Scatter(
+			LOADSplot = go.Scattergl(
 				x=pcaModel.loadings[component, sortOrder],
 				y=Yvals,
 				mode='markers',
@@ -921,7 +921,7 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 
 		hovertext = ["Feature: %s; W PC%s: %s; W PC%s: %s" % i for i in zip(featureMetadata['Feature Name'], PC1_id, WPC1_str, PC2_id, WPC2_str)]  # Text for tooltips
 
-		LOADSplot = go.Scatter(
+		LOADSplot = go.Scattergl(
 			x=pcaModel.loadings[component[0], :],
 			y=pcaModel.loadings[component[1], :],
 			mode='markers',
