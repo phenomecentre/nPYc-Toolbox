@@ -790,7 +790,10 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 			hovertext = ["Feature: %s; W: %s" % i for i in zip(featureMetadata['Feature Name'], W_str)] # Text for tooltips
 
 			# Convert cVect to a value between 0.1 and 1 - to set the alpha of each point relative to loading weight
-			alphas = (((abs(cVect) - numpy.min(abs(cVect))) * (1 - 0.2)) / (maxcol - numpy.min(abs(cVect)))) + 0.2
+			#alphas = (((abs(cVect) - numpy.min(abs(cVect))) * (1 - 0.2)) / (maxcol - numpy.min(abs(cVect)))) + 0.2
+
+			alphas = numpy.fmax(numpy.abs(cVect) / numpy.max(numpy.abs(cVect)), 0.1)
+
 
 			LOADSplot = go.Scattergl(
 				x = featureMetadata['Retention Time'],
