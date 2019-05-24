@@ -1233,7 +1233,7 @@ class Dataset:
 		#AssayRole
 		csvData['AssayRole'] = csvData['AssayRole'].apply(lambda x:(x.replace(" ", "")).lower())
 		csvData['SampleType'] = csvData['SampleType'].apply(lambda x:(x.replace(" ", "")).lower())
-	
+
 		if 'AssayRole' in csvData.columns:
 			for role in AssayRole:
 				csvData.loc[csvData['AssayRole'].values == (str(role).replace(" ",  "")).lower(), 'AssayRole'] = role
@@ -2076,14 +2076,14 @@ class Dataset:
 			for column in sampleMetadata.columns:
 				try:
 					if type(sampleMetadata[column][0]) is not datetime:
-						sampleMetadata[column] = sampleMetadata[column].str.replace(',', ';')
+						sampleMetadata.loc[:, column] = sampleMetadata[column].str.replace(',', ';')
 				except:
 					pass
 
 			for column in featureMetadata.columns:
 				try:
 					if type(featureMetadata[column][0]) is not datetime:
-						featureMetadata[column] = featureMetadata[column].str.replace(',', ';')
+						featureMetadata.loc[:, column] = featureMetadata[column].str.replace(',', ';')
 				except:
 					pass
 
