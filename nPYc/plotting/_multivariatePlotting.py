@@ -473,8 +473,9 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
 
 		cVect = pcaModel.loadings[i, :]
 		orig_cmap = plt.cm.RdYlBu_r # Red for high, Blue for negative, and we will have a very neutral yellow for 0
-		maxcol = numpy.max(cVect) # grab the maximum
-		mincol = numpy.min(cVect) # Grab the minimum
+		maxval = numpy.max([numpy.abs(numpy.max(cVect)), numpy.abs(numpy.min(cVect))])
+		maxcol = maxval#numpy.max(cVect) # grab the maximum
+		mincol = -maxval#numpy.min(cVect) # Grab the minimum
 		new_cmap = _shiftedColorMap(orig_cmap, start=0, midpoint=1 - maxcol/(maxcol + numpy.abs(mincol)), stop=1, name='new')
 
 		fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
