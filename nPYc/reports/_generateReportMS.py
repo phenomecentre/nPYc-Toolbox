@@ -549,7 +549,7 @@ def _featureReport(dataset, destinationPath=None):
             'figureFormat'])
         saveAs = item['SampleIntensityFigure']
     else:
-        print('Figure 2: Sample Total Ion Count (TIC) and distribtion (coloured by sample type).')
+        print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
 
     # TIC all samples
     plotTIC(dataset,
@@ -1073,7 +1073,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     """
     Generates a report post batch correction with pertinent figures (TIC, RSD etc.) before and after.
     """
-
+    
     if (hasattr(dataset.featureMetadata, 'cpdName')):
         featureName = 'cpdName'
         featName=True
@@ -1184,7 +1184,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
             figureSize=dataset.Attributes['figureSize'])
 
     # Figure 3: Histogram of RSD in study pool (SP) samples, segmented by abundance percentiles.
-
+    
     # Pre-correction
     if destinationPath:
         item['RsdByPercFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS3_rsdByPercPRE.' + dataset.Attributes[
@@ -1657,7 +1657,11 @@ def batchCorrectionTest(dataset, nFeatures=10, window=11):
     zeroMask = sum(dataset.intensityData[sampleMask, :] == 0)
     zeroMask = zeroMask == 0
 
-    passMask = zeroMask
+    # Exclude features which fail correlation to dilution
+    try:
+        passMask = numpy.logical_and(zeroMask, dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
+    except:
+        passMask = zeroMask
 
     # Select subset of features on which to perform batch correction
     maskNum = [i for i, x in enumerate(passMask) if x]
