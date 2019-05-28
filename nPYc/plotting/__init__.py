@@ -17,11 +17,10 @@ Interactive plots utilise the plotly framework to provide controls, when using p
 """
 
 from ._plotting import histogram, plotTICinteractive, plotLRTIC, plotCorrelationToLRbyFeature
-from ._nmrPlotting import plotPW, plotLineWidthInteractive, plotLineWidth
+from ._nmrPlotting import plotPW, plotLineWidthInteractive, plotLineWidth, plotSpectraInteractive
 from ._plotNMRcalibration import plotCalibration, plotCalibrationInteractive
 from ._plotNMRbaseline import plotBaseline, plotBaselineInteractive
 from ._plotNMRsolvent import plotSolventResonance, plotSolventResonanceInteractive
-from ._plotNMRspectra import plotSpectraInteractive
 from ._jointplotRSDvCorrelation import jointplotRSDvCorrelation
 from ._plotRSDs import plotRSDs, plotRSDsInteractive
 from ._plotTIC import plotTIC
