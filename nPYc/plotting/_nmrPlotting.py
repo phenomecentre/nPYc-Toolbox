@@ -8,11 +8,10 @@ import matplotlib.pyplot as plt
 from ..enumerations import AssayRole, SampleType
 import numpy
 import plotly.graph_objs as go
-from ..objects._nmrDataset import NMRDataset
 from ..enumerations import VariableType
 
 
-def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, sampleLabels='Sample ID'):
+def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, sampleLabels='Sample ID', nmrDataset=True):
 	"""
 	Plot spectra from *dataset*.
 
@@ -75,7 +74,7 @@ def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, 
 				)
 			data.append(trace)
 
-	if isinstance(dataset, NMRDataset):
+	if nmrDataset:
 		autorange = 'reversed'
 	else:
 		autorange = True

@@ -7,10 +7,10 @@ import re
 import warnings
 
 from ._dataset import Dataset
-from ..utilities import removeTrailingColumnNumbering
-from .._toolboxPath import toolboxPath
 from ..enumerations import VariableType, AssayRole, SampleType
 from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
+from plotly.offline import iplot
+from ..plotting import plotSpectraInteractive
 
 
 class NMRDataset(Dataset):
@@ -296,6 +296,31 @@ class NMRDataset(Dataset):
 			assayRoles,
 			', '.join("{!s}={!r}".format(key,val) for (key,val) in kwargs.items()))])
 
+	def plot(self, spectra, labels, interactive=False):
+		"""
+		Plots a set of nmr spectra. If interactive is False, returns a static matplotlib plot. If True, then plotly is used to generate
+		an interactive plot.
+
+		:param spectra: The specific 'labels' of the spectra to plot. By default all spectra are plotted.
+		:param labels: Which labels to select
+		:param interactive: Use matplotlib (False) or plotly (True)
+		:return: Displays the NMR data and returns either a matplotlib axis object or a plotly figure dictionary
+		"""
+
+		# Convert the spectra name/string to
+		spectra_idx = self.sampleMetadata[labels][self.sampleMetadata[labels] == spectra]
+		import matplotlib.pyplot as plt
+		if interactive:
+			nmr_plot = plotSpectraInteractive(self, spectra, sampleLabels=labels)
+			iplot(nmr_plot)
+			return nmr_plot
+
+		else:
+			fig, ax = plt.subplots(111)
+			ax.plot(self.featureMetadata.ppm, self.intensityData[spectra_idx, :].T)
+			ax.reverse_axis()
+			plt.show()
+			return ax
 
 	def _exportISATAB(self, destinationPath, detailsDict):
 		"""

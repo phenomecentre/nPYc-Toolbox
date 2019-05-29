@@ -2612,7 +2612,8 @@ class test_msdataset_initialiseFromCSV(unittest.TestCase):
 		dataset.name = 'Testing'
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
-
+			# Change default SOP to allow exporting acquired time.
+			dataset.Attributes['sampleMetadataNotExported'].remove('Acquired Time')
 			dataset.exportDataset(destinationPath=tmpdirname, saveFormat='CSV', withExclusions=False)
 
 			pathName = os.path.join(tmpdirname, 'Testing_sampleMetadata.csv')

@@ -1230,9 +1230,9 @@ class Dataset:
 				currentMetadata.drop(column, axis=1, inplace=True)
 
 		# If AssayRole or SampleType columns are present parse strings into enums
-		#AssayRole
-		csvData['AssayRole'] = csvData['AssayRole'].apply(lambda x:(x.replace(" ", "")).lower())
-		csvData['SampleType'] = csvData['SampleType'].apply(lambda x:(x.replace(" ", "")).lower())
+
+		csvData['AssayRole'] = [(x.replace(" ", "")).lower() if type(x) is str else numpy.nan for x in csvData['AssayRole']]
+		csvData['SampleType'] = [(x.replace(" ", "")).lower() if type(x) is str else numpy.nan for x in csvData['SampleType']]
 
 		if 'AssayRole' in csvData.columns:
 			for role in AssayRole:

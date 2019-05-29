@@ -11,4 +11,4 @@ from . import reports
 from . import batchAndROCorrection
 from . import multivariate
 
-__all__ = ['Dataset', 'MSDataset', 'MSTargetedDataset', 'plotting', 'reports', 'extractParams', 'NMRDataset', 'multivariate', 'TargetedDataset']
+__all__ = ['Dataset', 'MSDataset', 'plotting', 'reports', 'extractParams', 'NMRDataset', 'multivariate', 'TargetedDataset']
