@@ -1,74 +1,168 @@
 Reports
 -------
 
-The nPYc-Toolbox offers a series of `reports`, pre-set visualisations comprised of text, figures and tables to describe and summarise the characteristics of the dataset, and help the user assess the overall impact of quality control decisions (e.g. whether to exclude samples or features or change filtering criteria).
+The nPYc-Toolbox offers a series of `reports`, pre-set visualisations comprised of text, figures and tables to describe and summarise the characteristics of the dataset, and help the user assess the overall impact of quality control decisions (e.g. whether to exclude samples or features or change filtering criteria). 
 
-There are four reports available for all data types:
+The main reporting functions include:
 
-•	Sample Summary: Presents a breakdown of available samples per sample type. If metadata from a csv file was added, extra information about mismatches between expected and acquired samples is given
-•	Feature Summary: Summarises the main properties of the dataset and method specific quality control metrics
-•	Multivariate Report: Plots the main outputs of a PCA model (R2/Q2, scores and loading plots) and also any potential associations between pertinent analytical metadata and the scores values
-•	Final Report: Summarises report compiling information about the samples acquired, the overall quality of the dataset
-
-These can be generated using (e.g. for the Feature Summary Report)::
-
-	nPYc.reports.generateReport(dataset, 'feature summary')
-	
-In addition, there are a number of method-specific reports:
-
-- For specfic reports available for each method, see the sections below
-- For implementation of these with explainations, see :doc:`tutorial`
-- For batch and run-order correction specific reports for :py:class:`~nPYc.objects.MSDataset`, see :doc:`batchAndROCorrection`
-- For analytical multivariate quality control reports, see :doc:`multivariate`
-
-
-Quality Control
-===============
-
-The nPYc-Toolbox incorporates the concept of analytical quality directly into the subclasses of :py:class:`~nPYc.objects.Dataset`. Depending on the analytical platform and protocol, quality metrics may be judged on the basis of sample-by-sample or feature-by-feature comparisons, or both.
-
-Parameters for the quality control procedure can be specified in the :doc:`Configuration File<../configuration/builtinSOPs>` as the Dataset object is created, and amended after creation by modifying the relevant entry of the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
-
-The reporting functions have been specifically designed to summarise all important aspects of quality control throughout import and preprocessing, see the method-specific sections below and :doc:`tutorial` for full details.
-
-
-Saving Reports
-==============
+- Sample Summary: Presents a summary of the samples acquired
+- Feature Summary: Summarises the main properties of the dataset and method specific quality control metrics
+- Multivariate Report: Summarises the main outputs of a PCA model and also any potential associations with pertinent analytical metadata, see :doc:`multivariate` for full details.
+- Final Report: Summary report compiling information about the samples acquired, and the overall quality of the dataset
+- Batch and Run-Order Correction: specific reports for optimising and assessing correction in :py:class:`~nPYc.objects.MSDataset`, see :doc:`batchAndROCorrection` for full details
+- Feature Selection: specific report for assessing the number of features passing quality criteria in :py:class:`~nPYc.objects.MSDataset`, see :doc:`featurefiltering` for full details
 
 By default, reports are generated inline (i.e. in a Jupyter notebook), however reports can also be saved as html documents with static images by supplying a destination path, for example::
 
 	saveDir = '/path to save outputs'
 	nPYc.reports.generateReport(dataset, 'feature summary', destinationPath=saveDir)
 
-
-Templates
-=========
-
-Reporting used when saving reports as HTML are based on Jinja2, default reports are saved in the `Templates` directory, these may be customised if required.
+The html versions of the reports use Jinja2 templates, default reports are saved in the `Templates` directory, and may be customised if required.
 
 
-Sample Report
-=============
+Sample Summary Report
+=====================
+
+The sample summary report can be used to check the expected samples against those acquired, in terms of numbers, sample type, and any samples either missing from acquisition or not recorded in the sample metadata CSV file::
+
+	nPYc.reports.generateReport(msData, 'sample summary')
+
+The main function parameters are as follows:
 
 .. autoclass:: nPYc.reports._generateSampleReport
   :members:
 
 
-LC-MS Reports
-=============
+Feature Summary Report: LC-MS Datasets
+======================================
+
+The feature summary report provides visualisations summarising the quality of the dataset with regards to quality control criteria previously described in Lewis et al. 2016. These include both assessment of potential run-order and batch effects, and metrics by which feature quality can be assessed::
+
+	nPYc.reports.generateReport(msData, 'feature summary')
+
+In order, these consist of:
+
+- Feature abundances (Figure 1)
+- Sum of total ion count, TIC (Figures 2 and 3)
+- Correlation to dilution (Figures 4, 5 and 7)
+- Residual standard deviation, RSD (Figures 5, 7 and 9)
+- Chromatographic peak width, if available (Figure 8)
+- Ion map (Figure 10)
+
+For several of these parameters (for example, correlation to dilution, RSD), acceptable default values are pre-defined in the configuration SOP, see Built-in Configuration SOPs. If different values are required, these can be set by the user when feature filtering is implemented (**LINK TO FEATURE FILTERING**).
+
+The following sections describe how the quality for each of these is assessed.
+
+Feature abundance
+
+The histogram of feature abundance shows the distribution of mean abundance by sample type for each feature (Figure 1).
+
+While a normal distribution is expected for the SS and SR samples, if your study includes LTR samples (QC samples from a different source to the study) it can be the case that a subset of features are not present in these samples. If this is the case, and it is required to limit the feature set to those detected in your LTR samples, features not found in this set can be excluded based on their intensity (see X. xxxxxx or give example here?) Similarly, if an unexpected distribution is observed this can be investigated (for example, by going back to XCMS feature extraction parameters) or those with intensities less than a given threshold excluded as above.
+
+Sum of total ion count, TIC
+
+The SFE plot shows the the summed intensity of all feature integrals for each sample (Figure 2) and provides insight into potential run-order and batch effects.
+
+By plotting the SFE for each sample (ordered by acquisition date) any broad trends in overall sample intensity can be observed. With LC-MS it is usual to see a gradual decline in SFE across the run owing to increasing inefficiencies in ion detection (from source and ion optic contamination), alongside large jumps if data is acquired in multiple batches, both of which can be mitigated (at least in part) by run-order and batch correction (see X. xxxxx Run order and batch correction).
+
+In addition, throughout each experiment, the voltage applied to the MS detector is automatically adjusted to compensate for trends in instrument performance, which, especially when the increments in applied voltage are large, has a noticable effect on the SFE. Thus, an additional figure of SFE coloured by detector voltage is provided (Figure 3).
+
+See Lewis et al. 2016 for more details.
+
+Correlation to dilution
+
+Correlation to dilution is one metric by which feature quality can be determined. By inclusion of a dilution series (SR samples prepared at different concentrations) the correlation to dilution for each feature can be calculated. A histogram of the resulting values shows the distribution of correlation to dilution (Figure 4) and an SFE plot for the SRD samples can be used to assess the overall behaviour of the dilution series (Figure 5).
+
+A high quality dataset should contain only features which can be shown to be measured accurately with respect to the true intensity, i.e. to scale with dilution. At the feature filtering stage (see X. xxxxxxx) a threshold in correlation to dilution (default value 0.7) is used to exclude all features which do not respond to dilution. Figure 4 shows the distribution in correlation to dilution segmented by mean feature intensity. If the distribution in correlation to dilution values is not highly skewed to high values (especially for high and medium intensity features), the reason for this needs investigating.
+
+The first thing to check in this case is that the overall trend in SFE for the dilution series samples corresponds to the expected dilution as defined in the 'Basic CSV' file (Figure 5). Any outliers (for example, mis-injections) can be excluded, which may have a substantial impact on the resulting correlation values.
+
+If a large number of SRD samples are not scaling with dilution, and the distribution in correlation values is poor, the cause of this should be investigated across all stages, from acquisition, through conversion and peak detection.
+
+Residual standard deviation, RSD
+
+Another key metric by which feature quality can be assessed is that of residual standard deviation (RSD). By inclusion of precision reference samples (SR or LTR) the RSD for each feature can be calculated. A histogram of the resulting values shows the distribution of RSD in the SR samples (Figure 5) and a plot of the RSD for each feature by sample type (Figure 9) allows comparision of the variation observed between QC and study samples.
+
+A high quality dataset should contain only features which can be shown to be measured precisely from multiple acquisitions across the run (in this case this is provided by repeated injections of the pooled SR sample). At the feature filtering stage (see X. xxxxxxx) a threshold in RSD (default value 30) is used to exclude all features which cannot be measured precisely across the run. Figure 5 shows the distribution in RSD segmented by mean feature intensity. If the distribution is not skewed to low values (especially for high and medium intensity features), the reason for this needs investigating.
+
+The first thing to check is substantial run-order and batch trends (Figure 2), if these are present, the RSD in the SR samples will be skewed to higher values, and batch and run-order correction should be first applied. Additionally, outlying SR samples can cause increases in the RSD, if a small number of SR samples demonstrate an unusual SFE (which is not shown by surronding SS samples) these should be excluded before RSD is calculated.
+
+In addition to the requirement that features are measured precicely, the variance observed in the study samples, should exceed that measured in the SR samples, with the expectation that biologcal variance should exceeed analytical variance. The plot comparing the RSD measured in the different sample classes (study reference sample, study sanples etc) provides insight into variance structures in the dataset (Figure 9).
+
+Finally, to assess the main feature quality metrics together a plot of RSD vs. correlation is provided (Figure 7).
+
+Chromatographic peak width
+
+If available, a histogram is plotted of chromatographic peak width (Figure 8).
+
+Narrower peaks mean better chromatograpic resolution, while broadening in peak width (when compared with previous runs) imply indicate potential aging of the column, which may need replacing.
+
+Ion map
+
+The ion map visualises the location of the detected features in the m/z and retention time space of the assay.
+
+This plot can be used to assess potential feature exclusion ranges. For example, where the retention time is outside the useful range of the assay, or signals resulting from polymer contamination.
+
+  
+Feature Summary Report: NMR Datasets
+====================================
+
+The feature summary report provides visualisations summarising the quality of the dataset with regards to quality control criteria previously described in Dona et al. 2014.
+
+In order, these consist of:
+
+    Chemical shift calibration (Figure 1)
+    Line width (Figures 2)
+    Baseline consistency (Figure 3)
+    Quality of solvent suppression (Figure 3)
+
+For each parameter, acceptable default values are pre-defined in the configuration SOP, see Built-in Configuration SOPs. If different values are required, these can be set by the user as per the example in Section 2 above (2. Import and preprocess NMR data).
+
+Any samples failing any of the above criteria are flagged in Table 1 at the end of the report.
+
+The following sections describe how the quality for each of these is assessed.
+
+Chemical shift calibration:
+
+The chemical shift calibration algorithm detects deviation from the expected 𝛿
+
+ppm and flags those samples outside of the empirical 95% bound as estimated from the whole dataset (Figure 1).
+
+If spectra are failing calibration, firstly the presence of the target resonance should be checked, and if required, a different target can be defined in the Configuration SOPs or by the user at import.
+
+Line width:
+
+The spectral line-width is calculated by fitting a pseudo-voigt line shape to a pre-specified signal on the native-resolution Fourier-transformed spectrum at import (see Figure 2).
+
+Depending on the number of samples failing line-width checks, either individual samples may be re-run, or the acquisition parameters adjusted by the spectroscopist.
+
+Baseline consistency:
+
+Baseline consistancy is calculated based on two regions at either end of the spectrum expected to contain only electronic noise. For these regions the 5% and 95% percentile bounds in intensity are calculated using all the points in all the spectra. For each individual spectrum, if more than 95% of the intensity points fall ouside of these bounds the sample is flagged for review (Figure 3).
+
+The phasing of spectra flagged for review should first be checked, and adjusted if applicable. If a larger number of samples in the dataset fail the spectrometer acquisition parameters (such as receiver gain settings) and sample preparation (such as dilution) should be revised.
+
+Quality of solvent suppression:
+
+The solvent suppression quality control is performed by applying the same method as above to the regions flanking either side of the residual solvent peak (Figure 4).
+
+This test normally flags very dilute samples for which it might be difficult to obtain a high quality spectrum without adjusting the sample preparation. However, for these spectra, re-aquisition with more manual adjustment of the solvent suppression parameters may substantially improve the data.
+
+
+Feature Summary Report: NMR Targeted Datasets
+=============================================
+
+
+  
+  
+Dataset Specific Reporting Syntax and Parameters
+================================================
 
 .. autoclass:: nPYc.reports._generateReportMS
   :members:
   
-  
-NMR Reports
-===========
-
 .. autoclass:: nPYc.reports._generateReportNMR
   :members:
-
-Targeted Reports
-================
-
+	
 .. autoclass:: nPYc.reports._generateReportTargeted
   :members:
