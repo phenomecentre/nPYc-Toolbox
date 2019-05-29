@@ -15,7 +15,7 @@ def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, 
 	"""
 	Plot spectra from *dataset*.
 
-	:param Dataset dataset: Dataset to plot from
+	#:param Dataset dataset: Dataset to plot from
 	:param samples: Index of samples to plot, if ``None`` plot all spectra
 	:type samples: None or list of int
 	:param xlim: Tuple of (minimum value, maximum value) defining a feature range to plot

@@ -10,7 +10,6 @@ from ._dataset import Dataset
 from ..enumerations import VariableType, AssayRole, SampleType
 from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
 from plotly.offline import iplot
-from ..plotting import plotSpectraInteractive
 
 
 class NMRDataset(Dataset):
@@ -311,6 +310,7 @@ class NMRDataset(Dataset):
 		spectra_idx = self.sampleMetadata[labels][self.sampleMetadata[labels] == spectra]
 		import matplotlib.pyplot as plt
 		if interactive:
+			from ..plotting import plotSpectraInteractive
 			nmr_plot = plotSpectraInteractive(self, spectra, sampleLabels=labels)
 			iplot(nmr_plot)
 			return nmr_plot
@@ -327,22 +327,22 @@ class NMRDataset(Dataset):
 		Export the dataset's metadata to the directory *destinationPath* as ISATAB
 		detailsDict should have the format:
 		detailsDict = {
-		    'investigation_identifier' : "i1",
-		    'investigation_title' : "Give it a title",
-		    'investigation_description' : "Add a description",
-		    'investigation_submission_date' : "2016-11-03",
-		    'investigation_public_release_date' : "2016-11-03",
-		    'first_name' : "Noureddin",
-		    'last_name' : "Sadawi",
-		    'affiliation' : "University",
-		    'study_filename' : "my_ms_study",
-		    'study_material_type' : "Serum",
-		    'study_identifier' : "s1",
-		    'study_title' : "Give the study a title",
-		    'study_description' : "Add study description",
-		    'study_submission_date' : "2016-11-03",
-		    'study_public_release_date' : "2016-11-03",
-		    'assay_filename' : "my_ms_assay"
+			'investigation_identifier' : "i1",
+			'investigation_title' : "Give it a title",
+			'investigation_description' : "Add a description",
+			'investigation_submission_date' : "2016-11-03",
+			'investigation_public_release_date' : "2016-11-03",
+			'first_name' : "Noureddin",
+			'last_name' : "Sadawi",
+			'affiliation' : "University",
+			'study_filename' : "my_ms_study",
+			'study_material_type' : "Serum",
+			'study_identifier' : "s1",
+			'study_title' : "Give the study a title",
+			'study_description' : "Add study description",
+			'study_submission_date' : "2016-11-03",
+			'study_public_release_date' : "2016-11-03",
+			'assay_filename' : "my_ms_assay"
 		}
 
 		:param str destinationPath: Path to a directory in which the output will be saved
@@ -397,50 +397,50 @@ class NMRDataset(Dataset):
 
 
 		for index, row in self.sampleMetadata.iterrows():
-		    src_name = row['Sample File Name']
-		    source = Source(name=src_name)
+			src_name = row['Sample File Name']
+			source = Source(name=src_name)
 
-		    source.comments.append(Comment(name='Study Name', value=row['Study']))
-		    study.sources.append(source)
+			source.comments.append(Comment(name='Study Name', value=row['Study']))
+			study.sources.append(source)
 
-		    sample_name = src_name
-		    sample = Sample(name=sample_name, derives_from=[source])
-		    # check if field exists first
-		    status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
-		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
-		    sample.characteristics.append(characteristic_material_type)
+			sample_name = src_name
+			sample = Sample(name=sample_name, derives_from=[source])
+			# check if field exists first
+			status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
+			characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
+			sample.characteristics.append(characteristic_material_type)
 
-		    #characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
-		    #sample.characteristics.append(characteristic_material_role)
+			#characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
+			#sample.characteristics.append(characteristic_material_role)
 
-		    # check if field exists first
-		    age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
-		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
-		    sample.characteristics.append(characteristic_age)
-		    # check if field exists first
-		    gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
-		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
-		    sample.characteristics.append(characteristic_gender)
+			# check if field exists first
+			age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
+			characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
+			sample.characteristics.append(characteristic_age)
+			# check if field exists first
+			gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
+			characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
+			sample.characteristics.append(characteristic_gender)
 
-		    ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
-		    characteristic_organism = Characteristic(category=OntologyAnnotation(term="Organism"),value=OntologyAnnotation(term="Homo Sapiens", term_source=ncbitaxon,term_accession="http://purl.bioontology.org/ontology/NCBITAXON/9606"))
-		    sample.characteristics.append(characteristic_organism)
+			ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
+			characteristic_organism = Characteristic(category=OntologyAnnotation(term="Organism"),value=OntologyAnnotation(term="Homo Sapiens", term_source=ncbitaxon,term_accession="http://purl.bioontology.org/ontology/NCBITAXON/9606"))
+			sample.characteristics.append(characteristic_organism)
 
-		    study.samples.append(sample)
+			study.samples.append(sample)
 
-		    # check if field exists first
-		    sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
-		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
-		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
+			# check if field exists first
+			sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
+			sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
+			aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
 
-		    sample_collection_process.inputs = [source]
-		    aliquoting_process.outputs = [sample]
+			sample_collection_process.inputs = [source]
+			aliquoting_process.outputs = [sample]
 
-		    # links processes
-		    plink(sample_collection_process, aliquoting_process)
+			# links processes
+			plink(sample_collection_process, aliquoting_process)
 
-		    study.process_sequence.append(sample_collection_process)
-		    study.process_sequence.append(aliquoting_process)
+			study.process_sequence.append(sample_collection_process)
+			study.process_sequence.append(aliquoting_process)
 
 
 		study.protocols.append(sample_collection_protocol)
@@ -464,51 +464,51 @@ class NMRDataset(Dataset):
 
 		#for index, row in sampleMetadata.iterrows():
 		for index, sample in enumerate(study.samples):
-		    row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
-		    # create an extraction process that executes the extraction protocol
-		    extraction_process = Process(executes_protocol=extraction_protocol)
+			row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
+			# create an extraction process that executes the extraction protocol
+			extraction_process = Process(executes_protocol=extraction_protocol)
 
-		    # extraction process takes as input a sample, and produces an extract material as output
-		    sample_name = sample.name
-		    sample = Sample(name=sample_name, derives_from=[source])
-		    #print(row['Acquired Time'].values[0])
+			# extraction process takes as input a sample, and produces an extract material as output
+			sample_name = sample.name
+			sample = Sample(name=sample_name, derives_from=[source])
+			#print(row['Acquired Time'].values[0])
 
-		    extraction_process.inputs.append(sample)
-		    material = Material(name="extract-{}".format(index))
-		    material.type = "Extract Name"
-		    extraction_process.outputs.append(material)
+			extraction_process.inputs.append(sample)
+			material = Material(name="extract-{}".format(index))
+			material.type = "Extract Name"
+			extraction_process.outputs.append(material)
 
-		    # create a ms process that executes the nmr protocol
-		    nmr_process = Process(executes_protocol=nmr_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
+			# create a ms process that executes the nmr protocol
+			nmr_process = Process(executes_protocol=nmr_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
 
-		    nmr_process.name = "assay-name-{}".format(index)
-		    nmr_process.inputs.append(extraction_process.outputs[0])
-		    # nmr process usually has an output data file
-		    # check if field exists first
-		    assay_data_name = row['Assay data name'].values[0] if 'Assay data name' in self.sampleMetadata.columns else 'N/A'
-		    datafile = DataFile(filename=assay_data_name, label="NMR Assay Name", generated_from=[sample])
-		    nmr_process.outputs.append(datafile)
+			nmr_process.name = "assay-name-{}".format(index)
+			nmr_process.inputs.append(extraction_process.outputs[0])
+			# nmr process usually has an output data file
+			# check if field exists first
+			assay_data_name = row['Assay data name'].values[0] if 'Assay data name' in self.sampleMetadata.columns else 'N/A'
+			datafile = DataFile(filename=assay_data_name, label="NMR Assay Name", generated_from=[sample])
+			nmr_process.outputs.append(datafile)
 
-		    #nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
-		    nmr_process.parameter_values = [ParameterValue(category=nmr_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
-		    # check if field exists first
-		    instrument = row['Instrument'].values[0] if 'Instrument' in self.sampleMetadata.columns else 'N/A'
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=instrument))
-             # check if field exists first
-		    sbatch = row['Sample batch'].values[0] if 'Sample batch' in self.sampleMetadata.columns else 'N/A'
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=sbatch))
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
+			#nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
+			nmr_process.parameter_values = [ParameterValue(category=nmr_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
+			# check if field exists first
+			instrument = row['Instrument'].values[0] if 'Instrument' in self.sampleMetadata.columns else 'N/A'
+			nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=instrument))
+			 # check if field exists first
+			sbatch = row['Sample batch'].values[0] if 'Sample batch' in self.sampleMetadata.columns else 'N/A'
+			nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=sbatch))
+			nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 
-		    # ensure Processes are linked forward and backward
-		    plink(extraction_process, nmr_process)
-		    # make sure the extract, data file, and the processes are attached to the assay
-		    nmr_assay.samples.append(sample)
-		    nmr_assay.data_files.append(datafile)
-		    nmr_assay.other_material.append(material)
-		    nmr_assay.process_sequence.append(extraction_process)
-		    nmr_assay.process_sequence.append(nmr_process)
-		    nmr_assay.measurement_type = OntologyAnnotation(term="metabolite profiling")
-		    nmr_assay.technology_type = OntologyAnnotation(term="NMR spectroscopy")
+			# ensure Processes are linked forward and backward
+			plink(extraction_process, nmr_process)
+			# make sure the extract, data file, and the processes are attached to the assay
+			nmr_assay.samples.append(sample)
+			nmr_assay.data_files.append(datafile)
+			nmr_assay.other_material.append(material)
+			nmr_assay.process_sequence.append(extraction_process)
+			nmr_assay.process_sequence.append(nmr_process)
+			nmr_assay.measurement_type = OntologyAnnotation(term="metabolite profiling")
+			nmr_assay.technology_type = OntologyAnnotation(term="NMR spectroscopy")
 
 		# attach the assay to the study
 		study.assays.append(nmr_assay)
