@@ -30,6 +30,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 	"""
 	PCA based analysis of a dataset. A PCA model is generated for the data object, then potential associations between the scores and any sample metadata determined by correlation (continuous data) or a Kruskal-Wallis test (categorical data).
 
+	The multivariateReport has three options for the **reportType** argument:
+
 	* **'analytical'** Reports on analytical qualities of the data only (as defined in the relevant SOP).
 	* **'biological'** Reports on biological qualities of the data only (all columns in *sampleMetadata* except those defined as analytical or skipped in the SOP).
 	* **'all'** Reports on all qualities of the data (all columns in *sampleMetadata* except those defined as skipped in the SOP).
