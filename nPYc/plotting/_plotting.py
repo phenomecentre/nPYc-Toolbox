@@ -202,7 +202,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 		plt.show()
 
 
-def plotTICinteractive(msData, plottype='Sample Type', withExclusions=True):
+def plotTICinteractive(msData, plottype='Sample Type', labelby='Run Order', withExclusions=True):
 	"""
 	Interactively visualise TIC (coloured by batch and sample type) with plotly, provides tooltips to allow identification of samples.
 
@@ -246,7 +246,7 @@ def plotTICinteractive(msData, plottype='Sample Type', withExclusions=True):
 				symbol = 'circle'
 				),
 				name = 'Study Sample',
-				text = msData.sampleMetadata['Run Order'][SSmask]
+				text = msData.sampleMetadata[labelby][SSmask]
 				)
 
 		SRplot = go.Scatter(
@@ -258,7 +258,7 @@ def plotTICinteractive(msData, plottype='Sample Type', withExclusions=True):
 				symbol = 'cross'
 				),
 			name = 'Study Reference',
-			text = msData.sampleMetadata['Run Order'][SPmask]
+			text = msData.sampleMetadata[labelby][SPmask]
 			)
 			
 		LTRplot = go.Scatter(
@@ -270,7 +270,7 @@ def plotTICinteractive(msData, plottype='Sample Type', withExclusions=True):
 				symbol = 'cross'
 				),
 			name = 'Long-Term Reference',
-			text = msData.sampleMetadata['Run Order'][ERmask]
+			text = msData.sampleMetadata[labelby][ERmask]
 			)
 		
 		data = [SSplot, SRplot, LTRplot]
