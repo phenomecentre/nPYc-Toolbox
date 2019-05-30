@@ -32,7 +32,6 @@ By comparing the results across all surveyed features, the parameters for and ne
 
 - Is the window of the LOWESS smoother appropriate? Check that only broad and not narrow trends are being fitted, change batch_correction_window parameter if required.
 - Does the correction need to be applied in different sub-batches? Check if there is a common and consistant jump in intensity across all features, amend the sample batches if required.
-- Do any :term:`Study Reference` samples need to be excluded? Check if there are any common outliers across all features, exclude samples if required.
 - Is batch correction required? Check if there is an observable trend in the batch and/or run-order, if not then correction is not required!
 
 Once these questions have been assessed, the appropriate parameters can be modified, or samples excluded, for full details and a worked example see the LC-MS tutorial at :doc:`tutorial`.
