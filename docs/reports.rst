@@ -42,10 +42,10 @@ The feature summary report provides visualisations summarising the quality of th
 
 In order, these consist of:
 
-- Feature abundances (Figure 1)
+- Feature abundance (Figure 1)
 - Sum of total ion count, TIC (Figures 2 and 3)
 - Correlation to dilution (Figures 4, 5 and 7)
-- Residual standard deviation, RSD (Figures 5, 7 and 9)
+- Residual standard deviation, RSD (Figures 6, 7 and 9)
 - Chromatographic peak width, if available (Figure 8)
 - Ion map (Figure 10)
 
@@ -53,55 +53,97 @@ For several of these parameters (for example, correlation to dilution, RSD), acc
 
 The following sections describe how the quality for each of these is assessed.
 
-Feature abundance
+**Feature abundance**
 
 The histogram of feature abundance shows the distribution of mean abundance by sample type for each feature (Figure 1).
 
+.. figure:: _static/featureSummaryMS_fig1_meanIntensityFeature.svg
+	:figwidth: 70%
+	:alt: Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).
+	
+	Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).
+
 While a normal distribution is expected for the SS and SR samples, if your study includes LTR samples (QC samples from a different source to the study) it can be the case that a subset of features are not present in these samples. If this is the case, and it is required to limit the feature set to those detected in your LTR samples, features not found in this set can be excluded based on their intensity (see X. xxxxxx or give example here?) Similarly, if an unexpected distribution is observed this can be investigated (for example, by going back to XCMS feature extraction parameters) or those with intensities less than a given threshold excluded as above.
 
-Sum of total ion count, TIC
+**Sum of total ion count, TIC**
 
-The SFE plot shows the the summed intensity of all feature integrals for each sample (Figure 2) and provides insight into potential run-order and batch effects.
+The TIC plot shows the the summed intensity of all feature integrals for each sample (Figure 2) and provides insight into potential run-order and batch effects.
 
-By plotting the SFE for each sample (ordered by acquisition date) any broad trends in overall sample intensity can be observed. With LC-MS it is usual to see a gradual decline in SFE across the run owing to increasing inefficiencies in ion detection (from source and ion optic contamination), alongside large jumps if data is acquired in multiple batches, both of which can be mitigated (at least in part) by run-order and batch correction (see X. xxxxx Run order and batch correction).
+.. figure:: _static/featureSummaryMS_fig2_acquisitionStructure.svg
+	:figwidth: 70%
+	:alt: Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).
+	
+	Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).
 
-In addition, throughout each experiment, the voltage applied to the MS detector is automatically adjusted to compensate for trends in instrument performance, which, especially when the increments in applied voltage are large, has a noticable effect on the SFE. Thus, an additional figure of SFE coloured by detector voltage is provided (Figure 3).
+By plotting the TIC for each sample (ordered by acquisition date) any broad trends in overall sample intensity can be observed. With LC-MS it is usual to see a gradual decline in TIC across the run owing to increasing inefficiencies in ion detection (from source and ion optic contamination), alongside large jumps if data is acquired in multiple batches, both of which can be mitigated (at least in part) by run-order and batch correction (see X. xxxxx Run order and batch correction).
+
+In addition, throughout each experiment, the voltage applied to the MS detector is automatically adjusted to compensate for trends in instrument performance, which, especially when the increments in applied voltage are large, has a noticable effect on the TIC. Thus, an additional figure of TIC coloured by detector voltage is provided (see Figure 3 in tutorial).
 
 See Lewis et al. 2016 for more details.
 
-Correlation to dilution
+**Correlation to dilution**
 
-Correlation to dilution is one metric by which feature quality can be determined. By inclusion of a dilution series (SR samples prepared at different concentrations) the correlation to dilution for each feature can be calculated. A histogram of the resulting values shows the distribution of correlation to dilution (Figure 4) and an SFE plot for the SRD samples can be used to assess the overall behaviour of the dilution series (Figure 5).
+Correlation to dilution is one metric by which feature quality can be determined. By inclusion of a dilution series (SR samples prepared at different concentrations) the correlation to dilution for each feature can be calculated. A histogram of the resulting values shows the distribution of correlation to dilution (Figure 4) and a TIC plot for the SRD samples can be used to assess the overall behaviour of the dilution series (Figure 5).
 
 A high quality dataset should contain only features which can be shown to be measured accurately with respect to the true intensity, i.e. to scale with dilution. At the feature filtering stage (see X. xxxxxxx) a threshold in correlation to dilution (default value 0.7) is used to exclude all features which do not respond to dilution. Figure 4 shows the distribution in correlation to dilution segmented by mean feature intensity. If the distribution in correlation to dilution values is not highly skewed to high values (especially for high and medium intensity features), the reason for this needs investigating.
 
+.. figure:: _static/featureSummaryMS_fig4_correlationByPerc.svg
+	:figwidth: 70%
+	:alt: Figure 4: Histogram of pearson correlation of features to serial dilution, segmented by percentile.
+	
+	Figure 4: Histogram of pearson correlation of features to serial dilution, segmented by percentile.
+
 The first thing to check in this case is that the overall trend in SFE for the dilution series samples corresponds to the expected dilution as defined in the 'Basic CSV' file (Figure 5). Any outliers (for example, mis-injections) can be excluded, which may have a substantial impact on the resulting correlation values.
+
+.. figure:: _static/featureSummaryMS_fig5_TICinLR.svg
+	:figwidth: 70%
+	:alt: Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.
+	
+	Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.
 
 If a large number of SRD samples are not scaling with dilution, and the distribution in correlation values is poor, the cause of this should be investigated across all stages, from acquisition, through conversion and peak detection.
 
-Residual standard deviation, RSD
+**Residual standard deviation, RSD**
 
-Another key metric by which feature quality can be assessed is that of residual standard deviation (RSD). By inclusion of precision reference samples (SR or LTR) the RSD for each feature can be calculated. A histogram of the resulting values shows the distribution of RSD in the SR samples (Figure 5) and a plot of the RSD for each feature by sample type (Figure 9) allows comparision of the variation observed between QC and study samples.
+Another key metric by which feature quality can be assessed is that of residual standard deviation (RSD). By inclusion of precision reference samples (SR or LTR) the RSD for each feature can be calculated. A histogram of the resulting values shows the distribution of RSD in the SR samples (Figure 6) and a plot of the RSD for each feature by sample type (Figure 9) allows comparision of the variation observed between QC and study samples.
 
-A high quality dataset should contain only features which can be shown to be measured precisely from multiple acquisitions across the run (in this case this is provided by repeated injections of the pooled SR sample). At the feature filtering stage (see X. xxxxxxx) a threshold in RSD (default value 30) is used to exclude all features which cannot be measured precisely across the run. Figure 5 shows the distribution in RSD segmented by mean feature intensity. If the distribution is not skewed to low values (especially for high and medium intensity features), the reason for this needs investigating.
+A high quality dataset should contain only features which can be shown to be measured precisely from multiple acquisitions across the run (in this case this is provided by repeated injections of the pooled SR sample). At the feature filtering stage (see X. xxxxxxx) a threshold in RSD (default value 30) is used to exclude all features which cannot be measured precisely across the run. Figure 6 shows the distribution in RSD segmented by mean feature intensity. If the distribution is not skewed to low values (especially for high and medium intensity features), the reason for this needs investigating.
+
+.. figure:: _static/featureSummaryMS_fig6_rsdByPerc.svg
+	:figwidth: 70%
+	:alt: Figure 6: Histogram of Residual Standard Deviation (RSD) in study reference (SR) samples, segmented by abundance percentiles.
+	
+	Figure 6: Histogram of Residual Standard Deviation (RSD) in study reference (SR) samples, segmented by abundance percentiles.
 
 The first thing to check is substantial run-order and batch trends (Figure 2), if these are present, the RSD in the SR samples will be skewed to higher values, and batch and run-order correction should be first applied. Additionally, outlying SR samples can cause increases in the RSD, if a small number of SR samples demonstrate an unusual SFE (which is not shown by surronding SS samples) these should be excluded before RSD is calculated.
 
 In addition to the requirement that features are measured precicely, the variance observed in the study samples, should exceed that measured in the SR samples, with the expectation that biologcal variance should exceeed analytical variance. The plot comparing the RSD measured in the different sample classes (study reference sample, study sanples etc) provides insight into variance structures in the dataset (Figure 9).
 
-Finally, to assess the main feature quality metrics together a plot of RSD vs. correlation is provided (Figure 7).
+.. figure:: _static/featureSummaryMS_fig9_RSDdistributionFigure.svg
+	:figwidth: 70%
+	:alt: Figure 9: RSD distribution for all samples and all features in dataset (by sample type).
+	
+	Figure 9: RSD distribution for all samples and all features in dataset (by sample type).
 
-Chromatographic peak width
+Finally, to assess the main feature quality metrics together a plot of RSD vs. correlation is provided (see Figure 7 in tutorial).
 
-If available, a histogram is plotted of chromatographic peak width (Figure 8).
+**Chromatographic peak width**
+
+If available, a histogram is plotted of chromatographic peak width (if available, Figure 8).
 
 Narrower peaks mean better chromatograpic resolution, while broadening in peak width (when compared with previous runs) imply indicate potential aging of the column, which may need replacing.
 
-Ion map
+**Ion map**
 
-The ion map visualises the location of the detected features in the m/z and retention time space of the assay.
+The ion map visualises the location of the detected features in the m/z and retention time space of the assay (Figure 10).
 
-This plot can be used to assess potential feature exclusion ranges. For example, where the retention time is outside the useful range of the assay, or signals resulting from polymer contamination.
+.. figure:: _static/featureSummaryMS_fig10_ionMap.svg
+	:figwidth: 70%
+	:alt: Figure 10: Ion map of all features (coloured by log median intensity).
+	
+	Figure 10: Ion map of all features (coloured by log median intensity).
+
+This plot can be used to assess potential feature exclusion ranges. For example, where the retention time is outside the useful range of the assay, or presence of signals resulting from polymer contamination.
 
   
 Feature Summary Report: NMR Datasets

@@ -113,7 +113,7 @@ todo_include_todos = False
 
 # -- Options for HTML output ----------------------------------------------
 
-numfig = True
+numfig = False#True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
