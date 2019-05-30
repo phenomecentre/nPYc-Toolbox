@@ -103,7 +103,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 											  variableType=nPYc.enumerations.VariableType.Spectral,
 											  sop='GenericNMRurine')
 
-		dataset.Attributes.pop('PWFailThreshold', None)
+		dataset.Attributes.pop('LWFailThreshold', None)
 		dataset.Attributes.pop('baselineCheckRegion', None)
 		dataset.Attributes.pop('solventPeakCheckRegion', None)
 
@@ -187,7 +187,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 													   variableType=nPYc.enumerations.VariableType.Spectral,
 													   sop='GenericNMRurine')
 
-		dataset.Attributes.pop('PWFailThreshold', None)
+		dataset.Attributes.pop('LWFailThreshold', None)
 		dataset.Attributes.pop('baselineCheckRegion', None)
 		dataset.Attributes.pop('solventPeakCheckRegion', None)
 
@@ -254,7 +254,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 	def test_nmrQCchecks(self):
 
-		self.dataset.Attributes.pop('PWFailThreshold', None)
+		self.dataset.Attributes.pop('LWFailThreshold', None)
 		self.dataset.Attributes.pop('baselineCheckRegion', None)
 		self.dataset.Attributes.pop('solventPeakCheckRegion', None)
 
@@ -275,7 +275,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			#	self.assertFalse(skipedCheck in self.dataset.sampleMetadata.columns)
 
 		with self.subTest('Line Width'):
-			self.dataset.Attributes['PWFailThreshold'] = 2
+			self.dataset.Attributes['LWFailThreshold'] = 2
 
 			self.dataset.sampleMetadata['Line Width (Hz)'] = 1.5
 			self.dataset.sampleMetadata.loc[0::5, 'Line Width (Hz)'] = 3

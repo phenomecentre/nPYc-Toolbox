@@ -534,10 +534,10 @@ class NMRDataset(Dataset):
 			(self.sampleMetadata['Delta PPM'] > meanVal - bounds),
 			(self.sampleMetadata['Delta PPM'] < meanVal + bounds))
 
-		if 'PWFailThreshold' in self.Attributes.keys():
+		if 'LWFailThreshold' in self.Attributes.keys():
 			# LineWidth quality check
 			self.sampleMetadata['LineWidthFail'] = self.sampleMetadata['Line Width (Hz)'] >= self.Attributes[
-				'PWFailThreshold']
+				'LWFailThreshold']
 
 		if 'baselineCheckRegion' in self.Attributes.keys():
 			# Baseline check

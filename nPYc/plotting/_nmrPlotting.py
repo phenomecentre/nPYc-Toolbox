@@ -153,19 +153,19 @@ def plotPW(nmrData, savePath=None, title='', figureFormat='png', dpi=72, figureS
 	tempDF.dropna(axis='columns', how='all', inplace=True) # remove empty columns
 	
 	#all the outliers only
-	pw_ER = pw_ER.where(pw_ER>nmrData.Attributes['PWFailThreshold'], numpy.nan) #anything smaller than pw threshold set to NaN so doesnt plot
-	pw_SP = pw_SP.where(pw_SP>nmrData.Attributes['PWFailThreshold'], numpy.nan)
-	pw_SS = pw_SS.where(pw_SS>nmrData.Attributes['PWFailThreshold'], numpy.nan)
-	pw_SRD = pw_SRD.where(pw_SRD>nmrData.Attributes['PWFailThreshold'], numpy.nan)
-	pw_Blank = pw_Blank.where(pw_Blank>nmrData.Attributes['PWFailThreshold'], numpy.nan)
-	pw_Unknown = pw_Unknown.where(pw_Unknown>nmrData.Attributes['PWFailThreshold'], numpy.nan)
+	pw_ER = pw_ER.where(pw_ER>nmrData.Attributes['LWFailThreshold'], numpy.nan) #anything smaller than pw threshold set to NaN so doesnt plot
+	pw_SP = pw_SP.where(pw_SP>nmrData.Attributes['LWFailThreshold'], numpy.nan)
+	pw_SS = pw_SS.where(pw_SS>nmrData.Attributes['LWFailThreshold'], numpy.nan)
+	pw_SRD = pw_SRD.where(pw_SRD>nmrData.Attributes['LWFailThreshold'], numpy.nan)
+	pw_Blank = pw_Blank.where(pw_Blank>nmrData.Attributes['LWFailThreshold'], numpy.nan)
+	pw_Unknown = pw_Unknown.where(pw_Unknown>nmrData.Attributes['LWFailThreshold'], numpy.nan)
 	tempDF_outliers = pd.concat([pw_SS, pw_SP, pw_ER, pw_SRD, pw_Blank, pw_Unknown], axis=1)#put them all together in a new df
 	tempDF_outliers.columns = ['Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution', 'Blank', 'Unspecified SampleType or AssayRole']
 	tempDF_outliers.dropna(axis='columns', how='all', inplace=True) # remove empty columns
 	
 	#plot fail threshold line only if there exists values greater than the fail (normally 1.4 set in SOP)
-	if numpy.max(nmrData.sampleMetadata['Line Width (Hz)']) > nmrData.Attributes['PWFailThreshold']:#numpy.max(tempDF)[0]>nmrData.Attributes['PWFailThreshold']:
-		plt.plot([-0.5,5], [nmrData.Attributes['PWFailThreshold'], nmrData.Attributes['PWFailThreshold']], 'r-', label='PW fail threshold')#-0.5 to 3 as on box plot as i understand the first plot is 1 at x so put to 3 as we have max of 3 categories normally (may have to revisit this)
+	if numpy.max(nmrData.sampleMetadata['Line Width (Hz)']) > nmrData.Attributes['LWFailThreshold']:#numpy.max(tempDF)[0]>nmrData.Attributes['LWFailThreshold']:
+		plt.plot([-0.5,5], [nmrData.Attributes['LWFailThreshold'], nmrData.Attributes['LWFailThreshold']], 'r-', label='PW fail threshold')#-0.5 to 3 as on box plot as i understand the first plot is 1 at x so put to 3 as we have max of 3 categories normally (may have to revisit this)
 		plt.legend(loc='best')#also we only need legend if the line is present
 
 	if numpy.size(tempDF_outliers) > 0:#we dont attempt to plot if their is no outliers
@@ -206,7 +206,7 @@ def plotLineWidth(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize
         
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'Line Width (Hz)'] > nmrData.Attributes['PWFailThreshold']:
+		if nmrData.sampleMetadata.loc[i, 'Line Width (Hz)'] > nmrData.Attributes['LWFailThreshold']:
 			ax.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.8,0.05,0.01,0.7), label='Exceeded threshold: %s' % (nmrData.sampleMetadata.loc[i, 'Sample File Name']))
 
 		if numpy.isnan(nmrData.sampleMetadata.loc[i, 'Line Width (Hz)']):
@@ -271,7 +271,7 @@ def plotLineWidthInteractive(nmrData):
 			line = dict(
 				color = ('rgb(205, 12, 24)')
 			),
-			name = 'Spectra exceeding LW cutoff of %.2f Hz' % (nmrData.Attributes['PWFailThreshold']),
+			name = 'Spectra exceeding LW cutoff of %.2f Hz' % (nmrData.Attributes['LWFailThreshold']),
 			mode = 'lines',
 			visible = 'legendonly'
 			)
@@ -294,7 +294,7 @@ def plotLineWidthInteractive(nmrData):
 	##
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'Line Width (Hz)'] > nmrData.Attributes['PWFailThreshold']:
+		if nmrData.sampleMetadata.loc[i, 'Line Width (Hz)'] > nmrData.Attributes['LWFailThreshold']:
 
 			trace = go.Scatter(
 				x = nmrData.featureMetadata.loc[:, 'ppm'].values[ppmMask],

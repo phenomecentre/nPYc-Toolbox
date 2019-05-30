@@ -162,7 +162,7 @@ The visualisations include various metrics by which dataset quality can be asses
 
 For each parameter, acceptable default values are pre-defined in the configuration SOP, see :doc:`configuration/builtinSOPs` for details. If different values are required, these can be set by the user by modifying the appropriate 'Attribute', for example, to decrease the line width threshold::
 
-	nmrData
+	nmrData.Attributes['LWFailThreshold'] = 0.8
 
 Any samples failing any of the above criteria are flagged in Table 1 at the end of the report.
 

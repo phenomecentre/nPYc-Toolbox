@@ -71,7 +71,7 @@ NMRDataset Objects
 	'ppmSearchRange'              list of float                 [-0.3, 0.3]                             [4.9, 5.733]                            Chemical shift region to search for calibration signal
 	'LWpeakMultiplicity'          str                           ‘singlet’                               'quartet'								Type of signal used to measure line width
 	'LWpeakRange'                 list of float                 [-0.1, 0.1]                             [4.08, 4.14]                            Chemical shift region to search for line width signal
-	'PWFailThreshold'             float                         1.3										1.3                                     Line-width check cut-off in Hz
+	'LWFailThreshold'             float                         1.3										1.3                                     Line-width check cut-off in Hz
 	'baselineCheckRegion'         list of list pairs of floats  [[-2, -0.5], [9.5, 12.5]]				[[-2, -0.5], [9.5, 12.5]]               Chemical shift regions to use in baseline quality checks
 	'solventPeakCheckRegion'      list of list pairs of floats  [[4.6, 4.7],[4.9,5]]                    [[4.4, 4.5], [4.85,5]]                  Chemical shift regions to use in water suppression quality checks
 	'exclusionRegions'            list of list pairs of floats  [[-0.2,0.2],[4.7,4.9]]                  [[-0.2,0.2],[4.5,4.85]]                 Chemical shift regions to mark for exclusion by default during pre-processing

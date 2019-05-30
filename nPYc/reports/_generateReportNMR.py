@@ -295,7 +295,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 	dataParametersTable = pandas.DataFrame(
 			data = [dataset.Attributes['calibrateTo'], dataset.Attributes['variableSize'], dataset.Attributes['baselineCheckRegion'],
 				   dataset.Attributes['solventPeakCheckRegion'], dataset.Attributes['LWpeakRange'], dataset.Attributes['LWpeakMultiplicity'],
-				   dataset.Attributes['PWFailThreshold'], dataset.Attributes['exclusionRegions']],
+				   dataset.Attributes['LWFailThreshold'], dataset.Attributes['exclusionRegions']],
 			index = ['Referenced to (ppm)', 'Spectral Resolution (points)', 'Baseline Region Checked (ppm)', 
 					'Solvent Suppresion Region Checked (ppm)', 'Line Width: Calculated on', 'Line Width: Peak Multiplicity',
 					'Line Width: Threshold (Hz)', 'Spectral Regions Automatically Removed (ppm)'],
