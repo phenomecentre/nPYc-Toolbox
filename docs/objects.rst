@@ -13,8 +13,20 @@ These can be created using (e.g. for LC-MS data)::
 	
 	dataset = nPYc.MSDataset('path to data')
 
-When setting up the Dataset classes, default parameters are loaded from their associated :doc:`Configuration Files<configuration/configuration>` (see :doc:`tutorial` for details on how to modify these), and subsequently saved in the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary.
+When setting up the Dataset classes, default parameters are loaded from their associated :doc:`Configuration Files<configuration/configuration>`, and subsequently saved in the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary. 
 
+For NMR data, the nPYc-Toolbox contains two default configuration files, 'GenericNMRUrine' and 'GenericNMRBlood' for urine and blood datasets respecively, therefore, to import NMR spectra from urine samples the *sop* parameter would be::
+
+	nmrData = nPYc.NMRDataset('path to data', sop='GenericNMRurine')
+	
+A full list of the parameters for each dataset type is given in the :doc:`configuration/builtinSOPs`. If different values are required, these can be modified directly in the appropriate *SOP* file, or alternatively they can be set by the user by modifying the required 'Attribute', either at import, or by subsequent direct modification in the pipeline. For example, to set the line width threshold (*LWFailThreshold*) to subsequently flag NMR spectra with line widths not meeting this value::
+	
+	# EITHER, set the required value (here 0.8) at import
+	nmrData = nPYc.NMRDataset(rawDataPath, pulseProgram='noesygppr1d', LWFailThreshold=0.8)
+	
+	# OR, set the *Attribute* directly (after importing nmrData)
+	nmrData.Attributes['LWFailThreshold'] = 0.8
+	
 Dataset classes have several other key atttributes, including:
 
 * :py:attr:`~Dataset.sampleMetadata`: A :math:`n` × :math:`p` pandas dataframe of sample identifiers and sample associated metadata (each row here corresponds to a row in the intensityData file)

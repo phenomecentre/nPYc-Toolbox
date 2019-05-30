@@ -165,7 +165,7 @@ def plotPW(nmrData, savePath=None, title='', figureFormat='png', dpi=72, figureS
 	
 	#plot fail threshold line only if there exists values greater than the fail (normally 1.4 set in SOP)
 	if numpy.max(nmrData.sampleMetadata['Line Width (Hz)']) > nmrData.Attributes['LWFailThreshold']:#numpy.max(tempDF)[0]>nmrData.Attributes['LWFailThreshold']:
-		plt.plot([-0.5,5], [nmrData.Attributes['LWFailThreshold'], nmrData.Attributes['LWFailThreshold']], 'r-', label='PW fail threshold')#-0.5 to 3 as on box plot as i understand the first plot is 1 at x so put to 3 as we have max of 3 categories normally (may have to revisit this)
+		plt.plot([-0.5,5], [nmrData.Attributes['LWFailThreshold'], nmrData.Attributes['LWFailThreshold']], 'r-', label='LW fail threshold')#-0.5 to 3 as on box plot as i understand the first plot is 1 at x so put to 3 as we have max of 3 categories normally (may have to revisit this)
 		plt.legend(loc='best')#also we only need legend if the line is present
 
 	if numpy.size(tempDF_outliers) > 0:#we dont attempt to plot if their is no outliers

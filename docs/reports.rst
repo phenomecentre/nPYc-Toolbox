@@ -51,7 +51,7 @@ The visualisations include both assessment of potential run-order and batch effe
 - Chromatographic peak width, if available (Figure 8)
 - Ion map (Figure 10)
 
-For several of these parameters (for example, correlation to dilution, RSD), acceptable default values are pre-defined in the configuration SOP, see :doc:`configuration/builtinSOPs` for details. If different values are required, these can be set by the user when feature filtering is implemented (see :doc:`featurefiltering` for details).
+For several of these parameters (for example, correlation to dilution, RSD), acceptable default values are pre-defined in the configuration SOP, see :doc:`configuration/builtinSOPs` for details. If different values are required, these can be set by the user either by modifying the SOP, or during data import, or directly at any point during running the pipeline. For more information, see :doc:`Datasets<objects>` and for examples, :doc:`tutorial`.
 
 The following sections describe how the quality for each of these is assessed.
 
@@ -149,48 +149,76 @@ This plot can be used to assess potential feature exclusion ranges. For example,
 Feature Summary Report: NMR Datasets
 ====================================
 
-The NMR feature summary report provides visualisations summarising the quality of the dataset with regards to quality control criteria previously described in Dona et al. 2014, and can be run using::
+The NMR feature summary report provides visualisations summarising the quality of the dataset with regards to quality control criteria previously described in Dona *et al* [#]_ and can be run using::
 
 	nPYc.reports.generateReport(nmrData, 'feature summary')
 
 The visualisations include various metrics by which dataset quality can be assessed, in order, these consist of:
 
-    Chemical shift calibration (Figure 1)
-    Line width (Figures 2 and 3)
-    Baseline consistency (Figure 4)
-    Quality of solvent suppression (Figure 5)
+- Chemical shift calibration (Figure 1)
+- Line width (Figures 2 and 3)
+- Baseline consistency (Figure 4)
+- Quality of solvent suppression (Figure 5)
 
-For each parameter, acceptable default values are pre-defined in the configuration SOP, see :doc:`configuration/builtinSOPs` for details. If different values are required, these can be set by the user by modifying the appropriate 'Attribute', for example, to decrease the line width threshold::
+For several of these parameters (for example, line width), acceptable default values are pre-defined in the configuration SOP, see :doc:`configuration/builtinSOPs` for details. If different values are required, these can be set by the user either by modifying the SOP, or during data import, or directly at any point during running the pipeline. For more information, see :doc:`Datasets<objects>` and for examples, :doc:`tutorial`.
 
-	nmrData.Attributes['LWFailThreshold'] = 0.8
-
-Any samples failing any of the above criteria are flagged in Table 1 at the end of the report.
+Any samples failing any of the above criteria are flagged, but in the appropriate plots, and in the table at the end of the report.
 
 The following sections describe how the quality for each of these is assessed.
 
-Chemical shift calibration:
+**Chemical shift calibration**
 
-The chemical shift calibration algorithm detects deviation from the expected 𝛿
+The chemical shift calibration algorithm detects deviation from the expected delta ppm and flags those samples outside of the empirical 95% bound as estimated from the whole dataset (Figure 1).
 
-ppm and flags those samples outside of the empirical 95% bound as estimated from the whole dataset (Figure 1).
+.. figure:: _static/featureSummaryNMR_fig1_calibrationCheck.svg
+	:figwidth: 70%
+	:alt: Figure 1: Distribution of all samples after chemical shift calibration (5-95% with outliers flagged).
+	
+	Figure 1: Distribution of all samples after chemical shift calibration (5-95% with outliers flagged).
 
-If spectra are failing calibration, firstly the presence of the target resonance should be checked, and if required, a different target can be defined in the Configuration SOPs or by the user at import.
+If spectra are failing calibration, firstly the presence of the target resonance should be checked, and if required, a different peak target can be defined as described above. 
 
-Line width:
+**Line width**
 
-The spectral line-width is calculated by fitting a pseudo-voigt line shape to a pre-specified signal on the native-resolution Fourier-transformed spectrum at import (see Figure 2).
+The spectral line width is calculated by fitting a pseudo-voigt line shape to a pre-specified signal on the native-resolution Fourier-transformed spectrum at import. A box plot of the calculated line width values coloured by sample type is plotted in Figure 2.
 
-Depending on the number of samples failing line-width checks, either individual samples may be re-run, or the acquisition parameters adjusted by the spectroscopist.
+.. figure:: _static/featureSummaryNMR_fig2_peakWidthBoxplot.svg
+	:figwidth: 70%
+	:alt: Figure 2: Boxplot of line width values (coloured by sample type).
+	
+	Figure 2: Boxplot of line width values (coloured by sample type).
+	
+Any samples with values above the line width threshold (here set to 0.8 as above), are also plotted (Figure 3)
 
-Baseline consistency:
+.. figure:: _static/featureSummaryNMR_fig3_peakWidthSpectra.svg
+	:figwidth: 70%
+	:alt: Figure 3: Distribution of all samples around peak on which line width calculated (5-95% with outliers flagged).
+	
+	Figure 3: Distribution of all samples around peak on which line width calculated (5-95% with outliers flagged).
 
-Baseline consistancy is calculated based on two regions at either end of the spectrum expected to contain only electronic noise. For these regions the 5% and 95% percentile bounds in intensity are calculated using all the points in all the spectra. For each individual spectrum, if more than 95% of the intensity points fall ouside of these bounds the sample is flagged for review (Figure 3).
+Depending on the number of samples failing the line width checks, either individual samples may be re-run, or, if necessary, the acquisition parameters adjusted by the spectroscopist.
+
+**Baseline consistency**
+
+Baseline consistancy is calculated based on two regions at either end of the spectrum expected to contain only electronic noise. For these regions the 5% and 95% percentile bounds in intensity are calculated using all the points in all the spectra. For each individual spectrum, if more than 95% of the intensity points fall ouside of these bounds the sample is flagged for review (Figure 4).
+
+.. figure:: _static/featureSummaryNMR_fig4_baselineCheck.svg
+	:figwidth: 70%
+	:alt: Figure 4: Distribution of all samples at baseline regions (5-95% with outliers flagged).
+	
+	Figure 4: Distribution of all samples at baseline regions (5-95% with outliers flagged).
 
 The phasing of spectra flagged for review should first be checked, and adjusted if applicable. If a larger number of samples in the dataset fail the spectrometer acquisition parameters (such as receiver gain settings) and sample preparation (such as dilution) should be revised.
 
-Quality of solvent suppression:
+**Quality of solvent suppression**
 
-The solvent suppression quality control is performed by applying the same method as above to the regions flanking either side of the residual solvent peak (Figure 4).
+The solvent suppression quality control is performed by applying the same method as above to the regions flanking either side of the residual solvent peak (Figure 5).
+
+.. figure:: _static/featureSummaryNMR_fig5_solventSuppresionCheck.svg
+	:figwidth: 70%
+	:alt: Figure 5: Distribution of all samples at region surrounding solvent suppresion peak (5-95% with outliers flagged).
+	
+	Figure 5: Distribution of all samples at region surrounding solvent suppresion peak (5-95% with outliers flagged).
 
 This test normally flags very dilute samples for which it might be difficult to obtain a high quality spectrum without adjusting the sample preparation. However, for these spectra, re-aquisition with more manual adjustment of the solvent suppression parameters may substantially improve the data.
 
@@ -214,7 +242,9 @@ Dataset Specific Reporting Syntax and Parameters
   :members:
   
   
-.. [#] Matthew R Lewis, Jake TM Pearce, Konstantina Spagou, Martin Green, Anthony C Dona, Ada HY Yuen, Mark David, David J Berry, Katie Chappell, Verena Horneffer-van der Sluis, Rachel Shaw, Simon Lovestone, Paul Elliott, John Shockcor, John C Lindon, Olivier Cloarec, Zoltan Takats, Elaine Holmes and Jeremy K Nicholson. Development and Application of Ultra-Performance Liquid Chromatography-TOF MS for Precision Large Scale Urinary Metabolic Phenotyping. Analytical Chemistry, 88(18):9004-13, 2016. URL: http://dx.doi.org/10.1021/acs.analchem.6b01481
+.. [#] Matthew R Lewis, Jake TM Pearce, Konstantina Spagou, Martin Green, Anthony C Dona, Ada HY Yuen, Mark David, David J Berry, Katie Chappell, Verena Horneffer-van der Sluis, Rachel Shaw, Simon Lovestone, Paul Elliott, John Shockcor, John C Lindon, Olivier Cloarec, Zoltan Takats, Elaine Holmes and Jeremy K Nicholson. Development and Application of Ultra-Performance Liquid Chromatography-TOF MS for Precision Large Scale Urinary Metabolic Phenotyping. Analytical Chemistry, 88(18):9004-9013, 2016. URL: http://dx.doi.org/10.1021/acs.analchem.6b01481
+
+.. [#] Anthony C Dona, Beatriz Jiménez, Hartmut Schäfer, Eberhard Humpfer, Manfred Spraul, Matthew R Lewis, Jake TM Pearce, Elaine Holmes, John C Lindon and Jeremy K Nicholson. Precision High-Throughput Proton NMR Spectroscopy of Human Urine, Serum, and Plasma for Large-Scale Metabolic Phenotyping. Analytical Chemistry, 86(19):9887-9894, 2014. URL: http://dx.doi.org/10.1021/ac5025039
 
 
 
