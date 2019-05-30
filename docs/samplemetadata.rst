@@ -34,7 +34,9 @@ Assay Roles are described in detail here :py:class:`~nPYc.enumerations.AssayRole
 - 'Precision Reference' acquired to characterise analytical variability
 - 'Linearity Reference' samples used assess the linearity of response (intensity responses to changes in abundance) in the dataset
 
-Common combinations of *Sample Type* and *Assay Role* are defined within the nPYc-Toolbox and used to characterise data quality, these include:
+The main samples comprising the study are named :term:`Study Sample` (SS), and are a *Study Sample*, *Assay* combination.
+
+In addition, common combinations of *Sample Type* and *Assay Role* are defined within the nPYc-Toolbox and used to characterise data quality, these include:
 
 - :term:`Study Reference` (SR): A *Study Pool*, *Precision Reference* combination used to assess analytical stability across the aquisition run
 - :term:`Long-Term Reference` (LTR): An *External Reference*, *Precision Reference* combination used to assess analytical stability across the aquisition run, and furthermore between different studies

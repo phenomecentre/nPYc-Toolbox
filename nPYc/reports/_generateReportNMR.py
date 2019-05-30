@@ -109,7 +109,7 @@ def _featureReport(dataset, destinationPath=None):
 		item['calibrationCheck'] = os.path.join(graphicsPath, dataset.name + '_calibrationCheck.' + dataset.Attributes['figureFormat'])
 		saveAs = item['calibrationCheck']
 	else:
-		print('Figure 1: Calibration Check Plot, aligned to:', dataset.Attributes['alignTo'])
+		print('Figure 1: Distribution of all samples after chemical shift calibration (5-95% with outliers flagged)')
 
 	
 	if destinationPath:
@@ -129,7 +129,7 @@ def _featureReport(dataset, destinationPath=None):
 					item['Name'] + '_peakWidthBoxplot.' + dataset.Attributes['figureFormat'])
 		saveAs = item['peakWidthBoxplot']
 	else:
-		print('Figure 2: Peak Width Boxplot (Hz)')
+		print('Figure 2: Boxplot of line width values (coloured by sample type)')
 		saveAs = None
 		
 	nPYc.plotting.plotPW(dataset,
@@ -142,9 +142,20 @@ def _featureReport(dataset, destinationPath=None):
 	# LW shape plot
 	##
 	if not destinationPath:
-		print('Figure 2a: Peak Width Modeling')
+		print('Figure 3: Distribution of all samples around peak on which line width calculated (5-95% with outliers flagged)')
 		figure = plotLineWidthInteractive(dataset)
 		iplot(figure)
+	else:
+		item['peakWidthSpectra'] = os.path.join(graphicsPath,
+					item['Name'] + '_peakWidthSpectra.' + dataset.Attributes['figureFormat'])
+		saveAs = item['peakWidthSpectra']
+
+		nPYc.plotting.plotLineWidth(dataset,
+			savePath=saveAs,
+			figureFormat=dataset.Attributes['figureFormat'],
+			dpi=dataset.Attributes['dpi'],
+			figureSize=dataset.Attributes['figureSize'])
+
 
 	##
 	# Baseline plot
@@ -154,7 +165,7 @@ def _featureReport(dataset, destinationPath=None):
 					item['Name'] + '_finalFeatureBLWPplots1.' + dataset.Attributes['figureFormat'])
 		saveAs = item['finalFeatureBLWPplots1']
 	else:
-		print('Figure 3: Baseline Low and High')
+		print('Figure 4: Distribution of all samples at baseline regions (5-95% with outliers flagged)')
 
 		saveAs = None
 
@@ -178,7 +189,7 @@ def _featureReport(dataset, destinationPath=None):
 		saveAs = item['finalFeatureBLWPplots3']
 		
 	else:
-		print('Figure 4: Solvent peak Low and High')
+		print('Figure 5: Distribution of all samples at region surrounding solvent suppresion peak (5-95% with outliers flagged)')
 		saveAs = None
 
 	if destinationPath:

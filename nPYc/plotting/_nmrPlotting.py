@@ -96,7 +96,7 @@ def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, 
 	return figure
 
 
-def plotPW(nmrData, savePath=None, title='Line with values (Hz)', figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotPW(nmrData, savePath=None, title='', figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotPW(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7))
 	
@@ -192,26 +192,25 @@ def plotLineWidth(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize
 	:param savePath: If None, plot interactively, otherwise attempt to save at this path
 	:type savePath: None or str
 	"""
-
+    
 	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, nmrData.Attributes['LWpeakRange'], percentiles=(5, 95))
 
-	globalMask = numpy.ix_(nmrData.sampleMask, ppmMask)
-
-	fig, ax = plt.subplots(1, 1, sharey=True)
+	fig, ax = plt.subplots(1, figsize=figureSize, dpi=dpi)
 
 	ax.plot(localPPM, meanSpectrum, color=(0.46,0.71,0.63))
-	ax.fill_between(localPPM, lowerPercentile, y2=upperPercentile, color=(0,0.4,.3,0.2))
+	ax.fill_between(localPPM, lowerPercentile, y2=upperPercentile, color=(0,0.4,.3,0.2), label='Variance about the median')
 
 	##
 	# Plot failures
 	##
+        
 	for i in range(nmrData.noSamples):
 
-		if nmrData.sampleMetadata.loc[i, 'Line Width (Hz)'] <= nmrData.Attributes['PWFailThreshold']:
-			ax.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.8,0.05,0.01,0.7))
+		if nmrData.sampleMetadata.loc[i, 'Line Width (Hz)'] > nmrData.Attributes['PWFailThreshold']:
+			ax.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.8,0.05,0.01,0.7), label='Exceeded threshold: %s' % (nmrData.sampleMetadata.loc[i, 'Sample File Name']))
 
 		if numpy.isnan(nmrData.sampleMetadata.loc[i, 'Line Width (Hz)']):
-			ax.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.05,0.05,0.8,0.7))
+			ax.plot(localPPM, nmrData.intensityData[i, ppmMask], color=(0.05,0.05,0.8,0.7), label='Calculation failed: %s' % nmrData.sampleMetadata.loc[i, 'Sample File Name'])
 
 	ax.axvline(nmrData.Attributes['calibrateTo'], color='k', linestyle='--')
 	ax.set_xlabel('ppm')
@@ -220,14 +219,8 @@ def plotLineWidth(nmrData, savePath=None, figureFormat='png', dpi=72, figureSize
 	##
 	# Set up legend
 	##
-	variance = mpatches.Patch(color=(0,0.4,.3,0.2), label='Variance about the median')
-
-	failures = mlines.Line2D([], [], color=(0.8,0.05,0.01,0.7), marker='',
-							label='Exceeded linewidth cuttoff of %.2f Hz' % (nmrData.Attributes['PWFailThreshold']))
-	uncalculated = mlines.Line2D([], [], color=(0.05,0.05,0.8,0.7), marker='',
-							label='Linewidth could not be calculated')
-	plt.legend(handles=[variance, failures, uncalculated])
-
+	ax.legend()
+    
 	##
 	# Save or draw
 	##
@@ -248,9 +241,9 @@ def plotLineWidthInteractive(nmrData):
 	:param savePath: If None, plot interactively, otherwise attempt to save at this path
 	:type savePath: None or str
 	"""
+   
 	localPPM, ppmMask, meanSpectrum, lowerPercentile, upperPercentile = nmrRangeHelper(nmrData, nmrData.Attributes['LWpeakRange'], percentiles=(5, 95))
 
-	globalMask = numpy.ix_(nmrData.sampleMask, ppmMask)
 
 	data = []
 	failedCalculation = []
@@ -334,7 +327,7 @@ def plotLineWidthInteractive(nmrData):
 	data = data + failedCalculation
 
 	layout = go.Layout(
-				title='Line width',
+				#title='Line width',
 				legend=dict(
 					orientation="h"),
 				yaxis = dict(

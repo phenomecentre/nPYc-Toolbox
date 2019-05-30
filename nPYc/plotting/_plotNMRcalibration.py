@@ -100,7 +100,7 @@ def plotCalibrationInteractive(nmrData):
 	data.append(trace)
 
 	layout = go.Layout(
-				title='Chemical shift registration',
+				#title='Chemical shift registration',
 				legend=dict(
 					orientation="h"),
 				hovermode = "closest",
