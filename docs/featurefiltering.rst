@@ -11,9 +11,15 @@ For NMR datasets, feature filtering typically takes the form of removing one or 
 
 The regions typically removed are pre-defined in the :doc:`Configuration Files<configuration/builtinSOPs>`, and can be automatically flagged for removal, and subsequently removed using::
 
-	dataset.updateMasks(filterSamples=False, filterFeatures=True)
-	dataset.applyMasks()
+	nmrData.updateMasks(filterSamples=False, filterFeatures=True)
+	nmrData.applyMasks()
 	
+
+Finally, additional regions can also be masked by using 'updateMasks' with the additional "exclusionRegions" parameter. For example, to also mask the region between 8.4 and 8.5 ppm the following would be run::
+
+    nmrData.updateMasks(filterSamples=False, filterFeatures=True, exclusionRegions=[(8.4, 8.5)])
+
+
 For more details on using :py:meth:`~nPYc.objects.Dataset.updateMasks` see :doc:`Sample and Feature Masks<objects>`.
 
 
@@ -33,7 +39,7 @@ For LC-MS datasets, features should be filtered based on their individual precis
    RSD in SS * *default value* > RSD in SR    :term:`Study Sample` and :term:`Study Reference` 1.1                 Variation in SS should always be greater than variation in SR
    ========================================== ================================================ =================== =====================
    
-The distribution of correlation to dilution, and RSD can be visualised in the *Feature Summary Report* (see :doc:`reports>` for more details).
+The distribution of correlation to dilution, and RSD can be visualised in the *Feature Summary Report* (see :doc:`reports` for more details).
 
 A report summarising number of features passing selection with different criteria can also be produced using::
 

@@ -52,7 +52,7 @@ This tutorial demonstrates how to use the NMR data processing modules of the nPY
 
 Required files in nPYc-toolbox-tutorials:
 
-- Preprocessing and quality control of NMR data with the nPYc-Toolbox.ipynb: Jupyter notebook tutorial
+- Preprocessing and Quality Control of NMR Data with the nPYc-Toolbox.ipynb: Jupyter notebook tutorial
 - DEVSET U 1D NMR raw data files: folder containing the 1D NMR raw data files (Bruker format)
 - DEVSET U 1D NMR Basic CSV.csv: CSV file containing basic metadata about each of the acquired samples
 
@@ -66,6 +66,6 @@ quality dataset ready for data modeling.
 
 Required files in nPYc-toolbox-tutorials:
 
-- Preprocessing and quality control of targeted NMR data (Bruker IvDr) with the nPYc-toolbox.ipynb: Jupyter notebook tutorial
+- Preprocessing and Quality Control of Targeted NMR Data (Bruker IvDr) with the nPYc-toolbox.ipynb: Jupyter notebook tutorial
 - DEVSET U 1D NMR raw data files: folder containing the 1D NMR raw data files and the Bruker ivDr xml quantification files
 - DEVSET U 1D NMR IVDr Basic CSV.csv: CSV file containing basic metadata about each of the acquired samples

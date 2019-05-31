@@ -232,9 +232,34 @@ This test normally flags very dilute samples for which it might be difficult to 
 Feature Summary Report: NMR Targeted Datasets
 =============================================
 
+The feature summary report provides visualisations summarising the quality and distribution of values across samples for each individual feature. This report can be obtained by running::
 
-  
-  
+	nPYc.reports.generateReport(TargetedData, 'feature summary')
+
+
+In order, for an NMR targeted dataset these consist of:
+
+- Tables containing summary information about each of the quantified features (Name, and if available, reference ranges). These are further broken down by the type of quantification (not applicable for targeted NMR datasets).
+- The residual standard deviation (RSD) observed for each feature per Sample Type/Assay Role (Figure 2)
+- Violin plots showing the distribution across the different sample types for each chemical compound (Figure 3)
+- A table with the RSD values for each feature, calculated separately for the Study Pool, External Reference and Study Sample types (Table 2)
+
+.. figure:: _static/targeted_FeatureRSD.svg
+	:figwidth: 70%
+	:alt: Figure 2: Distribution of values for each feature per sample type.
+
+	Figure 2: Distribution of values for each feature per sample type.
+
+Figure 2 allows a comparative visualization of the RSD per feature across each Sample Type.
+
+.. figure:: _static/targeted_FeatureConcentrationDistribution.svg
+	:figwidth: 70%
+	:alt: Figure 3: Distribution of values for each feature per sample type.
+
+	Figure 3: Distribution of values for each feature per sample type.
+
+The violin plots in Figure 3 can be used to identify features with a very high proportion of zeros or values outside the limits of quantification.
+
 Dataset Specific Reporting Syntax and Parameters
 ================================================
 
