@@ -15,8 +15,8 @@ There are three built-in normalisation objects:
 - Total area normaliser (:py:class:`~nPYc.utilities.normalisation.TotalAreaNormaliser`): performs normalisation where each row (sample) is divided by the total sum of its variables (columns)
 
 
-Normalisation objects
-=====================
+Normalisation Syntax and Parameters
+===================================
 
 .. automodule:: nPYc.utilities.normalisation
    :members:

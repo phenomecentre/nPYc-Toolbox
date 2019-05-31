@@ -11,7 +11,7 @@ A Dataset class can be set up from a number of common data types, including cert
 
 These can be created using (e.g. for LC-MS data)::
 	
-	dataset = nPYc.MSDataset('path to data')
+	msData = nPYc.MSDataset('path to data')
 
 When setting up the Dataset classes, default parameters are loaded from their associated :doc:`Configuration Files<configuration/configuration>`, and subsequently saved in the :py:attr:`~nPYc.objects.Dataset.Attributes` dictionary. 
 
@@ -71,28 +71,39 @@ There are several functions which modify these internal masks:
 
 For examples of how these masks are used during the import and preprocessing of specific datasets see :doc:`tutorial`.
 
+In brief, however, the following describes an example interatively utilising the above functions to generate a feature filtered (see :doc:`featurefiltering`) LC-MS dataset containing only :term:`Study Sample` samples, with a specific sample excluded::
 
-Dataset
-=======
-The Dataset object serves as a common parent to :py:class:`~nPYc.objects.MSDataset`, :py:class:`~nPYc.objects.TargetedDataset`, and :py:class:`~nPYc.objects.NMRDataset`, and should not typically be instantiated independently.
+	# To automatically mask features not passing quality control criteria
+	msData.updateMasks(filterFeatures=True, filterSamples=False)
+	
+	# To reset (initialise) the masks, and run with an updated RSD threshold
+	msData.initialiseMasks()
+	dataset.Attributes['rsdThreshold'] = 20
+	msData.updateMasks(filterFeatures=True, filterSamples=False)
+	
+	# To automatically mask all sample types except for study samples
+	msData.updateMasks(filterSamples=True, sampleTypes=[SampleType.StudySample], assayRoles=[AssayRole.Assay], filterFeatures=False)
+	
+	# To exclude a specific sample, 'PipelineTesting_RPOS_ToF10_U1W04', by 'Sample File Name'
+	msData.excludeSamples(['PipelineTesting_RPOS_ToF10_U1W04'], on='Sample File Name', message='User excluded')
+	
+	# To finally apply the masks and permanently exclude the masked samples and features
+	msData.applyMasks()
+
+
+Dataset Specific Syntax and Parameters
+======================================
+
+Note, the Dataset object serves as a common parent to :py:class:`~nPYc.objects.MSDataset`, :py:class:`~nPYc.objects.TargetedDataset`, and :py:class:`~nPYc.objects.NMRDataset`, and should not typically be instantiated independently.
 
 .. autoclass:: nPYc.objects.Dataset
   :members:
 
-MSDataset
-=========
-
 .. autoclass:: nPYc.objects.MSDataset
   :members:
-  
-NMRDataset
-==========
 
 .. autoclass:: nPYc.objects.NMRDataset
   :members:
-
-TargetedDataset
-=================
 
 .. autoclass:: nPYc.objects.TargetedDataset
   :members:

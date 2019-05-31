@@ -19,6 +19,12 @@ By default, reports are generated inline (i.e. in a Jupyter notebook), using :py
 
 The html versions of the reports use Jinja2 templates, default reports are saved in the `Templates` directory, and may be customised if required.
 
+By default, reports are generated on the full sample and feature complement of each dataset, however, reports can also be generated on only those samples and features not set to be masked from the dataset (i.e. with sampleMask and featureMask values set to True, see :doc:`Sample and Feature Masks<objects>`), by running with *withExclusions=True* for example::
+
+	nPYc.reports.generateReport(dataset, 'feature summary', withExclusions=True)
+	
+In this way, samples and features can be iteratively masked/included, and the impact of masking visualised before the masks are finally applied and samples and/or features permanently excluded from the dataset.
+
 Throughout the reports, we reference the various QC sample types included in every dataset to enable the characterisation of data quality, see :doc:`samplemetadata` for full details.
 
 
