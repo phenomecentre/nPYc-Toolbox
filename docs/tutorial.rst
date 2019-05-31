@@ -68,4 +68,4 @@ Required files in nPYc-toolbox-tutorials:
 
 - Preprocessing and quality control of targeted NMR data (Bruker IvDr) with the nPYc-toolbox.ipynb: Jupyter notebook tutorial
 - DEVSET U 1D NMR raw data files: folder containing the 1D NMR raw data files and the Bruker ivDr xml quantification files
-- DEVSET U 1D NMR Basic CSV.csv: CSV file containing basic metadata about each of the acquired samples
+- DEVSET U 1D NMR IVDr Basic CSV.csv: CSV file containing basic metadata about each of the acquired samples
