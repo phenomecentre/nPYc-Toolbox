@@ -38,6 +38,16 @@ class test_utilities_massSpectrumBuilder_synthetic(unittest.TestCase):
 													   [5.32, 5, '100', '5.32_89.9812m/z', numpy.nan, 89.9812],
 													   [0.56, 5, '90 - 100 - 50', '0.56_214.1245n', 'M+H, M+Na, M+K, 2M+Na', 213.1245]],
 													   columns=['Retention Time','Peak Width','Isotope Distribution','Feature Name','Adducts','m/z'])
+
+		self.msData.featureMetadata['Exclusion Details'] = None
+		self.msData.featureMetadata['User Excluded'] = False
+		self.msData.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+									 'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
+																			  index=self.msData.featureMetadata.index)
+
+		self.msData.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=self.msData.featureMetadata.index)
+
 		self.msData.Attributes['FeatureExtractionSoftware'] = 'Progenesis QI'
 		self.msData.initialiseMasks()
 
@@ -54,8 +64,16 @@ class test_utilities_massSpectrumBuilder_synthetic(unittest.TestCase):
 													[5.32, 5, '100', '5.32_89.9812m/z', numpy.nan, 89.9812, '', [(89.9812, 100)]],
 													[0.56, 5, '90 - 100 - 50', '0.56_214.1245n', 'M+H, M+Na, M+K, 2M+Na', 213.1245, '', [(215.131776, 90.0), (216.135131, 100.0), (217.138486, 50.0), (237.113718, 90.0), (238.117073, 100.0), (239.120428, 50.0), (253.087658, 90.0), (254.091013, 100.0), (255.094368, 50.0), (451.238218, 90.0), (452.241573, 100.0), (453.244928, 50.0)]]],
 													columns=['Retention Time','Peak Width','Isotope Distribution','Feature Name','Adducts','m/z', 'Correlated Features', 'Mass Spectrum'])
+		expectedFeatureMetadata['Exclusion Details'] = None
+		expectedFeatureMetadata['User Excluded'] = False
+		expectedFeatureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+									 'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
+																			  index=expectedFeatureMetadata.index)
 
-		pandas.util.testing.assert_frame_equal(filteredData.featureMetadata, expectedFeatureMetadata)
+		expectedFeatureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=expectedFeatureMetadata.index)
+
+		pandas.util.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
 
 
 	def test_utilities_massSpectrumBuilder_rtwindow(self):
@@ -70,14 +88,26 @@ class test_utilities_massSpectrumBuilder_synthetic(unittest.TestCase):
 													[3.12, 5, '100 - 20', '3.12_170.2233m/z', numpy.nan, 170.2233, ''], 
 													[0.56, 5, '90 - 100 - 50', '0.56_214.1245n', 'M+H, M+Na, M+K, 2M+Na', 213.1245, '']],
 													columns=['Retention Time','Peak Width','Isotope Distribution','Feature Name','Adducts','m/z', 'Correlated Features'])
-			pandas.util.testing.assert_frame_equal(filteredData.featureMetadata, expectedFeatureMetadata)
+
+			expectedFeatureMetadata['Exclusion Details'] = None
+			expectedFeatureMetadata['User Excluded'] = False
+			expectedFeatureMetadata[
+				['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+				 'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
+														  index=expectedFeatureMetadata.index)
+
+			expectedFeatureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+				= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]],
+								   index=expectedFeatureMetadata.index)
+
+			pandas.util.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
 
 		with self.subTest(msg='Restrictive window'):
 			filteredData = massSpectrumBuilder(self.msData, correlationThreshold=0.95, rtWindow=0.1, simulatedSpecra=False)
 
 			expectedFeatureMetadata = copy.copy(self.msData.featureMetadata)
 			expectedFeatureMetadata['Correlated Features'] = ''
-			pandas.util.testing.assert_frame_equal(filteredData.featureMetadata, expectedFeatureMetadata)
+			pandas.util.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
 
 
 	def test_utilities_massSpectrumBuilder_correlationThreshold(self):
@@ -90,7 +120,17 @@ class test_utilities_massSpectrumBuilder_synthetic(unittest.TestCase):
 													[5.32, 5, '100', '5.32_89.9812m/z', numpy.nan, 89.9812, ''], 
 													[0.56, 5, '90 - 100 - 50', '0.56_214.1245n', 'M+H, M+Na, M+K, 2M+Na', 213.1245, '']],
 													columns=['Retention Time','Peak Width','Isotope Distribution','Feature Name','Adducts','m/z', 'Correlated Features'])
-		pandas.util.testing.assert_frame_equal(filteredData.featureMetadata, expectedFeatureMetadata)
+
+		expectedFeatureMetadata['Exclusion Details'] = None
+		expectedFeatureMetadata['User Excluded'] = False
+		expectedFeatureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+									 'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
+																			  index=expectedFeatureMetadata.index)
+
+		expectedFeatureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=expectedFeatureMetadata.index)
+
+		pandas.util.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
 
 
 	def test_utilities_massSpectrumBuilder_log(self):

@@ -1,0 +1,74 @@
+{% extends "base_QC.html" %}
+
+{% import 'sampleReportChunk.html' as sampleReport %}
+
+{% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
+
+{% block content %}
+
+<!--Overall Summary_______________________________________________________________________________________________________________-->
+<h2>Final Dataset</h2>
+
+<div class='content'>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	<p></p>
+</div>
+
+<!--Sample Details________________________________________________________________________________________________________________-->
+<h2>Sample Summary</h2>
+
+<!--Summary of samples in final dataset-->
+<div class='content'>
+	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
+	{{ item.sampleSummary['Acquired'].to_html() }}
+	<p>*Details of any missing/excluded study samples given at the end of the report</p>
+	<p></p>
+</div>
+
+<!--Feature Summary______________________________________________________________________________________________________________-->
+<h2>Feature Summary</h2>
+
+<div class='content'>
+	<p>Samples acquired in {{ item['batchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
+	<p>{{ item['batchesCorrect'] }})</p>
+	
+	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
+	{{ item['FeatureSelectionTable'].to_html() }}
+	<p></p>
+</div>
+
+
+<!--Figure 1: RSD histogram-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Residual Standard Deviation (RSD) histogram for study reference samples and all features in final dataset, segmented by abundance percentiles.</p>
+	<img src="{{ item['finalRsdHist'] }}" alt="Residual Standard Deviation (RSD) histogram for study reference samples and all features in final dataset, segmented by abundance percentiles.">
+</div>
+
+<!--Figure 2: RSD for all samples and features passing selection-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).</p>
+	<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
+</div>
+
+<!--Figure 3: Feature intensity histogram-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Feature Intensity histogram for all samples and all features in final dataset (by sample type).</p>
+	<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature Intensity histogram for all samples and all features in final dataset (by sample type).">
+</div>	
+
+
+<!--Figure 4: Ion map of all features (coloured by log median intensity)-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Ion map of all features (coloured by log median intensity).</p>
+	<img src="{{ item.finalIonMap}}" alt="Ion map of all features (coloured by log median intensity).">
+</div>
+
+<!--Details of any missing/excluded samples-->
+{% if 'StudySamples Exclusion Details' in item.sampleSummary %}
+	<h2>Missing/Excluded Study Samples</h2>
+	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
+	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
+{% endif %}
+
+{% endblock %}

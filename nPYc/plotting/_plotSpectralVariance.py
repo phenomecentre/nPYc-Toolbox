@@ -181,7 +181,7 @@ def plotSpectralVarianceInteractive(dataset, classes=None, quantiles=(25, 75), a
 
 		quantileRange = numpy.percentile(dataset.intensityData[localMask], quantiles, axis=0)
 
-		trace = go.Scatter(
+		trace = go.Scattergl(
 				x = dataset.featureMetadata.loc[featureMask, 'ppm'],
 				y = averageSpectrum,
 				line = dict(
@@ -198,7 +198,7 @@ def plotSpectralVarianceInteractive(dataset, classes=None, quantiles=(25, 75), a
 		classColour  = 'rgba(%s, %s, %s, 0.2)' % classColour.groups()
 
 		data.append(trace)
-		trace = go.Scatter(
+		trace = go.Scattergl(
 				x = dataset.featureMetadata.loc[featureMask, 'ppm'],
 				y = quantileRange[0],
 				line = dict(
@@ -211,7 +211,7 @@ def plotSpectralVarianceInteractive(dataset, classes=None, quantiles=(25, 75), a
 				legendgroup=thisClass
 				)
 		data.append(trace)
-		trace = go.Scatter(
+		trace = go.Scattergl(
 				x = dataset.featureMetadata.loc[featureMask, 'ppm'],
 				y = quantileRange[1],
 				line = dict(

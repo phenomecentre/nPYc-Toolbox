@@ -1,5 +1,5 @@
 Generation of Targeted SOPs
----------------------------
+===========================
 
 To create a new pre-defined TargetLynx SOP (``fileType == 'TargetLynx'``) the `JSON` SOP must contain the following fields, the list must cover all compounds in the same order:
 

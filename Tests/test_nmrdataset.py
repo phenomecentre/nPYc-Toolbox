@@ -103,9 +103,9 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 											  variableType=nPYc.enumerations.VariableType.Spectral,
 											  sop='GenericNMRurine')
 
-		dataset.Attributes.pop('PWFailThreshold', None)
+		dataset.Attributes.pop('LWFailThreshold', None)
 		dataset.Attributes.pop('baselineCheckRegion', None)
-		dataset.Attributes.pop('waterPeakCheckRegion', None)
+		dataset.Attributes.pop('solventPeakCheckRegion', None)
 
 		dataset.sampleMetadata['AssayRole'] = pandas.Series([AssayRole.LinearityReference,
 								AssayRole.LinearityReference,
@@ -150,7 +150,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 								dtype=object)
 
 		with self.subTest(msg='Default Parameters'):
-			expectedSampleMask = numpy.array([False, False, False, False, False,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, False, False], dtype=bool)
+			expectedSampleMask = numpy.array([True, True, True, True, True,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, True, True], dtype=bool)
 
 			dataset.initialiseMasks()
 			dataset.updateMasks(filterFeatures=False)
@@ -187,9 +187,9 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 													   variableType=nPYc.enumerations.VariableType.Spectral,
 													   sop='GenericNMRurine')
 
-		dataset.Attributes.pop('PWFailThreshold', None)
+		dataset.Attributes.pop('LWFailThreshold', None)
 		dataset.Attributes.pop('baselineCheckRegion', None)
-		dataset.Attributes.pop('waterPeakCheckRegion', None)
+		dataset.Attributes.pop('solventPeakCheckRegion', None)
 
 		ppm = numpy.linspace(-10, 10, noFeat)
 		dataset.featureMetadata = pandas.DataFrame(ppm, columns=['ppm'])
@@ -254,9 +254,9 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 	def test_nmrQCchecks(self):
 
-		self.dataset.Attributes.pop('PWFailThreshold', None)
+		self.dataset.Attributes.pop('LWFailThreshold', None)
 		self.dataset.Attributes.pop('baselineCheckRegion', None)
-		self.dataset.Attributes.pop('waterPeakCheckRegion', None)
+		self.dataset.Attributes.pop('solventPeakCheckRegion', None)
 
 		with self.subTest('Calibration'):
 			bounds = numpy.std(self.dataset.sampleMetadata['Delta PPM']) * 3
@@ -275,7 +275,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			#	self.assertFalse(skipedCheck in self.dataset.sampleMetadata.columns)
 
 		with self.subTest('Line Width'):
-			self.dataset.Attributes['PWFailThreshold'] = 2
+			self.dataset.Attributes['LWFailThreshold'] = 2
 
 			self.dataset.sampleMetadata['Line Width (Hz)'] = 1.5
 			self.dataset.sampleMetadata.loc[0::5, 'Line Width (Hz)'] = 3
@@ -311,8 +311,8 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			# Commented out assuming the test nmr dataset obtained with generateTestDataset always has these columns
 			#self.assertFalse('WaterPeakFail' in self.dataset.sampleMetadata.columns)
 
-		with self.subTest('Water Peak'):
-			self.dataset.Attributes['waterPeakCheckRegion'] = [(-2, -0.5), (9.5, 12.5)]
+		with self.subTest('Solvent Peak'):
+			self.dataset.Attributes['solventPeakCheckRegion'] = [(-2, -0.5), (9.5, 12.5)]
 
 			self.dataset._nmrQCChecks()
 
@@ -320,7 +320,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 			expected[0] = True
 			# expected[2] = True
 
-			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['WaterPeakFail'].values)
+			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['SolventPeakFail'].values)
 
 
 	def test_baselineAreaAndNeg(self):
@@ -395,9 +395,9 @@ class test_nmrdataset_bruker(unittest.TestCase):
 
 			dataset.addSampleInfo(descriptionFormat='NPC LIMS', filePath=limsFilePath)
 
-			testSeries = ['Sampling ID', 'Status', 'AssayRole', 'SampleType']
+			testSeries = ['Sample ID', 'Status', 'AssayRole', 'SampleType']
 
-			expected['Sampling ID'] = ['UT1_S2_u1', 'UT1_S3_u1', 'UT1_S4_u1', 'UT1_S4_u2', 'UT1_S4_u3',
+			expected['Sample ID'] = ['UT1_S2_u1', 'UT1_S3_u1', 'UT1_S4_u1', 'UT1_S4_u2', 'UT1_S4_u3',
 									   'UT1_S4_u4', 'External Reference Sample', 'Study Pool Sample']
 
 			expected['Status'] = ['Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Long Term Reference', 'Study Reference']
@@ -431,9 +431,9 @@ class test_nmrdataset_bruker(unittest.TestCase):
 
 			dataset.addSampleInfo(descriptionFormat='NPC LIMS', filePath=limsFilePath)
 
-			testSeries = ['Sampling ID', 'Status', 'AssayRole', 'SampleType']
+			testSeries = ['Sample ID', 'Status', 'AssayRole', 'SampleType']
 
-			expected['Sampling ID'] = ['UT3_S7', 'UT3_S8', 'UT3_S6', 'UT3_S5', 'UT3_S4', 'UT3_S3', 'UT3_S2', 'External Reference Sample', 'Study Pool Sample', 'UT3_S1']
+			expected['Sample ID'] = ['UT3_S7', 'UT3_S8', 'UT3_S6', 'UT3_S5', 'UT3_S4', 'UT3_S3', 'UT3_S2', 'External Reference Sample', 'Study Pool Sample', 'UT3_S1']
 
 			expected['Status'] = ['Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Long Term Reference', 'Study Reference', 'nan']
 
@@ -508,6 +508,34 @@ class test_nmrdataset_ISATAB(unittest.TestCase):
 
 			#self.assertTrue(os.path.exists(a))
 			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))
+
+
+class test_nmrdataset_initialiseFromCSV(unittest.TestCase):
+
+	def test_init(self):
+
+		noSamp = numpy.random.randint(5, high=10, size=None)
+		noFeat = numpy.random.randint(500, high=1000, size=None)
+
+		dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', sop='GenericNMRurine')
+		dataset.name = 'Testing'
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+
+			dataset.exportDataset(destinationPath=tmpdirname, saveFormat='CSV', withExclusions=False)
+
+			pathName = os.path.join(tmpdirname, 'Testing_sampleMetadata.csv')
+
+			rebuitData =  nPYc.NMRDataset(pathName, fileType='CSV Export')
+
+			numpy.testing.assert_array_equal(rebuitData.intensityData, dataset.intensityData)
+
+			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
+				pandas.util.testing.assert_series_equal(rebuitData.sampleMetadata[column], dataset.sampleMetadata[column], check_dtype=False)
+			for column in ['ppm']:
+				pandas.util.testing.assert_series_equal(rebuitData.featureMetadata[column], dataset.featureMetadata[column], check_dtype=False)
+
+			self.assertEqual(rebuitData.name, dataset.name)
 
 
 if __name__ == '__main__':

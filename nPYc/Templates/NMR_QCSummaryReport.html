@@ -7,26 +7,30 @@
 <!--BL *& PW plots______________________________________________________________________________________________________________-->
 
 <div class='figure1'>
-	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Chemical Shift Calibration</p>
-	<img src="{{ item['calibrationCheck'] }}" alt="Chemical Shift Calibrationt.">
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Distribution of all samples after chemical shift calibration (5-95% with outliers flagged)</p>
+	<img src="{{ item['calibrationCheck'] }}" alt="Distribution of all samples after chemical shift calibration (5-95% with outliers flagged).">
 	<h4>{{ item['fig1SummaryText'] }}</h4>
 </div>
 
-<div class='figure1'>
-	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Peak Width</p>
-	<img src="{{ item['peakWidthBoxplot'] }}" alt="Peak Width plot.">
-	<h4>{{ item['fig1SummaryText'] }}</h4>
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Boxplot of line width values (coloured by sample type)</p>
+	<img src="{{ item['peakWidthBoxplot'] }}" alt="Boxplot of line width values (coloured by sample type).">
 </div>
 
-<div class='figure2'>
-	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Baseline low &amp; high</p>
-	<img src="{{ item['finalFeatureBLWPplots1']}}" alt="Baseline plot.">
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Distribution of all samples around peak on which line width calculated (5-95% with outliers flagged)</p>
+	<img src="{{ item['peakWidthSpectra'] }}" alt="Distribution of all samples around peak on which line width calculated (5-95% with outliers flagged).">
 </div>
 
-<div class='figure3'>
-	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Water peak low &amp; high</p>
-	<img src="{{ item['finalFeatureBLWPplots3']}}" alt="Water peak plot.">
-	<h4>{{ item['fig2to3SummaryText'] }}</h4>
+
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Distribution of all samples at baseline regions (5-95% with outliers flagged)</p>
+	<img src="{{ item['finalFeatureBLWPplots1']}}" alt="Distribution of all samples at baseline regions (5-95% with outliers flagged).">
+</div>
+
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;5.</span> Distribution of all samples at region surrounding solvent suppresion peak (5-95% with outliers flagged)</p>
+	<img src="{{ item['finalFeatureBLWPplots3']}}" alt="Distribution of all samples at region surrounding solvent suppresion peak (5-95% with outliers flagged).">
 </div>
 
 <!--Summary of samples acquired________________________________________________________________________________________________________________-->

@@ -36,11 +36,21 @@ class test_msdataset_synthetic(unittest.TestCase):
 			 'Acquired Time': [datetime(2017, 5, 26, 16, 42, 57), datetime(2017, 5, 26, 16, 58, 49),
 							   datetime(2017, 5, 26, 17, 14, 41)], 'Run Order': [0, 1, 2], 'Batch': [1, 1, 2],
 			 'Correction Batch': [numpy.nan, 1, 2], 'Matrix': ['U', 'U', 'U'],
-			 'Subject ID': ['subject1', 'subject1', 'subject2'], 'Sampling ID': ['sample1', 'sample2', 'sample3'],
+			 'Subject ID': ['subject1', 'subject1', 'subject2'], 'Sample ID': ['sample1', 'sample2', 'sample3'],
 			 'Dilution': [numpy.nan, '60.0', '100.0'],'Exclusion Details': ['','','']})
 		self.msData.featureMetadata = pandas.DataFrame(
 			{'Feature Name': ['Feature1', 'Feature2', 'Feature3'], 'Retention Time': [6.2449, 2.7565, 5.0564],
 			 'm/z': [249.124281, 381.433191, 471.132083]})
+
+		self.msData.featureMetadata['Exclusion Details'] = None
+		self.msData.featureMetadata['User Excluded'] = False
+		self.msData.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+							  'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
+																	   index=self.msData.featureMetadata.index)
+
+		self.msData.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=self.msData.featureMetadata.index)
+
 		self.msData._intensityData = numpy.array([[10.2, 20.95, 30.37], [10.1, 20.03, 30.74], [3.065, 15.83, 30.16]])
 		# Attributes
 		self.msData.Attributes['FeatureExtractionSoftware'] = 'UnitTestSoftware'
@@ -513,12 +523,23 @@ class test_msdataset_synthetic(unittest.TestCase):
 														['Feature_5', 0.95, 300.08, 0.1]],
 														columns=['Feature Name','Retention Time','m/z','Peak Width'])
 
+		msData.featureMetadata['Exclusion Details'] = None
+		msData.featureMetadata['User Excluded'] = False
+		msData.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+							  'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
+																	   index=msData.featureMetadata.index)
+
+		msData.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=msData.featureMetadata.index)
+
+
 		msData.initialiseMasks()
 
 		with self.subTest(msg='Default Parameters'):
 			expectedFeatureMask = numpy.array([True, False, False, False, False], dtype=bool)
 
-			msData.updateMasks(withArtifactualFiltering=False)
+			msData.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilutionFilter':True, 'varianceRatioFilter':True,
+											   'artifactualFilter': False,'blankFilter':True})
 
 			numpy.testing.assert_array_equal(expectedFeatureMask, msData.featureMask)
 
@@ -526,7 +547,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedFeatureMask = numpy.array([True, False, True, False, False], dtype=bool)
 
 			msData.initialiseMasks()
-			msData.updateMasks(withArtifactualFiltering=False, rsdThreshold=90, varianceRatio=0.1, correlationThreshold=0.7)
+			msData.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilutionFilter':True, 'varianceRatioFilter':True,
+											   'artifactualFilter': False,'blankFilter':True}, **dict(rsdThreshold=90, varianceRatio=0.1, corrThreshold=0.7))
 
 			numpy.testing.assert_array_equal(expectedFeatureMask, msData.featureMask)
 
@@ -534,7 +556,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedFeatureMask = numpy.array([True, True, False, False, False], dtype=bool)
 
 			msData.initialiseMasks()
-			msData.updateMasks(withArtifactualFiltering=False, rsdThreshold=30, varianceRatio=1.1, correlationThreshold=0)
+			msData.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilutionFilter': True, 'varianceRatioFilter':True,
+											   'artifactualFilter': False,'blankFilter':True}, **dict(rsdThreshold=30, varianceRatio=1.1, corrThreshold=0))
 
 			numpy.testing.assert_array_equal(expectedFeatureMask, msData.featureMask)
 
@@ -542,7 +565,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedFeatureMask = numpy.array([False, False, False, False, False], dtype=bool)
 
 			msData.initialiseMasks()
-			msData.updateMasks(withArtifactualFiltering=False, rsdThreshold=30, varianceRatio=100, correlationThreshold=0.7)
+			msData.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilutionFilter':True, 'varianceRatioFilter':True,
+											   'artifactualFilter': False,'blankFilter':True}, **dict(rsdThreshold=30, varianceRatio=100, corrThreshold=0.7))
 
 			numpy.testing.assert_array_equal(expectedFeatureMask, msData.featureMask)
 
@@ -550,7 +574,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedFeatureMask = numpy.array([True, False, False, False, True], dtype=bool)
 
 			msData.initialiseMasks()
-			msData.updateMasks(withArtifactualFiltering=False, blankThreshold=0.5)
+			msData.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilutionFilter':True, 'varianceRatioFilter':True,
+											   'artifactualFilter': False,'blankFilter':True}, **dict(blankThreshold=0.5))
 
 			numpy.testing.assert_array_equal(expectedFeatureMask, msData.featureMask)
 
@@ -558,7 +583,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedFeatureMask = numpy.array([True, False, False, False, True], dtype=bool)
 
 			msData.initialiseMasks()
-			msData.updateMasks(withArtifactualFiltering=False, blankThreshold=False)
+			msData.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilutionFilter':True, 'varianceRatioFilter':True,
+											   'artifactualFilter': False,'blankFilter':False})
 
 			numpy.testing.assert_array_equal(expectedFeatureMask, msData.featureMask)
 
@@ -566,18 +592,23 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedTempArtifactualLinkageMatrix = pandas.DataFrame(data=[[0,1],[3,4]],columns=['node1','node2'])
 
 			msData.initialiseMasks()
-			msData.updateMasks(withArtifactualFiltering=True, blankThreshold=False)
+			msData.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilutionFilter':True, 'varianceRatioFilter':True,
+											   'artifactualFilter': True,'blankFilter':True})
 
 			pandas.util.testing.assert_frame_equal(expectedTempArtifactualLinkageMatrix, msData._tempArtifactualLinkageMatrix)
 
 		with self.subTest(msg='Altered withArtifactualFiltering parameters'):
 			expectedArtifactualLinkageMatrix = pandas.DataFrame(data=[[0,1]],columns=['node1','node2'])
 
-			msData.updateMasks(withArtifactualFiltering=True, deltaMzArtifactual=300, overlapThresholdArtifactual=0.1, corrThresholdArtifactual=0.2, blankThreshold=False)
+			msData.initialiseMasks()
+			msData.updateMasks(featureFilters={'rsdFilter': True, 'correlationToDilutionFilter': True, 'varianceRatioFilter': True,
+											   'artifactualFilter': True,'blankFilter':True}, **dict(deltaMzArtifactual=300,
+																									 overlapThresholdArtifactual=0.1,
+																									 corrThresholdArtifactual=0.2))
 
-			self.assertEqual(msData.Attributes['deltaMzArtifactual'], 300)
-			self.assertEqual(msData.Attributes['overlapThresholdArtifactual'], 0.1)
-			self.assertEqual(msData.Attributes['corrThresholdArtifactual'], 0.2)
+			self.assertEqual(msData.Attributes['filterParameters']['deltaMzArtifactual'], 300)
+			self.assertEqual(msData.Attributes['filterParameters']['overlapThresholdArtifactual'], 0.1)
+			self.assertEqual(msData.Attributes['filterParameters']['corrThresholdArtifactual'], 0.2)
 			pandas.util.testing.assert_frame_equal(expectedArtifactualLinkageMatrix, msData._artifactualLinkageMatrix)
 
 		with self.subTest(msg='withArtifactualFiltering=None, Attribute[artifactualFilter]=False'):
@@ -586,7 +617,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedFeatureMask = numpy.array([True, False, False, False, False], dtype=bool)
 
 			msData2.initialiseMasks()
-			msData2.updateMasks(withArtifactualFiltering=None)
+			msData2.updateMasks(featureFilters={'rsdFilter': True, 'correlationToDilutionFilter': True, 'varianceRatioFilter': True,
+											   'artifactualFilter': False, 'blankFilter': True})
 
 			numpy.testing.assert_array_equal(expectedFeatureMask, msData2.featureMask)
 
@@ -596,7 +628,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 			expectedTempArtifactualLinkageMatrix = pandas.DataFrame(data=[[0, 1], [3, 4]], columns=['node1', 'node2'])
 
 			msData2.initialiseMasks()
-			msData2.updateMasks(withArtifactualFiltering=None)
+			msData2.updateMasks(featureFilters={'rsdFilter': True, 'correlationToDilutionFilter': True, 'varianceRatioFilter': True,
+											   'artifactualFilter': True,'blankFilter':True})
 
 			pandas.util.testing.assert_frame_equal(expectedTempArtifactualLinkageMatrix, msData2._tempArtifactualLinkageMatrix)
 
@@ -654,7 +687,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 
 
 		with self.subTest(msg='Default Parameters'):
-			expectedSampleMask = numpy.array([False, False, False, False, False,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, False, False], dtype=bool)
+			expectedSampleMask = numpy.array([True, True, True, True, True,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, True, True], dtype=bool)
 
 			msData.initialiseMasks()
 			msData.updateMasks(withArtifactualFiltering=False, filterFeatures=False)
@@ -687,31 +720,32 @@ class test_msdataset_synthetic(unittest.TestCase):
 		msData = nPYc.MSDataset('', fileType='empty')
 
 		with self.subTest(msg='Correlation'):
-			self.assertRaises(ValueError, msData.updateMasks, correlationThreshold=-1.01)
-			self.assertRaises(ValueError, msData.updateMasks, correlationThreshold=1.01)
-			self.assertRaises(TypeError, msData.updateMasks, correlationThreshold='0.7')
+			self.assertRaises(ValueError, msData.updateMasks, **dict(corrThreshold=-1.01))
+			self.assertRaises(ValueError, msData.updateMasks, **dict(corrThreshold=1.01))
+			self.assertRaises(TypeError, msData.updateMasks, **dict(corrThreshold='0.7'))
 
 		with self.subTest(msg='RSD'):
-			self.assertRaises(ValueError, msData.updateMasks, rsdThreshold=-1.01)
-			self.assertRaises(TypeError, msData.updateMasks, rsdThreshold='30')
+			self.assertRaises(ValueError, msData.updateMasks, **dict(rsdThreshold=-1.01))
+			self.assertRaises(TypeError, msData.updateMasks, **dict(rsdThreshold='30'))
 
 		with self.subTest(msg='Blanks'):
-			self.assertRaises(TypeError, msData.updateMasks, blankThreshold='A string')
+			self.assertRaises(TypeError, msData.updateMasks, **dict(blankThreshold='A string'))
 
 		with self.subTest(msg='RSD'):
-			self.assertRaises(ValueError, msData.updateMasks, rsdThreshold=-1.01)
-			self.assertRaises(TypeError, msData.updateMasks, rsdThreshold='30')
+			self.assertRaises(ValueError, msData.updateMasks, **dict(rsdThreshold=-1.01))
+			self.assertRaises(TypeError, msData.updateMasks, **dict(rsdThreshold='30'))
 
 		with self.subTest(msg='Variance Ratio'):
-			self.assertRaises(TypeError, msData.updateMasks, varianceRatio='1.1')
+			self.assertRaises(TypeError, msData.updateMasks, **dict(varianceRatio='1.1'))
 
 		with self.subTest(msg='ArtifactualParameters'):
-			self.assertRaises(TypeError, msData.updateMasks, withArtifactualFiltering='A string', blankThreshold=False)
-			self.assertRaises(ValueError, msData.updateMasks, corrThresholdArtifactual=1.01, blankThreshold=False)
-			self.assertRaises(ValueError, msData.updateMasks, corrThresholdArtifactual=-0.01, blankThreshold=False)
-			self.assertRaises(TypeError, msData.updateMasks, corrThresholdArtifactual='0.7', blankThreshold=False)
-			self.assertRaises(TypeError, msData.updateMasks, deltaMzArtifactual='100', blankThreshold=False)
-			self.assertRaises(TypeError, msData.updateMasks, overlapThresholdArtifactual='0.5', blankThreshold=False)
+			self.assertRaises(TypeError, msData.updateMasks, featureFilters={'artifactualFilter':'A string', 'rsdFilter':False, 'blankFilter': False,
+																			 'correlationToDilutionFilter':False, 'varianceRatioFilter':False}, **dict(blankThreshold=False))
+			self.assertRaises(ValueError, msData.updateMasks, featureFilters={'artifactualFilter':True}, **dict(corrThresholdArtifactual=1.01, blankThreshold=False))
+			self.assertRaises(ValueError, msData.updateMasks, featureFilters={'artifactualFilter':True}, **dict(corrThresholdArtifactual=-0.01, blankThreshold=False))
+			self.assertRaises(TypeError, msData.updateMasks, featureFilters={'artifactualFilter':True}, **dict(corrThresholdArtifactual='0.7', blankThreshold=False))
+			self.assertRaises(TypeError, msData.updateMasks, featureFilters={'artifactualFilter':True}, **dict(deltaMzArtifactual='100', blankThreshold=False))
+			self.assertRaises(TypeError, msData.updateMasks, featureFilters={'artifactualFilter':True}, **dict(overlapThresholdArtifactual='0.5', blankThreshold=False))
 
 
 	def test_applyMasks(self):
@@ -773,7 +807,6 @@ class test_msdataset_synthetic(unittest.TestCase):
 		with self.subTest(msg='No Dilution field'):
 			dataset.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
 			self.assertRaises(KeyError, dataset._MSDataset__correlateToDilution)
-
 
 	def test_validateObject(self):
 		with self.subTest(msg='validateObject successful on correct dataset'):
@@ -958,18 +991,6 @@ class test_msdataset_synthetic(unittest.TestCase):
 		with self.subTest(msg='if self.Attributes[\'rsdThreshold\'] is not an int or float'):
 			badDataset = copy.deepcopy(self.msData)
 			badDataset.Attributes['rsdThreshold'] = 'not an int or float'
-			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset': False, 'QC': False, 'sampleMetadata': False})
-			self.assertRaises(TypeError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
-
-		with self.subTest(msg='self.Attributes[\'artifactualFilter\'] does not exist'):
-			badDataset = copy.deepcopy(self.msData)
-			del badDataset.Attributes['artifactualFilter']
-			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset': False, 'QC': False, 'sampleMetadata': False})
-			self.assertRaises(AttributeError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
-
-		with self.subTest(msg='if self.Attributes[\'artifactualFilter\'] is not a bool'):
-			badDataset = copy.deepcopy(self.msData)
-			badDataset.Attributes['artifactualFilter'] = 'not a bool'
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(TypeError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -1201,9 +1222,9 @@ class test_msdataset_synthetic(unittest.TestCase):
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset': True, 'QC': True, 'sampleMetadata': False})
 			self.assertRaises(TypeError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
-		with self.subTest(msg='if self.sampleMetadata[\'Sampling ID\'] is not str'):
+		with self.subTest(msg='if self.sampleMetadata[\'Sample ID\'] is not str'):
 			badDataset = copy.deepcopy(self.msData)
-			badDataset.sampleMetadata['Sampling ID'] = 5.
+			badDataset.sampleMetadata['Sample ID'] = 5.
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset': True, 'QC': True, 'sampleMetadata': False})
 			self.assertRaises(TypeError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
@@ -2070,16 +2091,16 @@ class test_msdataset_import_biocrates(unittest.TestCase):
 
 	def test_samples(self):
 
-		with self.subTest(msg='Checking Sampling IDs'):
+		with self.subTest(msg='Checking Sample IDs'):
 			samples = pandas.Series(['UnitTest1_LPOS_ToF02_S1W01', 'UnitTest1_LPOS_ToF02_S1W02',
 									'UnitTest1_LPOS_ToF02_S1W03', 'UnitTest1_LPOS_ToF02_S1W04',
 									'UnitTest1_LPOS_ToF02_S1W05', 'UnitTest1_LPOS_ToF02_S1W06',
 									'UnitTest1_LPOS_ToF02_S1W07', 'UnitTest1_LPOS_ToF02_S1W11_LTR',
 									'UnitTest1_LPOS_ToF02_S1W12_SR'],
-									name='Sampling ID',
+									name='Sample ID',
 									dtype=str)
 
-			pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sampling ID'], samples)
+			pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample ID'], samples)
 
 		with self.subTest(msg='Checking Sample Bar Code'):
 			samples = pandas.Series([1010751983, 1010751983, 1010751983, 1010751983, 1010751983, 1010751998, 1010751998, 1010751998, 1010751998],
@@ -2207,11 +2228,11 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
 									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
 									 'UT1_S1_s1', 'UT1_S2_s1', 'UT1_S3_s1', 'Not specified', 'UT1_S4_s2', 'UT1_S4_s3', 'UT1_S4_s4', 'UT1_S4_s5',
-									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sampling ID', dtype='str')
+									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sample ID', dtype='str')
 		samplingIDs = samplingIDs.astype(str)
 
 		self.msData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sampling ID'], samplingIDs)
+		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample ID'], samplingIDs)
 
 
 	def test_msdataset_load_watersraw_metadata(self):
@@ -2326,14 +2347,19 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		self.msData = nPYc.MSDataset(
 			os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest2_artifactualFiltering.csv'),
 			fileType='QI')
-		self.msData.Attributes['artifactualFilter'] = True
+		self.msData.Attributes['featureFilters']['artifactualFilter'] = True
+		self.msData.Attributes['filterParameters']["deltaMzArtifactual"] = self.msData.Attributes["deltaMzArtifactual"]
+		self.msData.Attributes['filterParameters']["overlapThresholdArtifactual"] = self.msData.Attributes["overlapThresholdArtifactual"]
+		self.msData.Attributes['filterParameters']["corrThresholdArtifactual"] = self.msData.Attributes["corrThresholdArtifactual"]
+
+
 		self.msData.addSampleInfo(descriptionFormat='Filenames')
 
 
 	def test_artifactualFilter_raise(self):
 		with self.subTest(msg='Attributes artifactualFilter is False'):
 			partialMsData = copy.deepcopy(self.msData)
-			partialMsData.Attributes['artifactualFilter'] = False
+			partialMsData.Attributes['featureFilters']['artifactualFilter'] = False
 			self.assertRaises(ValueError,partialMsData._MSDataset__generateArtifactualLinkageMatrix)
 		with self.subTest(msg='Missing Feature Name'):
 			partialMsData1 = copy.deepcopy(self.msData)
@@ -2422,9 +2448,9 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		# Change artifactualThresholds & update
 		##
 		self.msData3 = copy.deepcopy(self.msData)
-		self.msData3.Attributes['deltaMzArtifactual'] = 0.05
-		self.msData3.Attributes['overlapThresholdArtifactual'] = 70
-		self.msData3.Attributes['corrThresholdArtifactual'] = 0.95
+		self.msData3.Attributes['filterParameters']['deltaMzArtifactual'] = 0.05
+		self.msData3.Attributes['filterParameters']['overlapThresholdArtifactual'] = 70
+		self.msData3.Attributes['filterParameters']['corrThresholdArtifactual'] = 0.95
 		self.msData3.updateArtifactualLinkageMatrix()
 
 		## _artifactualLinkageMatrix, artifactualLinkageMatrix
@@ -2467,6 +2493,7 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		self.msData4.artifactualLinkageMatrix
 		self.msData4.sampleMask = numpy.array([False, False, False, False, False, True, True, True, True, True],
 											  dtype=bool)
+
 		self.msData4.applyMasks()
 
 		# _artifactualLinkageMatrix, artifactualLinkageMatrix are modified
@@ -2572,6 +2599,35 @@ class test_msdataset_ISATAB(unittest.TestCase):
 
 			#a = os.path.join(tmpdirname,'a_my_ms_assay.txt')
 			#self.assertTrue(os.path.exists(a))
+
+
+class test_msdataset_initialiseFromCSV(unittest.TestCase):
+
+	def test_init(self):
+
+		noSamp = numpy.random.randint(5, high=10, size=None)
+		noFeat = numpy.random.randint(500, high=1000, size=None)
+
+		dataset = generateTestDataset(noSamp, noFeat, dtype='MSDataset', sop='GenericMS')
+		dataset.name = 'Testing'
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			# Change default SOP to allow exporting acquired time.
+			dataset.Attributes['sampleMetadataNotExported'].remove('Acquired Time')
+			dataset.exportDataset(destinationPath=tmpdirname, saveFormat='CSV', withExclusions=False)
+
+			pathName = os.path.join(tmpdirname, 'Testing_sampleMetadata.csv')
+
+			rebuiltData = nPYc.MSDataset(pathName, fileType='CSV Export')
+
+			numpy.testing.assert_array_equal(rebuiltData.intensityData, dataset.intensityData)
+
+			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
+				pandas.util.testing.assert_series_equal(rebuiltData.sampleMetadata[column], dataset.sampleMetadata[column])
+			for column in rebuiltData.featureMetadata.columns:
+				pandas.util.testing.assert_series_equal(rebuiltData.featureMetadata[column], dataset.featureMetadata[column])
+
+			self.assertEqual(rebuiltData.name, dataset.name)
 
 
 if __name__ == '__main__':

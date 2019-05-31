@@ -9,7 +9,9 @@ from matplotlib import gridspec
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 from matplotlib.collections import LineCollection
-from matplotlib.dates import DateFormatter
+import matplotlib.dates as mdates
+#from matplotlib.dates import AutoDateFormatter
+#from matplotlib.dates import AutoDateLocator
 import seaborn as sns
 import plotly.graph_objs as go
 import pandas
@@ -61,7 +63,7 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 
 	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param pandas.Series classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
-	:param str classType: Type of data in ``classes``, either 'Plot Sample Type', 'categorical' or 'continuous', must be specified if classes is not ``None``. If ``classType`` is 'Plot Sample Type', ``classes`` expects 'Study Sample', 'Study Pool', 'External Reference', 'Linearity Reference' or 'Sample'.
+	:param str classType: Type of data in ``classes``, either 'Plot Sample Type', 'categorical' or 'continuous', must be specified if classes is not ``None``. If ``classType`` is 'Plot Sample Type', ``classes`` expects 'Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution' or 'Sample'.
 	:param components: If ``None`` plots all components in model, else plots those specified in components
 	:type components: tuple (int, int)
 	:param float alpha: Significance value for plotting Hotellings ellipse
@@ -90,8 +92,8 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 	components = numpy.where(components==True)
 	components = components[0]
 	# TODO: fix this so can plot if model only has one component
-	if len(components)==1:
-		temp = numpy.arange(0,nc)
+	if len(components) == 1:
+		temp = numpy.arange(0, nc)
 		components = numpy.append(components, min(temp[temp!=components]))
 	nc = len(components)
 
@@ -128,11 +130,28 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 		if plotAssociation is not None:
 			fig = plt.figure(figsize=figureSize, dpi=dpi)
 			gs = gridspec.GridSpec(2, 10)
-			ax = plt.subplot(gs[:,3:])
-			ax1 = plt.subplot(gs[0,:2])
-			ax2 = plt.subplot(gs[1,:2])
+			ax = plt.subplot(gs[:, 3:])
+			ax1 = plt.subplot(gs[0,: 2])
+			ax2 = plt.subplot(gs[1,: 2])
 		else:
 			fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
+
+		# Add Hotelling's T2
+		hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[i], components[j]]), alpha=alpha)
+
+		# a = numpy.sqrt(numpy.var(values[:,components[i]])*Fval*2*((ns-1)/(ns-2)));
+		# b = numpy.sqrt(numpy.var(values[:,components[j]])*Fval*2*((ns-1)/(ns-2)));
+		ellipse = Ellipse(xy=(0, 0), width=hotelling_ellipse[0] * 2, height=hotelling_ellipse[1] * 2,
+						  edgecolor='k', fc='None', lw=2)
+		ax.add_patch(ellipse)
+
+		xmin = numpy.minimum(min(values[:, components[i]]), -1*hotelling_ellipse[0])
+		xmax = numpy.maximum(max(values[:, components[i]]), hotelling_ellipse[0])
+		ymin = numpy.minimum(min(values[:, components[j]]), -1*hotelling_ellipse[1])
+		ymax = numpy.maximum(max(values[:, components[j]]), hotelling_ellipse[1])
+
+		ax.set_xlim([(xmin + (0.2 * xmin)), xmax + (0.2 * xmax)])
+		ax.set_ylim([(ymin + (0.2 * ymin)), ymax + (0.2 * ymax)])
 
 		# If colouring by Sample Type - use standard reporting colours
 		if classType == 'Plot Sample Type':
@@ -162,12 +181,12 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 			sns.set_color_codes(palette='deep')
 			if any(classes == 'Study Sample'):
 				ax.scatter(values[classes.values == 'Study Sample', components[i]], values[classes.values == 'Study Sample', components[j]], c=sTypeColourDict[SampleType.StudySample], label='Study Sample')
-			if any(classes == 'Study Pool'):
-				ax.scatter(values[classes.values == 'Study Pool', components[i]], values[classes.values == 'Study Pool', components[j]], c=sTypeColourDict[SampleType.StudyPool], label='Study Pool')
-			if any(classes == 'External Reference'):
-				ax.scatter(values[classes.values == 'External Reference', components[i]], values[classes.values == 'External Reference', components[j]], c=sTypeColourDict[SampleType.ExternalReference], label='External Reference')
+			if any(classes == 'Study Reference'):
+				ax.scatter(values[classes.values == 'Study Reference', components[i]], values[classes.values == 'Study Reference', components[j]], c=sTypeColourDict[SampleType.StudyPool], label='Study Reference')
+			if any(classes == 'Long-Term Reference'):
+				ax.scatter(values[classes.values == 'Long-Term Reference', components[i]], values[classes.values == 'Long-Term Reference', components[j]], c=sTypeColourDict[SampleType.ExternalReference], label='Long-Term Reference')
 			if any(classes == 'Linearity Reference'):
-				ax.scatter(values[classes.values == 'Linearity Reference', components[i]], values[classes.values == 'Linearity Reference', components[j]], c=sTypeColourDict[SampleType.MethodReference], label='Linearity Reference')
+				ax.scatter(values[classes.values == 'Serial Dilution', components[i]], values[classes.values == 'Serial Dilution', components[j]], c=sTypeColourDict[SampleType.MethodReference], label='Serial Dilution')
 			if any(classes == 'Sample'):
 				ax.scatter(values[classes.values == 'Sample', components[i]], values[classes.values == 'Sample', components[j]], c=sTypeColourDict['Other'], label='Sample')
 			ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
@@ -251,14 +270,6 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 				ax2.set_xlabel(plotTitle)
 				ax2.set_ylabel('PC' + str(components[j]+1))
 
-		# Add Hotelling's T2
-		hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[i], components[j]]), alpha=alpha)
-
-		#a = numpy.sqrt(numpy.var(values[:,components[i]])*Fval*2*((ns-1)/(ns-2)));
-		#b = numpy.sqrt(numpy.var(values[:,components[j]])*Fval*2*((ns-1)/(ns-2)));
-		ellipse = Ellipse(xy=(0, 0), width=hotelling_ellipse[0]*2, height=hotelling_ellipse[1]*2,
-			edgecolor='k', fc='None', lw=2)
-		ax.add_patch(ellipse)
 
 		# Annotate
 		ylabel = 'PC' + str(components[j]+1) + ' (' + '{0:.2f}'.format(pcaModel.modelParameters['VarExpRatio'][components[j]] * 100) + '%)'
@@ -295,7 +306,7 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
 
 	:param numpy.array values: dModX or sum of scores, measure of 'fit' for each sample
 	:param numpy.array runOrder: Order of sample acquisition (samples are plotted in this order)
-	:param pandas.Series sampleType: Sample type of each sample, must be from 'Study Sample', 'Study Pool', 'External Reference', or 'Sample' (see multivariateReport.py)
+	:param pandas.Series sampleType: Sample type of each sample, must be from 'Study Sample', 'Study Reference', 'Long-Term Reference', or 'Sample' (see multivariateReport.py)
 	:param bool addViolin: If True adds a violin plot of distribution of values
 	:param float Fcrit: If not none, plots a line at Fcrit
 	:param float FcritAlpha: Alpha value for Fcrit (for legend)
@@ -356,14 +367,14 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
 		ax.scatter(runOrder[sampleType.values == 'Study Sample'], values[sampleType.values == 'Study Sample'], c=sTypeColourDict[SampleType.StudySample], label='Study Sample')
 		sampleMasks.append(('SS', sampleType.values=='Study Sample'))
 		palette['SS'] = sTypeColourDict[SampleType.StudySample]
-	if any(sampleType == 'Study Pool'):
-		ax.scatter(runOrder[sampleType.values == 'Study Pool'], values[sampleType.values == 'Study Pool'], c=sTypeColourDict[SampleType.StudyPool], label='Study Pool')
-		sampleMasks.append(('SP', sampleType.values=='Study Pool'))
-		palette['SP'] = sTypeColourDict[SampleType.StudyPool]
-	if any(sampleType == 'External Reference'):
-		ax.scatter(runOrder[sampleType.values == 'External Reference'], values[sampleType.values == 'External Reference'], c=sTypeColourDict[SampleType.ExternalReference], label='External Reference')
-		sampleMasks.append(('ER', sampleType.values=='External Reference'))
-		palette['ER'] = sTypeColourDict[SampleType.ExternalReference]
+	if any(sampleType == 'Study Reference'):
+		ax.scatter(runOrder[sampleType.values == 'Study Reference'], values[sampleType.values == 'Study Reference'], c=sTypeColourDict[SampleType.StudyPool], label='Study Reference')
+		sampleMasks.append(('SR', sampleType.values=='Study Reference'))
+		palette['SR'] = sTypeColourDict[SampleType.StudyPool]
+	if any(sampleType == 'Long-Term Reference'):
+		ax.scatter(runOrder[sampleType.values == 'Long-Term Reference'], values[sampleType.values == 'Long-Term Reference'], c=sTypeColourDict[SampleType.ExternalReference], label='Long-Term Reference')
+		sampleMasks.append(('LTR', sampleType.values=='Long-Term Reference'))
+		palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
 	if any(sampleType == 'Sample'):
 		ax.scatter(runOrder[sampleType.values == 'Sample'], values[sampleType.values == 'Sample'], c=sTypeColourDict['Other'], label='Sample')
 		sampleMasks.append(('Sample', sampleType.values=='Sample'))
@@ -462,8 +473,9 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
 
 		cVect = pcaModel.loadings[i, :]
 		orig_cmap = plt.cm.RdYlBu_r # Red for high, Blue for negative, and we will have a very neutral yellow for 0
-		maxcol = numpy.max(cVect) # grab the maximum
-		mincol = numpy.min(cVect) # Grab the minimum
+		maxval = numpy.max([numpy.abs(numpy.max(cVect)), numpy.abs(numpy.min(cVect))])
+		maxcol = maxval#numpy.max(cVect) # grab the maximum
+		mincol = -maxval#numpy.min(cVect) # Grab the minimum
 		new_cmap = _shiftedColorMap(orig_cmap, start=0, midpoint=1 - maxcol/(maxcol + numpy.abs(mincol)), stop=1, name='new')
 
 		fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
@@ -779,9 +791,12 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 			hovertext = ["Feature: %s; W: %s" % i for i in zip(featureMetadata['Feature Name'], W_str)] # Text for tooltips
 
 			# Convert cVect to a value between 0.1 and 1 - to set the alpha of each point relative to loading weight
-			alphas = (((abs(cVect) - numpy.min(abs(cVect))) * (1 - 0.2)) / (maxcol - numpy.min(abs(cVect)))) + 0.2
+			#alphas = (((abs(cVect) - numpy.min(abs(cVect))) * (1 - 0.2)) / (maxcol - numpy.min(abs(cVect)))) + 0.2
 
-			LOADSplot = go.Scatter(
+			alphas = numpy.fmax(numpy.abs(cVect) / numpy.max(numpy.abs(cVect)), 0.1)
+
+
+			LOADSplot = go.Scattergl(
 				x = featureMetadata['Retention Time'],
 				y = featureMetadata['m/z'],
 				mode = 'markers',
@@ -840,10 +855,10 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 				)
 
 			# Add line for median spectral intensity
-			LOADSline = go.Scatter(
+			LOADSline = go.Scattergl(
 				x = Xvals,
 				y = numpy.median(dataMasked.intensityData, axis=0),
-				mode = 'line',
+				mode = 'lines',
 				line = dict(
 					color = 'black',
 					width = 1
@@ -870,7 +885,7 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 			
 			hovertext = ["Feature: %s; W: %s" % i for i in zip(featureMetadata['Feature Name'][sortOrder], W_str)]  # Text for tooltips
 
-			LOADSplot = go.Scatter(
+			LOADSplot = go.Scattergl(
 				x=pcaModel.loadings[component, sortOrder],
 				y=Yvals,
 				mode='markers',
@@ -910,7 +925,7 @@ def plotLoadingsInteractive(dataTrue, pcaModel, component=1, withExclusions=Fals
 
 		hovertext = ["Feature: %s; W PC%s: %s; W PC%s: %s" % i for i in zip(featureMetadata['Feature Name'], PC1_id, WPC1_str, PC2_id, WPC2_str)]  # Text for tooltips
 
-		LOADSplot = go.Scatter(
+		LOADSplot = go.Scattergl(
 			x=pcaModel.loadings[component[0], :],
 			y=pcaModel.loadings[component[1], :],
 			mode='markers',
@@ -1029,19 +1044,20 @@ def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=N
 
 			# Date
 			elif valueType == 'date':
-
-				# ensure date is datetime.datetime
+				
 				try:
-					xtime = [xtime.to_pydatetime() for xtime in sampleMetadata[field[plotNo]].tolist()]
-				except AttributeError:
-					xtime = sampleMetadata[field[plotNo]].tolist()
-				axIXs[axNo].hist(x=xtime)
-				formatter = DateFormatter('%d/%m/%y %H:%M')
-				axIXs[axNo].set_xticklabels(axIXs[axNo].xaxis.get_majorticklabels(), rotation=90)
-				axIXs[axNo].xaxis.set_major_formatter(formatter)
-
-				axIXs[axNo].set_ylabel('Count')
-				axIXs[axNo].set_title(field[plotNo])
+					xtime = mdates.date2num(sampleMetadata[field[plotNo]].values)
+					axIXs[axNo].hist(xtime, bins=20)
+					locator = mdates.AutoDateLocator()
+					axIXs[axNo].xaxis.set_major_locator(locator)
+					axIXs[axNo].xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))#AutoDateFormatter(locator))
+					axIXs[axNo].xaxis.set_tick_params(rotation=90)
+					axIXs[axNo].grid()
+	
+					axIXs[axNo].set_ylabel('Count')
+					axIXs[axNo].set_title(field[plotNo])					
+				except:
+					pass
 
 			# Advance plotNo
 			plotNo = plotNo+1

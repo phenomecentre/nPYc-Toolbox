@@ -45,6 +45,11 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	if withExclusions:
 		data.applyMasks()
 
+	if 'Sample ID' not in data.sampleMetadata:
+		sampleIdentifier = 'Sampling ID'
+	else:
+		sampleIdentifier = 'Sample ID'
+
 	sampleSummary = dict()
 	sampleSummary['Name'] = data.name
 
@@ -64,7 +69,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		Blankmask = numpy.zeros(len(data.sampleMask)).astype(bool)
 
 	NotInCSVmask = data.sampleMetadata['Metadata Available'] == False
-	UnclearRolemask = (SSmask==False) & (SPmask==False) & (ERmask==False) & (NotInCSVmask==False) & (SRDmask == False) & (Blankmask==False)
+	UnclearRolemask = (SSmask==False) & (SPmask==False) & (ERmask==False) & (SRDmask == False) & (Blankmask==False)
 	# Samples marked for exclusion (either as marked as skipped or as False in sampleMask)
 
 	try:
@@ -77,7 +82,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	# Determine if samples have been excluded
 	try:
 		excludedIX = [i for i, x in enumerate(data.excludedFlag) if x == 'Samples']
-		sampleMetadataExcluded = pandas.DataFrame(columns=['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available'])
+		sampleMetadataExcluded = pandas.DataFrame(columns=['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available', sampleIdentifier])
 		excluded = len(excludedIX)
 	except:
 		excluded = 0
@@ -87,7 +92,13 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		# Stick info of all previously excluded samples together
 		for i in excludedIX:
 			temp = copy.deepcopy(data.sampleMetadataExcluded[i])
-			sampleMetadataExcluded = sampleMetadataExcluded.append(temp.reindex(['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available'], axis=1), ignore_index=True)
+			
+			if (sampleIdentifier in temp):
+				sampleMetadataExcluded = sampleMetadataExcluded.append(temp[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available', sampleIdentifier]], ignore_index=True)
+			
+			else:
+				sampleMetadataExcluded = sampleMetadataExcluded.append(temp[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', 'Metadata Available']], ignore_index=True)
+
 
 		excluded = sampleMetadataExcluded.shape[0]
 
@@ -97,28 +108,26 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		ERmaskEx = (sampleMetadataExcluded['SampleType'] == SampleType.ExternalReference) & (sampleMetadataExcluded['AssayRole'] == AssayRole.PrecisionReference)
 		SRDmaskEx = (sampleMetadataExcluded['AssayRole'] == AssayRole.LinearityReference) & (sampleMetadataExcluded['SampleType'] == SampleType.StudyPool)
 		BlankmaskEx = sampleMetadataExcluded['SampleType'] == SampleType.ProceduralBlank
-
-		NotInCSVmaskEx = sampleMetadataExcluded['Metadata Available'] == False
-		UnclearRolemaskEx = (SSmaskEx==False) & (SPmaskEx==False) & (ERmaskEx==False) & (NotInCSVmaskEx==False) & (BlankmaskEx == False) & (SRDmaskEx == False)
-		sampleSummary['Excluded Details'] = sampleMetadataExcluded.set_index('Sample File Name')
+		UnclearRolemaskEx = (SSmaskEx==False) & (SPmaskEx==False) & (ERmaskEx==False) & (BlankmaskEx == False) & (SRDmaskEx == False)
+		sampleSummary['Excluded Details'] = sampleMetadataExcluded[['Sample File Name', 'Sample Base Name', 'SampleType', 'AssayRole', 'Exclusion Details', sampleIdentifier]]
 
 
 	# Summary table for samples acquired
-	temp = numpy.zeros([8,2], dtype=numpy.int)
+	temp = numpy.zeros([7,2], dtype=numpy.int)
 	# Total numbers
-	temp[:,0] = [data.sampleMetadata.shape[0], sum(SSmask), sum(SPmask), sum(ERmask), sum(SRDmask), sum(Blankmask), sum(NotInCSVmask), sum(UnclearRolemask)]
+	temp[:,0] = [data.sampleMetadata.shape[0], sum(SSmask), sum(SPmask), sum(ERmask), sum(SRDmask), sum(Blankmask), sum(UnclearRolemask)]
 	# Numbers marked for exclusion (either skipped or in sampleMask)
 	temp[:,1] = [sum(markedToExclude), sum(markedToExclude & SSmask), sum(markedToExclude & SPmask),
-		sum(markedToExclude & ERmask), sum(markedToExclude & SRDmask), sum(markedToExclude & Blankmask), sum(markedToExclude & NotInCSVmask), sum(markedToExclude & UnclearRolemask)]
+		sum(markedToExclude & ERmask), sum(markedToExclude & SRDmask), sum(markedToExclude & Blankmask), sum(markedToExclude & UnclearRolemask)]
 
 	# Convert to dataframe
 	sampleSummary['Acquired'] = pandas.DataFrame(data = temp,
-		index = ['All', 'Study Sample', 'Study Pool', 'External Reference', 'Serial Dilution', 'Blank Sample', 'No Metadata Available', 'Unspecified Sample Type or Assay Role'],
+		index = ['All', 'Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution', 'Blank', 'Unspecified SampleType or AssayRole'],
 		columns = ['Total', 'Marked for Exclusion'])
 
 	# Marked for exclusion - details
 	if (sum(markedToExclude) != 0):
-		sampleSummary['MarkedToExclude Details'] = data.sampleMetadata[['Sample File Name','Exclusion Details']][markedToExclude]
+		sampleSummary['MarkedToExclude Details'] = data.sampleMetadata[['Sample File Name', 'Exclusion Details']][markedToExclude]
 
 	# Save details of samples of unknown type
 	if (sum(NotInCSVmask) != 0):
@@ -130,17 +139,22 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 	if hasattr(data, 'sampleAbsentMetadata'):
 		if 'Sample File Name' in data.sampleAbsentMetadata.columns:
-			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sample File Name', 'Sample ID']]
+			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sample File Name', sampleIdentifier]]
 		else:
-			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[['Sampling ID', 'Assay data name', 'LIMS Marked Missing']]
+			sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[[sampleIdentifier, 'Assay data name', 'LIMS Marked Missing']]
 
 	# Finally - add column of samples already excluded to sampleSummary
 	if excluded != 0:
 		sampleSummary['Acquired']['Already Excluded'] = [excluded, sum(SSmaskEx), sum(SPmaskEx), sum(ERmaskEx),
-														 sum(SRDmaskEx), sum(BlankmaskEx), sum(NotInCSVmaskEx), sum(UnclearRolemaskEx)]
+														 sum(SRDmaskEx), sum(BlankmaskEx), sum(UnclearRolemaskEx)]
 		# Save field with Study Samples exclusions
 		if (sum(SSmaskEx) != 0):
-			sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', 'Exclusion Details']][SSmaskEx]
+			
+			if (sampleIdentifier in sampleMetadataExcluded):
+				sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', sampleIdentifier, 'Exclusion Details']][SSmaskEx]
+
+			else:
+				sampleSummary['StudySamples Exclusion Details'] = sampleMetadataExcluded[['Sample File Name', 'Exclusion Details']][SSmaskEx]
 
 	# Drop rows where no samples present for that datatype
 	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
@@ -185,18 +199,22 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 			display(sampleSummary['NotAcquired'])
 			print('\n')
 
-		if 'NoMetadata Details' in sampleSummary:
-			print('Details of Samples for which no Metadata was provided')
-			display(sampleSummary['NoMetadata Details'])
-			print('\n')
-
 		if 'UnknownType Details' in sampleSummary:
 			print('Details of Samples with Unknown Type')
 			display(sampleSummary['UnknownType Details'])
+			print('\n')
+            
+		if 'NoMetadata Details' in sampleSummary:
+			print('Details of Samples for which no Metadata was provided')
+			display(sampleSummary['NoMetadata Details'])
 			print('\n')
 
 		if 'MarkedToExclude Details' in sampleSummary:
 			print('Details of Samples Marked for Exclusion')
 			display(sampleSummary['MarkedToExclude Details'])
 			print('\n')
-
+			
+		if 'Excluded Details' in sampleSummary:
+			print('Details of Samples Already Excluded')
+			display(sampleSummary['Excluded Details'])
+			print('\n')

@@ -1,7 +1,7 @@
-Plotting functions
+Plotting Functions
 -------------------
 
-See the :doc:`gallery<plotsGallery>` for a visual overview of the available plots.
+See the :doc:`Plot Gallery<plotsGallery>` for a visual overview of the available plots.
 
 .. automodule:: nPYc.plotting
    :members:

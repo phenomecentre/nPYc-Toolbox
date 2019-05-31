@@ -7,10 +7,9 @@ import re
 import warnings
 
 from ._dataset import Dataset
-from ..utilities import removeTrailingColumnNumbering
-from .._toolboxPath import toolboxPath
 from ..enumerations import VariableType, AssayRole, SampleType
-from ..utilities._nmr import qcCheckBaseline, qcCheckWaterPeak
+from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
+from plotly.offline import iplot
 
 
 class NMRDataset(Dataset):
@@ -55,7 +54,7 @@ class NMRDataset(Dataset):
 		self.filePath, fileName = os.path.split(datapath)
 		self.fileName, fileExtension = os.path.splitext(fileName)
 
-		if fileType == 'Bruker':
+		if fileType.lower() == 'bruker':
 			from ..utilities._importBrukerSpectrum import importBrukerSpectra
 
 			self.Attributes['Feature Names'] = 'ppm'
@@ -85,15 +84,17 @@ class NMRDataset(Dataset):
 			##
 			# Set up additional metadata columns
 			##
-			self.sampleMetadata['Acquired Time'] = pandas.to_datetime(self.sampleMetadata['Acquired Time']).astype(datetime)
-			self.sampleMetadata['AssayRole'] = AssayRole.Assay
-			self.sampleMetadata['SampleType'] = SampleType.StudySample
+			self.sampleMetadata['Acquired Time'] = pandas.to_datetime(self.sampleMetadata['Acquired Time'], utc=True).dt.tz_localize(None)
+			self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+
+			self.sampleMetadata['AssayRole'] = None#AssayRole.Assay
+			self.sampleMetadata['SampleType'] = None#SampleType.StudySample
 			self.sampleMetadata['Dilution'] = 100
 			self.sampleMetadata['Batch'] = numpy.nan
 			self.sampleMetadata['Correction Batch'] = numpy.nan
 			runOrder = self.sampleMetadata.sort_values(by='Acquired Time').index.values
 			self.sampleMetadata['Run Order'] = numpy.argsort(runOrder)
-			self.sampleMetadata['Sampling ID'] = numpy.nan
+			self.sampleMetadata['Sample ID'] = numpy.nan
 			self.sampleMetadata['Exclusion Details'] = self.sampleMetadata['Warnings']
 			self.sampleMetadata['Metadata Available'] = False
 			self.sampleMetadata.drop('Warnings', inplace=True, axis=1)
@@ -109,7 +110,10 @@ class NMRDataset(Dataset):
 			self._nmrQCChecks()
 
 			self.Attributes['Log'].append([datetime.now(), 'Bruker format spectra loaded from %s' % (datapath)])
-
+		elif fileType.lower() == 'csv export':
+			(self.name, self.intensityData, self.featureMetadata, self.sampleMetadata) = self._initialiseFromCSV(datapath)
+			self.VariableType = VariableType.Spectral
+			self.initialiseMasks()
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
 			pass
@@ -183,9 +187,9 @@ class NMRDataset(Dataset):
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'SampleType'] = SampleType.ExternalReference
 
 		# Update Sampling ID values using new 'SampleType', special case for Study Pool, External Reference and Procedural Blank
-		self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'Not specified') | (self.sampleMetadata['Sampling ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.StudyPool)).tolist(), 'Sampling ID'] = 'Study Pool Sample'
-		self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'Not specified') | (self.sampleMetadata['Sampling ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ExternalReference)).tolist(), 'Sampling ID'] = 'External Reference Sample'
-		self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'Not specified') | (self.sampleMetadata['Sampling ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sampling ID'] = 'Procedural Blank Sample'
+		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.StudyPool)).tolist(), 'Sample ID'] = 'Study Pool Sample'
+		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ExternalReference)).tolist(), 'Sample ID'] = 'External Reference Sample'
+		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sample ID'] = 'Procedural Blank Sample'
 		# Neater output
 		#self.sampleMetadata.loc[self.sampleMetadata['Sample position'] == 'nan', 'Sample position'] = ''
 
@@ -215,11 +219,11 @@ class NMRDataset(Dataset):
 
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
-
 	def updateMasks(self, filterSamples=True, filterFeatures=True,
-					sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
-					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], exclusionRegions=None,
-					sampleQCChecks=['LineWidthFail','CalibrationFail','BaselineFail','WaterPeakFail'],**kwargs):
+					sampleTypes=list(SampleType),#[SampleType.StudySample, SampleType.StudyPool],
+					assayRoles=list(AssayRole),#[AssayRole.Assay, AssayRole.PrecisionReference],
+					exclusionRegions=None,
+					sampleQCChecks=[],**kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
@@ -291,28 +295,54 @@ class NMRDataset(Dataset):
 			assayRoles,
 			', '.join("{!s}={!r}".format(key,val) for (key,val) in kwargs.items()))])
 
+	def plot(self, spectra, labels, interactive=False):
+		"""
+		Plots a set of nmr spectra. If interactive is False, returns a static matplotlib plot. If True, then plotly is used to generate
+		an interactive plot.
+
+		:param spectra: The specific 'labels' of the spectra to plot. By default all spectra are plotted.
+		:param labels: Which labels to select
+		:param interactive: Use matplotlib (False) or plotly (True)
+		:return: Displays the NMR data and returns either a matplotlib axis object or a plotly figure dictionary
+		"""
+
+		# Convert the spectra name/string to
+		spectra_idx = self.sampleMetadata[labels][self.sampleMetadata[labels] == spectra]
+		import matplotlib.pyplot as plt
+		if interactive:
+			from ..plotting import plotSpectraInteractive
+			nmr_plot = plotSpectraInteractive(self, spectra, sampleLabels=labels)
+			iplot(nmr_plot)
+			return nmr_plot
+
+		else:
+			fig, ax = plt.subplots(111)
+			ax.plot(self.featureMetadata.ppm, self.intensityData[spectra_idx, :].T)
+			ax.reverse_axis()
+			plt.show()
+			return ax
 
 	def _exportISATAB(self, destinationPath, detailsDict):
 		"""
 		Export the dataset's metadata to the directory *destinationPath* as ISATAB
 		detailsDict should have the format:
 		detailsDict = {
-		    'investigation_identifier' : "i1",
-		    'investigation_title' : "Give it a title",
-		    'investigation_description' : "Add a description",
-		    'investigation_submission_date' : "2016-11-03",
-		    'investigation_public_release_date' : "2016-11-03",
-		    'first_name' : "Noureddin",
-		    'last_name' : "Sadawi",
-		    'affiliation' : "University",
-		    'study_filename' : "my_ms_study",
-		    'study_material_type' : "Serum",
-		    'study_identifier' : "s1",
-		    'study_title' : "Give the study a title",
-		    'study_description' : "Add study description",
-		    'study_submission_date' : "2016-11-03",
-		    'study_public_release_date' : "2016-11-03",
-		    'assay_filename' : "my_ms_assay"
+			'investigation_identifier' : "i1",
+			'investigation_title' : "Give it a title",
+			'investigation_description' : "Add a description",
+			'investigation_submission_date' : "2016-11-03",
+			'investigation_public_release_date' : "2016-11-03",
+			'first_name' : "Noureddin",
+			'last_name' : "Sadawi",
+			'affiliation' : "University",
+			'study_filename' : "my_ms_study",
+			'study_material_type' : "Serum",
+			'study_identifier' : "s1",
+			'study_title' : "Give the study a title",
+			'study_description' : "Add study description",
+			'study_submission_date' : "2016-11-03",
+			'study_public_release_date' : "2016-11-03",
+			'assay_filename' : "my_ms_assay"
 		}
 
 		:param str destinationPath: Path to a directory in which the output will be saved
@@ -367,50 +397,50 @@ class NMRDataset(Dataset):
 
 
 		for index, row in self.sampleMetadata.iterrows():
-		    src_name = row['Sample File Name']
-		    source = Source(name=src_name)
+			src_name = row['Sample File Name']
+			source = Source(name=src_name)
 
-		    source.comments.append(Comment(name='Study Name', value=row['Study']))
-		    study.sources.append(source)
+			source.comments.append(Comment(name='Study Name', value=row['Study']))
+			study.sources.append(source)
 
-		    sample_name = src_name
-		    sample = Sample(name=sample_name, derives_from=[source])
-		    # check if field exists first
-		    status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
-		    characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
-		    sample.characteristics.append(characteristic_material_type)
+			sample_name = src_name
+			sample = Sample(name=sample_name, derives_from=[source])
+			# check if field exists first
+			status = row['Status'] if 'Status' in self.sampleMetadata.columns else 'N/A'
+			characteristic_material_type = Characteristic(category=OntologyAnnotation(term="material type"), value=status)
+			sample.characteristics.append(characteristic_material_type)
 
-		    #characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
-		    #sample.characteristics.append(characteristic_material_role)
+			#characteristic_material_role = Characteristic(category=OntologyAnnotation(term="material role"), value=row['AssayRole'])
+			#sample.characteristics.append(characteristic_material_role)
 
-		    # check if field exists first
-		    age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
-		    characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
-		    sample.characteristics.append(characteristic_age)
-		    # check if field exists first
-		    gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
-		    characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
-		    sample.characteristics.append(characteristic_gender)
+			# check if field exists first
+			age = row['Age'] if 'Age' in self.sampleMetadata.columns else 'N/A'
+			characteristic_age = Characteristic(category=OntologyAnnotation(term="Age"), value=age,unit='Year')
+			sample.characteristics.append(characteristic_age)
+			# check if field exists first
+			gender = row['Gender'] if 'Gender' in self.sampleMetadata.columns else 'N/A'
+			characteristic_gender = Characteristic(category=OntologyAnnotation(term="Gender"), value=gender)
+			sample.characteristics.append(characteristic_gender)
 
-		    ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
-		    characteristic_organism = Characteristic(category=OntologyAnnotation(term="Organism"),value=OntologyAnnotation(term="Homo Sapiens", term_source=ncbitaxon,term_accession="http://purl.bioontology.org/ontology/NCBITAXON/9606"))
-		    sample.characteristics.append(characteristic_organism)
+			ncbitaxon = OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
+			characteristic_organism = Characteristic(category=OntologyAnnotation(term="Organism"),value=OntologyAnnotation(term="Homo Sapiens", term_source=ncbitaxon,term_accession="http://purl.bioontology.org/ontology/NCBITAXON/9606"))
+			sample.characteristics.append(characteristic_organism)
 
-		    study.samples.append(sample)
+			study.samples.append(sample)
 
-		    # check if field exists first
-		    sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
-		    sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
-		    aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
+			# check if field exists first
+			sampling_date = row['Sampling Date'] if not pandas.isnull(row['Sampling Date']) else None
+			sample_collection_process = Process(id_='sam_coll_proc',executes_protocol=sample_collection_protocol,date_=sampling_date)
+			aliquoting_process = Process(id_='sam_coll_proc',executes_protocol=aliquoting_protocol,date_=sampling_date)
 
-		    sample_collection_process.inputs = [source]
-		    aliquoting_process.outputs = [sample]
+			sample_collection_process.inputs = [source]
+			aliquoting_process.outputs = [sample]
 
-		    # links processes
-		    plink(sample_collection_process, aliquoting_process)
+			# links processes
+			plink(sample_collection_process, aliquoting_process)
 
-		    study.process_sequence.append(sample_collection_process)
-		    study.process_sequence.append(aliquoting_process)
+			study.process_sequence.append(sample_collection_process)
+			study.process_sequence.append(aliquoting_process)
 
 
 		study.protocols.append(sample_collection_protocol)
@@ -434,51 +464,51 @@ class NMRDataset(Dataset):
 
 		#for index, row in sampleMetadata.iterrows():
 		for index, sample in enumerate(study.samples):
-		    row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
-		    # create an extraction process that executes the extraction protocol
-		    extraction_process = Process(executes_protocol=extraction_protocol)
+			row = self.sampleMetadata.loc[self.sampleMetadata['Sample File Name'].astype(str) == sample.name]
+			# create an extraction process that executes the extraction protocol
+			extraction_process = Process(executes_protocol=extraction_protocol)
 
-		    # extraction process takes as input a sample, and produces an extract material as output
-		    sample_name = sample.name
-		    sample = Sample(name=sample_name, derives_from=[source])
-		    #print(row['Acquired Time'].values[0])
+			# extraction process takes as input a sample, and produces an extract material as output
+			sample_name = sample.name
+			sample = Sample(name=sample_name, derives_from=[source])
+			#print(row['Acquired Time'].values[0])
 
-		    extraction_process.inputs.append(sample)
-		    material = Material(name="extract-{}".format(index))
-		    material.type = "Extract Name"
-		    extraction_process.outputs.append(material)
+			extraction_process.inputs.append(sample)
+			material = Material(name="extract-{}".format(index))
+			material.type = "Extract Name"
+			extraction_process.outputs.append(material)
 
-		    # create a ms process that executes the nmr protocol
-		    nmr_process = Process(executes_protocol=nmr_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
+			# create a ms process that executes the nmr protocol
+			nmr_process = Process(executes_protocol=nmr_protocol,date_=datetime.isoformat(datetime.strptime(str(row['Acquired Time'].values[0]), '%Y-%m-%d %H:%M:%S')))
 
-		    nmr_process.name = "assay-name-{}".format(index)
-		    nmr_process.inputs.append(extraction_process.outputs[0])
-		    # nmr process usually has an output data file
-		    # check if field exists first
-		    assay_data_name = row['Assay data name'].values[0] if 'Assay data name' in self.sampleMetadata.columns else 'N/A'
-		    datafile = DataFile(filename=assay_data_name, label="NMR Assay Name", generated_from=[sample])
-		    nmr_process.outputs.append(datafile)
+			nmr_process.name = "assay-name-{}".format(index)
+			nmr_process.inputs.append(extraction_process.outputs[0])
+			# nmr process usually has an output data file
+			# check if field exists first
+			assay_data_name = row['Assay data name'].values[0] if 'Assay data name' in self.sampleMetadata.columns else 'N/A'
+			datafile = DataFile(filename=assay_data_name, label="NMR Assay Name", generated_from=[sample])
+			nmr_process.outputs.append(datafile)
 
-		    #nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
-		    nmr_process.parameter_values = [ParameterValue(category=nmr_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
-		    # check if field exists first
-		    instrument = row['Instrument'].values[0] if 'Instrument' in self.sampleMetadata.columns else 'N/A'
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=instrument))
-             # check if field exists first
-		    sbatch = row['Sample batch'].values[0] if 'Sample batch' in self.sampleMetadata.columns else 'N/A'
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=sbatch))
-		    nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
+			#nmr_process.parameter_values.append(ParameterValue(category='Run Order',value=str(i)))
+			nmr_process.parameter_values = [ParameterValue(category=nmr_protocol.get_param('Run Order'),value=row['Run Order'].values[0])]
+			# check if field exists first
+			instrument = row['Instrument'].values[0] if 'Instrument' in self.sampleMetadata.columns else 'N/A'
+			nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Instrument'),value=instrument))
+			 # check if field exists first
+			sbatch = row['Sample batch'].values[0] if 'Sample batch' in self.sampleMetadata.columns else 'N/A'
+			nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Sample Batch'),value=sbatch))
+			nmr_process.parameter_values.append(ParameterValue(category=nmr_protocol.get_param('Acquisition Batch'),value=row['Batch'].values[0]))
 
-		    # ensure Processes are linked forward and backward
-		    plink(extraction_process, nmr_process)
-		    # make sure the extract, data file, and the processes are attached to the assay
-		    nmr_assay.samples.append(sample)
-		    nmr_assay.data_files.append(datafile)
-		    nmr_assay.other_material.append(material)
-		    nmr_assay.process_sequence.append(extraction_process)
-		    nmr_assay.process_sequence.append(nmr_process)
-		    nmr_assay.measurement_type = OntologyAnnotation(term="metabolite profiling")
-		    nmr_assay.technology_type = OntologyAnnotation(term="NMR spectroscopy")
+			# ensure Processes are linked forward and backward
+			plink(extraction_process, nmr_process)
+			# make sure the extract, data file, and the processes are attached to the assay
+			nmr_assay.samples.append(sample)
+			nmr_assay.data_files.append(datafile)
+			nmr_assay.other_material.append(material)
+			nmr_assay.process_sequence.append(extraction_process)
+			nmr_assay.process_sequence.append(nmr_process)
+			nmr_assay.measurement_type = OntologyAnnotation(term="metabolite profiling")
+			nmr_assay.technology_type = OntologyAnnotation(term="NMR spectroscopy")
 
 		# attach the assay to the study
 		study.assays.append(nmr_assay)
@@ -487,7 +517,6 @@ class NMRDataset(Dataset):
 			ie.appendStudytoISA(study, destinationPath)
 		else:
 			isatab.dump(isa_obj=investigation, output_path=destinationPath)
-
 
 	def _nmrQCChecks(self):
 		"""
@@ -505,10 +534,10 @@ class NMRDataset(Dataset):
 			(self.sampleMetadata['Delta PPM'] > meanVal - bounds),
 			(self.sampleMetadata['Delta PPM'] < meanVal + bounds))
 
-		if 'PWFailThreshold' in self.Attributes.keys():
+		if 'LWFailThreshold' in self.Attributes.keys():
 			# LineWidth quality check
 			self.sampleMetadata['LineWidthFail'] = self.sampleMetadata['Line Width (Hz)'] >= self.Attributes[
-				'PWFailThreshold']
+				'LWFailThreshold']
 
 		if 'baselineCheckRegion' in self.Attributes.keys():
 			# Baseline check
@@ -525,19 +554,19 @@ class NMRDataset(Dataset):
 
 			self.sampleMetadata['BaselineFail'] = isOutlierBaselineHigh | isOutlierBaselineLow
 
-		if 'waterPeakCheckRegion' in self.Attributes.keys():
+		if 'solventPeakCheckRegion' in self.Attributes.keys():
 			# Water peak check
-			ppmWaterLow = tuple(self.Attributes['waterPeakCheckRegion'][0])
-			ppmWaterHigh = tuple(self.Attributes['waterPeakCheckRegion'][1])
+			ppmWaterLow = tuple(self.Attributes['solventPeakCheckRegion'][0])
+			ppmWaterHigh = tuple(self.Attributes['solventPeakCheckRegion'][1])
 
 			# Obtain the spectral regions - add sample Mask filter??here
 			specsLowWaterPeakRegion = self.getFeatures(ppmWaterLow)[1]
 			specsHighWaterPeakRegion = self.getFeatures(ppmWaterHigh)[1]
 
-			isOutlierWaterPeakLow = qcCheckWaterPeak(specsLowWaterPeakRegion, self.Attributes['baseline_alpha'])
-			isOutlierWaterPeakHigh = qcCheckWaterPeak(specsHighWaterPeakRegion, self.Attributes['baseline_alpha'])
+			isOutlierWaterPeakLow = qcCheckSolventPeak(specsLowWaterPeakRegion, self.Attributes['baseline_alpha'])
+			isOutlierWaterPeakHigh = qcCheckSolventPeak(specsHighWaterPeakRegion, self.Attributes['baseline_alpha'])
 
-			self.sampleMetadata['WaterPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
+			self.sampleMetadata['SolventPeakFail'] = isOutlierWaterPeakLow | isOutlierWaterPeakHigh
 
 		return None
 

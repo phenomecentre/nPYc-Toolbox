@@ -13,7 +13,7 @@ import warnings
 from .._toolboxPath import toolboxPath
 from ._dataset import Dataset
 from ..utilities import normalisation, rsd
-from ..enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod
+from ..enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod, AnalyticalPlatform
 
 
 class TargetedDataset(Dataset):
@@ -199,12 +199,14 @@ class TargetedDataset(Dataset):
             self._loadTargetLynxDataset(datapath, **kwargs)
             # Finalise object
             self.VariableType = VariableType.Discrete
+            self.AnalyticalPlatform = AnalyticalPlatform.MS
             self.initialiseMasks()
         elif fileType == 'Bruker Quantification':
             # Read files, clean object
             self._loadBrukerXMLDataset(datapath, **kwargs)
             # Finalise object
             self.VariableType = VariableType.Discrete
+            self.AnalyticalPlatform = AnalyticalPlatform.NMR
             self.initialiseMasks()
         elif fileType == 'empty':
             # Build empty object for testing
@@ -217,7 +219,9 @@ class TargetedDataset(Dataset):
             validDataset = self.validateObject(verbose=False, raiseError=False, raiseWarning=False)
             if not validDataset['BasicTargetedDataset']:
                 raise ValueError('Import Error: The imported dataset does not satisfy to the Basic TargetedDataset definition')
-        self.Attributes['Log'].append([datetime.now(),'%s instance initiated, with %d samples, %d features, from %s' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
+        self.Attributes['Log'].append([datetime.now(),
+                                       '%s instance initiated, with %d samples, %d features, from %s'
+                                       % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
         # Check later
         if 'Metadata Available' not in self.sampleMetadata:
             self.sampleMetadata['Metadata Available'] = False
@@ -242,6 +246,24 @@ class TargetedDataset(Dataset):
 
         return rsd(self._intensityData[mask & self.sampleMask])
 
+    @property
+    def rsdSS(self):
+        """
+        Returns percentage :term:`relative standard deviations<RSD>` for each feature in the dataset, calculated on samples with the Assay Role :py:attr:`~nPYc.enumerations.AssayRole.Assay` and Sample Type :py:attr:`~nPYc.enumerations.SampleType.StudySample` in :py:attr:`~Dataset.sampleMetadata`.
+
+        :return: Vector of feature RSDs
+        :rtype: numpy.ndarray
+        """
+        # Check we have Study Reference samples defined
+        if not ('AssayRole' in self.sampleMetadata.keys() or 'SampleType' in self.sampleMetadata.keys()):
+            raise ValueError('Assay Roles and Sample Types must be defined to calculate RSDs.')
+        if not sum(self.sampleMetadata['AssayRole'].values == AssayRole.Assay) > 1:
+            raise ValueError('More than one assay sample is required to calculate RSDs.')
+
+        mask = numpy.logical_and(self.sampleMetadata['AssayRole'].values == AssayRole.Assay,
+                                 self.sampleMetadata['SampleType'].values == SampleType.StudySample)
+
+        return rsd(self._intensityData[mask & self.sampleMask])
 
     def _loadTargetLynxDataset(self, datapath, calibrationReportPath, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False, **kwargs):
         """
@@ -383,7 +405,7 @@ class TargetedDataset(Dataset):
         self.sampleMetadata['SampleType']        = numpy.nan
         self.sampleMetadata['Dilution']          = numpy.nan
         self.sampleMetadata['Correction Batch']  = numpy.nan
-        self.sampleMetadata['Sampling ID']       = numpy.nan
+        self.sampleMetadata['Sample ID']       = numpy.nan
         self.sampleMetadata['Exclusion Details'] = numpy.nan
         #self.sampleMetadata['Batch']             = numpy.nan #already created
 
@@ -746,7 +768,7 @@ class TargetedDataset(Dataset):
         # check number of compounds in SOP & calibReport
         if SOPFeatureMetadata.shape[0] != calibReport.shape[0]:
             raise ValueError('SOP and Calibration Report number of compounds differ')
-        featureCalibSOP = pandas.merge(left=SOPFeatureMetadata, right=calibReport, how='inner', left_on='compoundID', right_on='TargetLynx ID', sort=False)
+        featureCalibSOP = pandas.merge(left=SOPFeatureMetadata, right=calibReport, how='inner', left_on='compoundName', right_on='Compound', sort=False)
         featureCalibSOP.drop('TargetLynx ID', inplace=True, axis=1)
 
         # check we still have the same number of features (inner join)
@@ -831,7 +853,7 @@ class TargetedDataset(Dataset):
                 finalSampleMetadata.loc[i, 'Acquired Time'] = datetime.strptime(str(finalSampleMetadata.loc[i, 'Acqu Date']) + " " + str(finalSampleMetadata.loc[i, 'Acqu Time']),'%d-%b-%y %H:%M:%S')
             except ValueError:
                 pass
-        finalSampleMetadata['Acquired Time'] = finalSampleMetadata['Acquired Time'].astype(datetime)
+        finalSampleMetadata['Acquired Time'] = finalSampleMetadata['Acquired Time'].dt.to_pydatetime()
         # Add Run Order
         finalSampleMetadata['Order'] = finalSampleMetadata.sort_values(by='Acquired Time').index
         finalSampleMetadata['Run Order'] = finalSampleMetadata.sort_values(by='Order').index
@@ -1123,7 +1145,7 @@ class TargetedDataset(Dataset):
         self.sampleMetadata['SampleType'] = numpy.nan
         self.sampleMetadata['Dilution'] = 100
         self.sampleMetadata['Correction Batch'] = numpy.nan
-        self.sampleMetadata['Sampling ID'] = numpy.nan
+        self.sampleMetadata['Sample ID'] = numpy.nan
         self.sampleMetadata['Exclusion Details'] = None
         # add Run Order
         self.sampleMetadata['Order'] = self.sampleMetadata.sort_values(by='Acquired Time').index
@@ -1751,6 +1773,8 @@ class TargetedDataset(Dataset):
         if any(u_counts > 1):
             warnings.warn('Warning: The following \'Sample File Name\' are present more than once: ' + str(u_ids[u_counts>1].tolist()))
 
+        if self.AnalyticalPlatform != other.AnalyticalPlatform:
+            raise ValueError('Can only add Targeted datasets with the same AnalyticalPlatform Attribute')
 
         ## Initialise an empty TargetedDataset to overwrite
         targetedData = TargetedDataset(datapath='', fileType='empty')
@@ -1769,6 +1793,8 @@ class TargetedDataset(Dataset):
 
         ## VariableType
         targetedData.VariableType = copy.deepcopy(self.VariableType)
+
+        targetedData.AnalyticalPlatform = copy.deepcopy(self.AnalyticalPlatform)
 
         ## _name
         targetedData.name = self.name+'-'+other.name
@@ -1925,7 +1951,7 @@ class TargetedDataset(Dataset):
 
 
         ## unexpected attributes
-        expectedAttr = {'Attributes', 'VariableType', '_Normalisation', '_name', 'fileName', 'filePath',
+        expectedAttr = {'Attributes', 'VariableType', 'AnalyticalPlatform', '_Normalisation', '_name', 'fileName', 'filePath',
                         '_intensityData', 'sampleMetadata', 'featureMetadata', 'expectedConcentration','sampleMask',
                         'featureMask', 'calibration', 'sampleMetadataExcluded', 'intensityDataExcluded',
                         'featureMetadataExcluded', 'expectedConcentrationExcluded', 'excludedFlag'}
@@ -2043,8 +2069,6 @@ class TargetedDataset(Dataset):
         """
         Calls :py:meth:`~Dataset.exportDataset` and raises a warning if normalisation is employed as :py:class:`TargetedDataset` :py:attr:`intensityData` can be left-censored.
         """
-        if True:
-            warnings.warn('TODO - fix for new normalisation scheme')
         # handle the dilution due to method... These lines are left here commented - as hopefully this will be handled more
         # elegantly through the intensityData getter
         # Export dataset...
@@ -2212,7 +2236,7 @@ class TargetedDataset(Dataset):
         :raises TypeError: if self.sampleMetadata['Sample Base Name'] is not str
         :raises LookupError: if self.sampleMetadata does not have a Subject ID column
         :raises TypeError: if self.sampleMetadata['Subject ID'] is not a str
-        :raises TypeError: if self.sampleMetadata['Sampling ID'] is not a str
+        :raises TypeError: if self.sampleMetadata['Sample ID'] is not a str
         :raises ValueError: if self.featureMetadata does not have the same number of features as self._intensityData
         :raises TypeError: if self.featureMetadata['Feature Name'] is not a str
         :raises ValueError: if self.featureMetadata['Feature Name'] is not unique
@@ -2447,10 +2471,10 @@ class TargetedDataset(Dataset):
                     failure = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tFailure, \'self.sampleMetadata[\'Subject ID\']\' is ' + str(type(self.sampleMetadata['Subject ID'][0]))
                     failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
                 # end self.sampleMetadata['Subject ID']
-                # sampleMetadata['Sampling ID'] is str
-                condition = (self.sampleMetadata['Sampling ID'].dtype == numpy.dtype('O'))
-                success = 'Check self.sampleMetadata[\'Sampling ID\'] is str:\tOK'
-                failure = 'Check self.sampleMetadata[\'Sampling ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sampling ID\']\' is ' + str(type(self.sampleMetadata['Sampling ID'][0]))
+                # sampleMetadata['Sample ID'] is str
+                condition = (self.sampleMetadata['Sample ID'].dtype == numpy.dtype('O'))
+                success = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tOK'
+                failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sample ID\']\' is ' + str(type(self.sampleMetadata['Sample ID'][0]))
                 failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
             # end self.sampleMetadata number of samples
             # end self.sampleMetadata
@@ -3054,7 +3078,11 @@ class TargetedDataset(Dataset):
         super().applyMasks()
 
 
-    def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool], assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], quantificationTypes=[QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantOther, QuantificationType.Monitored], calibrationMethods=[CalibrationMethod.backcalculatedIS, CalibrationMethod.noIS, CalibrationMethod.noCalibration, CalibrationMethod.otherCalibration], **kwargs):
+    def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
+                    assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference],
+                    quantificationTypes=[QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantOther, QuantificationType.Monitored],
+                    calibrationMethods=[CalibrationMethod.backcalculatedIS, CalibrationMethod.noIS, CalibrationMethod.noCalibration, CalibrationMethod.otherCalibration],
+                    rsdThreshold=None, **kwargs):
         """
         Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to QC parameters.
 
@@ -3101,6 +3129,13 @@ class TargetedDataset(Dataset):
             raise TypeError('quantificationTypes must be QuantificationType enums.')
         if not all(isinstance(item, CalibrationMethod) for item in calibrationMethods):
             raise TypeError('calibrationMethods must be CalibrationMethod enums.')
+        if rsdThreshold is None:
+            if 'rsdThreshold' in self.Attributes:
+                rsdThreshold = self.Attributes['rsdThreshold']
+            else:
+                rsdThreshold = None
+        if rsdThreshold is not None and not isinstance(rsdThreshold, (float, int)):
+            raise TypeError('rsdThreshold should either be a float or None')
 
         # Feature Exclusions
         if filterFeatures:
@@ -3110,6 +3145,10 @@ class TargetedDataset(Dataset):
             featureMask = numpy.logical_and(quantTypeMask, calibMethodMask).values
 
             self.featureMask = numpy.logical_and(featureMask, self.featureMask)
+            if rsdThreshold is not None:
+                self.featureMask &= self.rsdSP <= rsdThreshold
+
+            self.featureMetadata['Passing Selection'] = self.featureMask
 
         # Sample Exclusions
         if filterSamples:
@@ -3231,7 +3270,7 @@ class TargetedDataset(Dataset):
 
         # Map dilution series names to dilution level
         fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract('(?:.+_?)(SRD\d\d)(?:_?.*)', expand=False).replace(self.Attributes['dilutionMap'])
-
+        fileNameParts['Dilution'] = fileNameParts['Dilution'].astype(float)
         # Blank out NAs for neatness
         fileNameParts['reruns'].fillna('', inplace=True)
         fileNameParts['extraInjections'].fillna('', inplace=True)

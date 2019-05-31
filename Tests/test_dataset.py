@@ -241,7 +241,7 @@ class test_dataset_synthetic(unittest.TestCase):
 								
 
 		with self.subTest(msg='Default Parameters'):
-			expectedSampleMask = numpy.array([False, False, False, False, False,  True,  True,  True,  True, True,  True,  True,  True,  True,  True,  True, False, False], dtype=bool)
+			expectedSampleMask = numpy.array([True, True, True, True, True,  True,  True,  True,  True, True,  True,  True, True,  True,  True,  True, True, True], dtype=bool)
 
 			dataset.initialiseMasks()
 			dataset.updateMasks(withArtifactualFiltering=False, filterFeatures=False)
@@ -619,13 +619,13 @@ class test_dataset_synthetic(unittest.TestCase):
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
 			self.assertRaises(LookupError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
-		with self.subTest(msg='if self.sampleMetadata does not have a Sampling ID column'):
+		with self.subTest(msg='if self.sampleMetadata does not have a Sample ID column'):
 			badDataset = copy.deepcopy(testDataset)
-			badDataset.sampleMetadata.drop(['Sampling ID'], axis=1, inplace=True)
+			badDataset.sampleMetadata.drop(['Sample ID'], axis=1, inplace=True)
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
 			self.assertRaises(LookupError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
-		with self.subTest(msg='if self.sampleMetadata does not have a Sampling ID column'):
+		with self.subTest(msg='if self.sampleMetadata does not have a Exclusion Details column'):
 			badDataset = copy.deepcopy(testDataset)
 			badDataset.sampleMetadata.drop(['Exclusion Details'], axis=1, inplace=True)
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
@@ -886,35 +886,51 @@ class test_dataset_synthetic(unittest.TestCase):
 		randomFeatCols = [1] #numpy.random.randint(0, len(featureMetaCols), size=numpy.random.randint(int(len(featureMetaCols) / 2) + 1)).tolist()
 		randomSampCols = numpy.random.randint(0, len(sampleMetaCols), size=numpy.random.randint(int(len(sampleMetaCols) / 3) + 1)).tolist()
 		self.data.Attributes['featureMetadataNotExported'] = [x for i, x in enumerate(featureMetaCols) if i in randomFeatCols] + ['not an existing featureMeta column']
-		self.data.Attributes['sampleMetadataNotExported']  = [x for i, x in enumerate(sampleMetaCols) if i in randomSampCols]  + ['not an existing sampleMeta column']
+		self.data.Attributes['sampleMetadataNotExported'] = [x for i, x in enumerate(sampleMetaCols) if i in randomSampCols]  + ['not an existing sampleMeta column']
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			projectName = 'tempFile'
 			self.data.name = projectName
 
-			self.data.exportDataset(destinationPath=tmpdirname, saveFormat='CSV', withExclusions=False, filterMetadata=True)
+			self.data.exportDataset(destinationPath=tmpdirname, saveFormat='UnifiedCSV', withExclusions=False, filterMetadata=True)
 
 			# Load exported data back in, cast types back to str
-			filePath = os.path.join(tmpdirname, projectName + '_intensityData.csv')
-			intensityData = numpy.loadtxt(filePath, dtype=float, delimiter=',')
 
-			filePath = os.path.join(tmpdirname, projectName + '_featureMetadata.csv')
-			featureMetadata = pandas.read_csv(filePath)
-			featureMetadata.drop('Unnamed: 0', axis=1, inplace=True)
-			featureMetadata['Feature Name'] = featureMetadata['Feature Name'].astype(str)
+			filePath = os.path.join(tmpdirname, projectName + '_combinedData.csv')
+			savedData = pandas.read_csv(filePath)
 
-			filePath = os.path.join(tmpdirname, projectName + '_sampleMetadata.csv')
-			sampleMetadata = pandas.read_csv(filePath)
+			featureCols = self.data.featureMetadata.shape[1] - (len(self.data.Attributes['featureMetadataNotExported']) -1)
+			sampleCols = self.data.sampleMetadata.shape[1]+1 - (len(self.data.Attributes['sampleMetadataNotExported']) -1)
+
+			intensityData = savedData.iloc[featureCols:, sampleCols:].apply(pandas.to_numeric)
+
+			# Extract feature metadata
+			featureMetadata = savedData.iloc[:featureCols, sampleCols:].T
+			featureMetadata.columns = savedData.iloc[:featureCols, 0]
+			featureMetadata.reset_index(drop=True, inplace=True)
+			featureMetadata.columns.name = None
+
+			# Extract sample metadata
+			sampleMetadata = savedData.iloc[featureCols:, :sampleCols]
+			sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(int).astype(str)
 			sampleMetadata.drop('Unnamed: 0', axis=1, inplace=True)
+			sampleMetadata.reset_index(drop=True, inplace=True)
+
+			featureMetadata['Feature Name'] = featureMetadata['Feature Name'].astype(str)
 			sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
 
-		# Remove the same columns
-		self.data.featureMetadata.drop([x for i, x in enumerate(featureMetaCols) if i in randomFeatCols], axis=1, inplace=True)
-		self.data.sampleMetadata.drop( [x for i, x in enumerate(sampleMetaCols) if i in randomSampCols],  axis=1, inplace=True)
+		# Check we did not break the data we kept
+		numpy.testing.assert_array_almost_equal(self.data.intensityData, intensityData)
+		for column in featureMetadata.columns:
+			pandas.util.testing.assert_series_equal(self.data.featureMetadata[column], featureMetadata[column], check_dtype=False)
+		for column in sampleMetadata.columns:
+			pandas.util.testing.assert_series_equal(self.data.sampleMetadata[column], sampleMetadata[column], check_dtype=False)
 
-		numpy.testing.assert_equal(self.data.intensityData, intensityData)
-		pandas.util.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
-		pandas.util.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
+		# Check excluded columns are not in the new tables
+		for column in randomFeatCols:
+			self.assertFalse(column in featureMetadata.columns)
+		for column in randomSampCols:
+			self.assertFalse(column in sampleMetadata.columns)
 
 
 	def test_exportDataset_raises(self):
@@ -1199,18 +1215,23 @@ class test_dataset_loadsop(unittest.TestCase):
 
 		with self.subTest(msg='Checking null return for \'Generic\' SOP.'):
 			attributes = {'Log': self.data.Attributes['Log'],
-						'dpi': 300,
-						'figureFormat': 'png',
-						'figureSize': [11, 7],
-						'histBins': 100,
-						'noFiles': 10,
-						'quantiles': [25, 75],
-						'sampleMetadataNotExported': ["Exclusion Details"],
-						'featureMetadataNotExported': [],
-						"analyticalMeasurements":{},
-						"excludeFromPlotting":[],
-						"sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
-						}
+						  "methodName": "Unknown",
+						  'dpi': 300,
+						  'figureFormat': 'png',
+						  'figureSize': [11, 7],
+						  'histBins': 100,
+						  'noFiles': 10,
+						  'quantiles': [25, 75],
+						  'sampleMetadataNotExported': ["Exclusion Details"],
+						  'featureMetadataNotExported': [],
+						  "analyticalMeasurements":{},
+						  "excludeFromPlotting":[],
+						  "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m",
+												"ProceduralBlank": "c", "Other": "grey", "Study Sample": "b",
+												"Study Reference": "g", "Long-Term Reference": "r",
+												"Method Reference": "m", "Blank": "c",
+												"Unspecified SampleType or AssayRole": "grey"}
+						  }
 
 			self.assertEqual(self.data.Attributes, attributes)
 
@@ -1220,18 +1241,23 @@ class test_dataset_loadsop(unittest.TestCase):
 		data = nPYc.Dataset(figureFormat='svg', squids=True)
 
 		attributes = {'Log': data.Attributes['Log'],
-					'dpi': 300,
-					'figureFormat': 'svg',
-					'figureSize': [11, 7],
-					'histBins': 100,
-					'noFiles': 10,
-					'quantiles': [25, 75],
-					'squids': True,
-					'sampleMetadataNotExported': ["Exclusion Details"],
-					'featureMetadataNotExported': [],
-					"analyticalMeasurements":{},
-					"excludeFromPlotting":[],
-					"sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey"}
+					  'methodName': 'Unknown',
+					  'dpi': 300,
+					  'figureFormat': 'svg',
+					  'figureSize': [11, 7],
+					  'histBins': 100,
+					  'noFiles': 10,
+					  'quantiles': [25, 75],
+					  'squids': True,
+					  'sampleMetadataNotExported': ["Exclusion Details"],
+					  'featureMetadataNotExported': [],
+					  "analyticalMeasurements":{},
+					  "excludeFromPlotting":[],
+					  "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m",
+												"ProceduralBlank": "c", "Other": "grey", "Study Sample": "b",
+												"Study Reference": "g", "Long-Term Reference": "r",
+												"Method Reference": "m", "Blank": "c",
+												"Unspecified SampleType or AssayRole": "grey"}
 					}
 
 		self.assertEqual(data.Attributes, attributes)
@@ -1305,12 +1331,12 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
 									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
 									 'UT1_S1_s1', 'UT1_S2_s1', 'UT1_S3_s1', 'Not specified', 'UT1_S4_s2', 'UT1_S4_s3', 'UT1_S4_s4', 'UT1_S4_s5',
-									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sampling ID', dtype='str')
+									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sample ID', dtype='str')
 		samplingIDs = samplingIDs.astype(str)
 
 		data = copy.deepcopy(self.Data)
 		data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
-		pandas.util.testing.assert_series_equal(data.sampleMetadata['Sampling ID'], samplingIDs)
+		pandas.util.testing.assert_series_equal(data.sampleMetadata['Sample ID'], samplingIDs)
 
 
 	def test_dataset_load_npc_subjectinfo_columns(self):
@@ -1319,6 +1345,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 		data = copy.deepcopy(self.Data)
 		data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
+		data.addSampleInfo(descriptionFormat='NPC Subject Info', filePath=os.path.join('..','..','npc-standard-project','Project_Description','UnitTest1_metadata_PCDOC.014.xlsx'))
 		data.addSampleInfo(descriptionFormat='NPC Subject Info', filePath=os.path.join('..','..','npc-standard-project','Project_Description','UnitTest1_metadata_PCDOC.014.xlsx'))
 
 		for column in columns:
@@ -1342,7 +1369,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 										  True, True, True, True, True, True, True, False], dtype=bool)
 
 		expectedSampleMetadata = pandas.DataFrame(0, index=numpy.arange(115), columns=['Sample File Name', 'Sample Base Name', 'Batch', 'Correction Batch', 'Acquired Time', 'Run Order',
-																					   'Exclusion Details', 'Metadata Available', 'Sampling ID', 'AssayRole', 'SampleType', 'Dilution'])
+																					   'Exclusion Details', 'Metadata Available', 'Sample ID', 'AssayRole', 'SampleType', 'Dilution'])
 
 		expectedSampleMetadata['Sample File Name'] = ['UnitTest1_LPOS_ToF02_B1SRD01', 'UnitTest1_LPOS_ToF02_B1SRD02', 'UnitTest1_LPOS_ToF02_B1SRD03', 'UnitTest1_LPOS_ToF02_B1SRD04',
 												  'UnitTest1_LPOS_ToF02_B1SRD05', 'UnitTest1_LPOS_ToF02_B1SRD06', 'UnitTest1_LPOS_ToF02_B1SRD07', 'UnitTest1_LPOS_ToF02_B1SRD08',
@@ -1462,7 +1489,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 													   numpy.nan]
 
-		expectedSampleMetadata['Sampling ID'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+		expectedSampleMetadata['Sample ID'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 												 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 												 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 												 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
@@ -1632,6 +1659,33 @@ class test_dataset_addfeatureinfo(unittest.TestCase):
 
 		pandas.util.testing.assert_frame_equal(expectedFeatureMetadata, data.featureMetadata, check_dtype=False)
 
+
+class test_dataset_initialiseFromCSV(unittest.TestCase):
+
+	def test_initialiseFromCSV(self):
+
+		noSamp = numpy.random.randint(5, high=10, size=None)
+		noFeat = numpy.random.randint(500, high=1000, size=None)
+
+		dataset = generateTestDataset(noSamp, noFeat, dtype='Dataset')
+		dataset.name = 'Testing'
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+
+			dataset.exportDataset(destinationPath=tmpdirname, saveFormat='CSV', withExclusions=False)
+
+			pathName = os.path.join(tmpdirname, 'Testing_sampleMetadata.csv')
+
+			objectName, intensityData, featureMetadata, sampleMetadata = nPYc.Dataset._initialiseFromCSV(None, pathName)
+
+			numpy.testing.assert_array_equal(intensityData, dataset.intensityData)
+
+			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
+				pandas.util.testing.assert_almost_equal(sampleMetadata[column], dataset.sampleMetadata[column])
+			for column in featureMetadata.columns:
+				pandas.util.testing.assert_series_equal(featureMetadata[column], dataset.featureMetadata[column])
+
+			self.assertEqual(objectName, dataset.name)
 
 
 if __name__ == '__main__':
