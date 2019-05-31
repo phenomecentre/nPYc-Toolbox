@@ -60,7 +60,9 @@ Required files in nPYc-toolbox-tutorials:
 Preprocessing and Quality Control of NMR Targeted Data with the nPYc-Toolbox
 ============================================================================
 
-*GONCALO!!!!!!!!*
+This tutorial demonstrates how to use the NMR targeted data processing modules of the nPYc-Toolbox to 
+import and perform some basic quality control of outputs from the Bruker IVDr targeted quantification methods and generate a final high
+quality dataset ready for data modeling.
 
 Required files in nPYc-toolbox-tutorials:
 
