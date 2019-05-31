@@ -18,7 +18,6 @@ Provides:
  - PCA of datasets
  - Visualisation of datasets
 
-
 Exports:
 
  - Basic tabular csv
