@@ -14,7 +14,7 @@ from ..utilities import rsd
 from ._plotVariableScatter import plotVariableScatter
 
 
-def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=None, featName=False, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=True, sortOrder=True, savePath=None, color=None, featName=False, hLines=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotRSDs(dataset, ratio=False, savePath=None, color=None \*\*kwargs)
 
@@ -26,16 +26,25 @@ def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=No
 
 	:param Dataset dataset: Dataset object to plot, the object must have greater that one 'Study Sample' and 'Study-Reference Sample' defined
 	:param bool ratio: If ``True`` plot the ratio of analytical variance to biological variance instead of raw values
+	:param str featureName: featureMetadata column name by which to label features
 	:param bool logx: If ``True`` plot RSDs on a log10 scaled axis
 	:param xlim: Tuple of (min, max) RSD values to plot
 	:type xlim: None or tuple(float, float)
+	:param hLines: None or list of y positions at which to plot an horizontal line. Features are positioned from 1 to nFeat
+	:type hLines: None or list
 	:param savePath: If ``None`` plot interactively, otherwise save the figure to the path specified
 	:type savePath: None or str
 	:param color: Allows the default colour pallet to be overridden
 	:type color: None or seaborn.palettes._ColorPalette
 	:param bool featName: If ``True`` y-axis label is the feature Name, if ``False`` features are numbered.
 	"""
-	rsdTable = _plotRSDsHelper(dataset, ratio=ratio)
+	rsdTable = _plotRSDsHelper(dataset, featureName=featureName, ratio=ratio, withExclusions=withExclusions, sortOrder=sortOrder)
+    
+	# if RSD not able to be calculated for some features - rsdTable size will be less than dataset.featureMetadata
+	if hLines is not None:
+		if  dataset.featureMetadata.shape[0] != rsdTable.shape[0]:
+			temp = [x for x in rsdTable['Feature Name'].values.tolist() if x in dataset.featureMetadata[featureName][dataset.featureMetadata['Passing Selection'] == False].values.tolist()]
+			hLines = [len(temp)]
 
 	# Plot
 	if xlim:
@@ -57,13 +66,13 @@ def plotRSDs(dataset, ratio=False, logx=True, xlim=None, savePath=None, color=No
 	else:
 		ylab = 'Feature Number'
 
-	plotVariableScatter(rsdTable, logX=logx, xLim=xLim, xLabel=xlab, yLabel=ylab, sampletypeColor=True, hLines=None, vLines=None, savePath=savePath, figureFormat=figureFormat, dpi=dpi, figureSize=figureSize)
+	plotVariableScatter(rsdTable, logX=logx, xLim=xLim, xLabel=xlab, yLabel=ylab, sampletypeColor=True, hLines=hLines, vLines=None, savePath=savePath, figureFormat=figureFormat, dpi=dpi, figureSize=figureSize)
 
 
-def plotRSDsInteractive(dataset, ratio=False, logx=True):
+def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=True):
 	"""
 	Plotly-based interactive version of :py:func:`plotRSDs`
-	
+
 	Visualise analytical *versus* biological variance.
 
 	Plot RSDs calculated in study-reference samples (analytical variance), versus those calculated in study samples (biological variance). RSDs can be visualised either in absolute terms, or as a ratio to analytical variation (*ratio=*\ ``True``).
@@ -71,26 +80,28 @@ def plotRSDsInteractive(dataset, ratio=False, logx=True):
 	:py:func:`plotRSDsInteractive` requires that the dataset have at least two samples with the :py:attr:`~nPYc.enumerations.AssayRole.PrecisionReference` :term:`assay role`, if present, RSDs calculated on independent sets of :py:attr:`~nPYc.enumerations.AssayRole.PrecisionReference` samples will also be plotted.
 
 	:param Dataset dataset: Dataset object to plot, the object must have greater that one 'Study Sample' and 'Study-Reference Sample' defined
+	:param str featureName: featureMetadata column name by which to label features
 	:param bool ratio: If ``True`` plot the ratio of analytical variance to biological variance instead of raw values
 	:param bool logx: If ``True`` plot RSDs on a log10 scaled axis
 
 	"""
-	rsdTable = _plotRSDsHelper(dataset, ratio=ratio)
+	rsdTable = _plotRSDsHelper(dataset, featureName=featureName, ratio=ratio)
 
 	reversedIndex =  numpy.arange(len(rsdTable)-1,-1, -1)
 	data = []
-	studySamples = go.Scatter(
-		x = rsdTable[SampleType.StudySample].values,
-		y = reversedIndex,
-		mode = 'markers',
-		text = rsdTable['Feature Name'],
-		name = str(SampleType.StudySample),
-		marker = dict(
-			color = 'rgba(89, 117, 164, .8)',
-		),
-		hoverinfo = 'x+text',
-	)
-	data.append(studySamples)
+	if SampleType.StudySample in rsdTable.columns:
+		studySamples = go.Scatter(
+			x = rsdTable[SampleType.StudySample].values,
+			y = reversedIndex,
+			mode = 'markers',
+			text = rsdTable['Feature Name'],
+			name = 'Study Sample',
+			marker = dict(
+				color = 'rgba(89, 117, 164, .8)',
+			),
+			hoverinfo = 'x+text',
+		)
+		data.append(studySamples)
 
 	if SampleType.ExternalReference in rsdTable.columns:
 		externalRef = go.Scatter(
@@ -98,7 +109,7 @@ def plotRSDsInteractive(dataset, ratio=False, logx=True):
 			y = reversedIndex,
 			mode = 'markers',
 			text = rsdTable['Feature Name'],
-			name = str(SampleType.ExternalReference),
+			name = 'Long-Term Reference',
 			marker = dict(
 				color = 'rgba(181, 93, 96, .8)',
 			),
@@ -106,18 +117,20 @@ def plotRSDsInteractive(dataset, ratio=False, logx=True):
 		)
 		data.append(externalRef)
 
-	studyPool = go.Scatter(
-		x = rsdTable[SampleType.StudyPool].values,
-		y = reversedIndex,
-		mode = 'markers',
-		text = rsdTable['Feature Name'],
-		name = str(SampleType.StudyPool),
-		 marker = dict(
-			color = 'rgba(95, 158, 110, .8)',
-		),
-		hoverinfo = 'x+text',
-	)
-	data.append(studyPool)
+	if SampleType.StudyPool in rsdTable.columns:
+		studyPool = go.Scatter(
+			x = rsdTable[SampleType.StudyPool].values,
+			y = reversedIndex,
+			mode = 'markers',
+			text = rsdTable['Feature Name'],
+			name = 'Study Reference',
+			 marker = dict(
+				color = 'rgba(95, 158, 110, .8)',
+			),
+			hoverinfo = 'x+text',
+		)
+		data.append(studyPool)
+
 	if logx:
 		xaxis = dict(
 					type='log',
@@ -145,7 +158,8 @@ def plotRSDsInteractive(dataset, ratio=False, logx=True):
 	return figure
 
 
-def _plotRSDsHelper(dataset, ratio=False):
+def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder=True):
+	
 	if not dataset.VariableType == VariableType.Discrete:
 		raise ValueError('Only datasets with discreetly sampled variables are supported.')
 
@@ -159,12 +173,18 @@ def _plotRSDsHelper(dataset, ratio=False):
 	precRefMask = numpy.logical_and(precRefMask, dataset.sampleMask)
 	sTypes = list(set(dataset.sampleMetadata.loc[precRefMask, 'SampleType'].values))
 
-	rsdVal['Feature Name'] = dataset.featureMetadata.loc[dataset.featureMask, 'Feature Name'].values
-
-	rsdVal[SampleType.StudyPool] = dataset.rsdSP[dataset.featureMask]
-	ssMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & dataset.sampleMask
-	rsdList = rsd(dataset.intensityData[ssMask, :])
-	rsdVal[SampleType.StudySample] = rsdList[dataset.featureMask]
+	if withExclusions:   
+		rsdVal['Feature Name'] = dataset.featureMetadata.loc[dataset.featureMask, featureName].values
+		rsdVal[SampleType.StudyPool] = dataset.rsdSP[dataset.featureMask]
+		ssMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & dataset.sampleMask
+		rsdList = rsd(dataset.intensityData[ssMask, :])
+		rsdVal[SampleType.StudySample] = rsdList[dataset.featureMask]
+	else:		
+		rsdVal['Feature Name'] = dataset.featureMetadata.loc[:, featureName].values
+		rsdVal[SampleType.StudyPool] = dataset.rsdSP
+		ssMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & dataset.sampleMask
+		rsdList = rsd(dataset.intensityData[ssMask, :])
+		rsdVal[SampleType.StudySample] = rsdList		
 
 	# Only keep features with finite values for SP and SS
 	finiteMask = (rsdVal[SampleType.StudyPool] < numpy.finfo(numpy.float64).max)
@@ -179,23 +199,27 @@ def _plotRSDsHelper(dataset, ratio=False):
 			# minimum 3 points needed
 			if sum(sTypeMask) >= 3:
 				rsdList = rsd(dataset.intensityData[sTypeMask, :])
-				rsdVal[sType] = rsdList[dataset.featureMask]
+				if withExclusions:
+					rsdVal[sType] = rsdList[dataset.featureMask]
+				else:
+					rsdVal[sType] = rsdList
 				finiteMask = finiteMask & (rsdVal[sType] < numpy.finfo(numpy.float64).max)
 
 	## apply finiteMask
 	for sType in rsdVal.keys():
 		rsdVal[sType] = rsdVal[sType][finiteMask]
 
-	# reorder from largest to smallest RSD in Study Pool
-	sortIndex = reversed(numpy.argsort(rsdVal[SampleType.StudyPool]))
-
 	if ratio:
 		rsdSP = copy.deepcopy(rsdVal[SampleType.StudyPool])
 		for sType in sTypes:
 			rsdVal[sType] = numpy.divide(rsdVal[sType], rsdSP)
 
-	# Prepare data for plotting
-	rsdTable = pandas.DataFrame(rsdVal).reindex(sortIndex)
-	rsdTable.reset_index(drop=True, inplace=True)
+	# reorder from largest to smallest RSD in Study Pool
+	if sortOrder:
+		sortIndex = reversed(numpy.argsort(rsdVal[SampleType.StudyPool]))
+		rsdTable = pandas.DataFrame(rsdVal).reindex(sortIndex)
+		rsdTable.reset_index(drop=True, inplace=True)
+	else:
+		rsdTable = pandas.DataFrame(rsdVal)
 
 	return rsdTable

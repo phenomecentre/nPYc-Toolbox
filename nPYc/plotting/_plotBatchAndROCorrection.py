@@ -107,40 +107,60 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 
 
 		# Plot feature intensity for different sample types
-		ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[SSmask, 'Acquired Time']], msData.intensityData[SSmask, feature], c=sTypeColourDict[SampleType.StudySample], fmt='o', ms=4, alpha=0.5, label='Study Sample')
-		ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[SPmask, 'Acquired Time']], msData.intensityData[SPmask, feature], c=sTypeColourDict[SampleType.StudyPool], fmt='o', ms=4, alpha=0.9, label='Study Pool')
-		ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[ERmask, 'Acquired Time']], msData.intensityData[ERmask, feature], c=sTypeColourDict[SampleType.ExternalReference], fmt='o', ms=4, alpha=0.9, label='External Reference')
-		#ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[SSmask|SPmask|ERmask, 'Acquired Time']], msDatacorrected.intensityData[SSmask|SPmask|ERmask, feature], 'b^', alpha=0)
-		ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[LRmask, 'Acquired Time']], msData.intensityData[LRmask, feature], c=sTypeColourDict[SampleType.MethodReference], fmt='s', ms=4, alpha=0.9, label='Linearity Reference')
 
-		# Plot arrows (base to point = before to after correction)
-		SS = numpy.where(SSmask==True)
-		temp = SS[0]
-		for sample in temp:
-			ax.annotate('', xy=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-					msDatacorrected.intensityData[sample, feature]),
-					xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-					msData.intensityData[sample, feature]),
-					arrowprops=dict(edgecolor=sTypeColourDict[SampleType.StudySample], facecolor=sTypeColourDict[SampleType.StudySample], alpha=0.5, arrowstyle = '-|>', shrinkA=0, shrinkB=0))
+		# SS
+		if sum(SSmask) > 0:
+
+			# Plot data
+			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[SSmask, 'Acquired Time']], msData.intensityData[SSmask, feature], c=sTypeColourDict[SampleType.StudySample], fmt='o', ms=4, alpha=0.5, label='Study Sample')
+
+			# Plot arrows (base to point = before to after correction)
+			SS = numpy.where(SSmask==True)
+			temp = SS[0]
+			for sample in temp:
+				ax.annotate('', xy=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
+						msDatacorrected.intensityData[sample, feature]),
+						xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
+						msData.intensityData[sample, feature]),
+						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.StudySample], facecolor=sTypeColourDict[SampleType.StudySample], alpha=0.5, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
+						clip_on=True)
+
+		# SR
+		if sum(SPmask) > 0:
+
+			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[SPmask, 'Acquired Time']], msData.intensityData[SPmask, feature], c=sTypeColourDict[SampleType.StudyPool], fmt='o', ms=4, alpha=0.9, label='Study Reference')
+
+			SP = numpy.where(SPmask==True)
+			temp = SP[0]
+			for sample in temp:
+				ax.annotate('', xy=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
+						msDatacorrected.intensityData[sample, feature]),
+						xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
+						msData.intensityData[sample, feature]),
+						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.StudyPool], facecolor=sTypeColourDict[SampleType.StudyPool], alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
+						clip_on=True)
+
+		# LTR
+		if sum(ERmask) > 0:
+
+			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[ERmask, 'Acquired Time']], msData.intensityData[ERmask, feature], c=sTypeColourDict[SampleType.ExternalReference], fmt='o', ms=4, alpha=0.9, label='Long-Term Reference')
+
+			ER = numpy.where(ERmask==True)
+			temp = ER[0]
+			for sample in temp:
+				ax.annotate('', xy=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
+						msDatacorrected.intensityData[sample, feature]),
+						xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
+						msData.intensityData[sample, feature]),
+						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.ExternalReference], facecolor=sTypeColourDict[SampleType.ExternalReference], alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
+						clip_on=True)
 
 
-		SP = numpy.where(SPmask==True)
-		temp = SP[0]
-		for sample in temp:
-			ax.annotate('', xy=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-					msDatacorrected.intensityData[sample, feature]),
-					xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-					msData.intensityData[sample, feature]),
-					arrowprops=dict(edgecolor=sTypeColourDict[SampleType.StudyPool], facecolor=sTypeColourDict[SampleType.StudyPool], alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0))
+		# SRD
+		if sum(LRmask) > 0:
 
-		ER = numpy.where(ERmask==True)
-		temp = ER[0]
-		for sample in temp:
-			ax.annotate('', xy=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-					msDatacorrected.intensityData[sample, feature]),
-					xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-					msData.intensityData[sample, feature]),
-					arrowprops=dict(edgecolor=sTypeColourDict[SampleType.ExternalReference], facecolor=sTypeColourDict[SampleType.ExternalReference], alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0))
+			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[LRmask, 'Acquired Time']], msData.intensityData[LRmask, feature], c=sTypeColourDict[SampleType.MethodReference], fmt='s', ms=4, alpha=0.9, label='Serial Dilution')
+
 
 		# Plot fit coloured by batch
 		colIX = 1
@@ -187,14 +207,14 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 				sampleMasks.append(('SS', SSmask))
 				palette['SS'] = sTypeColourDict[SampleType.StudySample]
 			if sum(SPmask)>0:
-				sampleMasks.append(('SP', SPmask))
-				palette['SP'] = sTypeColourDict[SampleType.StudyPool]
+				sampleMasks.append(('SR', SPmask))
+				palette['SR'] = sTypeColourDict[SampleType.StudyPool]
 			if sum(ERmask)>0:
-				sampleMasks.append(('ER', ERmask))
-				palette['ER'] = sTypeColourDict[SampleType.ExternalReference]
+				sampleMasks.append(('LTR', ERmask))
+				palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
 			if sum(LRmask)>0:
-				sampleMasks.append(('LR', LRmask))
-				palette['LR'] = sTypeColourDict[SampleType.MethodReference]
+				sampleMasks.append(('SRD', LRmask))
+				palette['SRD'] = sTypeColourDict[SampleType.MethodReference]
 
 			limits = ax.get_ylim()
 

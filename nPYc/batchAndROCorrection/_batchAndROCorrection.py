@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 from ..objects._msDataset import MSDataset
 from ..enumerations import AssayRole, SampleType
 
+
 def correctMSdataset(data, window=11, method='LOWESS', align='median', parallelise=True, excludeFailures=True):
 	"""
 	Conduct run-order correction and batch alignment on the :py:class:`~nPYc.objects.MSDataset` instance *data*, returning a new instance with corrected intensity values.
@@ -52,7 +53,8 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 		raise TypeError("excludeFailures must be a boolean")
 
 	with warnings.catch_warnings():
-		warnings.simplefilter('once')
+		warnings.simplefilter('ignore', category=RuntimeWarning)
+
 		correctedP = _batchCorrectionHead(data.intensityData,
 									 data.sampleMetadata['Run Order'].values,
 									 (data.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
@@ -67,7 +69,7 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 	correctedData.fit = correctedP[1]
 	correctedData.Attributes['Log'].append([datetime.now(),'Batch and run order correction applied'])
 
-	return (correctedData)
+	return correctedData
 
 
 def _batchCorrectionHead(data, runOrder, referenceSamples, batchList, window=11, method='LOWESS', align='median', parallelise=True, savePlots=False):
@@ -217,10 +219,11 @@ def _batchCorrection(data, runOrder, QCsamples, batchList, featureIndex, paramet
 				if parameters['method'] == None:
 					# Skip RO correction if method is none
 					pass
-				else:	
+				else:
+
 					(feature[batchMask], fit[batchMask]) = runOrderCompensation(feature[batchMask],
 																			runOrder[batchMask],
-																			QCsamples[batchMask], 
+																			QCsamples[batchMask],
 																			parameters)
 
 				# Correct batch average to overall feature average

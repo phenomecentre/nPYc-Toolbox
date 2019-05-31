@@ -1,10 +1,11 @@
 {
-	"methodName":"Bruker BI-LISA Data",
+	"methodName":"NMR Bruker - BI-LISA",
 	"fileNamePattern":".*?results\\.xml$",
 	"externalID":[],
+	"rsdThreshold": 30,
 	"sampleMetadataNotExported":["Acqu Date", "Acqu Time", "Sample Type"],
 	"featureMetadataNotExported":["comment"],
 	"analyticalMeasurements":{"Study" : "categorical", "Instrument" : "categorical", "Re-Run" : "categorical", "Suplemental Injections" : "categorical", "Matrix" : "categorical", "Well" : "categorical", "Plate" : "categorical", "Batch" : "categorical", "Dilution" : "continuous", "Measurement Date" : "date", "Measurement Time" : "date", "Acquired Time" : "date", "Run Order" : "continuous", "Correction Batch" : "categorical", "Assay data name": "categorical", "Assay data location": "categorical", "Sample position": "categorical", "Sample batch": "categorical", "Acquisition batch": "categorical", "Plot Sample Type": "categorical", "AssayRole": "categorical", "SampleType": "categorical", "Exclusion Details": "categorical", "Skipped": "categorical", "Assay protocol": "categorical"},
-	"excludeFromPlotting":["Sample File Name", "Sample Base Name", "Batch Termini", "Study Reference", "Long-Term Reference", "Method Reference", "Dilution Series", "Skipped", "Study Sample", "File Path", "Exclusion Details", "Assay protocol", "Status", "Measurement Date", "Measurement Time", "Data Present", "LIMS Present", "LIMS Marked Missing", "Assay data name", "Assay data location", "AssayRole", "SampleType", "Sampling ID", "Plot Sample Type", "SubjectInfoData", "Detector Unit", "TargetLynx Sample ID", "MassLynx Row ID"],
+	"excludeFromPlotting":["Sample File Name", "Sample Base Name", "Batch Termini", "Study Reference", "Long-Term Reference", "Method Reference", "Dilution Series", "Skipped", "Study Sample", "File Path", "Exclusion Details", "Assay protocol", "Status", "Measurement Date", "Measurement Time", "Data Present", "LIMS Present", "LIMS Marked Missing", "Assay data name", "Assay data location", "AssayRole", "SampleType", "Sample ID", "Plot Sample Type", "SubjectInfoData", "Detector Unit", "TargetLynx Sample ID", "MassLynx Row ID"],
 	"additionalQuantParamColumns":["LOD", "Lower Reference Percentile", "Lower Reference Value", "Upper Reference Percentile", "Upper Reference Value"]
 }

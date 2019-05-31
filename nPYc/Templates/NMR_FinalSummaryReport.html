@@ -1,7 +1,7 @@
 {% extends "base_QC.html" %}
 
 {% import 'pcaReport.html' as pca %}
-{% import 'sampleReportChunk.html' as sampleReport %}
+<!-->{% import 'sampleReportChunk.html' as sampleReport %}-->
 
 {% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
@@ -12,98 +12,41 @@
 
 <div class='content'>
 	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
 	<p></p>
 </div>
 
-<!--Summary of samples acquired________________________________________________________________________________________________________________-->
+<!--Sample Details________________________________________________________________________________________________________________-->
 <h2>Sample Summary</h2>
-{% if 'SampleSummaryTable' in item %}
-	<h3>Sample Summary Table</h3>
-	{{ item['SampleSummaryTable']['Acquired'].to_html() }}
-{% endif %}
 
-
-<!--Sample Acquisition Structure_______________________________________________________________________________________________________-->
-<h2>Sample Acquisition Structure</h2>
+<!--Summary of samples in final dataset-->
 <div class='content'>
-	<p>Samples acquired between {{ item['toA_from'] }} and {{ item['toA_to'] }}.</p>
-	<p></p>
-</div>
-<div class='content'>
-	<p>Samples referenced to: {{ attributes['calibrateTo'] }} ppm, and aligned and interpolated onto a common scale of {{ attributes['variableSize'] }} points</p>
+	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
+	{{ item.sampleSummary['Acquired'].to_html() }}
+	<p>*Details of any missing/excluded study samples given at the end of the report</p>
 	<p></p>
 </div>
 
+<!--Spectral Data Summary_________________________________________________________________________________________________________-->
+<h2>Spectral Data Summary</h2>
 
-
-<!--info on whats been done______________________________________________________________________________________________________________-->
-<h2>Data Structure Summary</h2>
-<p>Data processed with the following parameters:</p>
-<div class='table1'>
-	<table>
-	 <tr>
-		<th></th>
-		<th>Applied</th>
-	</tr>
-	{% if 'baselineCheckRegion' in attributes %}
-	<tr>
-		<td>Baseline checked</td>
-		<td>Yes</td>
-	</tr>
-	<tr>
-		<td>Baseline check regions</td>
-		<td>{{ attributes['baselineCheckRegion'] }}</td>
-	</tr>
-	{% endif %}
-	{% if 'waterPeakCheckRegion' in attributes %}
-	<tr>
-		<td>Water resonance checked</td>
-		<td>Yes</td>
-	</tr>
-	<tr>
-		<td>Water Resonance check regions</td>
-		<td>{{ attributes['waterPeakCheckRegion'] }}</td>
-	</tr>
-	{% endif %}
-	{% if 'PWFailThreshold' in attributes %}
-	<tr>
-		<td>Samples with excesive line width removed</td>
-		<td>Yes</td>
-	</tr>
-	<tr>
-		<td>Line width threshold</td>
-		<td>{{ attributes['PWFailThreshold'] }}</td>
-	</tr>
-	<tr>
-		<td>Peak used for line width calculation</td>
-		<td>{{ attributes['LWpeakRange'] }}</td>
-	</tr>
-	<tr>
-		<td>Multiplicity of line width peak</td>
-		<td>{{ attributes['LWpeakMultiplicity'] }}</td>
-	</tr>
-	{% endif %}
-	<tr>
-		<td>Spectral regions automatically removed</td>
-		<td>{{ attributes['exclusionRegions'] }}</td>
-	</tr>
-	</table>
+<div class='content'>
+	<p class="caption"><span class="heading">Table&nbsp;2.</span> Data processed with the following criteria:</p>
+	{{ item['DataParametersTable'].to_html() }}
+	<p>Samples acquired between {{ item['start'] }} and {{ item['end'] }}.</p>
+	<p></p>
 </div>
-<!--BL *& PW plots______________________________________________________________________________________________________________-->
 
-<!--Figure 1: peak width box-->
+<!--Figure 1: Line width boxplot-->
 <div class='figure1'>
-	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Peak Width</p>
-	<img src="{{ item['peakWidthBoxplot'] }}" alt="Peak Width plot.">
-</div>
-<div class='figure2'>
-	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Baseline low and high</p>
-	<img src="{{ item['finalFeatureBLWPplots1']}}" alt="Baseline plot.">
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Boxplot of line width distributions (by sample type).</p>
+	<img src="{{ item['linewidthBoxplot'] }}" alt="Peak Width plot.">
 </div>
 
+<!--Figure 2: Distribution in intensity of spectral data around the removed water peak region.-->
 <div class='figure3'>
-	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Water peak low and high</p>
-	<img src="{{ item['finalFeatureBLWPplots3']}}" alt="Water peak plot.">
+	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Distribution in intensity of spectral data around the removed water peak region.</p>
+	<img src="{{ item['spectraWaterPeakRegion']}}" alt="Distribution in intensity of spectral data around the removed water peak region.">
 </div>
 
 <!--Multivariate -->
@@ -111,9 +54,11 @@
 	{{ pca.basicPCAReport(pcaPlots) }}
 {% endif %}
 
-<!--Samples -->
-{% if sampleSummary %}
-	{{ sampleReport.sampleReport(sampleSummary) }}
+<!--Details of any missing/excluded samples-->
+{% if 'StudySamples Exclusion Details' in item.sampleSummary %}
+	<h2>Missing/Excluded Study Samples</h2>
+	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
+	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
 {% endif %}
 
 {% endblock %}

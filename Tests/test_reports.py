@@ -13,7 +13,7 @@ import warnings
 
 sys.path.append("..")
 import nPYc
-from nPYc.enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod
+from nPYc.enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod, AnalyticalPlatform
 from nPYc.reports._generateReportTargeted import _postMergeLOQDataset, _prePostMergeLOQSummaryTable, _getAccuracyPrecisionTable
 from pyChemometrics import ChemometricsPCA
 from datetime import datetime, timedelta
@@ -91,20 +91,20 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		# Acquired - Totals
 		assert sampleSummary['Acquired'].loc['All', 'Total'] == 115
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Total'] == 8
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Total'] == 11
-		assert sampleSummary['Acquired'].loc['External Reference', 'Total'] == 1
+		assert sampleSummary['Acquired'].loc['Study Reference', 'Total'] == 11
+		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Total'] == 1
 		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Total'] == 92
-		assert sampleSummary['Acquired'].loc['Blank Sample', 'Total'] == 2
-		assert sampleSummary['Acquired'].loc['Unspecified Sample Type or Assay Role', 'Total'] == 1
+		assert sampleSummary['Acquired'].loc['Blank', 'Total'] == 2
+		assert sampleSummary['Acquired'].loc['Unspecified SampleType or AssayRole', 'Total'] == 1
 
 		# Acquired - Marked for exclusion
 		assert sampleSummary['Acquired'].loc['All', 'Marked for Exclusion'] == 1
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Marked for Exclusion'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['External Reference', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Study Reference', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Blank Sample', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Unspecified Sample Type or Assay Role', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Blank', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Unspecified SampleType or AssayRole', 'Marked for Exclusion'] == 0
 
 		# Check details tables
 		assert sampleSummary['MarkedToExclude Details'].shape == (1, 2)
@@ -126,26 +126,26 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		# Acquired - Totals
 		assert sampleSummary['Acquired'].loc['All', 'Total'] == 113
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Total'] == 7
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Total'] == 11
-		assert sampleSummary['Acquired'].loc['External Reference', 'Total'] == 1
+		assert sampleSummary['Acquired'].loc['Study Reference', 'Total'] == 11
+		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Total'] == 1
 		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Total'] == 92
-		assert sampleSummary['Acquired'].loc['Blank Sample', 'Total'] == 2
-		assert 'Unspecified Sample Type or Assay Role' not in sampleSummary['Acquired'].index
+		assert sampleSummary['Acquired'].loc['Blank', 'Total'] == 2
+		assert 'Unspecified SampleType or AssayRole' not in sampleSummary['Acquired'].index
 
 		# Acquired - Marked for exclusion
 		assert sampleSummary['Acquired'].loc['All', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['External Reference', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Study Reference', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Blank Sample', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Blank', 'Marked for Exclusion'] == 0
 		# Acquired - Already Excluded
 		assert sampleSummary['Acquired'].loc['All', 'Already Excluded'] == 1
 		assert sampleSummary['Acquired'].loc['Study Sample', 'Already Excluded'] == 1
-		assert sampleSummary['Acquired'].loc['Study Pool', 'Already Excluded'] == 0
-		assert sampleSummary['Acquired'].loc['External Reference', 'Already Excluded'] == 0
+		assert sampleSummary['Acquired'].loc['Study Reference', 'Already Excluded'] == 0
+		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Already Excluded'] == 0
 		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Already Excluded'] == 0
-		assert sampleSummary['Acquired'].loc['Blank Sample', 'Already Excluded'] == 0
+		assert sampleSummary['Acquired'].loc['Blank', 'Already Excluded'] == 0
 
 class test_reports_nmr_generatereport(unittest.TestCase):
 
@@ -186,22 +186,18 @@ class test_reports_nmr_generatereport(unittest.TestCase):
 			self.dataset.name = 'TestData'
 			self.dataset.sampleMetadata['Sample Base Name'] = self.dataset.sampleMetadata['Sample File Name']
 			self.dataset.sampleMetadata['BaselineFail'] = False
-			self.dataset.sampleMetadata['WaterPeakFail'] = False
+			self.dataset.sampleMetadata['SolventPeakFail'] = False
 			self.dataset.sampleMetadata['Metadata Available'] = True
 			nPYc.reports.generateReport(self.dataset, 'Final Report', destinationPath=tmpdirname)
 
 			expectedPath = os.path.join(tmpdirname, 'TestData_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_finalFeatureBLWPplots1.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_linewidthBoxplot.png')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_finalFeatureBLWPplots3.png')
+			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_spectraSolventPeakRegion.png')
 			self.assertTrue(os.path.exists(expectedPath))
-
-			expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', 'TestData_peakWidthBoxplot.png')
-			self.assertTrue(os.path.exists(expectedPath))
-
 
 	def test_report_nmr_raises(self):
 
@@ -415,10 +411,11 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 																			   SampleType.StudySample],
 																'Dilution': [numpy.nan, numpy.nan, numpy.nan],
 																'Correction Batch': [numpy.nan, numpy.nan, numpy.nan],
-																'Subject ID': ['', '', ''], 'Sampling ID': ['', '', ''],
+																'Subject ID': ['', '', ''], 'Sample ID': ['', '', ''],
 																'Sample Base Name': ['', '', ''],
-																'Exclusion Details': ['', '', '']})
-		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].astype(datetime)
+																'Exclusion Details': ['', '', ''],
+																'Metadata Available': [True, True, True]})
+		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 		self.targetedDataset.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2'],
 																 'TargetLynx Feature ID': [1, 2],
 																 'calibrationMethod': [
@@ -507,8 +504,9 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		self.tDataAccPrec.sampleMetadata['Dilution'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan]
 		self.tDataAccPrec.sampleMetadata['Correction Batch'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan]
 		self.tDataAccPrec.sampleMetadata['Subject ID'] = ['', '', '', '', '', '', '', '']
-		self.tDataAccPrec.sampleMetadata['Sampling ID'] = ['', '', '', '', '', '', '', '']
+		self.tDataAccPrec.sampleMetadata['Sample ID'] = ['', '', '', '', '', '', '', '']
 		self.tDataAccPrec.sampleMetadata['Sample Base Name'] = ['', '', '', '', '', '', '', '']
+		self.tDataAccPrec.sampleMetadata['Metadata Available'] = True
 		self.tDataAccPrec.sampleMetadata['Exclusion Details'] = ['', '', '', '', '', '', '', '']
 		self.tDataAccPrec.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2','Feature3']})
 		self.tDataAccPrec.featureMetadata['calibrationMethod'] = [CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS]
@@ -555,7 +553,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		rowIdx = pandas.MultiIndex.from_tuples(tuplesRow, names=['Feature', 'Sample Type'])
 		self.resAccPre.index = rowIdx
 		self.resAccPre.fillna(value='', inplace=True)
-
+		self.tDataAccPrec.AnalyticalPlatform = AnalyticalPlatform.MS
 
 	def test_report_postMergeLOQDataset(self):
 		# Expected
@@ -641,7 +639,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_featureSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['unittest_AcquisitionStructure.png', 'unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png', 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
+			testFiles = ['unittest_FeatureAccuracy-A.png', 'unittest_FeatureAccuracy-B.png', 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png', 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png', 'unittest_FeaturePrecision-A.png', 'unittest_FeaturePrecision-B.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', testFile)
@@ -675,7 +673,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
-			nPYc.reports.multivariateReport.multivariateQCreport(inputDataset, pcaModel=pcaModel, reportType='analytical', withExclusions=True, destinationPath=tmpdirPCA)
+			nPYc.reports.multivariateReport(inputDataset, pcaModel=pcaModel, reportType='analytical', withExclusions=True, destinationPath=tmpdirPCA)
 			inputDataset.sampleMetadata['Metadata Available'] = True
 			with warnings.catch_warnings():
 				warnings.simplefilter('ignore', UserWarning)
@@ -685,11 +683,10 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['unittest_AcquisitionStructure.png',
-						 'unittest_FeatureAccuracy-A.png',
+			testFiles = ['unittest_FeatureAccuracy-A.png',
 						 'unittest_FeatureAccuracy-B.png',
-						 'unittest_FeatureConcentrationDistribution-A_features_0_to_1.png',
-						 'unittest_FeatureConcentrationDistribution-B_features_0_to_2.png',
+						 'unittest_FeatureConcentrationDistribution_Quantified and validated with own labeled analogue_featureDistribution_0.png',
+						 'unittest_FeatureConcentrationDistribution_Quantified and validated with alternative labeled analogue_featureDistribution_0.png',
 						 'unittest_FeaturePrecision-A.png',
 						 'unittest_FeaturePrecision-B.png']
 
@@ -881,7 +878,7 @@ class test_reports_multivariate(unittest.TestCase):
 
 			# Report generation
 			with self.subTest(msg='Report generation'):
-				nPYc.reports.multivariateQCreport(self.dataset, pcaModel=pcaModel, reportType='all', destinationPath=tmpdirname)
+				nPYc.reports.multivariateReport(self.dataset, pcaModel=pcaModel, reportType='all', destinationPath=tmpdirname)
 
 				expectedPath = os.path.join(tmpdirname, 'Dataset_report_multivariateAll.html')
 				self.assertTrue(os.path.exists(expectedPath))
@@ -913,7 +910,7 @@ class test_reports_multivariate(unittest.TestCase):
 
 			with self.subTest(msg='Report generation'):
 
-				nPYc.reports.multivariateQCreport(self.dataset, pcaModel=pcaModel, reportType='analytical',
+				nPYc.reports.multivariateReport(self.dataset, pcaModel=pcaModel, reportType='analytical',
 												  destinationPath=tmpdirname)
 
 				expectedPath = os.path.join(tmpdirname, 'Dataset_report_multivariateAnalytical.html')
@@ -933,43 +930,43 @@ class test_reports_multivariate(unittest.TestCase):
 
 		pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(self.dataset)
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, 'not a dataset', pcaModel)
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, 'not a dataset', pcaModel)
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, 'not a pca model' )
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, 'not a pca model' )
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, reportType=1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, reportType=1)
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, withExclusions='not a bool')
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel, withExclusions='not a bool')
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, biologicalMeasurements='not a dict')
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel, biologicalMeasurements='not a dict')
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, reportType=1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, reportType=1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=0.05, dModX_criticalVal_type=None)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=0.05, dModX_criticalVal_type=None)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=-1, dModX_criticalVal_type='Fcrit')
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=-1, dModX_criticalVal_type='Fcrit')
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=101, dModX_criticalVal_type='Fcrit')
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=101, dModX_criticalVal_type='Fcrit')
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal_type = -1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal_type = -1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal_type = 'wrong threshold')
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal_type = 'wrong threshold')
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, scores_criticalVal=-1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, scores_criticalVal=-1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, scores_criticalVal=101)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, scores_criticalVal=101)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, kw_threshold=-1)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, kw_threshold=-1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, r_threshold=-1.5)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, r_threshold=-1.5)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, hotellings_alpha=-1.5)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, hotellings_alpha=-1.5)
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, excludeFields='not a list')
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel, excludeFields='not a list')
 
-		self.assertRaises(TypeError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, destinationPath=1)
+		self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel, destinationPath=1)
 
-		self.assertRaises(ValueError, nPYc.reports.multivariateQCreport, self.dataset, pcaModel, dModX_criticalVal=0.05)
+		self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=0.05)
 
 
 if __name__ == '__main__':

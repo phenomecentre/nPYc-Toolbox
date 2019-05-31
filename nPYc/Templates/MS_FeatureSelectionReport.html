@@ -14,12 +14,15 @@
 <h3>Summary of current feature filtering parameters and number of features passing at each stage</h3>
 <div class="content">
 	<p>
-		<p>Number of features in original dataset: {{ item['No Features'] }}</p>
+		<p>Number of features in original dataset: {{ item['Nfeatures'] }}</p>
 		<p>Features filtered on:</p>
 		<ul>
-			<li>Correlation ({{ item.corrMethod }}, {{ item.corrStyle }}, exclusions: {{ item.corrExclusions }}) to dilution greater than {{ item.corrThreshold }}: {{ item.corrPassed }} features passed selection.</li>
-			<li>Relative Standard Deviation (RSD) in study pool (SP) samples below {{ item.rsdThreshold }}: {{ item.rsdPassed }} features passed selection.</li>
-			<li>RSD in study samples (SS) * {{ item.rsdSPvsSSvarianceRatio }} &gt; RSD in SP samples: {{ item.rsdSPvsSSPassed}} features passed selection.</li>
+			<li>Correlation ({{ item.corrMethod }}, {{ item.corrStyle }}, exclusions: {{ item.corrExclusions }}) to dilution greater than {{ item.corrThreshold }}: {{ item.corrPassed }}</li>
+			<li>Relative Standard Deviation (RSD) in study reference (SR) samples below {{ item.rsdThreshold }}: {{ item.rsdPassed }}</li>
+			<li>RSD in study samples (SS) * {{ item.rsdSPvsSSvarianceRatio }} &gt; RSD in SR samples: {{ item.rsdSPvsSSPassed}}</li>
+			{% if 'BlankThreshold' in item %}
+				<li>Mean intensity in SS > 95% intensity * {{ item.BlankThreshold }} in sample blanks: {{ item.BlankPassed }} features passed selection.</li>
+			{% endif %}
 			{% if 'artifactualPassed' in item %}
 				<li>Artifactual features filtering: {{ item.artifactualPassed }} features passed selection.</li>
 			{% endif %}

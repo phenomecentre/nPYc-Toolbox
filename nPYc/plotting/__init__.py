@@ -17,11 +17,10 @@ Interactive plots utilise the plotly framework to provide controls, when using p
 """
 
 from ._plotting import histogram, plotTICinteractive, plotLRTIC, plotCorrelationToLRbyFeature
-from ._nmrPlotting import plotPW, plotLineWidthInteractive, plotLineWidth
+from ._nmrPlotting import plotPW, plotLineWidthInteractive, plotLineWidth, plotSpectraInteractive
 from ._plotNMRcalibration import plotCalibration, plotCalibrationInteractive
 from ._plotNMRbaseline import plotBaseline, plotBaselineInteractive
-from ._plotNMRwater import plotWaterResonance, plotWaterResonanceInteractive
-from ._plotNMRspectra import plotSpectraInteractive
+from ._plotNMRsolvent import plotSolventResonance, plotSolventResonanceInteractive
 from ._jointplotRSDvCorrelation import jointplotRSDvCorrelation
 from ._plotRSDs import plotRSDs, plotRSDsInteractive
 from ._plotTIC import plotTIC
@@ -37,10 +36,11 @@ from ._plotVariableScatter import plotVariableScatter
 from ._plotFeatureAccuracyPrecision import plotAccuracyPrecision
 from ._plotIonMap import plotIonMapInteractive
 from ._correlationSpectroscopy import correlationSpectroscopyInteractive
+from ._plotTargetedFeatureDistribution import plotTargetedFeatureDistribution
 
 __all__ = ['histogram', 'plotBatchAndROCorrection', 'plotTIC', 'plotTICinteractive', 'plotLRTIC', 'jointplotRSDvCorrelation', 'plotCorrelationToLRbyFeature',
 		   'plotIonMap', 'plotRSDs', 'plotRSDsInteractive', 'plotScree', 'plotOutliers', 'plotSpectralVariance', 'plotScores', 'plotScoresInteractive',
 		   'plotLoadings', 'plotLoadingsInteractive', 'plotDiscreteLoadings', 'plotFeatureRanges', 'plotMetadataDistribution', 'plotLOQRunOrder', 
 		   'plotFeatureLOQ', 'plotVariableScatter', 'plotAccuracyPrecision', 'plotCalibrationInteractive', 'plotLineWidth', 'plotLineWidthInteractive',
-		   'plotBaseline', 'plotBaselineInteractive', 'plotWaterResonance', 'plotWaterResonanceInteractive', 'plotSpectraInteractive', 'plotIonMapInteractive',
-		   'plotSpectralVarianceInteractive', 'correlationSpectroscopyInteractive']
+		   'plotBaseline', 'plotBaselineInteractive', 'plotSolventResonance', 'plotSolventResonanceInteractive', 'plotSpectraInteractive', 'plotIonMapInteractive',
+		   'plotSpectralVarianceInteractive', 'correlationSpectroscopyInteractive', 'plotTargetedFeatureDistribution']

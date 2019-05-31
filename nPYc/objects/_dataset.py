@@ -5,6 +5,7 @@ import os
 import isatools.isatab as isatab
 import json
 import inspect
+import re
 from ..enumerations import VariableType, DatasetLevel, SampleType, AssayRole
 from ..utilities.generic import removeDuplicateColumns
 from .._toolboxPath import toolboxPath
@@ -51,7 +52,7 @@ class Dataset:
 		================ ========================================= ============
 		"""
 		self.sampleMetadata = pandas.DataFrame(None,
-											   columns=['Sampling ID', 'AssayRole', 'SampleType', 'Sample File Name',
+											   columns=['Sample ID', 'AssayRole', 'SampleType', 'Sample File Name',
 														'Sample Base Name', 'Dilution', 'Batch', 'Correction Batch',
 														'Acquired Time', 'Run Order', 'Exclusion Details', 'Metadata Available'])
 		"""
@@ -62,11 +63,11 @@ class Dataset:
 		================== ========================================= ============
 		Column             dtype                                     Usage
 		================== ========================================= ============
-		Sampling ID        str                                       ID of the :term:`sampling event` generating this sample
+		Sample ID          str                                       ID of the :term:`sampling event` generating this sample
 		AssayRole          :py:class:`~nPYc.enumerations.AssayRole`  Defines the role of this assay
 		SampleType         :py:class:`~nPYc.enumerations.SampleType` Defines the type of sample acquired
 		Sample File Name   str                                       :term:`Unique file name<Sample File Name>` for the analytical data
-		Sample Base Name   str                                       :term:`Common identifier<Sample Base Name>` that links analytical data to the *Sampling ID*
+		Sample Base Name   str                                       :term:`Common identifier<Sample Base Name>` that links analytical data to the *Sample ID*
 		Dilution           float                                     Where *AssayRole* is :py:attr:`~nPYc.enumerations.AssayRole.LinearityReference`, the expected abundance is indicated here
 		Batch              int                                       Acquisition batch
 		Correction Batch   int                                       When detecting and correcting for :term:`batch<Batch Effects>` and :term:`Run-Order<Run-Order Effects>` effects, run-order effects are characterised within samples sharing the same *Correction Batch*, while batch effects are detected between distinct values
@@ -83,7 +84,7 @@ class Dataset:
 
 		self.Attributes = dict()
 		"""
-		Dictionary of object configuration attributes, including those loaded from :doc:`SOP files<configuration/configurationSOPs>`.
+		Dictionary of object configuration attributes, including those loaded from :doc:`SOP files<configuration/builtinSOPs>`.
 
 		Defined attributes are as follows\:
 
@@ -99,6 +100,7 @@ class Dataset:
 		"""
 
 		self.VariableType = None
+		self.AnalyticalPlatform = None
 		""":py:class:`~nPYc.enumerations.VariableType` enum specifying the type of data represented."""
 
 		self.Attributes['Log'] = list()
@@ -261,7 +263,7 @@ class Dataset:
 		:raises LookupError: if self.sampleMetadata does not have a Batch column
 		:raises LookupError: if self.sampleMetadata does not have a Correction Batch column
 		:raises LookupError: if self.sampleMetadata does not have a Run Order column
-		:raises LookupError: if self.sampleMetadata does not have a Sampling ID column
+		:raises LookupError: if self.sampleMetadata does not have a Sample ID column
 		:raises LookupError: if self.sampleMetadata does not have a Sample Base Name column
 		:raises LookupError: if self.sampleMetadata does not have an Acquired Time column
 		:raises LookupError: if self.sampleMetadata does not have an Exclusion Details column
@@ -668,10 +670,10 @@ class Dataset:
 				failure = 'Check self.sampleMetadata[\'Run Order\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Run Order\' column'
 				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
 											exception=LookupError(failure))
-				# ['Sampling ID']
-				condition = ('Sampling ID' in self.sampleMetadata.columns)
-				success = 'Check self.sampleMetadata[\'Sampling ID\'] exists:\tOK'
-				failure = 'Check self.sampleMetadata[\'Sampling ID\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Sampling ID\' column'
+				# ['Sample ID']
+				condition = ('Sample ID' in self.sampleMetadata.columns)
+				success = 'Check self.sampleMetadata[\'Sample ID\'] exists:\tOK'
+				failure = 'Check self.sampleMetadata[\'Sample ID\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Sample ID\' column'
 				failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
 											exception=LookupError(failure))
 				# ['Sample Base Name']
@@ -1003,9 +1005,9 @@ class Dataset:
 
 		self.Attributes['Log'].append([datetime.now(), "Masks Initialised to True.\n"])
 
-	def updateMasks(self, filterSamples=True, filterFeatures=False,
-					sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
-					assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference], **kwargs):
+	def updateMasks(self, filterSamples=True, filterFeatures=True,
+					sampleTypes=list(SampleType),
+					assayRoles=list(AssayRole), **kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
@@ -1095,6 +1097,7 @@ class Dataset:
 			if sum(self.featureMask) != len(self.featureMask):
 
 				# Save excluded features
+				# Save excluded features
 				self.featureMetadataExcluded.append(self.featureMetadata[:][self.featureMask == False])
 				self.intensityDataExcluded.append(self._intensityData[:, self.featureMask == False])
 				self.sampleMetadataExcluded.append(self.sampleMetadata)
@@ -1117,16 +1120,20 @@ class Dataset:
 
 		Possible options:
 
-		* **'NPC LIMS'** NPC LIMS files mapping files names of raw analytical data to sample IDs
-		* **'NPC Subject Info'** Map subject metadata from a NPC sample manifest file (format defined in 'PCSOP.082')
+		* **'Basic CSV'** Joins the :py:attr:`sampleMetadata` table with the data in the ``csv`` file at *filePath=*, matching on the 'Sample File Name' column in both (see :doc:`samplemetadata`).
+		* **'Filenames'** Parses sample information out of the filenames, based on the named capture groups in the regex passed in *filenamespec*
 		* **'Raw Data'** Extract analytical parameters from raw data files
 		* **'ISATAB'** ISATAB study designs
-		* **'Filenames'** Parses sample information out of the filenames, based on the named capture groups in the regex passed in *filenamespec*
-		* **'Basic CSV'** Joins the :py:attr:`sampleMetadata` table with the data in the ``csv`` file at *filePath=*, matching on the 'Sample File Name' column in both (see :doc:`tutorials/SampleMetadata`).
 
 		:param str descriptionFormat: Format of metadata to be added
 		:param str filePath: Path to the additional data to be added
 		:raises NotImplementedError: if the descriptionFormat is not understood
+		"""
+
+		"""
+		Extra options for internal NPC use:
+		* **'NPC LIMS'** NPC LIMS files mapping files names of raw analytical data to sample IDs
+		* **'NPC Subject Info'** Map subject metadata from a NPC sample manifest file (format defined in 'PCSOP.082')
 		"""
 		if descriptionFormat == 'Basic CSV':
 			self._matchBasicCSV(filePath)
@@ -1150,6 +1157,7 @@ class Dataset:
 		Possible options:
 
 		* **'Reference Ranges'** JSON file specifying upper and lower reference ranges for a feature.
+
 		:param str filePath: Path to the additional data to be added
 		:param str descriptionFormat:
 		:param str featureId: Unique feature Id field in the metadata file provided to match with internal Feature Name
@@ -1193,7 +1201,8 @@ class Dataset:
 		"""
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
-		csvData = pandas.read_csv(filePath)
+
+		csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str})
 		currentMetadata = self.sampleMetadata.copy()
 
 		if 'Sample File Name' not in csvData.columns:
@@ -1221,12 +1230,16 @@ class Dataset:
 				currentMetadata.drop(column, axis=1, inplace=True)
 
 		# If AssayRole or SampleType columns are present parse strings into enums
+
+		csvData['AssayRole'] = [(x.replace(" ", "")).lower() if type(x) is str else numpy.nan for x in csvData['AssayRole']]
+		csvData['SampleType'] = [(x.replace(" ", "")).lower() if type(x) is str else numpy.nan for x in csvData['SampleType']]
+
 		if 'AssayRole' in csvData.columns:
 			for role in AssayRole:
-				csvData.loc[csvData['AssayRole'].values == role.name, 'AssayRole'] = role
+				csvData.loc[csvData['AssayRole'].values == (str(role).replace(" ",  "")).lower(), 'AssayRole'] = role
 		if 'SampleType' in csvData.columns:
 			for stype in SampleType:
-				csvData.loc[csvData['SampleType'].values == stype.name, 'SampleType'] = stype
+				csvData.loc[csvData['SampleType'].values == (str(stype).replace(" ", "")).lower(), 'SampleType'] = stype
 
 		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
 		# which are used in some plotting functions
@@ -1304,8 +1317,8 @@ class Dataset:
 			#  If not in the new CSV, but previously there, keep it and don't mask
 			if len(metadataNotAvailable) > 0:
 				joinedTable.loc[metadataNotAvailable, 'Metadata Available'] = False
-				self.sampleMask[metadataNotAvailable] = False
-				joinedTable.loc[metadataNotAvailable, 'Exclusion Details'] = 'No Metadata in CSV'
+#				self.sampleMask[metadataNotAvailable] = False
+#				joinedTable.loc[metadataNotAvailable, 'Exclusion Details'] = 'No Metadata in CSV'
 
 		# 1) ACQ and in "include Sample" - drop and set mask to false
 		#  Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
@@ -1362,8 +1375,8 @@ class Dataset:
 			warnings.warn('The LIMS File contains both a Sample ID and Sampling ID Fields')
 
 		# rename 'sample ID' to 'sampling ID' to match sampleMetadata format
-		if any(self.limsFile.columns.str.match('Sample ID')):
-			self.limsFile.rename(columns={'Sample ID': 'Sampling ID'}, inplace=True)
+		if any(self.limsFile.columns.str.match('Sampling ID')):
+			self.limsFile.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
 
 		# Prepare data
 		# Create normalised columns
@@ -1377,6 +1390,7 @@ class Dataset:
 		# Match limsFile to sampleMetdata for samples with data PRESENT
 		# Remove already present columns
 		if 'Sampling ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sampling ID'], axis=1, inplace=True)
+		if 'Sample ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sample ID'], axis=1, inplace=True)
 		if 'Subject ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Subject ID'], axis=1, inplace=True)
 
 		merged_samples = pandas.merge(self.sampleMetadata, self.limsFile, how='inner',left_on='Sample Base Name Normalised',
@@ -1413,7 +1427,7 @@ class Dataset:
 		# Enforce string type on matched data
 		self.sampleMetadata['Assay data name'] = self.sampleMetadata['Assay data name'].astype(str)
 		self.sampleMetadata['Assay data location'] = self.sampleMetadata['Assay data location'].astype(str)
-		self.sampleMetadata['Sampling ID'] = self.sampleMetadata['Sampling ID'].astype(str)
+		self.sampleMetadata['Sample ID'] = self.sampleMetadata['Sample ID'].astype(str)
 		self.sampleMetadata['Status'] = self.sampleMetadata['Status'].astype(str)
 		if hasattr(self.sampleMetadata, 'Sample batch'):
 			self.sampleMetadata['Sample batch'] = self.sampleMetadata['Sample batch'].astype(str)
@@ -1449,20 +1463,20 @@ class Dataset:
 
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
-		# Rename values in Sampling ID, special case for Study Pool, External Reference and Procedural Blank
+		# Rename values in Sample ID, special case for Study Pool, External Reference and Procedural Blank
 		if 'SampleType' in self.sampleMetadata.columns:
-			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (
-						self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata[
-																		  'SampleType'] == SampleType.StudyPool)).tolist(), 'Sampling ID'] = 'Study Pool Sample'
-			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (
-						self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata[
-																		  'SampleType'] == SampleType.ExternalReference)).tolist(), 'Sampling ID'] = 'External Reference Sample'
-			self.sampleMetadata.loc[(((self.sampleMetadata['Sampling ID'] == 'nan') | (
-						self.sampleMetadata['Sampling ID'] == '')) & (self.sampleMetadata[
-																		  'SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sampling ID'] = 'Procedural Blank Sample'
-		self.sampleMetadata.loc[(self.sampleMetadata['Sampling ID'] == 'nan').tolist(), 'Sampling ID'] = 'Not specified'
+			self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'nan') | (
+						self.sampleMetadata['Sample ID'] == '')) & (self.sampleMetadata[
+																		  'SampleType'] == SampleType.StudyPool)).tolist(), 'Sample ID'] = 'Study Pool Sample'
+			self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'nan') | (
+						self.sampleMetadata['Sample ID'] == '')) & (self.sampleMetadata[
+																		  'SampleType'] == SampleType.ExternalReference)).tolist(), 'Sample ID'] = 'External Reference Sample'
+			self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'nan') | (
+						self.sampleMetadata['Sample ID'] == '')) & (self.sampleMetadata[
+																		  'SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sample ID'] = 'Procedural Blank Sample'
+		self.sampleMetadata.loc[(self.sampleMetadata['Sample ID'] == 'nan').tolist(), 'Sample ID'] = 'Not specified'
 		self.sampleMetadata.loc[(self.sampleMetadata[
-									 'Sampling ID'] == '').tolist(), 'Sampling ID'] = 'Present but undefined in the LIMS file'
+									 'Sample ID'] == '').tolist(), 'Sample ID'] = 'Present but undefined in the LIMS file'
 		# Metadata Available field is set to True
 		self.sampleMetadata.loc[merged_indices, 'Metadata Available'] = True
 
@@ -1473,7 +1487,7 @@ class Dataset:
 		"""
 		Match the Sample IDs in :py:attr:`sampleMetadata` to the subject information mapped in the sample manifest file found at *subjectInfoFile*.
 
-		The column *Sampling ID* in :py:attr:`sampleMetadata` is matched to *Sampling ID* in the *Sampling Events* sheet
+		The column *Sample ID* in :py:attr:`sampleMetadata` is matched to *Sample ID* in the *Sampling Events* sheet
 
 		:param str pathToSubjectInfoFile: path to subject information file, an Excel file with sheets 'Subject Info' and 'Sampling Events'
 		"""
@@ -1486,30 +1500,32 @@ class Dataset:
 												converters={'Subject ID': str, 'Sampling ID': str})
 		cols = [c for c in self.samplingEvents.columns if c[:7] != 'Unnamed']
 		self.samplingEvents = self.samplingEvents[cols]
+		self.samplingEvents.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
 
 		# Create one overall samplingInfo sheet - combine subjectInfo and samplingEvents for samples present in samplingEvents
 		self.samplingInfo = pandas.merge(self.samplingEvents, self.subjectInfo, left_on='Subject ID',
 										 right_on='Subject ID', how='left', sort=False)
 
+		self.samplingInfo.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
+
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
-
 		# Remove any rows which are just nans
-		self.samplingInfo = self.samplingInfo.loc[self.samplingInfo['Sampling ID'].values != 'nan', :]
+		self.samplingInfo = self.samplingInfo.loc[self.samplingInfo['Sample ID'].values != 'nan', :]
 
 		# Rename 'Sample Type' to 'Biofluid'
 		if hasattr(self.samplingInfo, 'Sample Type'):
 			self.samplingInfo.rename(columns={'Sample Type': 'Biofluid'}, inplace=True)
 
 		# Check no duplicates in sampleInfo
-		u_ids, u_counts = numpy.unique(self.samplingInfo['Sampling ID'], return_counts=True)
+		u_ids, u_counts = numpy.unique(self.samplingInfo['Sample ID'], return_counts=True)
 		if any(u_counts > 1):
 			warnings.warn('Check and remove (non-biofluid related) duplicates in sample manifest file')
 
 		# Match subjectInfo to sampleMetadata for samples with data ABSENT (i.e., samples in sampleAbsentMetadata)
 		if hasattr(self, 'sampleAbsentMetadata'):
 			self.sampleAbsentMetadata = pandas.merge(self.sampleAbsentMetadata, self.samplingInfo,
-													 left_on='Sampling ID', right_on='Sampling ID', how='left',
+													 left_on='Sample ID', right_on='Sample ID', how='left',
 													 sort=False)
 
 			# Remove duplicate columns (these will be appended with _x or _y)
@@ -1521,8 +1537,8 @@ class Dataset:
 			self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
 
 		# Match subjectInfo to sampleMetdata for samples with data PRESENT
-		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.samplingInfo, left_on='Sampling ID',
-										   right_on='Sampling ID', how='left', sort=False)
+		self.sampleMetadata = pandas.merge(self.sampleMetadata, self.samplingInfo, left_on='Sample ID',
+										   right_on='Sample ID', how='left', sort=False)
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		cols = [c for c in self.sampleMetadata.columns if c[-2:] != '_y']
@@ -1534,7 +1550,7 @@ class Dataset:
 
 		# Find samples present in sampleInfo but not in LIMS
 		info_butnotlims = self.samplingInfo.loc[
-						  self.samplingInfo['Sampling ID'].isin(self.limsFile['Sampling ID']) == False, :]
+						  self.samplingInfo['Sample ID'].isin(self.limsFile['Sample ID']) == False, :]
 
 		if info_butnotlims.shape[0] != 0:
 			self.subjectAbsentMetadata = info_butnotlims.copy(deep=True)
@@ -1554,6 +1570,52 @@ class Dataset:
 			return True
 		else:
 			return False
+
+
+	def _initialiseFromCSV(self, sampleMetadataPath):
+		"""
+		Initialise the object from the three csv outputs of :py:meth:`~nPYc.Dataset.exportDataset()`.
+
+		NOTE: This function assumes that the saved dataset was well formed with all the expected columns in the metadta tables.
+
+		:param str sampleMetadataPath: Path to the *Name_sampleMetadata.csv* table, the file names of the featureMetadata and intensityData talbes are infered from the provided filename.
+		"""
+		##
+		# Determine object name and paths
+		##
+		(folderPath, fileName) = os.path.split(sampleMetadataPath)
+		objectName = re.match('(.*?)_sampleMetadata.csv', fileName).groups()[0]
+
+		intensityDataPath = os.path.join(folderPath, objectName + '_intensityData.csv')
+		featureMetadataPath = os.path.join(folderPath, objectName + '_featureMetadata.csv')
+
+		##
+		# Load tables
+		##
+		intensityData = numpy.loadtxt(intensityDataPath, dtype=float, delimiter=',')
+
+		featureMetadata = pandas.read_csv(featureMetadataPath, index_col=0)
+		sampleMetadata = pandas.read_csv(sampleMetadataPath, index_col=0)
+
+		##
+		# Fix up types
+		##
+		featureMetadata['Feature Name'] = featureMetadata['Feature Name'].astype(str)
+		sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
+
+		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].apply(pandas.to_datetime)
+		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].dt.to_pydatetime()
+
+		# If AssayRole or SampleType columns are present parse strings into enums
+		if 'AssayRole' in sampleMetadata.columns:
+			for role in AssayRole:
+				sampleMetadata.loc[sampleMetadata['AssayRole'].values == str(role), 'AssayRole'] = role
+		if 'SampleType' in sampleMetadata.columns:
+			for stype in SampleType:
+				sampleMetadata.loc[sampleMetadata['SampleType'].values == str(stype), 'SampleType'] = stype
+
+
+		return (objectName, intensityData, featureMetadata, sampleMetadata)
 
 
 	def _matchDatasetToISATAB(self, pathToISATABFile, filenameSpec=None, studyID = 1, assayID=1, assay='MS'):
@@ -1679,7 +1741,7 @@ class Dataset:
 		self.sampleMetadata = removeDuplicateColumns(self.sampleMetadata)
 		#
 		if 'Exclusion Details' not in self.sampleMetadata:
-			self.sampleMetadata['Exclusion Details'] = None
+			self.sampleMetadata['Exclusion Details'] = ''
 
 		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
 		#self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Sampling ID'].notnull().astype(bool)
@@ -1702,7 +1764,7 @@ class Dataset:
 
 		# Explicity convert datetime format
 		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].apply(pandas.to_datetime,dayfirst=True)
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].astype(datetime)
+		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 
 		#automatically mark samples that have no 'Acquired Time' for exclusion
 		if sum(self.sampleMetadata['Acquired Time'].isnull()) > 0:
@@ -1833,12 +1895,12 @@ class Dataset:
 		notFound = []
 
 		if 'Exclusion Details' not in self.sampleMetadata:
-			self.sampleMetadata['Exclusion Details'] = None
+			self.sampleMetadata['Exclusion Details'] = ''
 
 		for sample in sampleList:
 			if sample in self.sampleMetadata[on].unique():
 				self.sampleMask[self.sampleMetadata[self.sampleMetadata[on] == sample].index] = False
-				if (self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'].isnull()).any():
+				if (self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'].values in ['', None]):
 					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] = message
 				else:
 					self.sampleMetadata.loc[self.sampleMetadata[on] == sample, 'Exclusion Details'] = \
@@ -1870,13 +1932,13 @@ class Dataset:
 		notFound = []
 
 		if 'Exclusion Details' not in self.featureMetadata:
-			self.featureMetadata['Exclusion Details'] = None
+			self.featureMetadata['Exclusion Details'] = ''
 
 		if self.VariableType == VariableType.Discrete:
 			for feature in featureList:
 				if feature in self.featureMetadata[on].unique():
 					self.featureMask[self.featureMetadata[self.featureMetadata[on] == feature].index] = False
-					if (self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'].isnull()).any():
+					if (self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'].values == ''):
 						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = message
 					else:
 						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = \
@@ -1898,15 +1960,10 @@ class Dataset:
 				mask = numpy.logical_or(self.featureMetadata[on] < start,
 										 self.featureMetadata[on] > stop)
 
-				self.featureMask = numpy.logical_and(self.featureMask,
-													 mask)
+				self.featureMask = numpy.logical_and(self.featureMask, mask)
 
 				mask = numpy.logical_not(mask)
-				if (self.featureMetadata.loc[mask, 'Exclusion Details'].isnull()).any():
-					self.featureMetadata.loc[mask, 'Exclusion Details'] = message
-				else:
-					self.featureMetadata.loc[mask, 'Exclusion Details'] = \
-					self.featureMetadata.loc[mask, 'Exclusion Details'] + ' AND ' + message
+				self.featureMetadata.loc[mask, 'Exclusion Details'] = message
 
 		else:
 			raise ValueError('Unknown VariableType.')
@@ -1927,25 +1984,27 @@ class Dataset:
 		:param str destinationPath: Save data into the directory specified here
 		:param str format: File format for saved data, defaults to CSV.
 		:param dict detailsDict: Contains several key: value pairs required to for exporting ISATAB.
+
 		detailsDict should have the format:
 		detailsDict = {
-		    'investigation_identifier' : "i1",
-		    'investigation_title' : "Give it a title",
-		    'investigation_description' : "Add a description",
-		    'investigation_submission_date' : "2016-11-03",
-		    'investigation_public_release_date' : "2016-11-03",
-		    'first_name' : "Noureddin",
-		    'last_name' : "Sadawi",
-		    'affiliation' : "University",
-		    'study_filename' : "my_ms_study",
-		    'study_material_type' : "Serum",
-		    'study_identifier' : "s1",
-		    'study_title' : "Give the study a title",
-		    'study_description' : "Add study description",
-		    'study_submission_date' : "2016-11-03",
-		    'study_public_release_date' : "2016-11-03",
-		    'assay_filename' : "my_ms_assay"
+			'investigation_identifier' : "i1",
+			'investigation_title' : "Give it a title",
+			'investigation_description' : "Add a description",
+			'investigation_submission_date' : "2016-11-03",
+			'investigation_public_release_date' : "2016-11-03",
+			'first_name' : "Noureddin",
+			'last_name' : "Sadawi",
+			'affiliation' : "University",
+			'study_filename' : "my_ms_study",
+			'study_material_type' : "Serum",
+			'study_identifier' : "s1",
+			'study_title' : "Give the study a title",
+			'study_description' : "Add study description",
+			'study_submission_date' : "2016-11-03",
+			'study_public_release_date' : "2016-11-03",
+			'assay_filename' : "my_ms_assay"
 		}
+
 		:param bool withExclusions: If ``True`` mask features and samples will be excluded
 		:param bool escapeDelimiters: If ``True`` remove characters commonly used as delimiters in csv files from metadata
 		:param bool filterMetadata: If ``True`` does not export the sampleMetadata and featureMetadata columns listed in self.Attributes['sampleMetadataNotExported'] and self.Attributes['featureMetadataNotExported']
@@ -1972,7 +2031,7 @@ class Dataset:
 			exportDataset.applyMasks()
 
 		# do not filter metadata if safe format is ISATAB
-		if filterMetadata and saveFormat in ['CSV', 'UnifiedCSV']:
+		if filterMetadata and (saveFormat in ['UnifiedCSV', 'CSV']):
 			# sampleMetadata not exported
 			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['sampleMetadataNotExported']))
@@ -1981,7 +2040,6 @@ class Dataset:
 			featureMetaColToRemove = list(set(exportDataset.featureMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['featureMetadataNotExported']))
 			exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1, inplace=True)
-
 
 		if saveFormat == 'CSV':
 			destinationPath = os.path.join(destinationPath, exportDataset.name)
@@ -2018,14 +2076,14 @@ class Dataset:
 			for column in sampleMetadata.columns:
 				try:
 					if type(sampleMetadata[column][0]) is not datetime:
-						sampleMetadata[column] = sampleMetadata[column].str.replace(',', ';')
+						sampleMetadata.loc[:, column] = sampleMetadata[column].str.replace(',', ';')
 				except:
 					pass
 
 			for column in featureMetadata.columns:
 				try:
 					if type(featureMetadata[column][0]) is not datetime:
-						featureMetadata[column] = featureMetadata[column].str.replace(',', ';')
+						featureMetadata.loc[:, column] = featureMetadata[column].str.replace(',', ';')
 				except:
 					pass
 

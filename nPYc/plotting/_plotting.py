@@ -202,7 +202,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 		plt.show()
 
 
-def plotTICinteractive(msData, plottype='Sample Type'):
+def plotTICinteractive(msData, plottype='Sample Type', labelby='Run Order', withExclusions=True):
 	"""
 	Interactively visualise TIC (coloured by batch and sample type) with plotly, provides tooltips to allow identification of samples.
 
@@ -217,19 +217,24 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 	import plotly.graph_objs as go
 	from ..utilities import generateLRmask
 
-	if not isinstance(plottype, str) & (plottype in {'Sample Type', 'Linearity Reference'}):
-		raise ValueError('plottype must be == \'Sample Type\', \'Linearity Reference\'')
+	if not isinstance(plottype, str) & (plottype in {'Sample Type', 'Serial Dilution'}):
+		raise ValueError('plottype must be == \'Sample Type\', \'Serial Dilution\'')
 
 	# Generate TIC
 	tempFeatureMask = numpy.sum(numpy.isfinite(msData.intensityData), axis=0)
 	tempFeatureMask = tempFeatureMask < msData.intensityData.shape[0]
-	tic = numpy.sum(msData.intensityData[:,tempFeatureMask==False], axis=1)	
+	tic = numpy.sum(msData.intensityData[:,tempFeatureMask==False], axis=1)
+
+	if withExclusions:
+		tempSampleMask = msData.sampleMask
+	else:
+		tempSampleMask = numpy.ones(shape=msData.sampleMask.shape, dtype=bool)
 		
 	if plottype=='Sample Type': # Plot TIC for SR samples coloured by batch
 	
-		SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-		SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+		SSmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)) & tempSampleMask
+		SPmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSampleMask
+		ERmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSampleMask
 	
 		SSplot = go.Scatter(
 			x = msData.sampleMetadata['Acquired Time'][SSmask],
@@ -241,7 +246,7 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 				symbol = 'circle'
 				),
 				name = 'Study Sample',
-				text = msData.sampleMetadata['Run Order'][SSmask]
+				text = msData.sampleMetadata[labelby][SSmask]
 				)
 
 		SRplot = go.Scatter(
@@ -252,8 +257,8 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 				color = 'rgb(63, 158, 108)',
 				symbol = 'cross'
 				),
-			name = 'Study Pool',
-			text = msData.sampleMetadata['Run Order'][SPmask]
+			name = 'Study Reference',
+			text = msData.sampleMetadata[labelby][SPmask]
 			)
 			
 		LTRplot = go.Scatter(
@@ -264,17 +269,17 @@ def plotTICinteractive(msData, plottype='Sample Type'):
 				color = 'rgb(198, 83, 83)',
 				symbol = 'cross'
 				),
-			name = 'External Reference',
-			text = msData.sampleMetadata['Run Order'][ERmask]
+			name = 'Long-Term Reference',
+			text = msData.sampleMetadata[labelby][ERmask]
 			)
 		
 		data = [SSplot, SRplot, LTRplot]
 		Xlabel = 'Acquisition Time'
 		title = 'TIC by Sample Type Coloured by Batch'
 	
-	if plottype=='Linearity Reference': # Plot TIC for LR samples coloured by dilution
+	if plottype=='Serial Dilution': # Plot TIC for LR samples coloured by dilution
 
-		LRmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+		LRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)) & tempSampleMask
 		
 		if hasattr(msData, 'corrExclusions'):
 			

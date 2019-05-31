@@ -5,7 +5,7 @@ from ._normaliserABC import Normaliser
 
 class ProbabilisticQuotientNormaliser(Normaliser):
 	"""
-	Normalisation object which performs Probabilistic Quotient normalisation [#]_ .
+	Normalisation object which performs Probabilistic Quotient normalisation. [pqn]_
 
 	:param reference: Source of the reference profile. If ``None``, use the median of **X**, if an int treat as the index of a spectrum in **X** to use as the reference, if an array with same width as X, treat as the reference profile.
 	:type reference: str, int, or numpy.ndarray
@@ -13,7 +13,7 @@ class ProbabilisticQuotientNormaliser(Normaliser):
 	:type referenceDescription: None, or str
 	:param bool keepMagnitude: If ``True`` scales **X** such that the mean area of **X** remains constant for the dataset as a whole.
 
-	.. [#] Dieterle, F., Ross, A., Schlotterbeck, G. & Senn, H. Probabilistic quotient normalization as robust method to account for dilution of complex biological mixtures. application in :sup:`1`\ H NMR metabonomics. Analytical Chemistry, 78(13):4281 – 90, 2006.
+	.. [pqn] Dieterle, F., Ross, A., Schlotterbeck, G. & Senn, H. Probabilistic quotient normalization as robust method to account for dilution of complex biological mixtures. application in :sup:`1`\ H NMR metabonomics. Analytical Chemistry, 78(13):4281 – 90, 2006.
 	"""
 
 	def __init__(self, reference=None, referenceDescription=None):
@@ -94,7 +94,10 @@ class ProbabilisticQuotientNormaliser(Normaliser):
 				featureMask = numpy.logical_and(numpy.isfinite(self._reference),
 												self._reference != 0)
 
-				fold_change_matrix = X[:,featureMask] / self._reference[featureMask]
+				fold_change_matrix = X[:, featureMask] / self._reference[featureMask]
+
+				# Change all 0's to nan so they are ignored
+				fold_change_matrix[fold_change_matrix == 0] = numpy.nan
 
 				self._normalisationcoefficients = numpy.absolute(numpy.nanmedian(fold_change_matrix, axis=1))
 

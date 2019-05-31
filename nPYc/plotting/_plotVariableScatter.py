@@ -119,7 +119,7 @@ def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='',
     # columns of interest
     if sampletypeColor:
         # match the subset of columns while imposing the sampleType ordering (can't be done with a set)
-        expectedCols = pandas.DataFrame({'sType': [SampleType.StudySample, SampleType.ExternalReference, 'nan', 'All Samples', SampleType.StudyPool]})
+        expectedCols = pandas.DataFrame({'sType': [SampleType.StudySample, SampleType.ExternalReference, 'Other', 'All Samples', SampleType.StudyPool]})
         workingCols = expectedCols['sType'][expectedCols.sType.isin(inputTable.columns.tolist())].tolist()
     else:
         workingCols = list(set(inputTable.columns.tolist()) - set(['yName']))
@@ -140,11 +140,21 @@ def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='',
             alphaPlot = 1
             currentColor = current_palette[colorIdx]
 
+        # Get name
+        if wcol == SampleType.StudySample:
+            name = 'Study Sample'
+        elif wcol == SampleType.StudyPool:
+            name = 'Study Reference'
+        elif wcol == SampleType.ExternalReference:
+            name = 'Long-Term Reference'
+        else:
+            name = wcol
+
         # only plot values, no inf or nan
         valueMask = numpy.isfinite(data[wcol].tolist()).tolist()
         tmpX = pandas.DataFrame({'x': data.loc[valueMask, wcol].tolist()})
         tmpY = pandas.DataFrame({'y': data.loc[valueMask, 'yPos'].tolist()})
-        pt = ax.scatter(x=tmpX['x'], y=tmpY['y'], alpha=alphaPlot, lw=lwPlot, c=currentColor, label=wcol)
+        pt = ax.scatter(x=tmpX['x'], y=tmpY['y'], alpha=alphaPlot, lw=lwPlot, c=currentColor, label=name)
         colorIdx += 1
 
         # store position of inf

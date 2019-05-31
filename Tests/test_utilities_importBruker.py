@@ -156,7 +156,7 @@ class test_utilities_importBruker(unittest.TestCase):
 		numpy.testing.assert_allclose(numpy.max(ppm), Attributes['bounds'][1])
 
 		expectedLW = 0.97083128379560091
-		numpy.testing.assert_allclose(metadata.loc[0, 'Line Width (Hz)'], expectedLW)
+		numpy.testing.assert_allclose(metadata.loc[0, 'Line Width (Hz)'], expectedLW, rtol=1e-5)
 
 		expectedERETIC = 181331824.09952235
 		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Integral'], expectedERETIC)

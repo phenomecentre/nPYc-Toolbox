@@ -94,9 +94,9 @@ def qcCheckBaseline(spectrum, alpha):
 
 
 # For now same as previous function, but keeping room for different algorithms
-def qcCheckWaterPeak(spectrum, alpha):
+def qcCheckSolventPeak(spectrum, alpha):
 	"""
-	Water peak checks
+	Solvent peak checks
 	:param spectrum:
 	:param alpha:
 	:return:

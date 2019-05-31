@@ -1,7 +1,7 @@
 :orphan:
 
-Plots gallery
--------------
+Plot Gallery
+------------
 
 Examples of the outputs from :doc:`plots` implemented in the toolbox.
 

@@ -32,6 +32,8 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 		data = nPYc.MSDataset('', fileType='empty', sop=sop)
 	elif dtype == 'NMRDataset':
 		data = nPYc.NMRDataset('', fileType='empty', sop=sop)
+	elif dtype  == 'TargetedDataset':
+		data = nPYc.TargetedDataset('', fileType='empty', sop=sop)
 	else:
 		raise ValueError
 
@@ -49,7 +51,7 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata['Exclusion Details'] = ''
 
 	data.sampleMetadata['Sample File Name'] = [randomword(10) for x in range(0, noSamp)]
-	data.sampleMetadata['Sampling ID'] = [randomword(10) for x in range(0, noSamp)]
+	data.sampleMetadata['Sample ID'] = [randomword(10) for x in range(0, noSamp)]
 	data.sampleMetadata['Dilution'] = numpy.random.rand(noSamp)
 
 	noClasses = numpy.random.randint(2, 5)
@@ -60,7 +62,9 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata['Classes'] = numpy.random.choice(classNames, size=noSamp, p=classProbabilties)
 
 	data.sampleMetadata['Acquired Time'] = [d for d in datetime_range(datetime.now(), noSamp, timedelta(minutes=15))]
-	data.sampleMetadata['Acquired Time'] = data.sampleMetadata['Acquired Time'].astype(datetime)
+	#Ensure seconds are not recorded, otherwise its impossible to test datasets read with datasets recorded on the fly.
+	data.sampleMetadata['Acquired Time'] = [datetime.strptime(d.strftime("%Y-%m-%d %H:%M"), "%Y-%m-%d %H:%M") for d in data.sampleMetadata['Acquired Time']]
+	data.sampleMetadata['Acquired Time'] = data.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 
 	data.sampleMetadata.iloc[::10, 1] = nPYc.enumerations.SampleType.StudyPool
 	data.sampleMetadata.iloc[::10, 2] = nPYc.enumerations.AssayRole.PrecisionReference
@@ -68,16 +72,35 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata.iloc[5::10, 1] = nPYc.enumerations.SampleType.ExternalReference
 	data.sampleMetadata.iloc[5::10, 2] = nPYc.enumerations.AssayRole.PrecisionReference
 
-	if dtype == 'MSDataset' or dtype == 'Dataset':
+	if dtype == 'MSDataset':
 		data.featureMetadata = pandas.DataFrame(0, index=numpy.arange(noFeat), columns=['m/z'])
 
 		data.featureMetadata['m/z'] = (800 - 40) * numpy.random.rand(noFeat) + 40
 		data.featureMetadata['Retention Time'] = (720 - 50) * numpy.random.rand(noFeat) + 50
 		data.featureMetadata['Feature Name'] = [randomword(10) for x in range(0, noFeat)]
+
+		data.featureMetadata['Exclusion Details'] = None
+		data.featureMetadata['User Excluded'] = False
+		data.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+							  'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]], index=data.featureMetadata.index)
+
+		data.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
+			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=data.featureMetadata.index)
+
+		data.Attributes['Feature Names'] = 'Feature Name'
+
+	elif dtype == 'Dataset':
+		data.featureMetadata = pandas.DataFrame(0, index=numpy.arange(noFeat), columns=['m/z'])
+
+		data.featureMetadata['m/z'] = (800 - 40) * numpy.random.rand(noFeat) + 40
+		data.featureMetadata['Retention Time'] = (720 - 50) * numpy.random.rand(noFeat) + 50
+		data.featureMetadata['Feature Name'] = [randomword(10) for x in range(0, noFeat)]
+
 		data.Attributes['Feature Names'] = 'Feature Name'
 
 	elif dtype == 'NMRDataset':
 		data.featureMetadata = pandas.DataFrame(numpy.linspace(10, -1, noFeat), columns=('ppm',), dtype=float)
+		data.featureMetadata['Feature Name'] = data.featureMetadata['ppm'].astype(str)
 		data.sampleMetadata['Delta PPM'] = numpy.random.rand(noSamp)
 		data.sampleMetadata['Line Width (Hz)'] = numpy.random.rand(noSamp)
 		data.sampleMetadata['CalibrationFail'] = False

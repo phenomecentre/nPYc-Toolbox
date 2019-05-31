@@ -8,6 +8,8 @@ from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 from matplotlib.dates import WeekdayLocator, HourLocator, DateFormatter
 from matplotlib import gridspec
 
+# TODO refactor this plot to fix datetime issues
+
 def plotLOQRunOrder(targetedData, addCalibration=True, compareBatch=True, title='', savePath=None, figureFormat='png', dpi=72, figureSize=(11, 7)):
     """
     Visualise ratio of LLOQ and ULOQ by run order, separated by batch. Option to add barchart that summarises across batch
