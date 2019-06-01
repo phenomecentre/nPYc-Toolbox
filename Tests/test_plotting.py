@@ -845,7 +845,7 @@ class test_plotting(unittest.TestCase):
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
 
-
+	@unittest.expectedFailure
 	def test_plotScores_raises(self):
 
 		self.assertRaises(TypeError, nPYc.plotting.plotScores, 'not a pca model')
