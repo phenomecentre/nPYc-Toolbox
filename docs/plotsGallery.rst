@@ -11,7 +11,7 @@ Examples of the outputs from :doc:`plots` implemented in the toolbox.
 	
 	:py:func:`~nPYc.plotting.histogram` - Draw a histogram, optionally segmented by a second parameter.
 
-.. figure:: _static/plotBatchAndROCorrection.svg
+.. figure:: _static/plotBatchAndROCorrection_oneFeature.svg
 	:figwidth: 49%
 	:alt: Visualise run-order and batch correction applied
 	
@@ -19,33 +19,33 @@ Examples of the outputs from :doc:`plots` implemented in the toolbox.
 
 .. figure:: _static/plotTIC.svg
 	:figwidth: 49%
-	:alt: Visualise the TIC vs run-order of a UPLC-MS derived dataset
+	:alt: Visualise the TIC vs. run-order of a UPLC-MS derived dataset
 	
 	:py:func:`~nPYc.plotting.plotTIC` - Visualise TIC for all or a subset of features in an :class:`~nPYc.objects.MSDataset`, coloured by class, dilution value, or detector voltage.
 
 .. figure:: _static/plotTICinteractive_Sample_Type.png
 	:figwidth: 49%
-	:alt: Interactively visualise the TIC vs run-order of a UPLC-MS derived dataset coloured by sample type
+	:alt: Interactively visualise the TIC vs. run-order of a UPLC-MS derived dataset coloured by sample type
 	
-	:py:func:`~nPYc.plotting.plotTICinteractive` - Interactively visualise TIC vs run-order for features in an :class:`~nPYc.objects.MSDataset`, coloured by sample type.
+	:py:func:`~nPYc.plotting.plotTICinteractive` - Interactively visualise TIC vs. run-order for features in an :class:`~nPYc.objects.MSDataset`, coloured by sample type.
 
 .. figure:: _static/plotTICinteractive_Linearity_Reference.png
 	:figwidth: 49%
-	:alt: Interactively visualise the TIC vs run-order of linearity reference samples from a UPLC-MS derived dataset coloured by concentration
+	:alt: Interactively visualise the TIC vs. run-order of linearity reference samples from a UPLC-MS derived dataset coloured by concentration
 	
-	:py:func:`~nPYc.plotting.plotTICinteractive` - Interactively visualise TIC vs run-order of linearity reference samples from an :class:`~nPYc.objects.MSDataset`, coloured by dilution value.
+	:py:func:`~nPYc.plotting.plotTICinteractive` - Interactively visualise TIC vs. run-order of linearity reference samples from an :class:`~nPYc.objects.MSDataset`, coloured by dilution value.
 
 .. figure:: _static/plotLRTIC.svg
 	:figwidth: 49%
-	:alt: Visualise the TIC vs run-order of linearity reference samples from a UPLC-MS derived dataset coloured by concentration
+	:alt: Visualise the TIC vs. run-order of linearity reference samples from a UPLC-MS derived dataset coloured by concentration
 	
-	:py:func:`~nPYc.plotting.plotLRTIC` - Visualise TIC vs run-order of linearity reference samples from an :class:`~nPYc.objects.MSDataset`, coloured by dilution value.
+	:py:func:`~nPYc.plotting.plotLRTIC` - Visualise TIC vs. run-order of linearity reference samples from an :class:`~nPYc.objects.MSDataset`, coloured by dilution value.
 
 .. figure:: _static/jointplotRSDvCorrelation.svg
 	:figwidth: 49%
-	:alt: Visualise 2D histogram of feature RSDs vs correlations to dilution, with marginal histograms.
+	:alt: Visualise 2D histogram of feature RSDs vs. correlations to dilution, with marginal histograms.
 	
-	:py:func:`~nPYc.plotting.jointplotRSDvCorrelation` - Visualise 2D histogram of feature RSDs vs correlations to dilution, with marginal histograms from :py:class:`~nPYc.enumerations.VariableType.Spectral` datasets.
+	:py:func:`~nPYc.plotting.jointplotRSDvCorrelation` - Visualise 2D histogram of feature RSDs vs. correlations to dilution, with marginal histograms from :py:class:`~nPYc.enumerations.VariableType.Spectral` datasets.
 
 .. figure:: _static/plotIonMap.svg
 	:figwidth: 49%

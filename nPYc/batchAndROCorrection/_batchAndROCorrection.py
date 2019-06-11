@@ -27,7 +27,7 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 
 	:param data: MSDataset object with measurements to be corrected
 	:type data: MSDataset
-	:param int window: When calculating trends, use a consider this many reference samples, centred on the current position
+	:param int window: When calculating trends, consider this many reference samples, centred on the current position
 	:param str method: Correction method, one of 'LOWESS' (default), 'SavitzkyGolay' or None for no correction
 	:param str align: Average calculation of batch and feature intensity for correction, one of 'median' (default) or 'mean'
 	:param bool parallelise: If ``True``, use multiple cores

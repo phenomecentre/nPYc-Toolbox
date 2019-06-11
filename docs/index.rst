@@ -16,12 +16,14 @@ Contents:
    :glob:
 
    introduction
+   metabolicprofiling
    tutorial
+   studydesign
    objects
    samplemetadata
+   masks
    reports
    batchAndROCorrection
-   featurefiltering
    multivariate
    normalisation
    exportingdata

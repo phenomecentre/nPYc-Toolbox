@@ -43,7 +43,7 @@ class Dataset:
 		"""
 		:math:`m` × :math:`q` pandas dataframe of feature identifiers and metadata
 
-		The featureMetadata table can included any datatype that can be placed in a pandas cell, However the toolbox assumes certain prerequisites on the following columns in order to function:
+		The featureMetadata table can include any datatype that can be placed in a pandas cell, However the toolbox assumes certain prerequisites on the following columns in order to function:
 
 		================ ========================================= ============
 		Column           dtype                                     Usage
@@ -58,7 +58,7 @@ class Dataset:
 		"""
 		:math:`n` × :math:`p` dataframe of sample identifiers and metadata.
 
-		The sampleMetadata table can included any datatype that can be placed in a pandas cell, However the toolbox assumes certain prerequisites on the following columns in order to function:
+		The sampleMetadata table can include any datatype that can be placed in a pandas cell, However the toolbox assumes certain prerequisites on the following columns in order to function:
 
 		================== ========================================= ============
 		Column             dtype                                     Usage

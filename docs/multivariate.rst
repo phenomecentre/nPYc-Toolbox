@@ -1,7 +1,7 @@
 Multivariate Analysis
 ---------------------
 
-The nPYc-Toolbox provides the capacity to generate a PCA model of the data (via the pyChemometrics module), and subesquently, to use this to assess data quality, identify potential sample and feature outliers, and determine any potential analytical associations with the main sources of variance in the data.
+The nPYc-Toolbox provides the capacity to generate a PCA model of the data (via the pyChemometrics module), and subsequently, to use this to assess data quality, identify potential sample and feature outliers, and determine any potential analytical associations with the main sources of variance in the data.
 
 PCA Model
 =========
@@ -12,16 +12,20 @@ A PCA model can be generated using :py:meth:`~nPYc.multivariate.exploratoryAnaly
 	
 There are a number of parameters which can be optimised depending on the dataset.
 
-One key paramter is 'scaling', which divides each column in the data matrix by its respective standard deviation raised to a power of the scaling parameter. This parameter can range in value between 0 and 1, and recommended values are 0 for mean centering only, 0.5 for Pareto scaling and 1 for unit variance (UV) scaling. The outcome of PCA model will vary based on the scaling method selected, and different scaling functions can be appropriate depending on the data itself and the question being asked of the data, see `van der Berg et al. 2006 <https://www.ncbi.nlm.nih.gov/pubmed/16762068>`_
+One key parameter is 'scaling', which divides each column in the data matrix by its respective standard deviation raised to a power of the scaling parameter. This parameter can range in value between 0 and 1, and recommended values are 0 for mean-centering only, 0.5 for Pareto scaling and 1 for unit variance (UV) scaling. The outcome of PCA model will vary based on the scaling method selected, and different scaling functions can be appropriate depending on the data itself and the question being asked of the data (van der Berg *et al* [#]_).
 
-The default scaling is unit variance (*scaling=1*), which scales every variable to have a variance of one, and thus all variables (despite their different magnitudes) become equally important in the model. For NMR, when smaller variables are more likely to be background noise, it may be that means-centering the data only (*scaling=0*) can be appropriate.
+The default scaling is unit variance (*scaling=1*), which scales every variable to have a variance of one, and thus all variables (despite their different magnitudes) become equally important in the model. For NMR, when smaller variables are more likely to be background noise, it may be that mean-centering the data only (*scaling=0*) can be appropriate.
 
-Each model is cross-validated using 7-fold cross-validation and the recommended number of principal components automatically estimated based on two criteria, when either one of these is met no more components will be added and the PCA model will be returned. There criteria are:
+Each model is cross-validated using 7-fold cross-validation and the recommended number of principal components is automatically estimated based on two criteria, when either one of these is met no more components will be added and the PCA model will be returned. There criteria are:
 
 - *minQ2*: Q2 is the variance predicted by each component (from cross-validation), when adding a component does not improve Q2 by at least this value (default *minQ2=0.05*) then no more components will be added.
 - *maxComponents*: this defines the maximum number of components (default *maxComponents=10*) returned by the model (regardless of Q2 increases).
 
-The main function parameters are as follows:
+If different parameters are required these can be specified as additional input arguments, for example, to generate a PCA model with a maximum of five components::
+
+	PCAmodel = nPYc.multivariate.exploratoryAnalysisPCA(dataset, scaling=1, maxComponents=5)
+
+The main function parameters (which may be of interest to advanced users) are as follows:
 
 .. automodule:: nPYc.multivariate.exploratoryAnalysisPCA
    :members:
@@ -62,7 +66,7 @@ If the variance is not predictable (negative or low Q2) this indicates that the 
 
 **Scores plots coloured by sample type**
 
-The PCA scores represent the new location of the samples in each pricipal component. A typical way to look at these is to plot the scores values in two dimensions, corresponding to pairs of components. Each point in a scores plot therefore represents a sample, with samples close together being more similar to each other, and those further apart being more dissimilar. By colouring by sample type (Figure 2), we can check, firstly, the consistency of the QC samples (SR and LTR) i.e. that they are tightly clustered; and secondly, for the presence of any sample outliers (any samples which are very different to the others).
+The PCA scores represent the new location of the samples in each principal component. A typical way to look at these is to plot the scores values in two dimensions, corresponding to pairs of components. Each point in a scores plot therefore represents a sample, with samples close together being more similar to each other, and those further apart being more dissimilar. By colouring by sample type (Figure 2), we can check, firstly, the consistency of the QC samples (SR and LTR) i.e. that they are tightly clustered; and secondly, for the presence of any sample outliers (any samples which are very different to the others).
 
 .. figure:: _static/multivariate_Fig2_scoresPlotBySampleType.svg
 	:figwidth: 70%
@@ -70,7 +74,7 @@ The PCA scores represent the new location of the samples in each pricipal compon
 	
 	Figure 2. PCA scores plots coloured by sample type.
 
-Outlying study samples in this plot are of interest (does this relate to biology, sample collection etc), but not of particular concern. However, any QC samples with unusual behaviour, or unusual clustering within QC samples, should be checked. Further sections of the multivariate report can help to elucidate if this behaviour may result from an analytical source (see below).
+Outlying study samples in this plot are of interest (does this relate to biology, sample collection etc.), but not of particular concern. However, any QC samples with unusual behaviour, or unusual clustering within QC samples, should be checked. Further sections of the multivariate report can help to elucidate if this behaviour may result from an analytical source (see below).
 
 **Strong sample outliers**
 
@@ -82,7 +86,7 @@ Strong sample outliers are those which are very different from the others, these
 	
 	Figure 3. Distribution in total distance from origin (scores space) by sample type.
 
-Outliers in study samples are common, owing for example, to the presence of strong drug or dietary related signals. If LTR samples are strong outliers this is not a concern, as they may have a significanly different composition to the study samples, similarly SR samples may be overly weighted with very high concentration metabolites in one or more study sample, so may also be located away from the origin.
+Outliers in study samples are common, owing for example, to the presence of strong drug or dietary related signals. If LTR samples are strong outliers this is not a concern, as they may have a significantly different composition to the study samples, similarly SR samples may be overly weighted with very high concentration metabolites in one or more study sample, so may also be located away from the origin.
 
 It would be expected here for all LTR and all SR samples to have roughly the same total distance from origin (although the two groups may be different from each other), as above, any deviation from this should be investigated.
 
@@ -96,23 +100,30 @@ DmodX (also called distance to model) is a measure of how well each sample fits 
 	
 	Figure 4. Distribution in distance from model (DmodX) by sample type.
 
-The interpretation of the DmodX plot is exactly as for the strong sample outliers though, with any deviation from a consistant value for all SR or LTR samples worthy of further investigation.
+The interpretation of the DmodX plot is exactly as for the strong sample outliers though, with any deviation from a consistent value for all SR or LTR samples worthy of further investigation.
 
 **Loadings plots**
 
-The PCA loadings represent the weight of each original feature in forming the new PCA variables (scores). Thus there is a set of loadings (with values corresponding to each original feature) for each component in the model. The loadings can be plotted as for the scores, in pairs, however for improved interpretation here the loadings are plotted for each component separately. For NMR data, this takes the form of a standard (the median) spectrum, with each point coloured by it's relative contribution to that particular component (Figure 5A), and for LC-MS data an ion map similarly coloured by the model loadings (Figure 5B).
+The PCA loadings represent the weight of each original feature in forming the new PCA variables (scores). Thus there is a set of loadings (with values corresponding to each original feature) for each component in the model. The loadings can be plotted as for the scores, in pairs, however for improved interpretation here the loadings are plotted for each component separately. For LC-MS data, this takes the form of an ion map with points coloured by the model loadings (Figure 5A); for NMR data a standard (the median) spectrum, with each point coloured by it's relative contribution to that particular component (Figure 5B); and for targeted datasets points corresponding to each named feature (Figure 5C).
 
-.. figure:: _static/multivariate_Fig5A_NMRloadings.svg
+.. figure:: _static/multivariate_Fig5A_MSloadings.svg
 	:figwidth: 70%
-	:alt: Figure 5A. PCA loadings (NMR).
+	:alt: Figure 5A. PCA loadings (LC-MS datasets).
 	
-	Figure 5A. PCA loadings (NMR).
-	
-.. figure:: _static/multivariate_Fig5B_MSloadings.svg
+	Figure 5A. PCA loadings (LC-MS datasets).
+
+.. figure:: _static/multivariate_Fig5B_NMRloadings.svg
 	:figwidth: 70%
-	:alt: Figure 5B. PCA loadings (LC-MS).
+	:alt: Figure 5B. PCA loadings (NMR datasets).
 	
-	Figure 5B. PCA loadings (LC-MS).
+	Figure 5B. PCA loadings (NMR datasets).
+	
+.. figure:: _static/multivariate_Fig5C_Targetedloadings.svg
+	:figwidth: 70%
+	:alt: Figure 5C. PCA loadings (Targeted datasets).
+	
+	Figure 5C. PCA loadings (Targeted datasets).
+
 
 These plots are useful in showing the regions of the spectrum with the most variance, and, by comparison with the scores plots (Figures 2 and 9-11) useful in determining any relationship to analytical sources (for example, variance in QC samples or association with specific analytical parameters).
 
@@ -140,11 +151,11 @@ Potential associations between the principal components and any analytical param
 	
 	Figure 7. Heatmap of correlation to PCA scores for suitable metadata fields.
 
-These allow a quick assessment of whether any of the largest sources of variance in a dataset may have anayltical sources. By default, any significant associations (correlation > 0.3 or Kruskal-Wallis p-value < 0.05) are plotted (see below), these default values can be amended by setting the "r_threshold" or "kw_threshold" when calling 'multivariateReport'.
+These allow a quick assessment of whether any of the largest sources of variance in a dataset may have analytical sources. By default, any significant associations (correlation > 0.3 or Kruskal-Wallis p-value < 0.05) are plotted (see below), these default values can be amended by setting the "r_threshold" or "kw_threshold" when calling 'multivariateReport'.
 
 **Scores plots coloured by analytical parameters with potential association**
 
-Additionaly for any fields where the correlation or p-value (respectively) exceed the threshold (default thresholds *r_threshold=0.3*, *kw_threshold=0.05*) the PCA scores plots are generated with sample points coloured according to their values for the flagged analytical parameter (in this case *Run Order*):
+Additionally for any fields where the correlation or p-value (respectively) exceed the threshold (default thresholds *r_threshold=0.3*, *kw_threshold=0.05*) the PCA scores plots are generated with sample points coloured according to their values for the flagged analytical parameter (in this case *Run Order*):
 
 .. figure:: _static/multivariate_Fig9_scoresByRunOrder.svg
 	:width: 70%
@@ -155,7 +166,23 @@ Additionaly for any fields where the correlation or p-value (respectively) excee
 		
 This allows quick identification and assessment of any analytical or pre-processing issues, and the subsequent action required depends on the analytical parameter flagged, for example, in this case batch and run-order correction would need to be applied, as there is a strong association with run order in PC3.
 
-The main function parameters are as follows:
+**Further options**
+
+As for the main reports (see :doc:`reports`), there are a number of different options which can be specified by the user if required, some examples of which include::
+
+	# To save as html documents with static images to a specified location ('saveDir'):
+	saveDir = '/path to save outputs'
+	nPYc.reports.multivariateReport(dataset, PCAmodel, destinationPath=saveDir)
+	
+	# To report on only those samples and features not set to be masked from the dataset, NOTE, PCAmodel must be generated with the same exlusion set:
+	PCAmodel = nPYc.multivariate.exploratoryAnalysisPCA(dataset, scaling=1, withExclusions=True)
+	nPYc.reports.multivariateReport(dataset, PCAmodel, withExclusions=True)
+	
+	# To plot scores plots coloured by any analytical parameter with a correlation exceeding 0.4 (default value=0.3, see Figure 9 above):
+	nPYc.reports.multivariateReport(dataset, PCAmodel, r_threshold=0.4)
+	
+
+Full function parameters (which may be of interest to advanced users) are as follows:
 
 .. autoclass:: nPYc.reports.multivariateReport
   :members:
@@ -178,5 +205,5 @@ Similarly a loadings plot for component 2 can be generated using::
 	
 Again, see the :doc:`Plot Gallery<plotsGallery>` for examples.
 
-
+.. [#] Robert A van den Berg, Huub CJ Hoefsloot, Johan A Westerhuis, Age K Smilde and Mariët J van der Werf. Centering, scaling, and transformations: improving the biological information content of metabolomics data. BMC Genomics, 8(7):142, 2006. URL: https://doi.org/10.1186/1471-2164-7-142
 

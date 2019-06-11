@@ -22,8 +22,14 @@ Exports:
 
  - Basic tabular csv
  - [ISA-TAB](http://isa-tools.org)
+ 
+Tutorials:
+ 
+ - Are also available from [nPYc-toolbox-tutorials](https://github.com/phenomecentre/nPYc-toolbox-tutorials), see below.
 
 ## Installation
+
+For full installation instructions see [Installing the nPYc-Toolbox](https://npyc-toolbox.readthedocs.io/en/latest/tutorial.html#installing-the-npyc-toolbox)
 
 To install _via_ [pip](https://pypi.org/project/nPYc/), run:
 
@@ -54,6 +60,13 @@ To build the documentation locally, cd into the `docs` directory and run:
 To clear the current documentation in order to rebuild after making changes, run:
 
     make clean
+
+
+## Tutorials
+
+A repository containing exemplar datasets and Jupyter notebook tutorials to demonstrate the application of the nPYc-Toolbox for the preprocessing and quality control of LC-MS, NMR and targeted NMR (Bruker IVDr) metabolic profiling data is available for download from [nPYc-toolbox-tutorials](https://github.com/phenomecentre/nPYc-toolbox-tutorials). 
+
+For new users, we strongly recommend downloading these tutorials, which provide detailed worked examples with links to relevant documentation.
 
 ## Development
 
