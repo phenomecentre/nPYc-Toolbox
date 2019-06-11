@@ -25,7 +25,7 @@ Exports:
  
 Tutorials:
  
- - Are also available from [nPYc-toolbox-tutorials](https://github.com/phenomecentre/nPYc-toolbox-tutorials), see below.
+ - Available at [nPYc-toolbox-tutorials](https://github.com/phenomecentre/nPYc-toolbox-tutorials), see below.
 
 ## Installation
 
