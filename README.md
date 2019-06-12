@@ -25,7 +25,7 @@ Exports:
  
 Tutorials:
  
- - Are also available from [nPYc-toolbox-tutorials](https://github.com/phenomecentre/nPYc-toolbox-tutorials), see below.
+ - Available at [nPYc-toolbox-tutorials](https://github.com/phenomecentre/nPYc-toolbox-tutorials), see below.
 
 ## Installation
 
@@ -94,8 +94,3 @@ To run all tests, cd into the `Tests` directory and run:
 Individual test modules can be run with:
 
     python -m `test_filename` -v
-
-
-## Standard measures and codings
-
-When stored internally, and unless explicitly overriden, variables should conform to the units laid out in the [Nomenclature](http://npyc-toolbox.readthedocs.io/en/latest/nomenclature.html) of the documentation.
