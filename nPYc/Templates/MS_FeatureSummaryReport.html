@@ -11,16 +11,23 @@
 </div>
 
 <!--Figure 2: Sample intensity TIC and distribution by sample type-->
-<div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;2.</span>  Sample TIC and distribution (coloured by sample type).</p>
-	<img src="{{ item.SampleIntensityFigure }}" alt="Sample TIC and distribution (coloured by sample type).">
-</div>
+<p class="caption"><span class="heading">Figure&nbsp;2.</span> Sample TIC and distribution (coloured by sample type).</p>
+{% if 'SampleIntensityFigure' in item %}
+	<div class='figure'>
+		<img src="{{ item.SampleIntensityFigure }}" alt="Sample TIC and distribution (coloured by sample type).">
+	</div>
+{% else %}
+	<p>Acquisition Time/Run Order data not available to plot.</p>
+{% endif %}
 
-<!--Figure 3: Acquisition structure and detector voltage-->
-<div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;3.</span>  Figure 3: Acquisition structure (coloured by detector voltage).</p>
-	<img src="{{ item.AcquisitionStructureFigure }}" alt="Figure 3: Acquisition structure (coloured by detector voltage).">
-</div>
+<p class="caption"><span class="heading">Figure&nbsp;3.</span> Acquisition structure (coloured by detector voltage).</p>
+{% if 'AcquisitionStructureFigure' in item %}
+	<div class='figure'>
+		<img src="{{ item.AcquisitionStructureFigure }}" alt="Acquisition structure (coloured by detector voltage).">
+	</div>
+{% else %}
+	<p>Acquisition Time/Run Order data not available to plot.</p>
+{% endif %}
 
 <!--Figure 4: Histogram of Spearman correlation to dilution, segmented by abundance percentiles-->
 <p class="caption"><span class="heading">Figure&nbsp;4.</span> Histogram of {{ item.corrMethod }} correlation of features to serial dilution, segmented by percentile.</p>

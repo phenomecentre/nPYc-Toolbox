@@ -10,9 +10,9 @@ There are several functions that modify these internal masks:
 - :py:meth:`~nPYc.objects.Dataset.initialiseMasks` is a method to reset the masks to include all samples/features.
 - :py:meth:`~nPYc.objects.Dataset.applyMasks` is a method to permanently exclude from the dataset all samples and features which have been previously masked. After calling this command the excluded features are deleted and the masks are re-initialised so that all remaining samples and features are unmasked. This method should be used only when it is absolutely certain that the masked features and samples are to be removed, as it is permanent so if samples/features were again required, the full dataset would have to be re-imported.
 
-Further details of each of these methods is given below, and full worked examples of how these are used during the import and preprocessing of specific datasets given in the :doc:`Tutorials<tutorial>`.
+Further details of each of these methods are given below, and full worked examples of how these are used during the import and preprocessing of specific datasets are provided in :doc:`Tutorials<tutorial>`.
 
-In brief, however, the following describes a step-wise example utilising the above functions to generate a feature filtered LC-MS dataset containing only :term:`Study Sample` samples, with a specific sample ('PipelineTesting_RPOS_ToF10_U1W04') excluded::
+In brief, however, the following describes a step-wise example utilising the above functions to generate a feature filtered LC-MS dataset containing only :term:`Study Samples<Study Sample>`, with a specific sample ('PipelineTesting_RPOS_ToF10_U1W04') excluded::
 
 	# To automatically mask features not passing quality control criteria
 	msData.updateMasks(filterFeatures=True, filterSamples=False)

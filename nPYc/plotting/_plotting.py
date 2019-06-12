@@ -229,6 +229,15 @@ def plotTICinteractive(msData, plottype='Sample Type', labelby='Run Order', with
 		tempSampleMask = msData.sampleMask
 	else:
 		tempSampleMask = numpy.ones(shape=msData.sampleMask.shape, dtype=bool)
+
+	# Plot by 'Run Order' if 'Acquired Time' not available
+	if ('Acquired Time' in msData.sampleMetadata.columns):
+		plotby='Acquired Time'
+	elif ('Run Order' in msData.sampleMetadata.columns):
+		plotby = 'Run Order'
+	else:
+		print('Acquired Time/Run Order data (columns in dataset.sampleMetadata) not available to plot')
+		return
 		
 	if plottype=='Sample Type': # Plot TIC for SR samples coloured by batch
 	
@@ -237,7 +246,7 @@ def plotTICinteractive(msData, plottype='Sample Type', labelby='Run Order', with
 		ERmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSampleMask
 	
 		SSplot = go.Scatter(
-			x = msData.sampleMetadata['Acquired Time'][SSmask],
+			x = msData.sampleMetadata[plotby][SSmask],
 			y = tic[SSmask],
 			mode = 'markers',
 			marker = dict(
@@ -250,7 +259,7 @@ def plotTICinteractive(msData, plottype='Sample Type', labelby='Run Order', with
 				)
 
 		SRplot = go.Scatter(
-			x = msData.sampleMetadata['Acquired Time'][SPmask],
+			x = msData.sampleMetadata[plotby][SPmask],
 			y = tic[SPmask],
 			mode = 'markers',
 			marker = dict(
@@ -262,7 +271,7 @@ def plotTICinteractive(msData, plottype='Sample Type', labelby='Run Order', with
 			)
 			
 		LTRplot = go.Scatter(
-			x = msData.sampleMetadata['Acquired Time'][ERmask],
+			x = msData.sampleMetadata[plotby][ERmask],
 			y = tic[ERmask],
 			mode = 'markers',
 			marker = dict(
@@ -274,7 +283,7 @@ def plotTICinteractive(msData, plottype='Sample Type', labelby='Run Order', with
 			)
 		
 		data = [SSplot, SRplot, LTRplot]
-		Xlabel = 'Acquisition Time'
+		Xlabel = plotby
 		title = 'TIC by Sample Type Coloured by Batch'
 	
 	if plottype=='Serial Dilution': # Plot TIC for LR samples coloured by dilution

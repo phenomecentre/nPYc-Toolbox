@@ -29,13 +29,13 @@ Batch *&* run-order correction performance can be assessed on a subset of featur
 	
 	nPYc.reports.generateReport(msData, 'batch correction assessment', batch_correction_window=11)
 
-This report shows the LOWESS fit for a number of features (default 10), and the results of applying such a fit.
+This report shows the LOESS fit for a number of features (default 10), and the results of applying such a fit.
 
 .. figure:: _static/plotBatchAndROCorrection_oneFeature.svg
 	:figwidth: 70%
-	:alt: Example outcome of applying batch and run-order correction to one feature, plot shows an arrow for each sample from the summed intensity (TIC) before to after batch correction, plus the LOWESS fit.
+	:alt: Example outcome of applying batch and run-order correction to one feature, plot shows an arrow for each sample from the summed intensity (TIC) before to after batch correction, plus the LOESS fit.
 	
-	Example outcome of applying batch and run-order correction to one feature, plot shows an arrow for each sample from the summed intensity (TIC) before to after batch correction, plus the LOWESS fit.
+	Example outcome of applying batch and run-order correction to one feature, plot shows an arrow for each sample from the summed intensity (TIC) before to after batch correction, plus the LOESS fit.
 	
 By comparing the results across all surveyed features, the parameters for and necessity of correction can be assessed:
 
