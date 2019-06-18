@@ -85,7 +85,7 @@ The TIC plot shows the summed intensity of all feature integrals for each sample
 
 By plotting the TIC for each sample (ordered by acquisition date) any broad trends in overall sample intensity can be observed. With LC-MS it is usual to see a gradual decline in TIC across the run owing to increasing inefficiencies in ion detection (from source and ion optic contamination), alongside large jumps if data is acquired in multiple batches, both of which can be mitigated (at least in part) by run-order and batch correction (see :doc:`batchAndROCorrection`).
 
-In addition, throughout each experiment, the voltage applied to the MS detector is automatically adjusted to compensate for trends in instrument performance, which, especially when the increments in applied voltage are large, has a noticeable effect on the TIC (Lewis *et al* [1]_). Thus, an additional figure of TIC coloured by detector voltage is provided (see Figure 3 in tutorial).
+With our instrumental set-up (recent generation Waters QToF instruments), we implement an automatic gain control (see Lewis *et al* [1]_). Briefly, throughout each experiment, the voltage applied to the MS detector is automatically adjusted to compensate for trends in instrument performance, which, especially when the increments in applied voltage are large, has a noticeable effect on the total ion count (TIC) of the sample. Although with our current set-up changes in detector voltage are capped and thus this is minimised, this was not always (and may not always be) the case. Therefore, an additional figure of TIC coloured by detector voltage is provided (see Figure 3 in tutorial).
 
 **Correlation to dilution**
 

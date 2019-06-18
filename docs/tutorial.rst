@@ -50,13 +50,15 @@ Jupyter can be opened from the Anaconda navigator (recommended) or from the comm
 - Jupyter notebooks save with the file extension 'ipynb'
 - Click on the required Jupyter notebook example (MS, NMR and targeted NMR examples available, as described below) to open in a new browser window
 - To run the notebook, click through the cells using the 'Run' button
+- Notebooks can be reset and restarted using 'Kernal > Restart & Clear Output'
+- Notebooks can be saved using 'File > Save and Checkpoint' (notebooks can then be shared, and others will be able to view their contents)
 - Full details on using the Jupyter Notebooks can be found here `Jupyter Read the Docs <https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/examples_index.html>`_
 
 **Running your own notebook**
 
-- Run the required the nPYc-toolbox-tutorials (as described above)
-- Select 'File/Make a copy..' to make a copy of the notebook
-- Select 'File/Rename..' to rename the copied notebook
+- Open the required the nPYc-toolbox-tutorials (as described above)
+- Select 'File > Make a copy..' to make a copy of the notebook
+- Select 'File > Rename..' to rename the copied notebook
 - Replace the file paths in the document with your own data path files
 - Run the notebook!
 
