@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='nPYc',
-	version='1.2.0',
+	version='1.2.1',
 	description='National Phenome Centre toolbox',
 	url='https://github.com/phenomecentre/npyc-toolbox',
 	author='National Phenome Centre',
