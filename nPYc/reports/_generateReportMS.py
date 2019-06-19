@@ -248,16 +248,20 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     if hasattr(dataset, 'fit'):
         nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
         if nBatchCorrect == 1:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in 1 batch'
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOWESS regression fitted to SR samples in 1 batch)'
         else:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in ' + str(nBatchCorrect) + ' batches'
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOWESS regression fitted to SR samples in ' + str(nBatchCorrect) + ' batches)'
     else:
         item['batchesCorrect'] =  'Run-order and batch correction not required' 
- 
-    start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
-    end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
-    item['start'] = start.strftime('%d/%m/%y')
-    item['end'] = end.strftime('%d/%m/%y')
+
+    if ('Acquired Time' in dataset.sampleMetadata.columns):
+        start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+        end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+        item['start'] = start.strftime('%d/%m/%y')
+        item['end'] = end.strftime('%d/%m/%y')
+    else:
+        item['start'] = 'unknown'
+        item['end'] = 'unknown'
     
     if not destinationPath:
         print('\nFeature Summary')
@@ -272,38 +276,50 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     # ONLY 'final report': plot TIC by batch and TIC
     if (reportType.lower() == 'final report'):
 
-	    # Figure 1: Acquisition Structure, TIC by sample and batch
-	    if destinationPath:
-	        item['finalTICbatches'] = os.path.join(graphicsPath, item['Name'] + '_finalTICbatches.' + dataset.Attributes['figureFormat'])
-	        saveAs = item['finalTICbatches']
-	    else:
-	        print('Figure ' + str(figNo) + ': Acquisition Structure')
-	        figNo = figNo+1
+        if ('Acquired Time' in dataset.sampleMetadata.columns) and ('Run Order' in dataset.sampleMetadata.columns):
 
-	    plotTIC(dataset,
-	            savePath=saveAs,
-	            addBatchShading=True,
-	            figureFormat=dataset.Attributes['figureFormat'],
-	            dpi=dataset.Attributes['dpi'],
-	            figureSize=dataset.Attributes['figureSize'])
+            # Figure 1: Acquisition Structure, TIC by sample and batch
+            if destinationPath:
+                item['finalTICbatches'] = os.path.join(graphicsPath,
+                                                       item['Name'] + '_finalTICbatches.' + dataset.Attributes[
+                                                           'figureFormat'])
+                saveAs = item['finalTICbatches']
+            else:
+                print('Figure ' + str(figNo) + ': Acquisition Structure')
+                figNo = figNo + 1
 
+            plotTIC(dataset,
+                    savePath=saveAs,
+                    addBatchShading=True,
+                    figureFormat=dataset.Attributes['figureFormat'],
+                    dpi=dataset.Attributes['dpi'],
+                    figureSize=dataset.Attributes['figureSize'])
 
-	    # Figure 2: Final TIC
-	    if destinationPath:
-	        item['finalTIC'] = os.path.join(graphicsPath, item['Name'] + '_finalTIC.' + dataset.Attributes['figureFormat'])
-	        saveAs = item['finalTIC']
-	    else:
-	        print('Figure ' + str(figNo) + ': Total Ion Count (TIC) for all samples and all features in final dataset.')
-	        figNo = figNo+1
+            # Figure 2: Final TIC
+            if destinationPath:
+                item['finalTIC'] = os.path.join(graphicsPath,
+                                                item['Name'] + '_finalTIC.' + dataset.Attributes['figureFormat'])
+                saveAs = item['finalTIC']
+            else:
+                print('Figure ' + str(figNo) + ': Total Ion Count (TIC) for all samples and all features in final dataset.')
+                figNo = figNo + 1
 
-	    plotTIC(dataset,
-	            addViolin=True,
-	            title='',
-	            savePath=saveAs,
-	            figureFormat=dataset.Attributes['figureFormat'],
-	            dpi=dataset.Attributes['dpi'],
-	            figureSize=dataset.Attributes['figureSize'])
+            plotTIC(dataset,
+                    addViolin=True,
+                    title='',
+                    savePath=saveAs,
+                    figureFormat=dataset.Attributes['figureFormat'],
+                    dpi=dataset.Attributes['dpi'],
+                    figureSize=dataset.Attributes['figureSize'])
 
+        else:
+
+            if not destinationPath:
+                print('Figure ' + str(figNo) + ': Acquisition Structure')
+                print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
+                print('Figure ' + str(figNo+1) + ': Total Ion Count (TIC) for all samples and all features in final dataset.')
+                print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
+                figNo = figNo+2
 
 	# Figure: Histogram of RSD in study pool samples
     if destinationPath:
@@ -543,43 +559,53 @@ def _featureReport(dataset, destinationPath=None):
 
     _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
 
-    # Figure 2: Sample intensity TIC and distribution by sample type
-    if destinationPath:
-        item['SampleIntensityFigure'] = os.path.join(graphicsPath, item['Name'] + '_meanIntensitySample.' + dataset.Attributes[
-            'figureFormat'])
-        saveAs = item['SampleIntensityFigure']
+
+    if ('Acquired Time' in dataset.sampleMetadata.columns) and ('Run Order' in dataset.sampleMetadata.columns):
+
+        # Figure 2: Sample intensity TIC and distribution by sample type
+        if destinationPath:
+            item['SampleIntensityFigure'] = os.path.join(graphicsPath, item['Name'] + '_meanIntensitySample.' + dataset.Attributes[
+                'figureFormat'])
+            saveAs = item['SampleIntensityFigure']
+        else:
+            print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
+
+        # TIC all samples
+        plotTIC(dataset,
+                addViolin=True,
+                savePath=saveAs,
+                title='',
+                figureFormat=dataset.Attributes['figureFormat'],
+                dpi=dataset.Attributes['dpi'],
+                figureSize=dataset.Attributes['figureSize'])
+
+        # Figure 3: Acquisition structure and detector voltage
+        if destinationPath:
+            item['AcquisitionStructureFigure'] = os.path.join(graphicsPath,
+                                                              item['Name'] + '_acquisitionStructure.' + dataset.Attributes[
+                                                                  'figureFormat'])
+            saveAs = item['AcquisitionStructureFigure']
+        else:
+            print('Figure 3: Acquisition structure (coloured by detector voltage).')
+
+        # TIC all samples
+        plotTIC(dataset,
+                addViolin=False,
+                addBatchShading=True,
+                addLineAtGaps=True,
+                colourByDetectorVoltage=True,
+                savePath=saveAs,
+                title='',
+                figureFormat=dataset.Attributes['figureFormat'],
+                dpi=dataset.Attributes['dpi'],
+                figureSize=dataset.Attributes['figureSize'])
     else:
-        print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
 
-    # TIC all samples
-    plotTIC(dataset,
-            addViolin=True,
-            savePath=saveAs,
-            title='',
-            figureFormat=dataset.Attributes['figureFormat'],
-            dpi=dataset.Attributes['dpi'],
-            figureSize=dataset.Attributes['figureSize'])
-
-    # Figure 3: Acquisition structure and detector voltage
-    if destinationPath:
-        item['AcquisitionStructureFigure'] = os.path.join(graphicsPath,
-                                                          item['Name'] + '_acquisitionStructure.' + dataset.Attributes[
-                                                              'figureFormat'])
-        saveAs = item['AcquisitionStructureFigure']
-    else:
-        print('Figure 3: Acquisition structure (coloured by detector voltage).')
-
-    # TIC all samples
-    plotTIC(dataset,
-            addViolin=False,
-            addBatchShading=True,
-            addLineAtGaps=True,
-            colourByDetectorVoltage=True,
-            savePath=saveAs,
-            title='',
-            figureFormat=dataset.Attributes['figureFormat'],
-            dpi=dataset.Attributes['dpi'],
-            figureSize=dataset.Attributes['figureSize'])
+        if not destinationPath:
+            print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
+            print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
+            print('Figure 3: Acquisition structure (coloured by detector voltage).')
+            print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
 
     # Correlation to dilution figures:
     if sum(LRmask) != 0:
@@ -946,6 +972,11 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
     """
 
+    # Check that we can plot data
+    if ('Acquired Time' not in dataset.sampleMetadata.columns) and ('Run Order' not in dataset.sampleMetadata.columns):
+        print('\x1b[31;1m Acquired Time/Run Order data (columns in dataset.sampleMetadata) not available to plot\n\033[0;0m')
+        return
+
     # Define sample masks
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
@@ -1153,37 +1184,42 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     _plotAbundanceBySampleType(correctedDataset.intensityData, SSmask, SPmask, ERmask, saveAs, correctedDataset)
 
     # Figure 2: TIC for all samples and features.
+    if ('Acquired Time' in dataset.sampleMetadata.columns) and ('Run Order' in dataset.sampleMetadata.columns):
+        # Pre-correction
+        if destinationPath:
+            item['TicPRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS2_TicPRE.' + dataset.Attributes['figureFormat'])
+            saveAs = item['TicPRE']
+        else:
+            print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
+            print('Pre-correction.')
 
-    # Pre-correction
-    if destinationPath:
-        item['TicPRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS2_TicPRE.' + dataset.Attributes['figureFormat'])
-        saveAs = item['TicPRE']
+        plotTIC(dataset,
+                addViolin=True,
+                title='TIC Pre Batch-Correction',
+                savePath=saveAs,
+                figureFormat=dataset.Attributes['figureFormat'],
+                dpi=dataset.Attributes['dpi'],
+                figureSize=dataset.Attributes['figureSize'])
+
+        # Post-correction
+        if destinationPath:
+            item['TicPOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS2_TicPOST.' + dataset.Attributes['figureFormat'])
+            saveAs = item['TicPOST']
+        else:
+            print('Post-correction.')
+
+        plotTIC(correctedDataset,
+                addViolin=True,
+                title='TIC Post Batch-Correction',
+                savePath=saveAs,
+                figureFormat=dataset.Attributes['figureFormat'],
+                dpi=dataset.Attributes['dpi'],
+                figureSize=dataset.Attributes['figureSize'])
+
     else:
-        print('Sample Total Ion Count (TIC) and distribtion (coloured by sample type).')
-        print('Pre-correction.')
-
-    plotTIC(dataset,
-            addViolin=True,
-            title='TIC Pre Batch-Correction',
-            savePath=saveAs,
-            figureFormat=dataset.Attributes['figureFormat'],
-            dpi=dataset.Attributes['dpi'],
-            figureSize=dataset.Attributes['figureSize'])
-
-    # Post-correction
-    if destinationPath:
-        item['TicPOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS2_TicPOST.' + dataset.Attributes['figureFormat'])
-        saveAs = item['TicPOST']
-    else:
-        print('Post-correction.')
-
-    plotTIC(correctedDataset,
-            addViolin=True,
-            title='TIC Post Batch-Correction',
-            savePath=saveAs,
-            figureFormat=dataset.Attributes['figureFormat'],
-            dpi=dataset.Attributes['dpi'],
-            figureSize=dataset.Attributes['figureSize'])
+        if not destinationPath:
+            print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
+            print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
 
     # Figure 3: Histogram of RSD in study pool (SP) samples, segmented by abundance percentiles.
     

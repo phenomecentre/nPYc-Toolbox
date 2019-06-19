@@ -22,8 +22,14 @@ Exports:
 
  - Basic tabular csv
  - [ISA-TAB](http://isa-tools.org)
+ 
+Tutorials:
+ 
+ - Available at [nPYc-toolbox-tutorials](https://github.com/phenomecentre/nPYc-toolbox-tutorials), see below.
 
 ## Installation
+
+For full installation instructions see [Installing the nPYc-Toolbox](https://npyc-toolbox.readthedocs.io/en/latest/tutorial.html#installing-the-npyc-toolbox)
 
 To install _via_ [pip](https://pypi.org/project/nPYc/), run:
 
@@ -55,6 +61,13 @@ To clear the current documentation in order to rebuild after making changes, run
 
     make clean
 
+
+## Tutorials
+
+A repository containing exemplar datasets and Jupyter notebook tutorials to demonstrate the application of the nPYc-Toolbox for the preprocessing and quality control of LC-MS, NMR and targeted NMR (Bruker IVDr) metabolic profiling data is available for download from [nPYc-toolbox-tutorials](https://github.com/phenomecentre/nPYc-toolbox-tutorials). 
+
+For new users, we strongly recommend downloading these tutorials, which provide detailed worked examples with links to relevant documentation.
+
 ## Development
 
 Source management is [git-flow](http://nvie.com/posts/a-successful-git-branching-model/)-like - no development in the master branch! When making a change, create a fork based on develop, and issue a pull request when ready.
@@ -81,8 +94,3 @@ To run all tests, cd into the `Tests` directory and run:
 Individual test modules can be run with:
 
     python -m `test_filename` -v
-
-
-## Standard measures and codings
-
-When stored internally, and unless explicitly overriden, variables should conform to the units laid out in the [Nomenclature](http://npyc-toolbox.readthedocs.io/en/latest/nomenclature.html) of the documentation.

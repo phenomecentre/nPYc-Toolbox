@@ -16,6 +16,6 @@ An alternative option (*saveFormat=UnifiedCSV*) results in export of a single fi
 
 	dataset.exportDataset(saveFormat='UnifiedCSV', destinationPath=saveDir)
 
-The nPYc toolbox also supports exporting metadata in ISATAB format.
+The nPYc-Toolbox also supports exporting metadata in ISATAB format.
 
 Reports can also be saved to file, see :doc:`reports` for details.

@@ -5,7 +5,7 @@ from ._normaliserABC import Normaliser
 
 class ProbabilisticQuotientNormaliser(Normaliser):
 	"""
-	Normalisation object which performs Probabilistic Quotient normalisation. [pqn]_
+	Normalisation object which performs Probabilistic Quotient normalisation (Dieterle *et al* Analytical Chemistry, 78(13):4281 – 90, 2006)
 
 	:param reference: Source of the reference profile. If ``None``, use the median of **X**, if an int treat as the index of a spectrum in **X** to use as the reference, if an array with same width as X, treat as the reference profile.
 	:type reference: str, int, or numpy.ndarray
@@ -13,7 +13,6 @@ class ProbabilisticQuotientNormaliser(Normaliser):
 	:type referenceDescription: None, or str
 	:param bool keepMagnitude: If ``True`` scales **X** such that the mean area of **X** remains constant for the dataset as a whole.
 
-	.. [pqn] Dieterle, F., Ross, A., Schlotterbeck, G. & Senn, H. Probabilistic quotient normalization as robust method to account for dilution of complex biological mixtures. application in :sup:`1`\ H NMR metabonomics. Analytical Chemistry, 78(13):4281 – 90, 2006.
 	"""
 
 	def __init__(self, reference=None, referenceDescription=None):

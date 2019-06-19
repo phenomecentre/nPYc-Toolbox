@@ -32,7 +32,7 @@
 
 <div class='content'>
 	<p>Samples acquired in {{ item['batchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
-	<p>{{ item['batchesCorrect'] }})</p>
+	<p>{{ item['batchesCorrect'] }}</p>
 	
 	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
 	{{ item['FeatureSelectionTable'].to_html() }}
@@ -40,17 +40,24 @@
 </div>
 
 <!--Figure 1: Sample Acquisition Structure-->
-<div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Sample Acquisition Structure.</p>
-	<img src="{{ item['finalTICbatches'] }}" alt="Sample Acquisition Structure.">
-</div>
-
+<p class="caption"><span class="heading">Figure&nbsp;1.</span> Sample Acquisition Structure.</p>
+{% if 'finalTICbatches' in item %}
+	<div class='figure'>
+		<img src="{{ item['finalTICbatches'] }}" alt="Sample Acquisition Structure.">
+	</div>
+{% else %}
+	<p>Acquired Time/Run Order data not available to plot.</p>
+{% endif %}
 
 <!--Figure 2: TIC for all samples and features passing selection-->
-<div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;2.</span> TIC for all samples and all features in final dataset.</p>
-	<img src="{{ item['finalTIC'] }}" alt="TIC for all samples and all features passing selection.">
-</div>
+<p class="caption"><span class="heading">Figure&nbsp;2.</span> TIC for all samples and all features in final dataset.</p>
+{% if 'finalTIC' in item %}
+	<div class='figure'>
+		<img src="{{ item['finalTIC'] }}" alt="TIC for all samples and all features passing selection.">
+	</div>
+{% else %}
+	<p>Acquired Time/Run Order data not available to plot.</p>
+{% endif %}
 
 <!--Figure 3: Histogram of RSD in study pool samples -->
 <div class='figure'>

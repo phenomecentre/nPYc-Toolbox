@@ -16,16 +16,21 @@
 	<img src="{{ item.FeatureIntensityFigurePOST}}" alt="Post-correction feature intensity histogram.">
 </div>
 
+<!--Figure 2: Sample intensity TIC and distribution by sample type-->
 <h3>Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type)</h3>
-<h3>Pre-correction</h3>
-<div class='figure'>
-	<img src="{{ item.TicPRE}}" alt="Pre-correction TIC for all samples and all features.">
-</div>
+{% if 'TicPRE' in item %}
+	<<h3>Pre-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.TicPRE}}" alt="Pre-correction TIC for all samples and all features.">
+	</div>
 
-<h3>Post-correction</h3>
-<div class='figure'>
-	<img src="{{ item.TicPOST}}" alt="Post-correction TIC for all samples and all features.">
-</div>
+	<h3>Post-correction</h3>
+	<div class='figure'>
+		<img src="{{ item.TicPOST}}" alt="Post-correction TIC for all samples and all features.">
+	</div>
+{% else %}
+	<p>Acquired Time/Run Order data not available to plot.</p>
+{% endif %}
 
 <h3>Figure 3: Histogram of Residual Standard Deviation (RSD) in study reference (SR) samples, segmented by abundance percentiles</h3>
 <h3>Pre-correction</h3>

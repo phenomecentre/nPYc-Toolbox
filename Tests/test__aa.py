@@ -21,7 +21,8 @@ def raiseWarning():
 
 class test__AA__decoy(unittest.TestCase):
 
-	@unittest.expectedFailure
+	#@unittest.expectedFailure
+	@unittest.skip
 	def test__AA(self):
 		dilutionMap = pandas.read_csv(os.path.join('..', 'nPYc', 'StudyDesigns', 'DilutionSeries.csv'))
 		self.assertWarnsRegex(UserWarning, 'You were warned', raiseWarning)

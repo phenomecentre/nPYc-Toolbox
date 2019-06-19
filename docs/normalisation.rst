@@ -11,12 +11,16 @@ By default new :py:class:`~nPYc.objects.Dataset` objects have a :py:class:`~nPYc
 There are three built-in normalisation objects:
 
 - Null normaliser (:py:class:`~nPYc.utilities.normalisation.NullNormaliser`): no normalisation performed
-- Probabilistic quotient normaliser (:py:class:`~nPYc.utilities.normalisation.ProbabilisticQuotientNormaliser`): performs probabilistic quotient normalisation (Dieterle *et al.* [pqn]_ )
+- Probabilistic quotient normaliser (:py:class:`~nPYc.utilities.normalisation.ProbabilisticQuotientNormaliser`): performs probabilistic quotient normalisation (Dieterle *et al.* [#]_ )
 - Total area normaliser (:py:class:`~nPYc.utilities.normalisation.TotalAreaNormaliser`): performs normalisation where each row (sample) is divided by the total sum of its variables (columns)
 
 
 Normalisation Syntax and Parameters
 ===================================
 
+The main function parameters (which may be of interest to advanced users) are as follows:
+
 .. automodule:: nPYc.utilities.normalisation
    :members:
+   
+.. [#] Frank Dieterle, Alfred Ross, Götz Schlotterbeck and Hans Senn. Probabilistic quotient normalization as robust method to account for dilution of complex biological mixtures. application in :sup:`1`\ H NMR metabonomics. Analytical Chemistry, 78(13):4281 – 90, 2006. URL: https://pubs.acs.org/doi/10.1021/ac051632c

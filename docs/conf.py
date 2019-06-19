@@ -53,7 +53,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'nPYc Toolbox'
-copyright = '2018, National Phenome Centre'
+copyright = '2019, National Phenome Centre'
 author = 'National Phenome Centre'
 
 # The version info for the project you're documenting, acts as replacement for
