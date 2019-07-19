@@ -9,6 +9,8 @@ from . import reports
 from . import batchAndROCorrection
 from . import multivariate
 
+import os
+
 path = os.path.realpath(__file__)
 path = os.path.dirname(path)
 path = os.path.join(path, 'VERSION')
