@@ -729,7 +729,7 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 		numpy.testing.assert_array_equal(intensityData, expectedIntesityData)
 		pandas.testing.assert_frame_equal(sampleMetadata, expectedSampleMetadata)
-		pandas.testing.assert_frame_equal(featureMetadata, expectedFeatureMetadata)
+		pandas.testing.assert_frame_equal(featureMetadata, expectedFeatureMetadata, check_like=True)
 
 
 	def test_utilities_importBrukerXML_fails(self):
