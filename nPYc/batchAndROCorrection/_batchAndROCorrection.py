@@ -88,26 +88,6 @@ def _batchCorrectionHead(data, runOrder, referenceSamples, batchList, window=11,
 	:param str method: Correction method, one of 'LOWESS' (default), 'SavitzkyGolay' or None for no correction
 	:param str align: Average calculation of batch and feature intensity for correction, one of 'median' (default) or 'mean'
 	"""
-	# Validate inputs
-	if not isinstance(data, numpy.ndarray):
-		raise TypeError('data must be a numpy array')
-	if not isinstance(runOrder, numpy.ndarray):
-		raise TypeError('runOrder must be a numpy array')
-	if not isinstance(referenceSamples, numpy.ndarray):
-		raise TypeError('referenceSamples must be a numpy array')
-	if not isinstance(batchList, numpy.ndarray):
-		raise TypeError('batchList must be a numpy array')
-	if not isinstance(window, int) & (window>0):
-		raise TypeError('window must be a positive integer')
-	if method is not None:
-		if not isinstance(method, str) & (method in {'LOWESS', 'SavitzkyGolay'}):
-			raise ValueError('method must be == LOWESS or SavitzkyGolay')	
-	if not isinstance(align, str) & (align in {'mean', 'median'}):
-			raise ValueError('align must be == mean or median')
-	if not isinstance(parallelise, bool):
-		raise TypeError('parallelise must be True or False')
-	if not isinstance(savePlots, bool):
-		raise TypeError('savePlots must be True or False')
 
 	# Store paramaters in a dict to avoid arg lists going out of control
 	parameters = dict()
@@ -281,22 +261,28 @@ def doLOESScorrection(QCdata, QCrunorder, data, runorder, window=11):
 	"""
 	Fit a LOWESS regression to the data.
 	"""
-
 	# Convert window number of samples to fraction of the dataset:
 	noSamples = QCrunorder.shape
-	frac = window / float(numpy.squeeze(noSamples))
 
-	# actually do the work
-	z = lowess(QCdata, QCrunorder, frac=frac)
+	if noSamples == 0:
 
-	# Divide by fit, then rescale to batch median
-	fit = interp(runorder, z[:,0], z[:,1])
+		fit = numpy.zeros(shape=runorder.shape)
+		corrected = data
+
+	else:
+		frac = window / float(numpy.squeeze(noSamples))
+		frac = min([1, frac])
+		# actually do the work
+		z = lowess(QCdata, QCrunorder, frac=frac)
+
+		# Divide by fit, then rescale to batch median
+		fit = interp(runorder, z[:,0], z[:,1])
 	
-	# Fit can go negative if too many adjacent QC samples == 0; set any negative fit values to zero
-	fit[fit<0] = 0
+		# Fit can go negative if too many adjacent QC samples == 0; set any negative fit values to zero
+		fit[fit < 0] = 0
 
-	corrected = numpy.divide(data, fit)
-	corrected = numpy.multiply(corrected, numpy.median(QCdata))
+		corrected = numpy.divide(data, fit)
+		corrected = numpy.multiply(corrected, numpy.median(QCdata))
 
 	return (corrected, fit)
 
