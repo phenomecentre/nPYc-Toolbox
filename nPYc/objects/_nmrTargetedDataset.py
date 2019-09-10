@@ -1939,7 +1939,7 @@ class NMRTargetedDataset(Dataset):
         an exception will be thrown listing those.
         2) If the features are different (number and name), it is assumed that both datasets contain the same
         samples and sum of the two objects is meant to add new measurements.
-        For this case, all the Sample File Names must be present in all merged batches.
+        For this case, only the intercept of the Sample File Names will be present in all merged batches.
         The __add__ method will automatically detect which behaviour is applicable and perform the appropriate checks.
         If new samples are added, the intensityData matrix is expected to increase in rows, and the sampleMetadata
         dataframe concatenated,
@@ -1949,13 +1949,8 @@ class NMRTargetedDataset(Dataset):
         :raises ValueError: if the merge object doesn't pass validation
         :raises Warning: to update LOQ using :py:meth:`~NMRTargetedDataset.mergeLimitsOfQuantification`
         """
-
-        # Refactor the logic here - there are 2 possible types of merge - either a new feature is added
-        if self.noFeatures == other.noFeatures:
-            stackSamplesMerge = True
-
-        if self.noSamples != other.noSamples:
-            stackFeaturesMerge = True
+        if ~isinstance(self, NMRTargetedDataset) or ~isinstance(other, NMRTargetedDataset):
+            raise TypeError('Only NMRTargetedDatasets can be merged')
 
         ## Input checks
         # Validate both objects.
@@ -1967,26 +1962,37 @@ class NMRTargetedDataset(Dataset):
         if not validOtherDataset['NMRTargetedDataset']:
             raise ValueError('other does not satisfy to the Basic TargetedDataset definition, '
                              'check with other.validateObject(verbose=True, raiseError=False)')
-        ## Attributes
-        if self.Attributes['methodName'] != other.Attributes['methodName']:
-            raise ValueError(
-                'Cannot concatenate different targeted methods: \'' + self.Attributes['methodName'] + '\' and \'' +
-                other.Attributes['methodName'] + '\'')
 
-        if stackSamplesMerge:
-            pass
+        # Refactor the logic here - there are 2 possible types of merge - either a new feature is added
+        if self.noFeatures == other.noFeatures:
+            stackSamplesMerge = True
 
-        elif stackFeaturesMerge:
-            #  Warning if duplicate 'Sample File Name' in sampleMetadata
             u_ids, u_counts = numpy.unique(
                 pandas.concat([self.sampleMetadata['Sample File Name'], other.sampleMetadata['Sample File Name']],
                               ignore_index=True, sort=False), return_counts=True)
-        if any(u_counts > 1):
-            warnings.warn('Warning: The following \'Sample File Name\' are present more than once: ' + str(
-                u_ids[u_counts > 1].tolist()))
+            if any(u_counts > 1):
+                raise ValueError('Warning: The following \'Sample File Name\' are present in both dataframes: ' + str(
+                    u_ids[u_counts > 1].tolist()))
+            if ~self.featureMetadata.equals(other.featureMetadata):
+                raise ValueError('The same number of features must ')
+
+        if self.noSamples != other.noSamples:
+            stackFeaturesMerge = True
+
+            u_ids, u_counts = numpy.unique(
+                pandas.concat([self.featureMetadata['Feature Name'], other.featureMetadata['Feature Name']],
+                              ignore_index=True, sort=False), return_counts=True)
+            if any(u_counts > 1):
+                raise ValueError('Warning: The following \'Feature Name\' are present in both dataframes: ' + str(
+                    u_ids[u_counts > 1].tolist()))
+
+            # Count and list the unique samples which will be left during the merge
+            if u_counts > max(self.noSamples, other.noSamples):
+                warnings.warn('Warning: The following \'Sample File Name\' are present in only one dataframes: ' + str(
+                    u_ids[u_counts > 1].tolist()))
 
 
-        ## Initialise an empty TargetedDataset to overwrite
+        # Initialise an empty TargetedDataset to overwrite
         targetedData = NMRTargetedDataset(datapath='', fileType='empty')
 
         # copy from the first (mainly dataset parameters, methodName, chromatography and ionisation)
@@ -2013,117 +2019,125 @@ class NMRTargetedDataset(Dataset):
         targetedData.filePath = flatten([self.filePath, other.filePath]) # what to do with this for NMR ??
 
         if stackSamplesMerge:
-            ## sampleMetadata
-            tmpSampleMetadata1 = copy.deepcopy(self.sampleMetadata)
-            tmpSampleMetadata2 = copy.deepcopy(other.sampleMetadata)
-            # reindex the 'Batch' value across both targetedDataset (self starts at 1, other at max(self)+1)
-            tmpSampleMetadata1['Batch'], batchChangeSelf = reNumber(tmpSampleMetadata1['Batch'], 1)
-            tmpSampleMetadata2['Batch'], batchChangeOther = reNumber(tmpSampleMetadata2['Batch'],
-                                                                     tmpSampleMetadata1['Batch'].values.max() + 1)
+            # sampleMetadata is concatenated
             # Concatenate samples and reinitialise index
-            sampleMetadata = pandas.concat([tmpSampleMetadata1, tmpSampleMetadata2], ignore_index=True, sort=False)
+            sampleMetadata = pandas.concat([self.sampleMetadata, other.sampleMetadata], ignore_index=True, sort=False)
+
             # Update Run Order
-            sampleMetadata['Order'] = sampleMetadata.sort_values(by='Acquired Time').index
-            sampleMetadata['Run Order'] = sampleMetadata.sort_values(by='Order').index
-            sampleMetadata.drop('Order', axis=1, inplace=True)
+            if 'Acquired Time' in sampleMetadata.columns:
+                sampleMetadata['Order'] = sampleMetadata.sort_values(by='Acquired Time').index
+                sampleMetadata['Run Order'] = sampleMetadata.sort_values(by='Order').index
+                sampleMetadata.drop('Order', axis=1, inplace=True)
+            else:
+                # If there is no way to remake a coherent run order then it is set to nan
+
+                sampleMetadata['Run Order'] = numpy.nan
+        elif stackFeaturesMerge:
+            # sampleMetadata is concatenated
+            # Concatenate samples and reinitialise index
+            sampleMetadata = pandas.concat([self.sampleMetadata, other.sampleMetadata], ignore_index=True, sort=False)
+
+            # Update Run Order - set to nan as when multiple measurements are merged check if identical otherwise remove
+            sampleMetadata['Run Order'] = numpy.nan
             # new sampleMetadata
-            targetedData.sampleMetadata = copy.deepcopy(sampleMetadata)
 
-            ## featureMetadata
-            ## Merge feature list on the common columns imposed by the targeted SOP employed.
-            # All other columns have a '_batchX' suffix amended for traceability. (use the min original 'Batch' for that targetedDataset)
-            # From that point onward no variable should exist without a '_batchX'
-            # Apply to '_batchX' the batchChangeSelf and batchChangeOther to align it with the 'Batch'
-            mergeCol = ['Feature Name', 'calibrationMethod', 'quantificationType', 'Unit']
-            mergeCol.extend(self.Attributes['externalID'])
-            # additionalQuantParamColumns if present are expected to be identical across batch
-            if 'additionalQuantParamColumns' in targetedData.Attributes.keys():
-                for col in targetedData.Attributes['additionalQuantParamColumns']:
-                    if (col in self.featureMetadata.columns) and (col in other.featureMetadata.columns) and (
-                            col not in mergeCol):
-                        mergeCol.append(col)
-            # take each dataset featureMetadata column names, modify them and rename columns
-            tmpFeatureMetadata1 = copy.deepcopy(self.featureMetadata)
-            updatedCol1 = batchListReNumber(tmpFeatureMetadata1.columns.tolist(), batchChangeSelf, mergeCol)
-            tmpFeatureMetadata1.columns = updatedCol1
-            tmpFeatureMetadata2 = copy.deepcopy(other.featureMetadata)
-            updatedCol2 = batchListReNumber(tmpFeatureMetadata2.columns.tolist(), batchChangeOther, mergeCol)
-            tmpFeatureMetadata2.columns = updatedCol2
-            # Merge featureMetadata on the mergeCol, no columns with identical name exist
-            tmpFeatureMetadata = tmpFeatureMetadata1.merge(tmpFeatureMetadata2, how='outer', on=mergeCol, left_on=None,
-                                                       right_on=None, left_index=False, right_index=False, sort=False,
-                                                       copy=True, indicator=False)
-            targetedData.featureMetadata = copy.deepcopy(tmpFeatureMetadata)
+        targetedData.sampleMetadata = copy.deepcopy(sampleMetadata)
 
-            ## featureMetadataNotExported
-            # add _batchX to the column names to exclude. The expected columns are 'mergeCol' from featureMetadata. No modification for sampleMetadataNotExported which has been copied with the other Attributes (and is an SOP parameter)
-            notExportedSelf = batchListReNumber(self.Attributes['featureMetadataNotExported'], batchChangeSelf, mergeCol)
-            notExportedOther = batchListReNumber(other.Attributes['featureMetadataNotExported'], batchChangeOther, mergeCol)
-            targetedData.Attributes['featureMetadataNotExported'] = list(set().union(notExportedSelf, notExportedOther))
+        ## featureMetadata
+        ## Merge feature list on the common columns imposed by the targeted SOP employed.
+        # All other columns have a '_batchX' suffix amended for traceability. (use the min original 'Batch' for that targetedDataset)
+        # From that point onward no variable should exist without a '_batchX'
+        # Apply to '_batchX' the batchChangeSelf and batchChangeOther to align it with the 'Batch'
+        mergeCol = ['Feature Name', 'calibrationMethod', 'quantificationType', 'Unit']
+        mergeCol.extend(self.Attributes['externalID'])
+        # additionalQuantParamColumns if present are expected to be identical across batch
+        if 'additionalQuantParamColumns' in targetedData.Attributes.keys():
+            for col in targetedData.Attributes['additionalQuantParamColumns']:
+                if (col in self.featureMetadata.columns) and (col in other.featureMetadata.columns) and (
+                        col not in mergeCol):
+                    mergeCol.append(col)
+        # take each dataset featureMetadata column names, modify them and rename columns
+        tmpFeatureMetadata1 = copy.deepcopy(self.featureMetadata)
+        updatedCol1 = batchListReNumber(tmpFeatureMetadata1.columns.tolist(), batchChangeSelf, mergeCol)
+        tmpFeatureMetadata1.columns = updatedCol1
+        tmpFeatureMetadata2 = copy.deepcopy(other.featureMetadata)
+        updatedCol2 = batchListReNumber(tmpFeatureMetadata2.columns.tolist(), batchChangeOther, mergeCol)
+        tmpFeatureMetadata2.columns = updatedCol2
+        # Merge featureMetadata on the mergeCol, no columns with identical name exist
+        tmpFeatureMetadata = tmpFeatureMetadata1.merge(tmpFeatureMetadata2, how='outer', on=mergeCol, left_on=None,
+                                                    right_on=None, left_index=False, right_index=False, sort=False,
+                                                    copy=True, indicator=False)
+        targetedData.featureMetadata = copy.deepcopy(tmpFeatureMetadata)
 
-            ## _intensityData
-            # samples are simply concatenated, but features are merged. Reproject each dataset on the merge feature list before concatenation.
-            # init with nan
-            intensityData1 = numpy.full([self._intensityData.shape[0], targetedData.featureMetadata.shape[0]], numpy.nan)
-            intensityData2 = numpy.full([other._intensityData.shape[0], targetedData.featureMetadata.shape[0]], numpy.nan)
-            # iterate over the merged features
-            for i in range(targetedData.featureMetadata.shape[0]):
-                featureName = targetedData.featureMetadata.loc[i, 'Feature Name']
-                featurePosition1 = self.featureMetadata['Feature Name'] == featureName
-                featurePosition2 = other.featureMetadata['Feature Name'] == featureName
-                if sum(featurePosition1) == 1:
-                    intensityData1[:, i] = self._intensityData[:, featurePosition1].ravel()
-                elif sum(featurePosition1) > 1:
-                    raise ValueError('Duplicate feature name in first input: ' + featureName)
-                if sum(featurePosition2) == 1:
-                    intensityData2[:, i] = other._intensityData[:, featurePosition2].ravel()
-                elif sum(featurePosition2) > 1:
-                    raise ValueError('Duplicate feature name in second input: ' + featureName)
-            intensityData = numpy.concatenate([intensityData1, intensityData2], axis=0)
-            targetedData._intensityData = copy.deepcopy(intensityData)
+        ## featureMetadataNotExported
+        # add _batchX to the column names to exclude. The expected columns are 'mergeCol' from featureMetadata. No modification for sampleMetadataNotExported which has been copied with the other Attributes (and is an SOP parameter)
+        notExportedSelf = batchListReNumber(self.Attributes['featureMetadataNotExported'], batchChangeSelf, mergeCol)
+        notExportedOther = batchListReNumber(other.Attributes['featureMetadataNotExported'], batchChangeOther, mergeCol)
+        targetedData.Attributes['featureMetadataNotExported'] = list(set().union(notExportedSelf, notExportedOther))
 
-            ## Masks
-            targetedData.initialiseMasks()
+        ## _intensityData
+        # samples are simply concatenated, but features are merged. Reproject each dataset on the merge feature list before concatenation.
+        # init with nan
+        intensityData1 = numpy.full([self._intensityData.shape[0], targetedData.featureMetadata.shape[0]], numpy.nan)
+        intensityData2 = numpy.full([other._intensityData.shape[0], targetedData.featureMetadata.shape[0]], numpy.nan)
+        # iterate over the merged features
+        for i in range(targetedData.featureMetadata.shape[0]):
+            featureName = targetedData.featureMetadata.loc[i, 'Feature Name']
+            featurePosition1 = self.featureMetadata['Feature Name'] == featureName
+            featurePosition2 = other.featureMetadata['Feature Name'] == featureName
+            if sum(featurePosition1) == 1:
+                intensityData1[:, i] = self._intensityData[:, featurePosition1].ravel()
+            elif sum(featurePosition1) > 1:
+                raise ValueError('Duplicate feature name in first input: ' + featureName)
+            if sum(featurePosition2) == 1:
+                intensityData2[:, i] = other._intensityData[:, featurePosition2].ravel()
+            elif sum(featurePosition2) > 1:
+                raise ValueError('Duplicate feature name in second input: ' + featureName)
+        intensityData = numpy.concatenate([intensityData1, intensityData2], axis=0)
+        targetedData._intensityData = copy.deepcopy(intensityData)
 
-            # sampleMask
-            targetedData.sampleMask = numpy.concatenate([self.sampleMask, other.sampleMask], axis=0)
+        ## Masks
+        targetedData.initialiseMasks()
 
-            # featureMask
-            # if featureMask agree in both, keep that value. Otherwise let the default True value. If feature exist only in one, use that value.
-            if (sum(~self.featureMask) != 0) | (sum(~other.featureMask) != 0):
-                warnings.warn(
-                    "Warning: featureMask are not empty, they will be merged. If both featureMasks do not agree, the default \'True\' value will be set. If the feature is only present in one dataset, the corresponding featureMask value will be kept.")
-            for i in range(targetedData.featureMetadata.shape[0]):
-                featureName = targetedData.featureMetadata.loc[i, 'Feature Name']
-                featurePosition1 = self.featureMetadata['Feature Name'] == featureName
-                featurePosition2 = other.featureMetadata['Feature Name'] == featureName
-                # if both exist
-                if (sum(featurePosition1) == 1) & (sum(featurePosition2) == 1):
-                    # only False if both are False (otherwise True, same as default)
-                    targetedData.featureMask[i] = self.featureMask[featurePosition1] | other.featureMask[featurePosition2]
-                # if feature only exist in first input
-                elif sum(featurePosition1 == 1):
-                    targetedData.featureMask[i] = self.featureMask[featurePosition1]
-                # if feature only exist in second input
-                elif sum(featurePosition2 == 1):
-                    targetedData.featureMask[i] = other.featureMask[featurePosition2]
+        # sampleMask
+        targetedData.sampleMask = numpy.concatenate([self.sampleMask, other.sampleMask], axis=0)
 
-            ## Excluded data with applyMask()
-            # attribute doesn't exist the first time. From one round of __add__ onward the attribute is created and the length matches the number and order of 'Batch'
-            if hasattr(self, 'sampleMetadataExcluded') & hasattr(other, 'sampleMetadataExcluded'):
-                targetedData.sampleMetadataExcluded = concatenateList(self.sampleMetadataExcluded,
+        # featureMask
+        # if featureMask agree in both, keep that value. Otherwise let the default True value. If feature exist only in one, use that value.
+        if (sum(~self.featureMask) != 0) | (sum(~other.featureMask) != 0):
+            warnings.warn(
+                "Warning: featureMask are not empty, they will be merged. If both featureMasks do not agree, the default \'True\' value will be set. If the feature is only present in one dataset, the corresponding featureMask value will be kept.")
+        for i in range(targetedData.featureMetadata.shape[0]):
+            featureName = targetedData.featureMetadata.loc[i, 'Feature Name']
+            featurePosition1 = self.featureMetadata['Feature Name'] == featureName
+            featurePosition2 = other.featureMetadata['Feature Name'] == featureName
+            # if both exist
+            if (sum(featurePosition1) == 1) & (sum(featurePosition2) == 1):
+                # only False if both are False (otherwise True, same as default)
+                targetedData.featureMask[i] = self.featureMask[featurePosition1] | other.featureMask[featurePosition2]
+            # if feature only exist in first input
+            elif sum(featurePosition1 == 1):
+                targetedData.featureMask[i] = self.featureMask[featurePosition1]
+            # if feature only exist in second input
+            elif sum(featurePosition2 == 1):
+                targetedData.featureMask[i] = other.featureMask[featurePosition2]
+
+        ## Excluded data with applyMask()
+        # attribute doesn't exist the first time. From one round of __add__ onward the attribute is created and the length matches the number and order of 'Batch'
+        if hasattr(self, 'sampleMetadataExcluded') & hasattr(other, 'sampleMetadataExcluded'):
+            targetedData.sampleMetadataExcluded = concatenateList(self.sampleMetadataExcluded,
                                                                       other.sampleMetadataExcluded)
-                targetedData.featureMetadataExcluded = concatenateList(self.featureMetadataExcluded,
-                                                                       other.featureMetadataExcluded)
-                targetedData.intensityDataExcluded = concatenateList(self.intensityDataExcluded,
-                                                                     other.intensityDataExcluded)
-                targetedData.excludedFlag = concatenateList(self.excludedFlag, other.excludedFlag)
-                # add expectedConcentrationExcluded here too!
-            elif hasattr(self, 'sampleMetadataExcluded'):
-                targetedData.sampleMetadataExcluded = concatenateList(self.sampleMetadataExcluded, [])
-                targetedData.featureMetadataExcluded = concatenateList(self.featureMetadataExcluded, [])
-                targetedData.intensityDataExcluded = concatenateList(self.intensityDataExcluded, [])
-                targetedData.excludedFlag = concatenateList(self.excludedFlag, [])
+            targetedData.featureMetadataExcluded = concatenateList(self.featureMetadataExcluded,
+                                                                   other.featureMetadataExcluded)
+            targetedData.intensityDataExcluded = concatenateList(self.intensityDataExcluded,
+                                                                 other.intensityDataExcluded)
+            targetedData.excludedFlag = concatenateList(self.excludedFlag, other.excludedFlag)
+            # add expectedConcentrationExcluded here too!
+        elif hasattr(self, 'sampleMetadataExcluded'):
+            targetedData.sampleMetadataExcluded = concatenateList(self.sampleMetadataExcluded, [])
+            targetedData.featureMetadataExcluded = concatenateList(self.featureMetadataExcluded, [])
+            targetedData.intensityDataExcluded = concatenateList(self.intensityDataExcluded, [])
+            targetedData.excludedFlag = concatenateList(self.excludedFlag, [])
         elif hasattr(other, 'sampleMetadataExcluded'):
             targetedData.sampleMetadataExcluded = concatenateList([], other.sampleMetadataExcluded)
             targetedData.featureMetadataExcluded = concatenateList([], other.featureMetadataExcluded)
