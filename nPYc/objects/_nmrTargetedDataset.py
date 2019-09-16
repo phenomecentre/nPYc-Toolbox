@@ -748,119 +748,6 @@ class NMRTargetedDataset(Dataset):
         else:
             super()._matchDatasetToLIMS(pathToLIMSfile)
 
-    def accuracyPrecision(self, onlyPrecisionReferences=False):
-        """
-        Return Precision (percent RSDs) and Accuracy for each SampleType and each unique concentration.
-        Statistic grouped by SampleType, Feature and unique concentration.
-
-        :param TargetedDataset dataset: TargetedDataset object to generate the accuracy and precision for.
-        :param bool onlyPrecisionReference: If ``True`` only use samples with the `AssayRole` PrecisionReference.
-        :returns: Dict of Accuracy and Precision dict for each group.
-        :rtype: dict(str:dict(str:pandas.DataFrame))
-        :raises TypeError: if dataset is not an instance of TargetedDataset
-        """
-
-        def calcAccuracy(measuredConc, expectedConc):
-            """
-            Calculate the accuracy of measurement for a column of data.
-            accuracy = (mean(measuredConcentration)/expectedConcentration)*100
-
-            :param numpy.ndarray measuredConc: *n* by 1 numpy array of data, with a single feature in column, and samples in rows
-            :param float expectedConc: expected concentration
-            :return: accuracy value
-            :rtype: float
-            """
-            accuracy = (numpy.mean(measuredConc) / expectedConc) * 100
-            return accuracy
-
-        def calcPrecision(measuredConc):
-            """
-            Calculate the precision of measurement (percent RSD) for a column of data.
-            Allow for -inf, inf values in input.
-
-            :param numpy.ndarray measuredConc: *n* by 1 numpy array of data, with a single feature in column, and samples in rows
-            :return: precisin value
-            :rtype: float
-            """
-            std = numpy.std(measuredConc)
-            rsd = (std / numpy.mean(measuredConc)) * 100
-            if numpy.isnan(rsd):
-                rsd = numpy.inf
-            return rsd
-
-        # if not isinstance(dataset, TargetedDataset):
-        #    raise TypeError('dataset must be an instance of TargetedDataset.')
-
-        # Init
-        accuracy = dict()
-        precision = dict()
-
-        # Restrict to PrecisionReference if necessary
-        if onlyPrecisionReferences:
-            startMask = (self.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-        else:
-            startMask = numpy.squeeze(numpy.ones([self.sampleMetadata.shape[0], 1], dtype=bool), axis=1)
-
-        # Unique concentrations
-        uniqueConc = pandas.unique(self.expectedConcentration.loc[startMask, :].values.ravel()).tolist()
-        uniqueConc = sorted([x for x in uniqueConc if str(x) != 'nan'])
-
-        # Each SampleType
-        sampleTypes = self.sampleMetadata['SampleType'].unique()
-        for sampleType in sampleTypes:
-            # init
-            acc = pandas.DataFrame(numpy.full([len(uniqueConc), self.featureMetadata.shape[0]], numpy.nan),
-                                   index=uniqueConc, columns=self.featureMetadata['Feature Name'].values)
-            prec = pandas.DataFrame(numpy.full([len(uniqueConc), self.featureMetadata.shape[0]], numpy.nan),
-                                    index=uniqueConc, columns=self.featureMetadata['Feature Name'].values)
-            # Restrict to sampleType
-            # Allow for the case where sampleType is not defined
-            if pandas.isnull(sampleType):
-                sampleTypeMask = numpy.logical_and(startMask, self.sampleMetadata['SampleType'].isnull())
-            else:
-                sampleTypeMask = numpy.logical_and(startMask, self.sampleMetadata['SampleType'].values == sampleType)
-            # Each feature
-            for feat in self.featureMetadata['Feature Name'].tolist():
-                # Each unique concentrations
-                for conc in uniqueConc:
-                    # Restrict to concentration
-                    mask = numpy.logical_and(sampleTypeMask, self.expectedConcentration[feat].values == conc)
-                    # minimum of samples
-                    if sum(mask) < 2:
-                        continue
-                    # fill accuracy/precision df
-                    featID = (self.featureMetadata['Feature Name'] == feat).values
-                    acc.loc[conc, feat] = calcAccuracy(self.intensityData[mask, featID], conc)
-                    prec.loc[conc, feat] = calcPrecision(self.intensityData[mask, featID])
-            # Store accuracy/precision + clean empty rows
-            accuracy[sampleType] = acc.dropna(axis=0, how='all')
-            precision[sampleType] = prec.dropna(axis=0, how='all')
-
-        # All samples
-        acc = pandas.DataFrame(numpy.full([len(uniqueConc), self.featureMetadata.shape[0]], numpy.nan),
-                               index=uniqueConc, columns=self.featureMetadata['Feature Name'].values)
-        prec = pandas.DataFrame(numpy.full([len(uniqueConc), self.featureMetadata.shape[0]], numpy.nan),
-                                index=uniqueConc, columns=self.featureMetadata['Feature Name'].values)
-        # Each feature
-        for feat in self.featureMetadata['Feature Name'].tolist():
-            # Each unique concentrations
-            for conc in uniqueConc:
-                # Restrict to concentration
-                mask = numpy.logical_and(startMask, self.expectedConcentration[feat].values == conc)
-                # minimum of samples
-                if sum(mask) < 2:
-                    continue
-                # fill accuracy/precision df
-                featID = (self.featureMetadata['Feature Name'] == feat).values
-                acc.loc[conc, feat] = calcAccuracy(self.intensityData[mask, featID], conc)
-                prec.loc[conc, feat] = calcPrecision(self.intensityData[mask, featID])
-        # Store accuracy/precision
-        accuracy['All Samples'] = acc.dropna(axis=0, how='all')
-        precision['All Samples'] = prec.dropna(axis=0, how='all')
-
-        # Output
-        return {'Accuracy': accuracy, 'Precision': precision}
-
     def validateObject(self, verbose=True, raiseError=False, raiseWarning=True):
         """
         Checks that all the attributes specified in the class definition are present and of the required class and/or values.
@@ -975,6 +862,7 @@ class NMRTargetedDataset(Dataset):
             if verb:
                 print(msg)
             return (allFailures)
+        ## ??
 
         ## init
         failureListBasic = []
@@ -985,8 +873,6 @@ class NMRTargetedDataset(Dataset):
         refNumFeatures = None
         # reference ['Feature Name'], from featureMetadata
         refFeatureName = None
-        # reference number of calibration samples, from calibration['calibIntensityData']
-        refNumCalibSamples = None
         # reference number of exclusions in list, from sampleMetadataExcluded
         refNumExcluded = None
 
@@ -995,7 +881,7 @@ class NMRTargetedDataset(Dataset):
             ## Check object class
             condition = isinstance(self, NMRTargetedDataset)
             success = 'Check Object class:\tOK'
-            failure = 'Check Object class:\tFailure, not TargetedDataset, but ' + str(type(self))
+            failure = 'Check Object class:\tFailure, not NMRTargetedDataset, but ' + str(type(self))
             failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
                                              raiseWarning, exception=TypeError(failure))
 
@@ -1239,21 +1125,7 @@ class NMRTargetedDataset(Dataset):
                     if verbose:
                         print('---- self.featureMetadata[\'Feature Name\'] used as Feature Name reference ----')
                 # end self.featureMetadata['Feature Name']
-                # ['calibrationMethod']
-                condition = ('calibrationMethod' in self.featureMetadata.columns)
-                success = 'Check self.featureMetadata[\'calibrationMethod\'] exists:\tOK'
-                failure = 'Check self.featureMetadata[\'calibrationMethod\'] exists:\tFailure, \'self.featureMetadata\' lacks a \'calibrationMethod\' column'
-                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                 raiseWarning, exception=LookupError(failure))
-                if condition:
-                    # featureMetadata['calibrationMethod'] is an enum 'CalibrationMethod'
-                    condition = isinstance(self.featureMetadata['calibrationMethod'][0], CalibrationMethod)
-                    success = 'Check self.featureMetadata[\'calibrationMethod\'] is an enum \'CalibrationMethod\':\tOK'
-                    failure = 'Check self.featureMetadata[\'calibrationMethod\'] is an enum \'CalibrationMethod\':\tFailure, \'self.featureMetadata[\'calibrationMethod\']\' is ' + str(
-                        type(self.featureMetadata['calibrationMethod'][0]))
-                    failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                     raiseWarning, exception=TypeError(failure))
-                # end self.featureMetadata['calibrationMethod']
+
                 # ['quantificationType']
                 condition = ('quantificationType' in self.featureMetadata.columns)
                 success = 'Check self.featureMetadata[\'quantificationType\'] exists:\tOK'
@@ -1284,50 +1156,7 @@ class NMRTargetedDataset(Dataset):
                     failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
                                                      raiseWarning, exception=TypeError(failure))
                 # end self.featureMetadata['Unit']
-                # ['LLOQ']
-                tmpLLOQMatch = self.featureMetadata.columns.to_series().str.contains('LLOQ')
-                condition = (sum(tmpLLOQMatch) > 0)
-                success = 'Check self.featureMetadata[\'LLOQ\'] or similar exists:\tOK'
-                failure = 'Check self.featureMetadata[\'LLOQ\'] or similar exists:\tFailure, \'self.featureMetadata\' lacks a \'LLOQ\' or \'LLOQ_batch\' column'
-                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                 raiseWarning, exception=LookupError(failure))
-                if condition:
-                    # featureMetadata['LLOQ'] is a float, try on first found
-                    condition = ((self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype == numpy.dtype(
-                        numpy.floating)) | (self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype == numpy.dtype(
-                        numpy.int32)) | (self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype == numpy.dtype(
-                        numpy.int64)))
-                    success = 'Check self.featureMetadata[\'' + str(
-                        self.featureMetadata.columns[tmpLLOQMatch][0]) + '\'] is int or float:\tOK'
-                    failure = 'Check self.featureMetadata[\'' + str(self.featureMetadata.columns[tmpLLOQMatch][
-                                                                        0]) + '\'] is int or float:\tFailure, \'self.featureMetadata[\'' + str(
-                        self.featureMetadata.columns[tmpLLOQMatch][0]) + '\']\' is ' + str(
-                        self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype)
-                    failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                     raiseWarning, exception=TypeError(failure))
-                # end self.featureMetadata['LLOQ']
-                # ['ULOQ']
-                tmpULOQMatch = self.featureMetadata.columns.to_series().str.contains('ULOQ')
-                condition = (sum(tmpULOQMatch) > 0)
-                success = 'Check self.featureMetadata[\'ULOQ\'] or similar exists:\tOK'
-                failure = 'Check self.featureMetadata[\'ULOQ\'] or similar exists:\tFailure, \'self.featureMetadata\' lacks a \'ULOQ\' or \'ULOQ_batch\' column'
-                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                 raiseWarning, exception=LookupError(failure))
-                if condition:
-                    # featureMetadata['ULOQ'] is a float, try on first found
-                    condition = ((self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype == numpy.dtype(
-                        numpy.floating)) | (self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype == numpy.dtype(
-                        numpy.int32)) | (self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype == numpy.dtype(
-                        numpy.int64)))
-                    success = 'Check self.featureMetadata[\'' + str(
-                        self.featureMetadata.columns[tmpULOQMatch][0]) + '\'] is int or float:\tOK'
-                    failure = 'Check self.featureMetadata[\'' + str(self.featureMetadata.columns[tmpULOQMatch][
-                                                                        0]) + '\'] is int or float:\tFailure, \'self.featureMetadata[\'' + str(
-                        self.featureMetadata.columns[tmpULOQMatch][0]) + '\']\' is ' + str(
-                        self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype)
-                    failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                     raiseWarning, exception=TypeError(failure))
-                # end self.featureMetadata['ULOQ']
+
                 # 'externalID' in featureMetadata columns (need externalID to exist)
                 if 'externalID' in self.Attributes:
                     if isinstance(self.Attributes['externalID'], list):
@@ -1339,51 +1168,6 @@ class NMRTargetedDataset(Dataset):
                 # end 'externalID' columns
             # end self.featureMetadata number of features
             # end self.featureMetadata
-
-            ## self.expectedConcentration
-            # exist
-            condition = hasattr(self, 'expectedConcentration')
-            success = 'Check self.expectedConcentration exists:\tOK'
-            failure = 'Check self.expectedConcentration exists:\tFailure, no attribute \'self.expectedConcentration\''
-            failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                             raiseWarning, exception=AttributeError(failure))
-            if condition:
-                # is a pandas.DataFrame
-                condition = isinstance(self.expectedConcentration, pandas.DataFrame)
-                success = 'Check self.expectedConcentration is a pandas.DataFrame:\tOK'
-                failure = 'Check self.expectedConcentration is a pandas.DataFrame:\tFailure, \'self.expectedConcentration\' is ' + str(
-                    type(self.expectedConcentration))
-                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                 raiseWarning, exception=TypeError(failure))
-                if condition:
-                    # number of samples
-                    condition = (self.expectedConcentration.shape[0] == refNumSamples)
-                    success = 'Check self.expectedConcentration number of samples (rows):\tOK'
-                    failure = 'Check self.expectedConcentration number of samples (rows):\tFailure, \'self.expectedConcentration\' has ' + str(
-                        self.expectedConcentration.shape[0]) + ' features, ' + str(refNumSamples) + ' expected'
-                    failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                     raiseWarning, exception=ValueError(failure))
-                    # number of features
-                    condition = (self.expectedConcentration.shape[1] == refNumFeatures)
-                    success = 'Check self.expectedConcentration number of features (columns):\tOK'
-                    failure = 'Check self.expectedConcentration number of features (columns):\tFailure, \'self.expectedConcentration\' has ' + str(
-                        self.expectedConcentration.shape[1]) + ' features, ' + str(refNumFeatures) + ' expected'
-                    failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                     raiseWarning, exception=ValueError(failure))
-                    if condition & (refNumFeatures != 0):
-                        # expectedConcentration column names match ['Feature Name']
-                        tmpDiff = pandas.DataFrame(
-                            {'FeatName': refFeatureName, 'ColName': self.expectedConcentration.columns.values.tolist()})
-                        condition = (self.expectedConcentration.columns.values.tolist() == refFeatureName)
-                        success = 'Check self.expectedConcentration column name match self.featureMetadata[\'Feature Name\']:\tOK'
-                        failure = 'Check self.expectedConcentration column name match self.featureMetadata[\'Feature Name\']:\tFailure, the following \'self.featureMetadata[\'Feature Name\']\' and \'self.expectedConcentration.columns\' differ ' + str(
-                            tmpDiff.loc[
-                                (tmpDiff['FeatName'] != tmpDiff['ColName']), ['FeatName', 'ColName']].values.tolist())
-                        failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                         raiseError, raiseWarning, exception=ValueError(failure))
-                    # end self.expectedConcentration number of features
-                # end self.expectedConcentration is a pandas.DataFrame
-            # end self.expectedConcentration
 
             ## self.sampleMask
             # is initialised
@@ -1418,398 +1202,6 @@ class NMRTargetedDataset(Dataset):
                 failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
                                                  raiseWarning, exception=ValueError(failure))
             ## end self.featureMask
-
-            ## self.calibration
-            # exist
-            condition = hasattr(self, 'calibration')
-            success = 'Check self.calibration exists:\tOK'
-            failure = 'Check self.calibration exists:\tFailure, no attribute \'self.calibration\''
-            failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                             raiseWarning, exception=AttributeError(failure))
-            if condition:
-                # is a dict or a list
-                condition = isinstance(self.calibration, (dict, list))
-                success = 'Check self.calibration is a dict or list:\tOK'
-                failure = 'Check self.calibration is a dict or list:\tFailure, \'self.calibration\' is ' + str(
-                    type(self.calibration))
-                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-                                                 raiseWarning, exception=TypeError(failure))
-                if condition:
-                    # self.calibration is a list of dict
-                    if isinstance(self.calibration, list):
-                        # use reference inside each calibration
-                        refCalibNumSamples = len(self.calibration) * [None]
-                        refCalibNumFeatures = len(self.calibration) * [None]
-                        refCalibFeatureName = len(self.calibration) * [None]
-                        for i in range(len(self.calibration)):
-                            # self.calibration[i] is a dict
-                            condition = isinstance(self.calibration[i], dict)
-                            success = 'Check self.calibration[' + str(i) + '] is a dict or list:\tOK'
-                            failure = 'Check self.calibration[' + str(
-                                i) + '] is a dict or list:\tFailure, \'self.calibration\' is ' + str(
-                                type(self.calibration[i]))
-                            failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                             raiseError, raiseWarning, exception=TypeError(failure))
-                            if condition:
-                                ## calibIntensityData
-                                # exist
-                                condition = 'calibIntensityData' in self.calibration[i]
-                                success = 'Check self.calibration[' + str(i) + '][\'calibIntensityData\'] exists:\tOK'
-                                failure = 'Check self.calibration[' + str(
-                                    i) + '][\'calibIntensityData\'] exists:\tFailure, no attribute \'self.calibration[' + str(
-                                    i) + '][\'calibIntensityData\']\''
-                                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                                 raiseError, raiseWarning,
-                                                                 exception=AttributeError(failure))
-                                if condition:
-                                    # is a numpy.ndarray
-                                    condition = isinstance(self.calibration[i]['calibIntensityData'], numpy.ndarray)
-                                    success = 'Check self.calibration[' + str(
-                                        i) + '][\'calibIntensityData\'] is a numpy.ndarray:\tOK'
-                                    failure = 'Check self.calibration[' + str(
-                                        i) + '][\'calibIntensityData\'] is a numpy.ndarray:\tFailure, \'self.calibration[' + str(
-                                        i) + '][\'calibIntensityData\']\' is ' + str(
-                                        type(self.calibration[i]['calibIntensityData']))
-                                    failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                     verbose, raiseError, raiseWarning,
-                                                                     exception=TypeError(failure))
-                                    if condition:
-                                        if (self.calibration[i]['calibIntensityData'].all() != numpy.array(None).all()):
-                                            # Use calibIntensityData as number of calib sample/feature reference
-                                            refCalibNumSamples[i] = self.calibration[i]['calibIntensityData'].shape[0]
-                                            refCalibNumFeatures[i] = self.calibration[i]['calibIntensityData'].shape[1]
-                                            if verbose:
-                                                print('---- self.calibration[' + str(
-                                                    i) + '][\'calibIntensityData\'] used as number of calibration samples/features reference ----')
-                                                print('\t' + str(refCalibNumSamples[i]) + ' samples, ' + str(
-                                                    refCalibNumFeatures[i]) + ' features')
-                                        # end calibIntensityData is a numpy.ndarray
-                                # end calibIntensityData
-                                ## calibSampleMetadata
-                                # exist
-                                condition = 'calibSampleMetadata' in self.calibration[i]
-                                success = 'Check self.calibration[' + str(i) + '][\'calibSampleMetadata\'] exists:\tOK'
-                                failure = 'Check self.calibration[' + str(
-                                    i) + '][\'calibSampleMetadata\'] exists:\tFailure, no attribute \'self.calibration[' + str(
-                                    i) + '][\'calibSampleMetadata\']\''
-                                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                                 raiseError, raiseWarning,
-                                                                 exception=AttributeError(failure))
-                                if condition:
-                                    # is a pandas.DataFrame
-                                    condition = isinstance(self.calibration[i]['calibSampleMetadata'], pandas.DataFrame)
-                                    success = 'Check self.calibration[' + str(
-                                        i) + '][\'calibSampleMetadata\'] is a pandas.DataFrame:\tOK'
-                                    failure = 'Check self.calibration[' + str(
-                                        i) + '][\'calibSampleMetadata\'] is a pandas.DataFrame:\tFailure, \'self.calibration[' + str(
-                                        i) + '][\'calibSampleMetadata\']\' is ' + str(
-                                        type(self.calibration[i]['calibSampleMetadata']))
-                                    failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                     verbose, raiseError, raiseWarning,
-                                                                     exception=TypeError(failure))
-                                    if condition:
-                                        # number of samples
-                                        condition = (self.calibration[i]['calibSampleMetadata'].shape[0] ==
-                                                     refCalibNumSamples[i])
-                                        success = 'Check self.calibration[' + str(
-                                            i) + '][\'calibSampleMetadata\'] number of samples:\tOK'
-                                        failure = 'Check self.calibration[' + str(
-                                            i) + '][\'calibSampleMetadata\'] number of samples:\tFailure, \'self.calibration[' + str(
-                                            i) + '][\'calibSampleMetadata\']\' has ' + str(
-                                            self.calibration[i]['calibSampleMetadata'].shape[0]) + ' samples, ' + str(
-                                            refCalibNumSamples[i]) + ' expected'
-                                        failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                         verbose, raiseError, raiseWarning,
-                                                                         exception=ValueError(failure))
-                                    # end calibSampleMetadata is a pandas.DataFrame
-                                # end calibSampleMetadata
-                                ## calibFeatureMetadata
-                                # exist
-                                condition = 'calibFeatureMetadata' in self.calibration[i]
-                                success = 'Check self.calibration[' + str(i) + '][\'calibFeatureMetadata\'] exists:\tOK'
-                                failure = 'Check self.calibration[' + str(
-                                    i) + '][\'calibFeatureMetadata\'] exists:\tFailure, no attribute \'self.calibration[' + str(
-                                    i) + '][\'calibFeatureMetadata\']\''
-                                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                                 raiseError, raiseWarning,
-                                                                 exception=AttributeError(failure))
-                                if condition:
-                                    # is a pandas.DataFrame
-                                    condition = isinstance(self.calibration[i]['calibFeatureMetadata'],
-                                                           pandas.DataFrame)
-                                    success = 'Check self.calibration[' + str(
-                                        i) + '][\'calibFeatureMetadata\'] is a pandas.DataFrame:\tOK'
-                                    failure = 'Check self.calibration[' + str(
-                                        i) + '][\'calibFeatureMetadata\'] is a pandas.DataFrame:\tFailure, \'self.calibration[' + str(
-                                        i) + '][\'calibFeatureMetadata\']\' is ' + str(
-                                        type(self.calibration[i]['calibFeatureMetadata']))
-                                    failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                     verbose, raiseError, raiseWarning,
-                                                                     exception=TypeError(failure))
-                                    if condition:
-                                        # number of features
-                                        condition = (self.calibration[i]['calibFeatureMetadata'].shape[0] ==
-                                                     refCalibNumFeatures[i])
-                                        success = 'Check self.calibration[' + str(
-                                            i) + '][\'calibFeatureMetadata\'] number of features:\tOK'
-                                        failure = 'Check self.calibration[' + str(
-                                            i) + '][\'calibFeatureMetadata\'] number of features:\tFailure, \'self.calibration[' + str(
-                                            i) + '][\'calibFeatureMetadata\']\' has ' + str(
-                                            self.calibration[i]['calibFeatureMetadata'].shape[0]) + ' features, ' + str(
-                                            refCalibNumFeatures[i]) + ' expected'
-                                        failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                         verbose, raiseError, raiseWarning,
-                                                                         exception=ValueError(failure))
-                                        if condition & (refCalibNumFeatures[i] != 0):
-                                            # Feature Name exist
-                                            condition = ('Feature Name' in self.calibration[i][
-                                                'calibFeatureMetadata'].columns.tolist())
-                                            success = 'Check self.calibration[' + str(
-                                                i) + '][\'calibFeatureMetadata\'][\'Feature Name\'] exist:\tOK'
-                                            failure = 'Check self.calibration[' + str(
-                                                i) + '][\'calibFeatureMetadata\'][\'Feature Name\'] exist:\tFailure, no column \'self.calibration[' + str(
-                                                i) + '][\'calibFeatureMetadata\'][\'Feature Name\']'
-                                            failureListBasic = conditionTest(condition, success, failure,
-                                                                             failureListBasic, verbose, raiseError,
-                                                                             raiseWarning,
-                                                                             exception=LookupError(failure))
-                                            if condition:
-                                                # store the featureMetadata columns as reference
-                                                refCalibFeatureName[i] = self.calibration[i]['calibFeatureMetadata'][
-                                                    'Feature Name'].values.tolist()
-                                    # end calibFeatureMetadata is a pandas.DataFrame
-                                # end calibFeatureMetadata
-                                ## calibExpectedConcentration
-                                # exist
-                                condition = 'calibExpectedConcentration' in self.calibration[i]
-                                success = 'Check self.calibration[' + str(
-                                    i) + '][\'calibExpectedConcentration\'] exists:\tOK'
-                                failure = 'Check self.calibration[' + str(
-                                    i) + '][\'calibExpectedConcentration\'] exists:\tFailure, no attribute \'self.calibration[' + str(
-                                    i) + '][\'calibExpectedConcentration\']\''
-                                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                                 raiseError, raiseWarning,
-                                                                 exception=AttributeError(failure))
-                                if condition:
-                                    # is a pandas.DataFrame
-                                    condition = isinstance(self.calibration[i]['calibExpectedConcentration'],
-                                                           pandas.DataFrame)
-                                    success = 'Check self.calibration[' + str(
-                                        i) + '][\'calibExpectedConcentration\'] is a pandas.DataFrame:\tOK'
-                                    failure = 'Check self.calibration[' + str(
-                                        i) + '][\'calibExpectedConcentration\'] is a pandas.DataFrame:\tFailure, \'self.calibration[' + str(
-                                        i) + '][\'calibExpectedConcentration\']\' is ' + str(
-                                        type(self.calibration[i]['calibExpectedConcentration']))
-                                    failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                     verbose, raiseError, raiseWarning,
-                                                                     exception=TypeError(failure))
-                                    if condition:
-                                        # number of samples
-                                        condition = (self.calibration[i]['calibExpectedConcentration'].shape[0] ==
-                                                     refCalibNumSamples[i])
-                                        success = 'Check self.calibration[' + str(
-                                            i) + '][\'calibExpectedConcentration\'] number of samples:\tOK'
-                                        failure = 'Check self.calibration[' + str(
-                                            i) + '][\'calibExpectedConcentration\'] number of samples:\tFailure, \'self.calibration[' + str(
-                                            i) + '][\'calibExpectedConcentration\']\' has ' + str(
-                                            self.calibration[i]['calibExpectedConcentration'].shape[
-                                                0]) + ' samples, ' + str(refCalibNumSamples[i]) + ' expected'
-                                        failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                         verbose, raiseError, raiseWarning,
-                                                                         exception=ValueError(failure))
-                                        # number of features
-                                        condition = (self.calibration[i]['calibExpectedConcentration'].shape[1] ==
-                                                     refCalibNumFeatures[i])
-                                        success = 'Check self.calibration[' + str(
-                                            i) + '][\'calibExpectedConcentration\'] number of features:\tOK'
-                                        failure = 'Check self.calibration[' + str(
-                                            i) + '][\'calibExpectedConcentration\'] number of features:\tFailure, \'self.calibration[' + str(
-                                            i) + '][\'calibExpectedConcentration\']\' has ' + str(
-                                            self.calibration[i]['calibExpectedConcentration'].shape[
-                                                1]) + ' features, ' + str(refCalibNumFeatures[i]) + ' expected'
-                                        failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                         verbose, raiseError, raiseWarning,
-                                                                         exception=ValueError(failure))
-                                        if condition & (refCalibNumFeatures[i] != 0):
-                                            # calibExpectedConcentration column names match ['Feature Name']
-                                            tmpDiff = pandas.DataFrame({'FeatName': refCalibFeatureName[i],
-                                                                        'ColName': self.calibration[i][
-                                                                            'calibExpectedConcentration'].columns.values.tolist()})
-                                            condition = (self.calibration[i][
-                                                             'calibExpectedConcentration'].columns.values.tolist() ==
-                                                         refCalibFeatureName[i])
-                                            success = 'Check self.calibration[' + str(
-                                                i) + '][\'calibExpectedConcentration\'] column name match self.calibration[' + str(
-                                                i) + '][\'calibFeatureMetadata\'][\'Feature Name\']:\tOK'
-                                            failure = 'Check self.calibration[' + str(
-                                                i) + '][\'calibExpectedConcentration\'] column name match self.calibration[' + str(
-                                                i) + '][\'calibFeatureMetadata\'][\'Feature Name\']:\tFailure, the following \'self.calibration[' + str(
-                                                i) + '][\'calibFeatureMetadata\'][\'Feature Name\']\' and \'self.calibration[' + str(
-                                                i) + '][\'calibExpectedConcentration\'].columns\' differ ' + str(
-                                                tmpDiff.loc[(tmpDiff['FeatName'] != tmpDiff['ColName']), ['FeatName',
-                                                                                                          'ColName']].values.tolist())
-                                            failureListBasic = conditionTest(condition, success, failure,
-                                                                             failureListBasic, verbose, raiseError,
-                                                                             raiseWarning,
-                                                                             exception=ValueError(failure))
-                                        # end calibExpectedConcentration number of features
-                                    # end calibExpectedConcentration is a pandas.DataFrame
-                                # end calibExpectedConcentration
-                            # end self.calibration[i] is a dict
-                    # end self.calibration list
-                    else:
-                        ## self.calibration is a dict
-                        ## calibIntensityData
-                        # exist
-                        condition = 'calibIntensityData' in self.calibration
-                        success = 'Check self.calibration[\'calibIntensityData\'] exists:\tOK'
-                        failure = 'Check self.calibration[\'calibIntensityData\'] exists:\tFailure, no attribute \'self.calibration[\'calibIntensityData\']\''
-                        failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                         raiseError, raiseWarning, exception=AttributeError(failure))
-                        if condition:
-                            # is a numpy.ndarray
-                            condition = isinstance(self.calibration['calibIntensityData'], numpy.ndarray)
-                            success = 'Check self.calibration[\'calibIntensityData\'] is a numpy.ndarray:\tOK'
-                            failure = 'Check self.calibration[\'calibIntensityData\'] is a numpy.ndarray:\tFailure, \'self.calibration[\'calibIntensityData\']\' is ' + str(
-                                type(self.calibration['calibIntensityData']))
-                            failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                             raiseError, raiseWarning, exception=TypeError(failure))
-                            if condition:
-                                if (self.calibration['calibIntensityData'].all() != numpy.array(None).all()):
-                                    # number of features
-                                    condition = (self.calibration['calibIntensityData'].shape[1] == refNumFeatures)
-                                    success = 'Check self.calibration[\'calibIntensityData\'] number of features:\tOK'
-                                    failure = 'Check self.calibration[\'calibIntensityData\'] number of features:\tFailure, \'self.calibration[\'calibIntensityData\']\' has ' + str(
-                                        self.calibration['calibIntensityData'].shape[1]) + ' features, ' + str(
-                                        refNumFeatures) + ' expected'
-                                    failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                     verbose, raiseError, raiseWarning,
-                                                                     exception=ValueError(failure))
-                                    # Use calibIntensityData as number of calib sample reference
-                                    refNumCalibSamples = self.calibration['calibIntensityData'].shape[0]
-                                    if verbose:
-                                        print(
-                                            '---- self.calibration[\'calibIntensityData\'] used as number of calibration samples reference ----')
-                                        print('\t' + str(refNumCalibSamples) + ' samples')
-                            # end calibIntensityData is a numpy.ndarray
-                        # end calibIntensityData
-                        ## calibSampleMetadata
-                        # exist
-                        condition = 'calibSampleMetadata' in self.calibration
-                        success = 'Check self.calibration[\'calibSampleMetadata\'] exists:\tOK'
-                        failure = 'Check self.calibration[\'calibSampleMetadata\'] exists:\tFailure, no attribute \'self.calibration[\'calibSampleMetadata\']\''
-                        failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                         raiseError, raiseWarning, exception=AttributeError(failure))
-                        if condition:
-                            # is a pandas.DataFrame
-                            condition = isinstance(self.calibration['calibSampleMetadata'], pandas.DataFrame)
-                            success = 'Check self.calibration[\'calibSampleMetadata\'] is a pandas.DataFrame:\tOK'
-                            failure = 'Check self.calibration[\'calibSampleMetadata\'] is a pandas.DataFrame:\tFailure, \'self.calibration[\'calibSampleMetadata\']\' is ' + str(
-                                type(self.calibration['calibSampleMetadata']))
-                            failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                             raiseError, raiseWarning, exception=TypeError(failure))
-                            if condition:
-                                # number of samples
-                                condition = (self.calibration['calibSampleMetadata'].shape[0] == refNumCalibSamples)
-                                success = 'Check self.calibration[\'calibSampleMetadata\'] number of samples:\tOK'
-                                failure = 'Check self.calibration[\'calibSampleMetadata\'] number of samples:\tFailure, \'self.calibration[\'calibSampleMetadata\']\' has ' + str(
-                                    self.calibration['calibSampleMetadata'].shape[0]) + ' samples, ' + str(
-                                    refNumCalibSamples) + ' expected'
-                                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                                 raiseError, raiseWarning,
-                                                                 exception=ValueError(failure))
-                            # end calibSampleMetadata is a pandas.DataFrame
-                        # end calibSampleMetadata
-                        ## calibFeatureMetadata
-                        # exist
-                        condition = 'calibFeatureMetadata' in self.calibration
-                        success = 'Check self.calibration[\'calibFeatureMetadata\'] exists:\tOK'
-                        failure = 'Check self.calibration[\'calibFeatureMetadata\'] exists:\tFailure, no attribute \'self.calibration[\'calibFeatureMetadata\']\''
-                        failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                         raiseError, raiseWarning, exception=AttributeError(failure))
-                        if condition:
-                            # is a pandas.DataFrame
-                            condition = isinstance(self.calibration['calibFeatureMetadata'], pandas.DataFrame)
-                            success = 'Check self.calibration[\'calibFeatureMetadata\'] is a pandas.DataFrame:\tOK'
-                            failure = 'Check self.calibration[\'calibFeatureMetadata\'] is a pandas.DataFrame:\tFailure, \'self.calibration[\'calibFeatureMetadata\']\' is ' + str(
-                                type(self.calibration['calibFeatureMetadata']))
-                            failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                             raiseError, raiseWarning, exception=TypeError(failure))
-                            if condition:
-                                # number of features
-                                condition = (self.calibration['calibFeatureMetadata'].shape[0] == refNumFeatures)
-                                success = 'Check self.calibration[\'calibFeatureMetadata\'] number of features:\tOK'
-                                failure = 'Check self.calibration[\'calibFeatureMetadata\'] number of features:\tFailure, \'self.calibration[\'calibFeatureMetadata\']\' has ' + str(
-                                    self.calibration['calibFeatureMetadata'].shape[0]) + ' features, ' + str(
-                                    refNumFeatures) + ' expected'
-                                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                                 raiseError, raiseWarning,
-                                                                 exception=ValueError(failure))
-                                if condition & (refNumFeatures != 0):
-                                    # Feature Name exist
-                                    condition = ('Feature Name' in self.calibration[
-                                        'calibFeatureMetadata'].columns.tolist())
-                                    success = 'Check self.calibration[\'calibFeatureMetadata\'][\'Feature Name\'] exist:\tOK'
-                                    failure = 'Check self.calibration[\'calibFeatureMetadata\'][\'Feature Name\'] exist:\tFailure, no column \'self.calibration[\'calibFeatureMetadata\'][\'Feature Name\']'
-                                    failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                     verbose, raiseError, raiseWarning,
-                                                                     exception=LookupError(failure))
-                            # end calibFeatureMetadata is a pandas.DataFrame
-                        # end calibFeatureMetadata
-                        ## calibExpectedConcentration
-                        # exist
-                        condition = 'calibExpectedConcentration' in self.calibration
-                        success = 'Check self.calibration[\'calibExpectedConcentration\'] exists:\tOK'
-                        failure = 'Check self.calibration[\'calibExpectedConcentration\'] exists:\tFailure, no attribute \'self.calibration[\'calibExpectedConcentration\']\''
-                        failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                         raiseError, raiseWarning, exception=AttributeError(failure))
-                        if condition:
-                            # is a pandas.DataFrame
-                            condition = isinstance(self.calibration['calibExpectedConcentration'], pandas.DataFrame)
-                            success = 'Check self.calibration[\'calibExpectedConcentration\'] is a pandas.DataFrame:\tOK'
-                            failure = 'Check self.calibration[\'calibExpectedConcentration\'] is a pandas.DataFrame:\tFailure, \'self.calibration[\'calibExpectedConcentration\']\' is ' + str(
-                                type(self.calibration['calibExpectedConcentration']))
-                            failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                             raiseError, raiseWarning, exception=TypeError(failure))
-                            if condition:
-                                # number of samples
-                                condition = (self.calibration['calibExpectedConcentration'].shape[
-                                                 0] == refNumCalibSamples)
-                                success = 'Check self.calibration[\'calibExpectedConcentration\'] number of samples:\tOK'
-                                failure = 'Check self.calibration[\'calibExpectedConcentration\'] number of samples:\tFailure, \'self.calibration[\'calibExpectedConcentration\']\' has ' + str(
-                                    self.calibration['calibExpectedConcentration'].shape[0]) + ' samples, ' + str(
-                                    refNumCalibSamples) + ' expected'
-                                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                                 raiseError, raiseWarning,
-                                                                 exception=ValueError(failure))
-                                # number of features
-                                condition = (self.calibration['calibExpectedConcentration'].shape[1] == refNumFeatures)
-                                success = 'Check self.calibration[\'calibExpectedConcentration\'] number of features:\tOK'
-                                failure = 'Check self.calibration[\'calibExpectedConcentration\'] number of features:\tFailure, \'self.calibration[\'calibExpectedConcentration\']\' has ' + str(
-                                    self.calibration['calibExpectedConcentration'].shape[1]) + ' features, ' + str(
-                                    refNumFeatures) + ' expected'
-                                failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose,
-                                                                 raiseError, raiseWarning,
-                                                                 exception=ValueError(failure))
-                                if condition & (refNumFeatures != 0):
-                                    # calibExpectedConcentration column names match ['Feature Name']
-                                    tmpDiff = pandas.DataFrame({'FeatName': refFeatureName, 'ColName': self.calibration[
-                                        'calibExpectedConcentration'].columns.values.tolist()})
-                                    condition = (self.calibration[
-                                                     'calibExpectedConcentration'].columns.values.tolist() == refFeatureName)
-                                    success = 'Check self.calibration[\'calibExpectedConcentration\'] column name match self.featureMetadata[\'Feature Name\']:\tOK'
-                                    failure = 'Check self.calibration[\'calibExpectedConcentration\'] column name match self.featureMetadata[\'Feature Name\']:\tFailure, the following \'self.featureMetadata[\'Feature Name\']\' and \'self.calibration[\'calibExpectedConcentration\'].columns\' differ ' + str(
-                                        tmpDiff.loc[(tmpDiff['FeatName'] != tmpDiff['ColName']), ['FeatName',
-                                                                                                  'ColName']].values.tolist())
-                                    failureListBasic = conditionTest(condition, success, failure, failureListBasic,
-                                                                     verbose, raiseError, raiseWarning,
-                                                                     exception=ValueError(failure))
-                                # end calibExpectedConcentration number of features
-                            # end calibExpectedConcentration is a pandas.DataFrame
-                        # end calibExpectedConcentration
-                    # end self.calib is a dict
-                # self.calibration is a dict or a list
-            # end self.calibration
 
             ## List additional attributes (print + log)
             expectedSet = set({'Attributes', 'VariableType', '_Normalisation', '_name', 'fileName', 'filePath',
@@ -1905,7 +1297,7 @@ class NMRTargetedDataset(Dataset):
             # try logging
             try:
                 self.Attributes['Log'].append(
-                    [datetime.now(), 'Failed basic TargetedDataset validation, Failed Dataset validation'])
+                    [datetime.now(), 'Failed basic NMRTargetedDataset validation, Failed Dataset validation'])
             except (AttributeError, KeyError, TypeError):
                 if verbose:
                     print('--------')
@@ -1922,7 +1314,7 @@ class NMRTargetedDataset(Dataset):
                 warnings.warn('Does not conform to basic TargetedDataset')
                 warnings.warn('Does not have QC parameters')
                 warnings.warn('Does not have sample metadata information')
-            return ({'Dataset': False, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
+            return ({'Dataset': False, 'NMRTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 
     def __add__(self, other):
         """
