@@ -46,53 +46,50 @@
 <!--Iterate over Quantification Types-->
 {% for i in item['QTypeIter'] %}
 
-    {% if not item['FeatureQuantParamTable'][i].empty %}
-        <h3>Sample Summary Table</h3>
-        {{ item['sampleSummary']['Acquired'].to_html() }}
-        <!--Title-->
-        <h2>Features {{ item['TextQType'][i] }} ({{ item['CountQType'][i] }})</h2>
+    <!--Title-->
+    <h2>Features {{ item['TextQType'][i] }} ({{ item['CountQType'][i] }})</h2>
 
 
-        <!--Table 2: Feature quantification parameters-->
-        <p class="caption"><span class="heading">Table {{ item['figTabNumber']['1'][i] }}.</span> Quantification parameters for features {{ item['TextQType'][i] }}.</p>
-        {{ item['FeatureQuantParamTable'][i].to_html() }}
+    <!--Table 2: Feature quantification parameters-->
+    <p class="caption"><span class="heading">Table {{ item['figTabNumber']['1'][i] }}.</span> Quantification parameters for features {{ item['TextQType'][i] }}.</p>
+    {{ item['FeatureQuantParamTable'][i].to_html() }}
 
 
-        <!--Figure 2: Feature Accuracy Plot-->
-        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['1'][i] }}.</span> Measurements accuracy for features {{ item['TextQType'][i] }}.</p>
-        {% if 'FeatureAccuracyPlot' in item %}
-            <div class='figure'>
-                <img src="{{ item.FeatureAccuracyPlot[i] }}" alt="Measurements accuracy for features {{ item['TextQType'][i] }}.">
-            </div>
-        {% else %}
-            <p>Unable to calculate (not enough samples with expected concentrations present in dataset).</p>
-        {% endif %}
-
-
-        <!--Figure 3: Feature Precision Plot-->
-        {% if 'FeaturePrecisionPlot' in item %}
-            <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements precision for features {{ item['TextQType'][i] }}.</p>
-            <div class='figure'>
-                <img src="{{ item.FeaturePrecisionPlot[i] }}" alt="Measurements precision for features {{ item['TextQType'][i] }}.">
-            </div>
-        {% elif 'FeatureRSDPlot' in item %}
-            <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements RSD for features {{ item['TextQType'][i] }} in all samples (by sample type).</p>
-            <div class='figure'>
-                <img src="{{ item.FeatureRSDPlot[i] }}" alt="Measurements RSD for features {{ item['TextQType'][i] }} in all samples (by sample type).">
-            </div>
-        {% else %}
-            <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements precision for features {{ item['TextQType'][i] }}.</p>
-            <p>Unable to calculate (not enough samples with expected concentrations present in dataset).</p>
-        {% endif %}
-
-        <!--Figure 4: Measured concentrations distribution, split by sample types.-->
-        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['3'][i] }}.</span> Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.</p>
+    <!--Figure 2: Feature Accuracy Plot-->
+    <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['1'][i] }}.</span> Measurements accuracy for features {{ item['TextQType'][i] }}.</p>
+    {% if 'FeatureAccuracyPlot' in item %}
         <div class='figure'>
-            {% for value in item.FeatureConcentrationDistribution[i] %}
-                <img src="{{ item.FeatureConcentrationDistribution[i][value] }}">
-            {% endfor %}
+            <img src="{{ item.FeatureAccuracyPlot[i] }}" alt="Measurements accuracy for features {{ item['TextQType'][i] }}.">
         </div>
+    {% else %}
+        <p>Unable to calculate (not enough samples with expected concentrations present in dataset).</p>
     {% endif %}
+
+
+    <!--Figure 3: Feature Precision Plot-->
+    {% if 'FeaturePrecisionPlot' in item %}
+        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements precision for features {{ item['TextQType'][i] }}.</p>
+        <div class='figure'>
+            <img src="{{ item.FeaturePrecisionPlot[i] }}" alt="Measurements precision for features {{ item['TextQType'][i] }}.">
+        </div>
+    {% elif 'FeatureRSDPlot' in item %}
+        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements RSD for features {{ item['TextQType'][i] }} in all samples (by sample type).</p>
+        <div class='figure'>
+            <img src="{{ item.FeatureRSDPlot[i] }}" alt="Measurements RSD for features {{ item['TextQType'][i] }} in all samples (by sample type).">
+        </div>
+    {% else %}
+        <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['2'][i] }}.</span> Measurements precision for features {{ item['TextQType'][i] }}.</p>
+        <p>Unable to calculate (not enough samples with expected concentrations present in dataset).</p>
+    {% endif %}
+
+    <!--Figure 4: Measured concentrations distribution, split by sample types.-->
+    <p class="caption"><span class="heading">Figure {{ item['figTabNumber']['3'][i] }}.</span> Measured concentrations distribution, split by sample types, for features {{ item['TextQType'][i] }}.</p>
+    <div class='figure'>
+        {% for value in item.FeatureConcentrationDistribution[i] %}
+            <img src="{{ item.FeatureConcentrationDistribution[i][value] }}">
+        {% endfor %}
+    </div>
+
 
 {% endfor %}
 
