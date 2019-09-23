@@ -337,52 +337,26 @@ class NMRTargetedDataset(Dataset):
         :raises AttributeError: if :py:attr:`featureMetadata['LLOQ']` is missing
         :raises AttributeError: if :py:attr:`featureMetadata['ULOQ']` is missing and onlyLLOQ==False
         """
-
-        sampleMetadata = copy.deepcopy(self.sampleMetadata)
-        featureMetadata = copy.deepcopy(self.featureMetadata)
         intensityData = copy.deepcopy(self._intensityData)
 
-        if ((not hasattr(self, 'sampleMetadataExcluded')) | (not hasattr(self, 'featureMetadataExcluded')) | (
-        not hasattr(self, 'intensityDataExcluded')) | (not hasattr(self, 'excludedFlag'))):
-            sampleMetadataExcluded = []
-            featureMetadataExcluded = []
-            intensityDataExcluded = []
-            excludedFlag = []
-        else:
-            sampleMetadataExcluded = copy.deepcopy(self.sampleMetadataExcluded)
-            featureMetadataExcluded = copy.deepcopy(self.featureMetadataExcluded)
-            intensityDataExcluded = copy.deepcopy(self.intensityDataExcluded)
-            excludedFlag = copy.deepcopy(self.excludedFlag)
-
         ## Check input columns
-        if 'LOD' not in featureMetadata.columns:
-            raise AttributeError('the featureMetadata[\'LOD\'] column is absent')
+        if not hasattr(self, 'lodData'):
+            raise ValueError('No LOD information')
+
         # TODO this check is not applicable in this way - new enum?
         ## Features only Monitored are not processed and passed untouched (concatenated back at the end)
-        untouched = (featureMetadata['quantificationType'] == QuantificationType.BrukerivDrEstimate).values
+        untouched = (self.featureMetadata['quantificationType'] == QuantificationType.BrukerivDrEstimate).values
         if sum(untouched) != 0:
             print('The following features have no LOD value recorded and will not be changed: ' + str(
-                featureMetadata.loc[untouched, 'Feature Name'].values.tolist()))
-            untouchedFeatureMetadata = featureMetadata.loc[untouched, :]
-            featureMetadata = featureMetadata.loc[~untouched, :]
-            untouchedIntensityData = intensityData[:, untouched]
-            intensityData = intensityData[:, ~untouched]
+                self.featureMetadata.loc[untouched, 'Feature Name'].values.tolist()))
 
         ## Values replacement (-inf / +inf)
         # iterate over the features
         toReplaceLLOQ = intensityData < self.lodData
         intensityData[toReplaceLLOQ] = -numpy.inf
 
-        # Remove excess info
-        featureMetadata.reset_index(drop=True, inplace=True)
-
         ## return dataset with limits of quantification applied
-        self.featureMetadata = featureMetadata
         self._intensityData = intensityData
-        self.sampleMetadataExcluded = sampleMetadataExcluded
-        self.featureMetadataExcluded = featureMetadataExcluded
-        self.intensityDataExcluded = intensityDataExcluded
-        self.excludedFlag = excludedFlag
 
         ## Output and Log
         print('Values <LOD replaced by -inf')
@@ -390,7 +364,7 @@ class NMRTargetedDataset(Dataset):
         # log the modifications
         logLimits = 'Limits of quantification applied to LOD'
 
-        self.Attributes['Log'].append([datetime.now(), '%s (%i samples, %i features). LLOQ are replaced by -inf.%s' % (
+        self.Attributes['Log'].append([datetime.now(), '%s (%i samples, %i features). Values < LOD are replaced by -inf.%s' % (
         logLimits, self.noSamples, self.noFeatures)])
 
     def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False,
@@ -513,8 +487,8 @@ class NMRTargetedDataset(Dataset):
     def updateMasks(self, filterSamples=True, filterFeatures=True,
                     sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
                     assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference],
-                    quantificationTypes=[QuantificationType.BrukerivDr,
-                                         QuantificationType.Monitored],
+                    quantificationTypes=[QuantificationType.BrukerivDrQuant,
+                                         QuantificationType.BrukerivDrEstimate],
                     rsdThreshold=None, **kwargs):
         """
         Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to QC parameters.
@@ -558,6 +532,7 @@ class NMRTargetedDataset(Dataset):
             raise TypeError('assayRoles must be AssayRole enums.')
         if not all(isinstance(item, QuantificationType) for item in quantificationTypes):
             raise TypeError('quantificationTypes must be QuantificationType enums.')
+
         if rsdThreshold is None:
             if 'rsdThreshold' in self.Attributes:
                 rsdThreshold = self.Attributes['rsdThreshold']
@@ -594,13 +569,8 @@ class NMRTargetedDataset(Dataset):
         Load additional metadata and map it in to the :py:attr:`~Dataset.sampleMetadata` table.
 
         Possible options:
-
-        * **'NPC Subject Info'** Map subject metadata from a NPC sample manifest file (format defined in 'PCSOP.082')
         * **'Raw Data'** Extract analytical parameters from raw data files
-        * **'ISATAB'** ISATAB study designs
-        * **'Filenames'** Parses sample information out of the filenames, based on the named capture groups in the regex passed in *filenamespec*
         * **'Basic CSV'** Joins the :py:attr:`sampleMetadata` table with the data in the ``csv`` file at *filePath=*, matching on the 'Sample File Name' column in both.
-        * **'Batches'** Interpolate batch numbers for samples between those with defined batch numbers based on sample acquisitions times
 
         :param str descriptionFormat: Format of metadata to be added
         :param str filePath: Path to the additional data to be added
@@ -608,14 +578,10 @@ class NMRTargetedDataset(Dataset):
         :type filenameSpec: None or str
         :raises NotImplementedError: if the descriptionFormat is not understood
         """
-
         if descriptionFormat == 'Filenames':
-            filenameSpec = kwargs.get('filenameSpec', None)  # default to None if not provided
-            if filenameSpec is None:
-                raise AttributeError('A \'filenameSpec\' must be provided with \'descriptionFormat==\'Filenames\'\'')
-            self._getSampleMetadataFromFilename(filenameSpec)
+            raise NotImplementedError('Filenames not implemented for NMRTargetedDataset')
         elif descriptionFormat == 'Batches':
-            self._fillBatches()
+            raise NotImplementedError('Filenames not implemented for NMRTargetedDataset')
         else:
             super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, **kwargs)
 
