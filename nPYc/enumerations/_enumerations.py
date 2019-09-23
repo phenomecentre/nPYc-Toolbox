@@ -149,6 +149,8 @@ class QuantificationType(enum.Enum):
 	QuantAltLabeledAnalogue = 'Quantified and validated with alternative labeled analogue'
 	QuantOther = 'Other quantification'
 	Monitored = 'Monitored for relative information'
+	BrukerivDrQuant = 'Quantified using Bruker Biospin ivDr methods'
+	BrukerivDrEstimate = 'Estimated from other parameters using Bruker Biospin ivDr methods'
 
 class AnalyticalPlatform(enum.Enum):
 	"""

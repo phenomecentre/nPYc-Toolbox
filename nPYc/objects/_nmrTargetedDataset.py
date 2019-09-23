@@ -187,7 +187,7 @@ class NMRTargetedDataset(Dataset):
 
     def _loadBrukerXMLDataset(self, datapath, fileNamePattern=None, pdata=1, unit=None, **kwargs):
         """
-        Initialise object from Bruker XML files. Read files and prepare a valid TargetedDataset.
+        Initialise object from Bruker XML files. Read files and prepare a valid NMRTargetedDataset.
 
         Targeted data measurements are read and mapped to pre-defined SOPs. Once the import is finished, only properly read samples are returned and only features mapped onto the pre-defined SOP and sufficiently described. Only the first instance of a duplicated feature is kept.
 
@@ -202,7 +202,6 @@ class NMRTargetedDataset(Dataset):
         :raises ValueError: if `unit` is not one of the unit in the input data
         :return: None
         """
-
 
         if fileNamePattern is None:
             fileNamePattern = self.Attributes['fileNamePattern']
@@ -223,7 +222,8 @@ class NMRTargetedDataset(Dataset):
         filelist = [x for x in filelist if pdataPattern.match(x)]
 
         ## Load intensity, sampleMetadata and featureMetadata. Files that cannot be opened raise warnings, and are filtered from the returned matrices.
-        (self.intensityData, self.sampleMetadata, self.featureMetadata) = importBrukerXML(filelist)
+        # Needs to return the LOD
+        (self.intensityData, self.sampleMetadata, self.featureMetadata, self.lodData) = importBrukerXML(filelist)
 
         ## Filter unit if required
         avUnit = self.featureMetadata['Unit'].unique().tolist()
@@ -235,6 +235,7 @@ class NMRTargetedDataset(Dataset):
             self.featureMetadata = self.featureMetadata.loc[keepMask, :]
             self.featureMetadata.reset_index(drop=True, inplace=True)
             self.intensityData = self.intensityData[:, keepMask]
+            self.lodData = self.lodData[:, keepMask]
 
         ## Check all features are unique, and
         u_ids, u_counts = numpy.unique(self.featureMetadata['Feature Name'], return_counts=True)
@@ -255,17 +256,15 @@ class NMRTargetedDataset(Dataset):
         # quantificationType
         self.featureMetadata['quantificationType'] = numpy.nan
         self.featureMetadata.loc[
-            self.featureMetadata['type'] == 'quantification', 'quantificationType'] = QuantificationType.QuantOther
+            self.featureMetadata['type'] == 'quantification', 'quantificationType'] = QuantificationType.BrukerivDrQuant
         self.featureMetadata.loc[
-            self.featureMetadata['type'] != 'quantification', 'quantificationType'] = QuantificationType.Monitored
+            self.featureMetadata['type'] != 'quantification', 'quantificationType'] = QuantificationType.BrukerivDrEstimate
         self.featureMetadata.drop('type', inplace=True, axis=1)
         # calibrationMethod
-        self.featureMetadata['calibrationMethod'] = numpy.nan
-        self.featureMetadata.loc[self.featureMetadata[
-                                     'quantificationType'] == QuantificationType.QuantOther, 'calibrationMethod'] = CalibrationMethod.otherCalibration
-        self.featureMetadata.loc[self.featureMetadata[
-                                     'quantificationType'] == QuantificationType.Monitored, 'calibrationMethod'] = CalibrationMethod.noCalibration
+        self.featureMetadata['calibrationMethod'] = CalibrationMethod.noCalibration
+
         # rename columns
+        # TODO check if a LOD per feature is still required/desired
         self.featureMetadata.rename(
             columns={'loq': 'LLOQ', 'lod': 'LOD', 'Lower Reference Bound': 'Lower Reference Percentile',
                      'Upper Reference Bound': 'Upper Reference Percentile'}, inplace=True)
@@ -292,37 +291,18 @@ class NMRTargetedDataset(Dataset):
         self.sampleMetadata['Batch'] = [1] * self.sampleMetadata.shape[0]
         self.sampleMetadata['Metadata Available'] = False
 
-        ## Initialise expectedConcentration
-        self.expectedConcentration = pandas.DataFrame(None, index=list(self.sampleMetadata.index),
-                                                      columns=self.featureMetadata['Feature Name'].tolist())
-
-        ## Initialise empty Calibration info
-        self.calibration = dict()
-        self.calibration['calibIntensityData'] = numpy.ndarray((0, self.featureMetadata.shape[0]))
-        self.calibration['calibSampleMetadata'] = pandas.DataFrame(None, columns=self.sampleMetadata.columns)
-        self.calibration['calibSampleMetadata']['Metadata Available'] = False
-        self.calibration['calibFeatureMetadata'] = pandas.DataFrame(
-            {'Feature Name': self.featureMetadata['Feature Name'].tolist()})
-        self.calibration['calibExpectedConcentration'] = pandas.DataFrame(None, columns=self.featureMetadata[
-            'Feature Name'].tolist())
-
         ## Summary
-        print('Targeted Method: ' + self.Attributes['methodName'])
+        print('NMR Targeted Method: ' + self.Attributes['methodName'])
         print(str(self.sampleMetadata.shape[0]) + ' study samples')
-        print(str(self.featureMetadata.shape[0]) + ' features (' + str(
-            sum(self.featureMetadata['quantificationType'] == QuantificationType.IS)) + ' IS, ' + str(sum(
-            self.featureMetadata[
-                'quantificationType'] == QuantificationType.QuantOwnLabeledAnalogue)) + ' quantified and validated with own labeled analogue, ' + str(
-            sum(self.featureMetadata[
-                    'quantificationType'] == QuantificationType.QuantAltLabeledAnalogue)) + ' quantified and validated with alternative labeled analogue, ' + str(
-            sum(self.featureMetadata[
-                    'quantificationType'] == QuantificationType.QuantOther)) + ' other quantification, ' + str(sum(
-            self.featureMetadata[
-                'quantificationType'] == QuantificationType.Monitored)) + ' monitored for relative information)')
+        print(str(self.featureMetadata.shape[0]) + ' features:')
+        print(str((sum(self.featureMetadata['quantificationType'] == QuantificationType.BrukerivDrQuant)))
+              + ' features quantified using Bruker BioSpin ivDr methods ')
+        print(str((sum(self.featureMetadata['quantificationType'] == QuantificationType.BrukerivDrEstimate)))
+              + ' features estimated using Bruker BioSpin ivDr methods ')
         print('-----')
 
         ## Apply limit of quantification by default??
-        self._applyLimitsOfQuantification(**kwargs)
+        #self._applyLimitsOfQuantification(**kwargs)
 
         ## clear **kwargs that have been copied to Attributes
         for i in list(kwargs.keys()):
@@ -363,8 +343,7 @@ class NMRTargetedDataset(Dataset):
         intensityData = copy.deepcopy(self._intensityData)
 
         if ((not hasattr(self, 'sampleMetadataExcluded')) | (not hasattr(self, 'featureMetadataExcluded')) | (
-        not hasattr(self, 'intensityDataExcluded')) | (not hasattr(self, 'expectedConcentrationExcluded')) | (
-        not hasattr(self, 'excludedFlag'))):
+        not hasattr(self, 'intensityDataExcluded')) | (not hasattr(self, 'excludedFlag'))):
             sampleMetadataExcluded = []
             featureMetadataExcluded = []
             intensityDataExcluded = []
@@ -377,12 +356,12 @@ class NMRTargetedDataset(Dataset):
 
         ## Check input columns
         if 'LOD' not in featureMetadata.columns:
-            raise AttributeError('the featureMetadata[\'LLOQ\'] column is absent')
-
+            raise AttributeError('the featureMetadata[\'LOD\'] column is absent')
+        # TODO this check is not applicable in this way - new enum?
         ## Features only Monitored are not processed and passed untouched (concatenated back at the end)
-        untouched = (featureMetadata['quantificationType'] == QuantificationType.Monitored).values
+        untouched = (featureMetadata['quantificationType'] == QuantificationType.BrukerivDrEstimate).values
         if sum(untouched) != 0:
-            print('The following features are only monitored and therefore not processed for LOQs: ' + str(
+            print('The following features have no LOD value recorded and will not be changed: ' + str(
                 featureMetadata.loc[untouched, 'Feature Name'].values.tolist()))
             untouchedFeatureMetadata = featureMetadata.loc[untouched, :]
             featureMetadata = featureMetadata.loc[~untouched, :]
@@ -391,11 +370,8 @@ class NMRTargetedDataset(Dataset):
 
         ## Values replacement (-inf / +inf)
         # iterate over the features
-        for i in range(0, featureMetadata.shape[0]):
-            # LOD/LOQ
-            if not numpy.isnan(featureMetadata['LLOQ'].values[i]):
-                toReplaceLLOQ = intensityData[:, i] < featureMetadata['LLOQ'].values[i]
-                intensityData[toReplaceLLOQ, i] = -numpy.inf
+        toReplaceLLOQ = intensityData < self.lodData
+        intensityData[toReplaceLLOQ] = -numpy.inf
 
         # Remove excess info
         featureMetadata.reset_index(drop=True, inplace=True)
@@ -409,10 +385,10 @@ class NMRTargetedDataset(Dataset):
         self.excludedFlag = excludedFlag
 
         ## Output and Log
-        print('Values <LLOQ replaced by -inf')
+        print('Values <LOD replaced by -inf')
 
         # log the modifications
-        logLimits = 'Limits of quantification applied to LLOQ'
+        logLimits = 'Limits of quantification applied to LOD'
 
         self.Attributes['Log'].append([datetime.now(), '%s (%i samples, %i features). LLOQ are replaced by -inf.%s' % (
         logLimits, self.noSamples, self.noFeatures)])
@@ -422,8 +398,7 @@ class NMRTargetedDataset(Dataset):
         """
         Calls :py:meth:`~Dataset.exportDataset` and raises a warning if normalisation is employed as :py:class:`TargetedDataset` :py:attr:`intensityData` can be left-censored.
         """
-        # handle the dilution due to method... hopefully this will be handled more elegantly through a getter
-        # elegantly through the intensityData getter
+
         # Export dataset...
         tmpData = copy.deepcopy(self)
         tmpData._intensityData = tmpData._intensityData * (100 / tmpData.sampleMetadata['Dilution']).values[:,
@@ -535,100 +510,10 @@ class NMRTargetedDataset(Dataset):
         tmpCombined.to_csv(os.path.join(destinationPath + '_combinedData.csv'), encoding='utf-8',
                            date_format=self._timestampFormat)
 
-    def applyMasks(self):
-        """
-        Permanently delete elements masked (those set to ``False``) in :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask`, from :py:attr:`~Dataset.featureMetadata`, :py:attr:`~Dataset.sampleMetadata`, :py:attr:`~Dataset.intensityData` and py:attr:`TargetedDataset.expectedConcentration`.
-
-        Features are excluded in each :py:attr:`~TargetedDataset.calibration` based on the internal :py:attr:`~TargetedDataset.calibration['calibFeatureMetadata']` (iterate through the list of calibration if 2+ datasets have been joined with :py:meth:`~TargetedDataset.__add__`).
-        """
-
-        def findAndRemoveFeatures(calibDict, featureNameList):
-            """
-            Finds and remove all features with Feature Name in featureNameList, from the numpy.ndarray and pandas.Dataframe in calibDict.
-            Do not expect features in calibration ordered the same as in featureMetadata (but it should), therefore work on feature names.
-
-            :param calibDict: self.calibration dictionary
-            :param featureNameList: list of Feature Name to remove
-            :return: newCalibDict with feature removed
-            """
-
-            # init new mask
-            toRemoveFeatMask = calibDict['calibFeatureMetadata']['Feature Name'].isin(
-                featureNameList).values  # True for feature to remove
-
-            newCalibDict = dict()
-            newCalibDict['calibSampleMetadata'] = calibDict['calibSampleMetadata']
-
-            # resize all frames
-            dictKeys = set(calibDict.keys()) - set(['calibFeatureMetadata', 'calibSampleMetadata'])
-            for i in dictKeys:
-                # numpy.ndarray
-                if isinstance(calibDict[i], numpy.ndarray):
-                    newCalibDict[i] = calibDict[i][:, ~toRemoveFeatMask]
-                # pandas.DataFrame
-                elif isinstance(calibDict[i], pandas.DataFrame):
-                    newCalibDict[i] = calibDict[i].loc[:, ~toRemoveFeatMask]
-                else:
-                    newCalibDict[i] = calibDict[i]
-
-            # calibFeatureMetadata
-            newCalibDict['calibFeatureMetadata'] = calibDict['calibFeatureMetadata'].loc[~toRemoveFeatMask, :]
-            newCalibDict['calibFeatureMetadata'].reset_index(drop=True, inplace=True)
-
-            return newCalibDict
-
-        # Only filter TargetedDataset.expectedConcentration as it is not present in Dataset, others are done in Dataset.applyMasks
-        if (sum(self.sampleMask == False) > 0) | (sum(self.featureMask == False) > 0):
-
-            # Instantiate lists if first application
-            if not hasattr(self, 'sampleMetadataExcluded'):
-                self.expectedConcentrationExcluded = []
-
-            # Samples
-            if sum(self.sampleMask) != len(self.sampleMask):
-                # Account for if self.sampleMask is a pandas.series
-                try:
-                    self.sampleMask = self.sampleMask.values
-                except:
-                    pass
-
-                # Save excluded samples
-                self.expectedConcentrationExcluded.append(self.expectedConcentration.loc[~self.sampleMask, :])
-                # Delete excluded samples
-                self.expectedConcentration = self.expectedConcentration.loc[self.sampleMask]
-                self.expectedConcentration.reset_index(drop=True, inplace=True)
-
-            # Features
-            if sum(self.featureMask) != len(self.featureMask):
-                # Account for if self.featureMask is a pandas.series
-                try:
-                    self.featureMask = self.featureMask.values
-                except:
-                    pass
-                # Start by removing features from self.calibration
-                featureNameList = self.featureMetadata['Feature Name'].values[~self.featureMask].tolist()
-                # list of dict if 2+ joined targetedDatasets
-                if isinstance(self.calibration, list):
-                    # remove in each calibration
-                    for j in range(len(self.calibration)):
-                        self.calibration[j] = findAndRemoveFeatures(self.calibration[j], featureNameList)
-                # dict 1 targetedDataset
-                elif isinstance(self.calibration, dict):
-                    self.calibration = findAndRemoveFeatures(self.calibration, featureNameList)
-
-                # Save excluded features
-                self.expectedConcentrationExcluded.append(self.expectedConcentration.loc[:, ~self.featureMask])
-                # Delete excluded features
-                self.expectedConcentration = self.expectedConcentration.loc[:, self.featureMask]
-                self.expectedConcentration.reset_index(drop=True, inplace=True)
-
-        # applyMasks to the rest of TargetedDataset
-        super().applyMasks()
-
     def updateMasks(self, filterSamples=True, filterFeatures=True,
                     sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
                     assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference],
-                    quantificationTypes=[QuantificationType.QuantOther,
+                    quantificationTypes=[QuantificationType.BrukerivDr,
                                          QuantificationType.Monitored],
                     rsdThreshold=None, **kwargs):
         """
