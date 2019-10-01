@@ -891,6 +891,7 @@ class MSDataset(Dataset):
 
 		# Generate the integer run order.
 		# Explicity convert datetime format
+		# Explicity convert datetime format
 		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 		self.sampleMetadata['Order'] = self.sampleMetadata.sort_values(by='Acquired Time').index
 		self.sampleMetadata['Run Order'] = self.sampleMetadata.sort_values(by='Order').index
@@ -910,13 +911,13 @@ class MSDataset(Dataset):
 			print('\n_HEADER.txt file (raw data folder) missing for:')
 			for i in headerNull:
 				print(i)
-			self.excludeSamples(headerNull, message='unable to load _HEADER.txt file')
+			#self.excludeSamples(headerNull, message='unable to load _HEADER.txt file')
 
 		if(externNull.shape[0] != 0):
 			print('\n_extern.inf file (raw data folder) missing for:')
 			for i in externNull:
 				print(i)
-			self.excludeSamples(externNull, message='unable to load _extern.inf file')
+			#self.excludeSamples(externNull, message='unable to load _extern.inf file')
 
 		if((headerNull.shape[0] != 0) | (externNull.shape[0] != 0)):
 			print('\n****** Please check and correct before continuing - these samples will be automatically marked for exclusion from subsequent processing ******\n')
