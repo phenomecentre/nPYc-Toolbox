@@ -867,11 +867,15 @@ class MSDataset(Dataset):
 		if not os.path.isdir(rawDataPath):
 			raise ValueError('No directory found at %s' % (rawDataPath))
 
-		# Store the location
-		self.Attributes['Raw Data Path'] = rawDataPath
-
 		# Infer data format here - for now assume Waters RAW.
 		instrumentParams = getSampleMetadataFromWatersRawFiles(rawDataPath)
+
+		# Store the location
+		# Appending is supported to allow reading from multiple folders and directories
+		if self.Attributes['Raw Data Path'] is None:
+			self.Attributes['Raw Data Path'] = [rawDataPath]
+		else:
+			self.Attributes['Raw Data Path'].append(rawDataPath)
 
 		# Merge back into sampleMetadata
 		# Check if we already have these columns in sampleMetadata, if not, merge, if so, use combine_first to patch
@@ -920,7 +924,8 @@ class MSDataset(Dataset):
 			#self.excludeSamples(externNull, message='unable to load _extern.inf file')
 
 		if((headerNull.shape[0] != 0) | (externNull.shape[0] != 0)):
-			print('\n****** Please check and correct before continuing - these samples will be automatically marked for exclusion from subsequent processing ******\n')
+			print('\n****** Please check and correct before continuing - samples without acquisition time cannot'
+			 ' be displayed correctly in the summary reports ******\n')
 
 
 	def _getSampleMetadataFromFilename(self, filenameSpec):
