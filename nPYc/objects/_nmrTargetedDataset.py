@@ -28,24 +28,6 @@ class NMRTargetedDataset(Dataset):
 
     In addition to the structure of :py:class:`~Dataset`, :py:class:`~NMRTargetedDataset` requires the following attributes:
 
-    * :py:attr:`~TargetedDataset.expectedConcentration`:
-        A :math:`n` × :math:`m` pandas dataframe of expected concentrations (matching the :py:attr:`~Dataset.intensityData` dimension), with column names matching :py:attr:`~TargetedDataset.featureMetadata[‘Feature Name’]`
-
-    * :py:attr:`~TargetedDataset.calibration`:
-        A dictionary containing pandas dataframe describing calibration samples:
-
-        * :py:attr:`~TargetedDataset.calibration['calibIntensityData']`:
-            A :math:`r` x :math:`m` numpy matrix of measurements. Features must match features in :py:attr:`~TargetedDataset.intensityData`
-
-        * :py:attr:`~TargetedDataset.calibration['calibSampleMetadata']`:
-            A :math:`r` x :math:`m` pandas dataframe of calibration sample identifiers and metadata
-
-        * :py:attr:`~TargetedDataset.calibration['calibFeatureMetadata']`:
-            A :math:`m` × :math:`q` pandas dataframe of feature identifiers and metadata
-
-        * :py:attr:`~TargetedDataset.calibration['calibExpectedConcentration']`:
-            A :math:`r` × :math:`m` pandas dataframe of calibration samples expected concentrations
-
     * :py:attr:`~TargetedDataset.Attributes` must contain the following (can be loaded from a method specific JSON on import):
 
         * ``methodName``:
@@ -61,10 +43,6 @@ class NMRTargetedDataset(Dataset):
             A :py:class:`~nPYc.enumerations.CalibrationMethod` enum specifying the calibration method employed.
         * ``Unit``:
             A (str) unit corresponding the the feature measurement value.
-        * ``LLOQ``:
-            The lowest limit of quantification, used to filter concentrations < LLOQ
-        * ``ULOQ``:
-            The upper limit of quantification, used to filter concentrations > ULOQ
         * externalID:
             All externalIDs listed in :py:attr:`~TargetedDataset.Attributes['externalID']` must be present as their own column
 

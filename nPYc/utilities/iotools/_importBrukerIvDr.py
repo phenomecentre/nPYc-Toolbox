@@ -24,7 +24,7 @@ def importBrukerXML(filelist):
 	sampleMetadata['Run Order'] = None
 	intensityData = None
 	featureMetadata = None
-
+	lodData = None
 	importPass = numpy.ones(len(filelist), dtype=bool)
 
 	nameParser = re.compile(r'^(.+?)_expno(\d+)\..+?$')
