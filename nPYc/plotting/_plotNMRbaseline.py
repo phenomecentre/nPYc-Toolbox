@@ -1,11 +1,6 @@
-import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.lines as lines
-import seaborn as sns
-import numpy
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-import plotly.plotly as py
 import plotly.graph_objs as go
 
 from ._nmrPlotting import nmrRangeHelper, plotlyRangeHelper
