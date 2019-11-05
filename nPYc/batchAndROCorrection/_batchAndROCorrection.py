@@ -281,22 +281,28 @@ def doLOESScorrection(QCdata, QCrunorder, data, runorder, window=11):
 	"""
 	Fit a LOWESS regression to the data.
 	"""
-
 	# Convert window number of samples to fraction of the dataset:
 	noSamples = QCrunorder.shape
-	frac = window / float(numpy.squeeze(noSamples))
 
-	# actually do the work
-	z = lowess(QCdata, QCrunorder, frac=frac)
+	if noSamples == 0:
 
-	# Divide by fit, then rescale to batch median
-	fit = interp(runorder, z[:,0], z[:,1])
+		fit = numpy.zeros(shape=runorder.shape)
+		corrected = data
+
+	else:
+		frac = window / float(numpy.squeeze(noSamples))
+		frac = min([1, frac])
+		# actually do the work
+		z = lowess(QCdata, QCrunorder, frac=frac)
+
+		# Divide by fit, then rescale to batch median
+		fit = interp(runorder, z[:,0], z[:,1])
 	
-	# Fit can go negative if too many adjacent QC samples == 0; set any negative fit values to zero
-	fit[fit<0] = 0
+		# Fit can go negative if too many adjacent QC samples == 0; set any negative fit values to zero
+		fit[fit < 0] = 0
 
-	corrected = numpy.divide(data, fit)
-	corrected = numpy.multiply(corrected, numpy.median(QCdata))
+		corrected = numpy.divide(data, fit)
+		corrected = numpy.multiply(corrected, numpy.median(QCdata))
 
 	return (corrected, fit)
 
