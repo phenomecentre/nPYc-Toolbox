@@ -43,6 +43,10 @@ Alternatively, using pip and a local copy of the source:
 
     pip install /nPYC-toolboxDirectory/
 
+To update the current installed version use:
+
+    pip install --upgrade nPYc
+
 Installation with pip allows the usage of the uninstall command
 
     pip uninstall nPYc
