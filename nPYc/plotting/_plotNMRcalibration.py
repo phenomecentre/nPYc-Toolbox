@@ -1,8 +1,4 @@
-import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import seaborn as sns
-import numpy
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import plotly.graph_objs as go
 

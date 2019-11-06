@@ -88,6 +88,26 @@ def _batchCorrectionHead(data, runOrder, referenceSamples, batchList, window=11,
 	:param str method: Correction method, one of 'LOWESS' (default), 'SavitzkyGolay' or None for no correction
 	:param str align: Average calculation of batch and feature intensity for correction, one of 'median' (default) or 'mean'
 	"""
+	# Validate inputs
+	if not isinstance(data, numpy.ndarray):
+		raise TypeError('data must be a numpy array')
+	if not isinstance(runOrder, numpy.ndarray):
+		raise TypeError('runOrder must be a numpy array')
+	if not isinstance(referenceSamples, numpy.ndarray):
+		raise TypeError('referenceSamples must be a numpy array')
+	if not isinstance(batchList, numpy.ndarray):
+		raise TypeError('batchList must be a numpy array')
+	if not isinstance(window, int) & (window>0):
+		raise TypeError('window must be a positive integer')
+	if method is not None:
+		if not isinstance(method, str) & (method in {'LOWESS', 'SavitzkyGolay'}):
+			raise ValueError('method must be == LOWESS or SavitzkyGolay')	
+	if not isinstance(align, str) & (align in {'mean', 'median'}):
+			raise ValueError('align must be == mean or median')
+	if not isinstance(parallelise, bool):
+		raise TypeError('parallelise must be True or False')
+	if not isinstance(savePlots, bool):
+		raise TypeError('savePlots must be True or False')
 
 	# Store paramaters in a dict to avoid arg lists going out of control
 	parameters = dict()
