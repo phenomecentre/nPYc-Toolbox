@@ -63,17 +63,17 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 				# Plot distribution of feature by sample type
 				# Remove infinites and - infinites for targeted dataset.
 				valid_values = numpy.isfinite(dataset.intensityData[:,plotNo])
+
 				currentFeatureSampleMasks = list()
 				for maskIndex in range(len(sampleMasks)):
 					currentFeatureSampleMasks.append((sampleMasks[maskIndex][0], sampleMasks[maskIndex][1] & valid_values))
-
-				_violinPlotHelper(axIXs[axNo], dataset.intensityData[:, plotNo], currentFeatureSampleMasks, None, 'Sample Type', palette=palette, logy=False)
+				if valid_values.any():
+					_violinPlotHelper(axIXs[axNo], dataset.intensityData[:, plotNo], currentFeatureSampleMasks, None, 'Sample Type', palette=palette, logy=False)
 
 				axIXs[axNo].set_title(dataset.featureMetadata.loc[plotNo, featureName])
 
 			# Advance plotNo
 			plotNo = plotNo+1
-
 
 		if savePath:
 			if figures is not None:
