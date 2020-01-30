@@ -663,7 +663,7 @@ class MSDataset(Dataset):
 				# rename mz to mzmed like in diffreport
 				dataT.rename(columns={'mz': 'mzmed', 'rt': 'rtmed'}, inplace=True)
 			except:
-				raise ValueError('XCMS data frame should be obtained with either peakTable or diffreport methods')
+				raise ValueError('XCMS data frame should be obtained with featureDefinitions method')
 
 		featureMetadata['Feature Name'] = dataT['name'].values
 		featureMetadata['m/z'] = dataT['mzmed'].values
