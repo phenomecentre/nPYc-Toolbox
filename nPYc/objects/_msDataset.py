@@ -724,7 +724,7 @@ class MSDataset(Dataset):
 		##
 		# Sample info
 		##
-		self.sampleMetadata = pandas.read_excel(path, sheet_name=sheetName, skiprows=[0, 2,3], usecols=noSampleParams)
+		self.sampleMetadata = pandas.read_excel(path, sheet_name=sheetName, skiprows=[0, 2, 3], usecols=range(noSampleParams + 1))
 
 		# If there are multiple 'LOD (calc.) ' strings we have several sheets concatenated.
 		sampleMask = self.sampleMetadata['Measurement Time'].str.match('LOD \(calc\.\).+').values
