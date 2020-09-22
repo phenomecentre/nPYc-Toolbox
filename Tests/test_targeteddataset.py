@@ -6,7 +6,6 @@ import sys
 import unittest
 import unittest.mock
 import tempfile
-from pandas.util.testing import assert_frame_equal
 import os
 import copy
 import json
@@ -29,7 +28,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 		# testcol_batch1 & testcol_batch3 test the column batch renaming when __add__
 		# testcol_batch3 & specialcol_batch3 test the column batch detection
 		self.targetedData1 = nPYc.TargetedDataset('', fileType='empty')
-		self.targetedData1.sampleMetadata = pandas.DataFrame({'Sample File Name':['Unittest_targeted_file_001','Unittest_targeted_file_002','Unittest_targeted_file_003'],'Sample Base Name':['Unittest_targeted_file_001','Unittest_targeted_file_002','Unittest_targeted_file_003'],'AssayRole':[AssayRole.Assay,AssayRole.PrecisionReference,AssayRole.PrecisionReference],'SampleType':[SampleType.StudySample,SampleType.StudyPool,SampleType.ExternalReference],'MassLynx Row ID':[1,2,3],'Sample Name':['Sample1','Sample2','Sample3'],'Sample Type':['Analyte','Analyte','Analyte'],'Acqu Date':['26-May-17','26-May-17','26-May-17'],'Acqu Time':['16:42:57','16:58:49','17:14:41'],'Vial':['1:A,1','1:A,2','1:A,3'],'Instrument':['XEVO-TQS#UnitTest','XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'],'Acquired Time':[datetime(2017,5,26,16,42,57),datetime(2017,5,26,16,58,49),datetime(2017,5,26,17,14,41)],'Run Order':[0,1,2],'Batch':[1,1,3],'Dilution':[50,100,100],'Correction Batch':[numpy.nan,numpy.nan,numpy.nan],'Sample ID':['Sample1','Sample2','Sample3'],'Subject ID': ['subject1', 'subject1', 'subject2'],'Exclusion Details':['','','']})
+		self.targetedData1.sampleMetadata = pandas.DataFrame({'Sample File Name':['Unittest_targeted_file_001','Unittest_targeted_file_002','Unittest_targeted_file_003'],'Sample Base Name':['Unittest_targeted_file_001','Unittest_targeted_file_002','Unittest_targeted_file_003'],'AssayRole':[AssayRole.Assay,AssayRole.PrecisionReference,AssayRole.PrecisionReference],'SampleType':[SampleType.StudySample,SampleType.StudyPool,SampleType.ExternalReference],'MassLynx Row ID':[1,2,3],'Sample Name':['Sample1','Sample2','Sample3'],'Sample Type':['Analyte','Analyte','Analyte'],'Acqu Date':['26-May-17','26-May-17','26-May-17'],'Acqu Time':['16:42:57','16:58:49','17:14:41'],'Vial':['1:A,1','1:A,2','1:A,3'],'Instrument':['XEVO-TQS#UnitTest','XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'],'Acquired Time':[pandas.Timestamp(datetime(2017,5,26,16,42,57)),pandas.Timestamp(datetime(2017,5,26,16,58,49)),pandas.Timestamp(datetime(2017,5,26,17,14,41))],'Run Order':[0,1,2],'Batch':[1,1,3],'Dilution':[50,100,100],'Correction Batch':[numpy.nan,numpy.nan,numpy.nan],'Sample ID':['Sample1','Sample2','Sample3'],'Subject ID': ['subject1', 'subject1', 'subject2'],'Exclusion Details':['','','']})
 		self.targetedData1.featureMetadata = pandas.DataFrame({'Feature Name':['Feature1','Feature2','Feature3'],'TargetLynx Feature ID':[1,2,3],'calibrationEquation':['((area * responseFactor)-b)/a','10**((numpy.log10(area * responseFactor)-b)/a)',''],'calibrationMethod':[CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.noCalibration],'quantificationType':[QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.Monitored],'unitCorrectionFactor':[10,1,1],'Unit':['\u00B5M','fg/\u00B5L','noUnit'],'Cpd Info_batch1':['Some info Feature1','Some info Feature2','Some info Feature3'],'Cpd Info_batch3':['Some info Feature1','Some info Feature2','Some info Feature3'],'Noise (area)_batch1':['','',''],'Noise (area)_batch3':['','',''],'LLOQ_batch1':[10,50,100],'LLOQ_batch3':[10,50,200],'ULOQ_batch1':[1000,5000,10000],'ULOQ_batch3':[1000,5000,25000],'a_batch1':['','',''],'a_batch3':['','',''],'b_batch1':['','',''],'b_batch3':['','',''],'r_batch1':['','',''],'r_batch3':['','',''],'r2_batch1':['','',''],'r2_batch3':['','',''],'testcol_batch1':['testcol_batch1','testcol_batch1','testcol_batch1'],'testcol_batch3':['testcol_batch3','testcol_batch3','testcol_batch3'],'specialcol_batch3':['specialcol_batch3','specialcol_batch3','specialcol_batch3'],'extID1': ['F1','F2','F3'],'extID2': ['ID1','ID2','ID3']})
 		self.targetedData1._intensityData = numpy.array([[10, 20, 30], [10, 20, 30], [3, 15, 30]])
 		self.targetedData1.expectedConcentration = pandas.DataFrame({'Feature1':[9, 22, 30], 'Feature2':[11, 18, 30], 'Feature3':[3, 15, 30]})
@@ -54,7 +53,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 		self.targetedData1.expectedConcentrationExcluded.append(self.targetedData1.expectedConcentration.iloc[:, [0]])
 		self.targetedData1.excludedFlag.append('Features')
 		# calibration import batch1
-		td1b1_calibSampleMetadata = pandas.DataFrame({'Sample File Name': ['Unittest_targeted_file_009'], 'MassLynx Row ID': [9], 'Sample Name': ['calib1'],'Sample Type': ['Calibrant'], 'Acqu Date': ['26-May-17'], 'Acqu Time': ['17:29:57'], 'Vial': ['1:A,9'],'Instrument': ['XEVO-TQS#UnitTest'], 'Acquired Time': [datetime(2017, 5, 26, 17, 29, 57)],'Run Order': [3], 'Batch': [1]})
+		td1b1_calibSampleMetadata = pandas.DataFrame({'Sample File Name': ['Unittest_targeted_file_009'], 'MassLynx Row ID': [9], 'Sample Name': ['calib1'],'Sample Type': ['Calibrant'], 'Acqu Date': ['26-May-17'], 'Acqu Time': ['17:29:57'], 'Vial': ['1:A,9'],'Instrument': ['XEVO-TQS#UnitTest'], 'Acquired Time': [pandas.Timestamp(datetime(2017, 5, 26, 17, 29, 57))],'Run Order': [3], 'Batch': [1]})
 		td1b1_calibFeatureMetadata = self.targetedData1.featureMetadata
 		td1b1_calibIntensityData = numpy.array([[10, 20, 30]])
 		td1b1_calibExpectedConcentration = pandas.DataFrame({'Feature1': [1000.0], 'Feature2': [1000.0], 'Feature3': [1000.0]})
@@ -66,7 +65,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 		td1b1_calibPeakInfo = {'peakResponse': td1b1_calibPeakResponse, 'peakArea': td1b1_calibPeakArea,'peakConcentrationDeviation': td1b1_calibPeakConcentrationDeviation,'peakIntegration': td1b1_calibPeakIntegrationFlag, 'peakRT': td1b1_calibPeakRT}
 		calibB1 = dict({'calibSampleMetadata': td1b1_calibSampleMetadata, 'calibFeatureMetadata': td1b1_calibFeatureMetadata,'calibIntensityData': td1b1_calibIntensityData,'calibExpectedConcentration': td1b1_calibExpectedConcentration, 'calibPeakInfo': td1b1_calibPeakInfo})
 		# calibration import batch 3
-		td1b3_calibSampleMetadata = pandas.DataFrame({'Sample File Name': ['Unittest_targeted_file_010'], 'MassLynx Row ID': [10], 'Sample Name': ['calib2'],'Sample Type': ['Calibrant'], 'Acqu Date': ['26-May-17'], 'Acqu Time': ['17:45:49'], 'Vial': ['1:A,10'],'Instrument': ['XEVO-TQS#UnitTest'], 'Acquired Time': [datetime(2017, 5, 26, 17, 45, 49)],'Run Order': [4], 'Batch': [3]})
+		td1b3_calibSampleMetadata = pandas.DataFrame({'Sample File Name': ['Unittest_targeted_file_010'], 'MassLynx Row ID': [10], 'Sample Name': ['calib2'],'Sample Type': ['Calibrant'], 'Acqu Date': ['26-May-17'], 'Acqu Time': ['17:45:49'], 'Vial': ['1:A,10'],'Instrument': ['XEVO-TQS#UnitTest'], 'Acquired Time': [pandas.Timestamp(datetime(2017, 5, 26, 17, 45, 49))],'Run Order': [4], 'Batch': [3]})
 		td1b3_calibFeatureMetadata = self.targetedData1.featureMetadata
 		td1b3_calibIntensityData = numpy.array([[3, 15, 30]])
 		td1b3_calibExpectedConcentration = pandas.DataFrame({'Feature1': [2500.0], 'Feature2': [2500.0], 'Feature3': [2500.0]})
@@ -318,12 +317,12 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 			if type(getattr(self.targetedData1, i)) is numpy.ndarray:
 				numpy.testing.assert_array_equal(getattr(self.targetedData1,i), getattr(copiedTargetedData,i))
 			elif type(getattr(self.targetedData1, i)) is pandas.core.frame.DataFrame:
-				pandas.util.testing.assert_frame_equal(getattr(self.targetedData1,i), getattr(copiedTargetedData,i))
+				pandas.testing.assert_frame_equal(getattr(self.targetedData1,i), getattr(copiedTargetedData,i))
 			elif type(getattr(self.targetedData1, i)) is list:
 				# the *Excluded are lists, need to match assert to type inside the list. Might not work with mixed type lists (expect the first type to match the whole list)
 				if type(getattr(self.targetedData1, i)[0]) is pandas.core.frame.DataFrame:
 					for j in range(len(getattr(self.targetedData1, i))):
-						pandas.util.testing.assert_frame_equal(getattr(self.targetedData1,i)[j], getattr(copiedTargetedData,i)[j])
+						pandas.testing.assert_frame_equal(getattr(self.targetedData1,i)[j], getattr(copiedTargetedData,i)[j])
 				elif type(getattr(self.targetedData1, i)[0]) is numpy.ndarray:
 					for k in range(len(getattr(self.targetedData1, i))):
 						numpy.testing.assert_array_equal(getattr(self.targetedData1,i)[k], getattr(copiedTargetedData,i)[k])
@@ -333,14 +332,14 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 						# each key needs to be checked differently
 						for m in getattr(self.targetedData1,i)[l].keys():
 							if type(getattr(self.targetedData1,i)[l][m]) is pandas.core.frame.DataFrame:
-								pandas.util.testing.assert_frame_equal(getattr(self.targetedData1, i)[l][m], getattr(copiedTargetedData, i)[l][m])
+								pandas.testing.assert_frame_equal(getattr(self.targetedData1, i)[l][m], getattr(copiedTargetedData, i)[l][m])
 							elif type(getattr(self.targetedData1,i)[l][m]) is numpy.ndarray:
 								numpy.testing.assert_array_equal(getattr(self.targetedData1, i)[l][m], getattr(copiedTargetedData, i)[l][m])
 							# dictionary in calibration is peakInfo
 							elif type(getattr(self.targetedData1, i)[l][m]) is dict:
 								for n in getattr(self.targetedData1, i)[l][m].keys():
 									if type(getattr(self.targetedData1, i)[l][m][n]) is pandas.core.frame.DataFrame:
-										pandas.util.testing.assert_frame_equal(getattr(self.targetedData1, i)[l][m][n],getattr(copiedTargetedData, i)[l][m][n])
+										pandas.testing.assert_frame_equal(getattr(self.targetedData1, i)[l][m][n],getattr(copiedTargetedData, i)[l][m][n])
 									elif type(getattr(self.targetedData1, i)[l][m][n]) is numpy.ndarray:
 										numpy.testing.assert_array_equal(getattr(self.targetedData1, i)[l][m][n],getattr(copiedTargetedData, i)[l][m][n])
 							else:
@@ -977,13 +976,13 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 			# Checking class:
 			self.assertEqual(type(concatenatedDataset),type(expectedDataset))
 			# Checking sampleMetadata:
-			pandas.util.testing.assert_frame_equal(concatenatedDataset.sampleMetadata,expectedDataset.sampleMetadata)
+			pandas.testing.assert_frame_equal(concatenatedDataset.sampleMetadata,expectedDataset.sampleMetadata)
 			# Checking featureMetadata:
-			pandas.util.testing.assert_frame_equal(concatenatedDataset.featureMetadata.reindex(sorted(concatenatedDataset.featureMetadata),axis=1), expectedDataset.featureMetadata.reindex(sorted(expectedDataset.featureMetadata),axis=1))
+			pandas.testing.assert_frame_equal(concatenatedDataset.featureMetadata.reindex(sorted(concatenatedDataset.featureMetadata),axis=1), expectedDataset.featureMetadata.reindex(sorted(expectedDataset.featureMetadata),axis=1))
 			# Checking intensityData:
 			numpy.testing.assert_array_equal(concatenatedDataset._intensityData, expectedDataset._intensityData)
 			# Checking expectedConcentration:
-			pandas.util.testing.assert_frame_equal(concatenatedDataset.expectedConcentration.reindex(sorted(concatenatedDataset.expectedConcentration), axis=1),expectedDataset.expectedConcentration.reindex(sorted(expectedDataset.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(concatenatedDataset.expectedConcentration.reindex(sorted(concatenatedDataset.expectedConcentration), axis=1),expectedDataset.expectedConcentration.reindex(sorted(expectedDataset.expectedConcentration), axis=1))
 			# Checking Attributes:
 			# same Attributes
 			self.assertEqual(concatenatedDataset.Attributes.keys(), expectedDataset.Attributes.keys())
@@ -1002,26 +1001,26 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 					else:
 						self.assertEqual(expectedDataset.Attributes[k],concatenatedDataset.Attributes[k])
 			# Checking sampleMetadataExcluded:
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][0], concatenatedDataset.sampleMetadataExcluded[0][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][1], concatenatedDataset.sampleMetadataExcluded[0][1])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][0], concatenatedDataset.sampleMetadataExcluded[1][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][1], concatenatedDataset.sampleMetadataExcluded[1][1])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][0], concatenatedDataset.sampleMetadataExcluded[0][0])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][1], concatenatedDataset.sampleMetadataExcluded[0][1])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][0], concatenatedDataset.sampleMetadataExcluded[1][0])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][1], concatenatedDataset.sampleMetadataExcluded[1][1])
 			self.assertListEqual(expectedDataset.sampleMetadataExcluded[2], concatenatedDataset.sampleMetadataExcluded[2])
 			# Checking intensityMetadataExcluded:
 			numpy.testing.assert_array_equal(expectedDataset.intensityDataExcluded[0], concatenatedDataset.intensityDataExcluded[0])
 			numpy.testing.assert_array_equal(expectedDataset.intensityDataExcluded[1], concatenatedDataset.intensityDataExcluded[1])
 			self.assertListEqual(expectedDataset.intensityDataExcluded[2], concatenatedDataset.intensityDataExcluded[2])
 			# Checking featureMetadataExcluded:
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][0], concatenatedDataset.featureMetadataExcluded[0][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][1], concatenatedDataset.featureMetadataExcluded[0][1])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][0], concatenatedDataset.featureMetadataExcluded[1][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][1], concatenatedDataset.featureMetadataExcluded[1][1])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][0], concatenatedDataset.featureMetadataExcluded[0][0])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][1], concatenatedDataset.featureMetadataExcluded[0][1])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][0], concatenatedDataset.featureMetadataExcluded[1][0])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][1], concatenatedDataset.featureMetadataExcluded[1][1])
 			self.assertListEqual(expectedDataset.featureMetadataExcluded[2], concatenatedDataset.featureMetadataExcluded[2])
 			# Checking expectedConcentrationExcluded:
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][0], concatenatedDataset.expectedConcentrationExcluded[0][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][1], concatenatedDataset.expectedConcentrationExcluded[0][1])
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][0], concatenatedDataset.expectedConcentrationExcluded[1][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][1], concatenatedDataset.expectedConcentrationExcluded[1][1])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][0], concatenatedDataset.expectedConcentrationExcluded[0][0])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][1], concatenatedDataset.expectedConcentrationExcluded[0][1])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][0], concatenatedDataset.expectedConcentrationExcluded[1][0])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][1], concatenatedDataset.expectedConcentrationExcluded[1][1])
 			self.assertListEqual(expectedDataset.expectedConcentrationExcluded[2], concatenatedDataset.expectedConcentrationExcluded[2])
 			# Checking excludedFlag:
 			self.assertListEqual(expectedDataset.excludedFlag, concatenatedDataset.excludedFlag)
@@ -1031,10 +1030,10 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 			numpy.testing.assert_array_equal(expectedDataset.sampleMask, concatenatedDataset.sampleMask)
 			# Checking calibration:
 			for i in range(len(expectedDataset.calibration)):
-				pandas.util.testing.assert_frame_equal(expectedDataset.calibration[i]['calibSampleMetadata'], concatenatedDataset.calibration[i]['calibSampleMetadata'])
-				pandas.util.testing.assert_frame_equal(expectedDataset.calibration[i]['calibFeatureMetadata'], concatenatedDataset.calibration[i]['calibFeatureMetadata'])
+				pandas.testing.assert_frame_equal(expectedDataset.calibration[i]['calibSampleMetadata'], concatenatedDataset.calibration[i]['calibSampleMetadata'])
+				pandas.testing.assert_frame_equal(expectedDataset.calibration[i]['calibFeatureMetadata'], concatenatedDataset.calibration[i]['calibFeatureMetadata'])
 				numpy.testing.assert_array_equal(expectedDataset.calibration[i]['calibIntensityData'], concatenatedDataset.calibration[i]['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expectedDataset.calibration[i]['calibExpectedConcentration'], concatenatedDataset.calibration[i]['calibExpectedConcentration'])
+				pandas.testing.assert_frame_equal(expectedDataset.calibration[i]['calibExpectedConcentration'], concatenatedDataset.calibration[i]['calibExpectedConcentration'])
 
 		with self.subTest(msg='Checking concatenation with unexpected attributes'):
 
@@ -1085,13 +1084,13 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 		with self.subTest(msg='Checking class'):
 			self.assertEqual(type(concatenatedDataset),type(expectedDataset))
 		with self.subTest(msg='Checking sampleMetadata'):
-			pandas.util.testing.assert_frame_equal(concatenatedDataset.sampleMetadata,expectedDataset.sampleMetadata)
+			pandas.testing.assert_frame_equal(concatenatedDataset.sampleMetadata,expectedDataset.sampleMetadata)
 		with self.subTest(msg='Checking featureMetadata'):
-			pandas.util.testing.assert_frame_equal(concatenatedDataset.featureMetadata.reindex(sorted(concatenatedDataset.featureMetadata),axis=1), expectedDataset.featureMetadata.reindex(sorted(expectedDataset.featureMetadata),axis=1))
+			pandas.testing.assert_frame_equal(concatenatedDataset.featureMetadata.reindex(sorted(concatenatedDataset.featureMetadata),axis=1), expectedDataset.featureMetadata.reindex(sorted(expectedDataset.featureMetadata),axis=1))
 		with self.subTest(msg='Checking intensityData'):
 			numpy.testing.assert_array_equal(concatenatedDataset._intensityData, expectedDataset._intensityData)
 		with self.subTest(msg='Checking expectedConcentration'):
-			pandas.util.testing.assert_frame_equal(concatenatedDataset.expectedConcentration.reindex(sorted(concatenatedDataset.expectedConcentration), axis=1),expectedDataset.expectedConcentration.reindex(sorted(expectedDataset.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(concatenatedDataset.expectedConcentration.reindex(sorted(concatenatedDataset.expectedConcentration), axis=1),expectedDataset.expectedConcentration.reindex(sorted(expectedDataset.expectedConcentration), axis=1))
 		with self.subTest(msg='Checking Attributes'):
 			# same Attributes
 			self.assertEqual(concatenatedDataset.Attributes.keys(), expectedDataset.Attributes.keys())
@@ -1108,26 +1107,26 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 					else:
 						self.assertEqual(expectedDataset.Attributes[k],concatenatedDataset.Attributes[k])
 		with self.subTest(msg='Checking sampleMetadataExcluded'):
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][0], concatenatedDataset.sampleMetadataExcluded[0][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][1], concatenatedDataset.sampleMetadataExcluded[0][1])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][0], concatenatedDataset.sampleMetadataExcluded[1][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][1], concatenatedDataset.sampleMetadataExcluded[1][1])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][0], concatenatedDataset.sampleMetadataExcluded[0][0])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][1], concatenatedDataset.sampleMetadataExcluded[0][1])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][0], concatenatedDataset.sampleMetadataExcluded[1][0])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][1], concatenatedDataset.sampleMetadataExcluded[1][1])
 			self.assertListEqual(expectedDataset.sampleMetadataExcluded[2], concatenatedDataset.sampleMetadataExcluded[2])
 		with self.subTest(msg='Checking intensityMetadataExcluded'):
 			numpy.testing.assert_array_equal(expectedDataset.intensityDataExcluded[0], concatenatedDataset.intensityDataExcluded[0])
 			numpy.testing.assert_array_equal(expectedDataset.intensityDataExcluded[1], concatenatedDataset.intensityDataExcluded[1])
 			self.assertListEqual(expectedDataset.intensityDataExcluded[2], concatenatedDataset.intensityDataExcluded[2])
 		with self.subTest(msg='Checking featureMetadataExcluded'):
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][0], concatenatedDataset.featureMetadataExcluded[0][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][1], concatenatedDataset.featureMetadataExcluded[0][1])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][0], concatenatedDataset.featureMetadataExcluded[1][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][1], concatenatedDataset.featureMetadataExcluded[1][1])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][0], concatenatedDataset.featureMetadataExcluded[0][0])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][1], concatenatedDataset.featureMetadataExcluded[0][1])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][0], concatenatedDataset.featureMetadataExcluded[1][0])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][1], concatenatedDataset.featureMetadataExcluded[1][1])
 			self.assertListEqual(expectedDataset.featureMetadataExcluded[2], concatenatedDataset.featureMetadataExcluded[2])
 		with self.subTest(msg='Checking expectedConcentrationExcluded'):
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][0], concatenatedDataset.expectedConcentrationExcluded[0][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][1], concatenatedDataset.expectedConcentrationExcluded[0][1])
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][0], concatenatedDataset.expectedConcentrationExcluded[1][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][1], concatenatedDataset.expectedConcentrationExcluded[1][1])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][0], concatenatedDataset.expectedConcentrationExcluded[0][0])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][1], concatenatedDataset.expectedConcentrationExcluded[0][1])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][0], concatenatedDataset.expectedConcentrationExcluded[1][0])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][1], concatenatedDataset.expectedConcentrationExcluded[1][1])
 			self.assertListEqual(expectedDataset.expectedConcentrationExcluded[2], concatenatedDataset.expectedConcentrationExcluded[2])
 		with self.subTest(msg='Checking excludedFlag'):
 			self.assertListEqual(expectedDataset.excludedFlag, concatenatedDataset.excludedFlag)
@@ -1137,10 +1136,10 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 			numpy.testing.assert_array_equal(expectedDataset.sampleMask, concatenatedDataset.sampleMask)
 		with self.subTest(msg='Checking calibration'):
 			for i in range(len(expectedDataset.calibration)):
-				pandas.util.testing.assert_frame_equal(expectedDataset.calibration[i]['calibSampleMetadata'], concatenatedDataset.calibration[i]['calibSampleMetadata'])
-				pandas.util.testing.assert_frame_equal(expectedDataset.calibration[i]['calibFeatureMetadata'], concatenatedDataset.calibration[i]['calibFeatureMetadata'])
+				pandas.testing.assert_frame_equal(expectedDataset.calibration[i]['calibSampleMetadata'], concatenatedDataset.calibration[i]['calibSampleMetadata'])
+				pandas.testing.assert_frame_equal(expectedDataset.calibration[i]['calibFeatureMetadata'], concatenatedDataset.calibration[i]['calibFeatureMetadata'])
 				numpy.testing.assert_array_equal(expectedDataset.calibration[i]['calibIntensityData'], concatenatedDataset.calibration[i]['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expectedDataset.calibration[i]['calibExpectedConcentration'], concatenatedDataset.calibration[i]['calibExpectedConcentration'])
+				pandas.testing.assert_frame_equal(expectedDataset.calibration[i]['calibExpectedConcentration'], concatenatedDataset.calibration[i]['calibExpectedConcentration'])
 
 
 	def test_targeteddataset_applymasks(self):
@@ -1183,13 +1182,13 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 		with self.subTest(msg='Checking class'):
 			self.assertEqual(type(maskedDataset),type(expectedDataset))
 		with self.subTest(msg='Checking sampleMetadata'):
-			pandas.util.testing.assert_frame_equal(maskedDataset.sampleMetadata,expectedDataset.sampleMetadata)
+			pandas.testing.assert_frame_equal(maskedDataset.sampleMetadata,expectedDataset.sampleMetadata)
 		with self.subTest(msg='Checking featureMetadata'):
-			pandas.util.testing.assert_frame_equal(maskedDataset.featureMetadata.reindex(sorted(maskedDataset.featureMetadata),axis=1), expectedDataset.featureMetadata.reindex(sorted(expectedDataset.featureMetadata),axis=1))
+			pandas.testing.assert_frame_equal(maskedDataset.featureMetadata.reindex(sorted(maskedDataset.featureMetadata),axis=1), expectedDataset.featureMetadata.reindex(sorted(expectedDataset.featureMetadata),axis=1))
 		with self.subTest(msg='Checking _intensityData'):
 			numpy.testing.assert_array_equal(maskedDataset._intensityData, expectedDataset._intensityData)
 		with self.subTest(msg='Checking expectedConcentration'):
-			pandas.util.testing.assert_frame_equal(maskedDataset.expectedConcentration.reindex(sorted(maskedDataset.expectedConcentration), axis=1),expectedDataset.expectedConcentration.reindex(sorted(expectedDataset.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(maskedDataset.expectedConcentration.reindex(sorted(maskedDataset.expectedConcentration), axis=1),expectedDataset.expectedConcentration.reindex(sorted(expectedDataset.expectedConcentration), axis=1))
 		with self.subTest(msg='Checking Attributes'):
 			# same Attributes
 			self.assertEqual(maskedDataset.Attributes.keys(), expectedDataset.Attributes.keys())
@@ -1206,26 +1205,26 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 					else:
 						self.assertEqual(expectedDataset.Attributes[k], maskedDataset.Attributes[k])
 		with self.subTest(msg='Checking sampleMetadataExcluded'):
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][0], maskedDataset.sampleMetadataExcluded[0][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][1], maskedDataset.sampleMetadataExcluded[0][1])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][0], maskedDataset.sampleMetadataExcluded[1][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][1], maskedDataset.sampleMetadataExcluded[1][1])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][0], maskedDataset.sampleMetadataExcluded[0][0])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0][1], maskedDataset.sampleMetadataExcluded[0][1])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][0], maskedDataset.sampleMetadataExcluded[1][0])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1][1], maskedDataset.sampleMetadataExcluded[1][1])
 			self.assertListEqual(expectedDataset.sampleMetadataExcluded[2], maskedDataset.sampleMetadataExcluded[2])
 		with self.subTest(msg='Checking intensityMetadataExcluded'):
 			numpy.testing.assert_array_equal(expectedDataset.intensityDataExcluded[0], maskedDataset.intensityDataExcluded[0])
 			numpy.testing.assert_array_equal(expectedDataset.intensityDataExcluded[1], maskedDataset.intensityDataExcluded[1])
 			self.assertListEqual(expectedDataset.intensityDataExcluded[2], maskedDataset.intensityDataExcluded[2])
 		with self.subTest(msg='Checking featureMetadataExcluded'):
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][0], maskedDataset.featureMetadataExcluded[0][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][1], maskedDataset.featureMetadataExcluded[0][1])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][0], maskedDataset.featureMetadataExcluded[1][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][1], maskedDataset.featureMetadataExcluded[1][1])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][0], maskedDataset.featureMetadataExcluded[0][0])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0][1], maskedDataset.featureMetadataExcluded[0][1])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][0], maskedDataset.featureMetadataExcluded[1][0])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1][1], maskedDataset.featureMetadataExcluded[1][1])
 			self.assertListEqual(expectedDataset.featureMetadataExcluded[2], maskedDataset.featureMetadataExcluded[2])
 		with self.subTest(msg='Checking expectedConcentrationExcluded'):
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][0], maskedDataset.expectedConcentrationExcluded[0][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][1], maskedDataset.expectedConcentrationExcluded[0][1])
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][0], maskedDataset.expectedConcentrationExcluded[1][0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][1], maskedDataset.expectedConcentrationExcluded[1][1])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][0], maskedDataset.expectedConcentrationExcluded[0][0])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[0][1], maskedDataset.expectedConcentrationExcluded[0][1])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][0], maskedDataset.expectedConcentrationExcluded[1][0])
+			pandas.testing.assert_frame_equal(expectedDataset.expectedConcentrationExcluded[1][1], maskedDataset.expectedConcentrationExcluded[1][1])
 			self.assertListEqual(expectedDataset.expectedConcentrationExcluded[2],maskedDataset.expectedConcentrationExcluded[2])
 		with self.subTest(msg='Checking excludedFlag'):
 			self.assertListEqual(expectedDataset.excludedFlag, maskedDataset.excludedFlag)
@@ -1235,10 +1234,10 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 			numpy.testing.assert_array_equal(expectedDataset.sampleMask, maskedDataset.sampleMask)
 		with self.subTest(msg='Checking calibration'):
 			for i in range(len(expectedDataset.calibration)):
-				pandas.util.testing.assert_frame_equal(expectedDataset.calibration[i]['calibSampleMetadata'], maskedDataset.calibration[i]['calibSampleMetadata'])
-				pandas.util.testing.assert_frame_equal(expectedDataset.calibration[i]['calibFeatureMetadata'], maskedDataset.calibration[i]['calibFeatureMetadata'])
+				pandas.testing.assert_frame_equal(expectedDataset.calibration[i]['calibSampleMetadata'], maskedDataset.calibration[i]['calibSampleMetadata'])
+				pandas.testing.assert_frame_equal(expectedDataset.calibration[i]['calibFeatureMetadata'], maskedDataset.calibration[i]['calibFeatureMetadata'])
 				numpy.testing.assert_array_equal(expectedDataset.calibration[i]['calibIntensityData'], maskedDataset.calibration[i]['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expectedDataset.calibration[i]['calibExpectedConcentration'], maskedDataset.calibration[i]['calibExpectedConcentration'])
+				pandas.testing.assert_frame_equal(expectedDataset.calibration[i]['calibExpectedConcentration'], maskedDataset.calibration[i]['calibExpectedConcentration'])
 
 
 	def test_targeteddataset_updatemasks_samples(self):
@@ -1425,7 +1424,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 									  'Test1_HPOS_ToF06_EIC21'],
 									  name='Sample Base Name',
 									  dtype=str)
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Sample Base Name'], basename)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Sample Base Name'], basename)
 
 		with self.subTest(msg='Study'):
 			study = pandas.Series(['Test1',
@@ -1445,7 +1444,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 								   'Test1'],
 								   name='Study',
 								   dtype='str')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Study'], study)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Study'], study)
 
 		with self.subTest(msg='Chromatography'):
 			chromatography = pandas.Series(['H',
@@ -1465,7 +1464,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 											'H'],
 											name='Chromatography',
 											dtype='str')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Chromatography'], chromatography)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Chromatography'], chromatography)
 
 		with self.subTest(msg='Ionisation'):
 			ionisation = pandas.Series(['POS',
@@ -1485,7 +1484,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 										'POS'],
 										name='Ionisation',
 										dtype='str')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Ionisation'], ionisation)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Ionisation'], ionisation)
 
 		with self.subTest(msg='Instrument'):
 			instrument = pandas.Series(['ToF01',
@@ -1505,7 +1504,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 										'ToF06'],
 										name='Instrument',
 										dtype='str')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Instrument'], instrument)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Instrument'], instrument)
 
 		with self.subTest(msg='Rerun'):
 			reRun = pandas.Series(['',
@@ -1525,7 +1524,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 								''],
 								name='Re-Run',
 								dtype='str')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Re-Run'], reRun)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Re-Run'], reRun)
 
 		with self.subTest(msg='Suplemental Injections'):
 			suplemental = pandas.Series(['',
@@ -1545,7 +1544,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 										''],
 										name='Suplemental Injections',
 										dtype='str')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Suplemental Injections'], suplemental)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Suplemental Injections'], suplemental)
 
 		with self.subTest(msg='Skipped'):
 			skipped = pandas.Series([False,
@@ -1565,7 +1564,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 									False],
 									name='Skipped',
 									dtype='bool')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Skipped'], skipped)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Skipped'], skipped)
 
 		with self.subTest(msg='Matrix'):
 			matrix = pandas.Series(['P',
@@ -1585,7 +1584,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 									''],
 									name='Matrix',
 									dtype='str')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Matrix'], matrix)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Matrix'], matrix)
 
 		with self.subTest(msg='Well'):
 			well = pandas.Series([2,
@@ -1605,7 +1604,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 								-1],
 								name='Well',
 								dtype='int')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Well'], well, check_dtype=False)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Well'], well, check_dtype=False)
 			self.assertEqual(self.targetedData5.sampleMetadata['Well'].dtype.kind, well.dtype.kind)
 
 		with self.subTest(msg='Plate'):
@@ -1626,7 +1625,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 									21],
 									name='Plate',
 									dtype='int')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Plate'], plate, check_dtype=False)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Plate'], plate, check_dtype=False)
 			self.assertEqual(self.targetedData5.sampleMetadata['Plate'].dtype.kind, well.dtype.kind)
 
 		with self.subTest(msg='Batch'):
@@ -1647,7 +1646,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 								numpy.nan],
 								name='Batch',
 								dtype=float)
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Batch'], batch)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Batch'], batch)
 
 		with self.subTest(msg='Dilution'):
 			dilution = pandas.Series([numpy.nan,
@@ -1667,7 +1666,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 									numpy.nan],
 									name='Dilution',
 									dtype='float')
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['Dilution'], dilution)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Dilution'], dilution)
 
 		with self.subTest(msg='AssayRole'):
 			assayRole = pandas.Series([AssayRole.Assay,
@@ -1687,7 +1686,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 									AssayRole.Assay],
 									name='AssayRole',
 									dtype=object)
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['AssayRole'], assayRole)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['AssayRole'], assayRole)
 
 		with self.subTest(msg='SampleType'):
 			sampleType = pandas.Series([SampleType.StudySample,
@@ -1707,7 +1706,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 									SampleType.StudyPool],
 									name='SampleType',
 									dtype=object)
-			pandas.util.testing.assert_series_equal(self.targetedData5.sampleMetadata['SampleType'], sampleType)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['SampleType'], sampleType)
 
 
 	def test_targeteddataset_fillbatch_correctionbatch(self):
@@ -1718,7 +1717,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 										 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, numpy.nan],
 										name='Correction Batch',
 										dtype=float)
-		pandas.util.testing.assert_series_equal(targetedData6.sampleMetadata['Correction Batch'], correctionBatch)
+		pandas.testing.assert_series_equal(targetedData6.sampleMetadata['Correction Batch'], correctionBatch)
 
 
 	def test_targeteddataset_fillbatch_runorder_warns(self):
@@ -1738,7 +1737,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 										name='Correction Batch',
 										dtype='float')
 		# test
-		pandas.util.testing.assert_series_equal(targetedData6.sampleMetadata['Correction Batch'], correctionBatch)
+		pandas.testing.assert_series_equal(targetedData6.sampleMetadata['Correction Batch'], correctionBatch)
 
 
 	def test_targeteddataset_addsampleinfo_filenames(self):
@@ -1781,7 +1780,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 								 name='Sample Base Name',
 								 dtype='str')
 		# test
-		pandas.util.testing.assert_series_equal(targetedData5.sampleMetadata['Sample Base Name'], basename)
+		pandas.testing.assert_series_equal(targetedData5.sampleMetadata['Sample Base Name'], basename)
 
 
 	def test_targeteddataset_addsampleinfo_filenames_raise_attributeerror(self):
@@ -1840,15 +1839,15 @@ class test_targeteddataset_import_targetlynx_getdatasetfromxml(unittest.TestCase
 		sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT = self.targetedData._TargetedDataset__getDatasetFromXML(datapath)
 
 		# test
-		pandas.util.testing.assert_frame_equal(expectedSampleMetadata.reindex(sorted(expectedSampleMetadata),axis=1), sampleMetadata.reindex(sorted(sampleMetadata),axis=1))
-		pandas.util.testing.assert_frame_equal(expectedFeatureMetadata.reindex(sorted(expectedFeatureMetadata),axis=1), featureMetadata.reindex(sorted(featureMetadata),axis=1))
+		pandas.testing.assert_frame_equal(expectedSampleMetadata.reindex(sorted(expectedSampleMetadata),axis=1), sampleMetadata.reindex(sorted(sampleMetadata),axis=1))
+		pandas.testing.assert_frame_equal(expectedFeatureMetadata.reindex(sorted(expectedFeatureMetadata),axis=1), featureMetadata.reindex(sorted(featureMetadata),axis=1))
 		numpy.testing.assert_array_almost_equal(expectedIntensityData, intensityData)
-		pandas.util.testing.assert_frame_equal(expectedExpectedConcentration.reindex(sorted(expectedExpectedConcentration),axis=1), expectedConcentration.reindex(sorted(expectedConcentration),axis=1))
-		pandas.util.testing.assert_frame_equal(expectedPeakResponse.reindex(sorted(expectedPeakResponse),axis=1), peakResponse.reindex(sorted(peakResponse),axis=1))
-		pandas.util.testing.assert_frame_equal(expectedPeakArea.reindex(sorted(expectedPeakArea),axis=1), peakArea.reindex(sorted(peakArea),axis=1))
-		pandas.util.testing.assert_frame_equal(expectedPeakConcentrationDeviation.reindex(sorted(expectedPeakConcentrationDeviation),axis=1), peakConcentrationDeviation.reindex(sorted(peakConcentrationDeviation),axis=1))
-		pandas.util.testing.assert_frame_equal(expectedPeakIntegrationFlag.reindex(sorted(expectedPeakIntegrationFlag),axis=1), peakIntegrationFlag.reindex(sorted(peakIntegrationFlag),axis=1))
-		pandas.util.testing.assert_frame_equal(expectedPeakRT.reindex(sorted(expectedPeakRT),axis=1), peakRT.reindex(sorted(peakRT),axis=1))
+		pandas.testing.assert_frame_equal(expectedExpectedConcentration.reindex(sorted(expectedExpectedConcentration),axis=1), expectedConcentration.reindex(sorted(expectedConcentration),axis=1))
+		pandas.testing.assert_frame_equal(expectedPeakResponse.reindex(sorted(expectedPeakResponse),axis=1), peakResponse.reindex(sorted(peakResponse),axis=1))
+		pandas.testing.assert_frame_equal(expectedPeakArea.reindex(sorted(expectedPeakArea),axis=1), peakArea.reindex(sorted(peakArea),axis=1))
+		pandas.testing.assert_frame_equal(expectedPeakConcentrationDeviation.reindex(sorted(expectedPeakConcentrationDeviation),axis=1), peakConcentrationDeviation.reindex(sorted(peakConcentrationDeviation),axis=1))
+		pandas.testing.assert_frame_equal(expectedPeakIntegrationFlag.reindex(sorted(expectedPeakIntegrationFlag),axis=1), peakIntegrationFlag.reindex(sorted(peakIntegrationFlag),axis=1))
+		pandas.testing.assert_frame_equal(expectedPeakRT.reindex(sorted(expectedPeakRT),axis=1), peakRT.reindex(sorted(peakRT),axis=1))
 
 
 class test_targeteddataset_import_targetlynx_getcalibrationfromreport(unittest.TestCase):
@@ -1870,7 +1869,7 @@ class test_targeteddataset_import_targetlynx_getcalibrationfromreport(unittest.T
 			self.calibrationReport.to_csv(reportPath, index=False)
 			loadedReport = self.targetedData._TargetedDataset__getCalibrationFromReport(reportPath)
 
-			pandas.util.testing.assert_frame_equal(loadedReport.reindex(sorted(loadedReport), axis=1), self.calibrationReport.reindex(sorted(self.calibrationReport), axis=1))
+			pandas.testing.assert_frame_equal(loadedReport.reindex(sorted(loadedReport), axis=1), self.calibrationReport.reindex(sorted(self.calibrationReport), axis=1))
 
 
 	def test_targeteddataset_getcalibrationfromreport_raise(self):
@@ -2043,7 +2042,7 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 
 		self.targetedExpected = dict()
 		self.targetedExpected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001', 'UnitTest4_targeted_file_002','UnitTest4_targeted_file_003', 'UnitTest4_targeted_file_004','UnitTest4_targeted_file_005'],'TargetLynx Sample ID': [1, 2,3,4,5], 'MassLynx Row ID': [1, 2,3,4,5],'Sample Name': ['Calibration 1', 'Study Sample 1','Blank 1','QC 1','Other 1'], 'Sample Type': ['Standard', 'Analyte','Blank','QC','Solvent'],'Acqu Date': ['10-Sep-16', '10-Sep-16','12-Sep-16','10-Sep-16','10-Sep-16'], 'Acqu Time': ['02:14:32', '03:23:02', '13:52:35', '14:46:40', '15:05:26'], 'Vial': ['1:A,1', '1:A,2','1:A,3','1:A,4','1:A,5'],'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'], 'Calibrant':[True,False,False,False,False], 'Study Sample': [False,True,False,False,False], 'Blank': [False,False,True,False,False], 'QC':[False,False,False,True,False], 'Other':[False,False,False,False,True], 'Acquired Time':[datetime(2016, 9, 10, 2, 14, 32), datetime(2016, 9, 10, 3, 23, 2), datetime(2016, 9, 12, 13, 52, 35), datetime(2016, 9, 10, 14, 46,40), datetime(2016, 9, 10, 15, 5, 26)], 'Run Order':[0,1,4,2,3], 'Batch':[1,1,1,1,1]})
-		self.targetedExpected['sampleMetadata']['Acquired Time'] = self.targetedExpected['sampleMetadata']['Acquired Time'].dt.to_pydatetime()
+		self.targetedExpected['sampleMetadata']['Acquired Time'] = self.targetedExpected['sampleMetadata']['Acquired Time']
 		self.targetedExpected['featureMetadata'] = pandas.DataFrame({'Feature Name':['Feature-1'],'TargetLynx Feature ID':[1], 'TargetLynx IS ID':['1'], 'IS':[True], 'calibrationEquation':[''], 'calibrationMethod':[CalibrationMethod.noIS], 'quantificationType':[QuantificationType.IS], 'unitCorrectionFactor':[1.], 'Unit':['noUnit'], 'Cpd Info':['uM'], 'LLOQ':[25.0], 'Noise (area)':[38.95], 'ULOQ':[1000.0],'a': [0.997431],'another column': ['something'],  'b': [-2.19262], 'r': [0.997931], 'r2': [0.995866], 'extID1': ['F1'], 'extID2': ['ID1']})
 		self.targetedExpected['featureMetadata']['IS'] = numpy.array([True], dtype=object)
 		self.targetedExpected['featureMetadata'].index = [0]
@@ -2095,7 +2094,7 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 
 		self.targetedExpectedNoExclusion = dict()
 		self.targetedExpectedNoExclusion['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001', 'UnitTest4_targeted_file_002', 'UnitTest4_targeted_file_003','UnitTest4_targeted_file_004', 'UnitTest4_targeted_file_005'], 'TargetLynx Sample ID': [1, 2, 3, 4, 5], 'MassLynx Row ID': [1, 2, 3, 4, 5], 'Sample Name': ['Calibration 1', 'Study Sample 1', 'Blank 1', 'QC 1', 'Other 1'], 'Sample Type': ['Standard', 'Analyte', 'Blank', 'QC', 'Solvent'],  'Acqu Date': ['10-Sep-16', '10-Sep-16','12-Sep-16', '10-Sep-16','10-Sep-16'], 'Acqu Time': ['02:14:32', '03:23:02', '13:52:35','14:46:40', '15:05:26'],  'Vial': ['1:A,1', '1:A,2', '1:A,3', '1:A,4', '1:A,5'], 'Instrument': ['XEVO-TQS#UnitTest','XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'],'Calibrant': [True, False, False, False, False],'Study Sample': [False, True, False, False, False], 'Blank': [False, False, True, False, False], 'QC': [False, False, False, True, False], 'Other': [False, False, False, False, True], 'Acquired Time': [datetime(2016, 9, 10, 2, 14, 32), datetime(2016, 9, 10, 3, 23, 2), datetime(2016, 9, 12, 13, 52, 35),datetime(2016, 9, 10, 14, 46, 40), datetime(2016, 9, 10, 15, 5, 26)], 'Run Order': [0, 1, 4, 2, 3], 'Batch': [1, 1, 1, 1, 1]})
-		self.targetedExpectedNoExclusion['sampleMetadata']['Acquired Time'] = self.targetedExpected['sampleMetadata']['Acquired Time'].dt.to_pydatetime()
+		self.targetedExpectedNoExclusion['sampleMetadata']['Acquired Time'] = self.targetedExpected['sampleMetadata']['Acquired Time']
 		self.targetedExpectedNoExclusion['featureMetadata'] = pandas.DataFrame({'Feature Name': ['Feature-1','Feature2'], 'TargetLynx Feature ID': [1,2], 'TargetLynx IS ID': ['1','1'], 'IS': [True,False],'calibrationEquation': ['','((area * responseFactor)-b)/a'], 'calibrationMethod': [CalibrationMethod.noIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue],'unitCorrectionFactor': [10.,1.], 'Unit': ['noUnit','pg/uL'], 'Cpd Info': ['uM','fg/uL'], 'Noise (area)': [38.95, 14.7], 'LLOQ': [250., 10.], 'ULOQ': [10000., 2500.], 'a': [0.997431, 1.04095], 'b': [-2.19262, numpy.nan], 'r': [0.997931, 0.999556], 'r2': [0.995866, 0.999113],'another column': ['something', 'something else'], 'extID1': ['F1', 'F2'], 'extID2': ['ID1', 'ID2']})
 		self.targetedExpectedNoExclusion['featureMetadata'].index = [0,1]
 		self.targetedExpectedNoExclusion['intensityData'] = numpy.array([[10.,2.], [30.,4.], [50.,6.], [70.,8.], [90.,10.]])
@@ -2127,20 +2126,20 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 				warnings.simplefilter('ignore', UserWarning)
 				result['sampleMetadata'], result['featureMetadata'], result['intensityData'], result['expectedConcentration'], result['sampleMetadataExcluded'], result['featureMetadataExcluded'], result['intensityDataExcluded'], result['expectedConcentrationExcluded'], result['excludedFlag'], result['peakResponse'], result['peakArea'], result['peakConcentrationDeviation'], result['peakIntegrationFlag'], result['peakRT'] = targeted._TargetedDataset__matchDatasetToCalibrationReport(sampleMetadata=self.targetedTargetLynxData['sampleMetadata'],featureMetadata=self.targetedTargetLynxData['featureMetadata'],intensityData=self.targetedTargetLynxData['intensityData'],expectedConcentration=self.targetedTargetLynxData['expectedConcentration'],peakResponse=self.targetedTargetLynxData['peakResponse'], peakArea=self.targetedTargetLynxData['peakArea'],peakConcentrationDeviation=self.targetedTargetLynxData['peakConcentrationDeviation'],	peakIntegrationFlag=self.targetedTargetLynxData['peakIntegrationFlag'],peakRT=self.targetedTargetLynxData['peakRT'], calibReport=self.targetedReport)
 			# Test
-			pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1),result['sampleMetadata'].reindex(sorted(result['sampleMetadata']), axis=1))
-			pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1),result['featureMetadata'].reindex(sorted(result['featureMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1),result['sampleMetadata'].reindex(sorted(result['sampleMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1),result['featureMetadata'].reindex(sorted(result['featureMetadata']), axis=1))
 			numpy.testing.assert_array_equal(expected['intensityData'], result['intensityData'])
-			pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']),axis=1), result['expectedConcentration'].reindex(sorted(result['expectedConcentration']),axis=1))
-			pandas.util.testing.assert_frame_equal(expected['sampleMetadataExcluded'][0].reindex(sorted(expected['sampleMetadataExcluded'][0]), axis=1),result['sampleMetadataExcluded'][0].reindex(sorted(result['sampleMetadataExcluded'][0]), axis=1))
-			pandas.util.testing.assert_frame_equal(expected['featureMetadataExcluded'][0].reindex(sorted(expected['featureMetadataExcluded'][0]), axis=1),result['featureMetadataExcluded'][0].reindex(sorted(result['featureMetadataExcluded'][0]), axis=1))
+			pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']),axis=1), result['expectedConcentration'].reindex(sorted(result['expectedConcentration']),axis=1))
+			pandas.testing.assert_frame_equal(expected['sampleMetadataExcluded'][0].reindex(sorted(expected['sampleMetadataExcluded'][0]), axis=1),result['sampleMetadataExcluded'][0].reindex(sorted(result['sampleMetadataExcluded'][0]), axis=1))
+			pandas.testing.assert_frame_equal(expected['featureMetadataExcluded'][0].reindex(sorted(expected['featureMetadataExcluded'][0]), axis=1),result['featureMetadataExcluded'][0].reindex(sorted(result['featureMetadataExcluded'][0]), axis=1))
 			numpy.testing.assert_array_equal(expected['intensityDataExcluded'][0], result['intensityDataExcluded'][0])
-			pandas.util.testing.assert_frame_equal(expected['expectedConcentrationExcluded'][0].reindex(sorted(expected['expectedConcentrationExcluded'][0]), axis=1),result['expectedConcentrationExcluded'][0].reindex(sorted(result['expectedConcentrationExcluded'][0]), axis=1))
+			pandas.testing.assert_frame_equal(expected['expectedConcentrationExcluded'][0].reindex(sorted(expected['expectedConcentrationExcluded'][0]), axis=1),result['expectedConcentrationExcluded'][0].reindex(sorted(result['expectedConcentrationExcluded'][0]), axis=1))
 			self.assertEqual(expected['excludedFlag'], result['excludedFlag'])
-			pandas.util.testing.assert_frame_equal(expected['peakResponse'].reindex(sorted(expected['peakResponse']),axis=1), result['peakResponse'].reindex(sorted(result['peakResponse']),axis=1))
-			pandas.util.testing.assert_frame_equal(expected['peakArea'].reindex(sorted(expected['peakArea']),axis=1), result['peakArea'].reindex(sorted(result['peakArea']),axis=1))
-			pandas.util.testing.assert_frame_equal(expected['peakConcentrationDeviation'].reindex(sorted(expected['peakConcentrationDeviation']),axis=1), result['peakConcentrationDeviation'].reindex(sorted(result['peakConcentrationDeviation']),axis=1))
-			pandas.util.testing.assert_frame_equal(expected['peakIntegrationFlag'].reindex(sorted(expected['peakIntegrationFlag']),axis=1), result['peakIntegrationFlag'].reindex(sorted(result['peakIntegrationFlag']),axis=1))
-			pandas.util.testing.assert_frame_equal(expected['peakRT'].reindex(sorted(expected['peakRT']),axis=1), result['peakRT'].reindex(sorted(result['peakRT']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakResponse'].reindex(sorted(expected['peakResponse']),axis=1), result['peakResponse'].reindex(sorted(result['peakResponse']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakArea'].reindex(sorted(expected['peakArea']),axis=1), result['peakArea'].reindex(sorted(result['peakArea']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakConcentrationDeviation'].reindex(sorted(expected['peakConcentrationDeviation']),axis=1), result['peakConcentrationDeviation'].reindex(sorted(result['peakConcentrationDeviation']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakIntegrationFlag'].reindex(sorted(expected['peakIntegrationFlag']),axis=1), result['peakIntegrationFlag'].reindex(sorted(result['peakIntegrationFlag']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakRT'].reindex(sorted(expected['peakRT']),axis=1), result['peakRT'].reindex(sorted(result['peakRT']),axis=1))
 
 		with self.subTest(msg='Checking match without feature exclusion, with renaming of Feature1 to Feature-1'):
 			# Init
@@ -2152,20 +2151,20 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 				warnings.simplefilter('ignore', UserWarning)
 				result['sampleMetadata'], result['featureMetadata'], result['intensityData'], result['expectedConcentration'], result['sampleMetadataExcluded'], result['featureMetadataExcluded'], result['intensityDataExcluded'], result['expectedConcentrationExcluded'], result['excludedFlag'], result['peakResponse'], result['peakArea'], result['peakConcentrationDeviation'], result['peakIntegrationFlag'], result['peakRT'] = targetedNoExclusion._TargetedDataset__matchDatasetToCalibrationReport(sampleMetadata=self.targetedTargetLynxData['sampleMetadata'],featureMetadata=self.targetedTargetLynxData['featureMetadata'],intensityData=self.targetedTargetLynxData['intensityData'],expectedConcentration=self.targetedTargetLynxData['expectedConcentration'],peakResponse=self.targetedTargetLynxData['peakResponse'],peakArea=self.targetedTargetLynxData['peakArea'],peakConcentrationDeviation=self.targetedTargetLynxData['peakConcentrationDeviation'],peakIntegrationFlag=self.targetedTargetLynxData['peakIntegrationFlag'],peakRT=self.targetedTargetLynxData['peakRT'], calibReport=self.targetedNoExclusionReport)
 			# Test
-			pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1),result['sampleMetadata'].reindex(sorted(result['sampleMetadata']), axis=1))
-			pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1),result['featureMetadata'].reindex(sorted(result['featureMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1),result['sampleMetadata'].reindex(sorted(result['sampleMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1),result['featureMetadata'].reindex(sorted(result['featureMetadata']), axis=1))
 			numpy.testing.assert_array_equal(expected['intensityData'], result['intensityData'])
-			pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']),axis=1), result['expectedConcentration'].reindex(sorted(result['expectedConcentration']),axis=1))
+			pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']),axis=1), result['expectedConcentration'].reindex(sorted(result['expectedConcentration']),axis=1))
 			self.assertListEqual(expected['sampleMetadataExcluded'], result['sampleMetadataExcluded'])
 			self.assertListEqual(expected['featureMetadataExcluded'], result['featureMetadataExcluded'])
 			self.assertListEqual(expected['intensityDataExcluded'], result['intensityDataExcluded'])
 			self.assertListEqual(expected['expectedConcentrationExcluded'], result['expectedConcentrationExcluded'])
 			self.assertEqual(expected['excludedFlag'], result['excludedFlag'])
-			pandas.util.testing.assert_frame_equal(expected['peakResponse'].reindex(sorted(expected['peakResponse']),axis=1), result['peakResponse'].reindex(sorted(result['peakResponse']),axis=1))
-			pandas.util.testing.assert_frame_equal(expected['peakArea'].reindex(sorted(expected['peakArea']),axis=1), result['peakArea'].reindex(sorted(result['peakArea']),axis=1))
-			pandas.util.testing.assert_frame_equal(expected['peakConcentrationDeviation'].reindex(sorted(expected['peakConcentrationDeviation']),axis=1), result['peakConcentrationDeviation'].reindex(sorted(result['peakConcentrationDeviation']),axis=1))
-			pandas.util.testing.assert_frame_equal(expected['peakIntegrationFlag'].reindex(sorted(expected['peakIntegrationFlag']),axis=1), result['peakIntegrationFlag'].reindex(sorted(result['peakIntegrationFlag']),axis=1))
-			pandas.util.testing.assert_frame_equal(expected['peakRT'].reindex(sorted(expected['peakRT']),axis=1), result['peakRT'].reindex(sorted(result['peakRT']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakResponse'].reindex(sorted(expected['peakResponse']),axis=1), result['peakResponse'].reindex(sorted(result['peakResponse']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakArea'].reindex(sorted(expected['peakArea']),axis=1), result['peakArea'].reindex(sorted(result['peakArea']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakConcentrationDeviation'].reindex(sorted(expected['peakConcentrationDeviation']),axis=1), result['peakConcentrationDeviation'].reindex(sorted(result['peakConcentrationDeviation']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakIntegrationFlag'].reindex(sorted(expected['peakIntegrationFlag']),axis=1), result['peakIntegrationFlag'].reindex(sorted(result['peakIntegrationFlag']),axis=1))
+			pandas.testing.assert_frame_equal(expected['peakRT'].reindex(sorted(expected['peakRT']),axis=1), result['peakRT'].reindex(sorted(result['peakRT']),axis=1))
 
 
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
@@ -2253,7 +2252,7 @@ class test_targeteddataset_import_targetlynx_filtertargetlynx(unittest.TestCase)
 																'Acquired Time': [datetime(2016, 9, 10, 2, 14, 32), datetime(2016, 9, 10, 3, 23, 2), datetime(2016, 9, 10, 4, 52, 35), datetime(2016, 9, 10, 5, 46, 40), datetime(2016, 9, 10, 6, 5, 26)],
 																'Run Order': [0, 1, 2, 3, 4],
 																'Batch': [1, 1, 1, 1, 1]})
-		self.targetedInFilterSample.sampleMetadata['Acquired Time'] = self.targetedInFilterSample.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+		self.targetedInFilterSample.sampleMetadata['Acquired Time'] = self.targetedInFilterSample.sampleMetadata['Acquired Time']
 		self.targetedInFilterSample.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2'], 'TargetLynx Feature ID': [1, 2], 'TargetLynx IS ID': ['1', '1'], 'IS': [True, False], 'calibrationEquation': ['((area * responseFactor)-b)/a', '10**((numpy.log10(area * responseFactor)-b)/a)'], 'calibrationMethod': [CalibrationMethod.noIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.IS, QuantificationType.QuantAltLabeledAnalogue], 'unitCorrectionFactor': [1., 1.], 'Unit': ['pg/uL', 'pg/uL'], 'Cpd Info': ['info cpd1', 'info cpd2'], 'LLOQ': [100., 100.], 'ULOQ': [1000., 1000.], 'another column': ['something 1', 'something 2']})
 		self.targetedInFilterSample._intensityData = numpy.array([[100., 250.], [250., 250.], [250., 100.], [500., 500.], [500., 500.]])
 		self.targetedInFilterSample.expectedConcentration = pandas.DataFrame( numpy.array([[1., 2.], [3., 4.], [5., 6.], [7., 8.], [9., 10.]]), columns=self.targetedInFilterSample.featureMetadata['Feature Name'].values.tolist())
@@ -2354,43 +2353,43 @@ class test_targeteddataset_import_targetlynx_filtertargetlynx(unittest.TestCase)
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Import exclusion
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 			# peakInfo
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
 
 		with self.subTest(msg='Checking filterTargetLynxSamples, sampleTypeToProcess = [\'Study Sample\',\'QC\',\'Blank\']'):
 			# Expected
@@ -2416,43 +2415,43 @@ class test_targeteddataset_import_targetlynx_filtertargetlynx(unittest.TestCase)
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Import exclusion
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 			# peakInfo
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
 
 		with self.subTest(msg='Checking filterTargetLynxSamples, sampleTypeToProcess = [\'Study Sample\',\'QC\',\'Other\']'):
 			# Expected
@@ -2480,43 +2479,43 @@ class test_targeteddataset_import_targetlynx_filtertargetlynx(unittest.TestCase)
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Import exclusion
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 			# peakInfo
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
 
 		with self.subTest(msg='Checking filterTargetLynxSamples, sampleTypeToProcess = [\'Study Sample\']'):
 			# Expected
@@ -2543,43 +2542,43 @@ class test_targeteddataset_import_targetlynx_filtertargetlynx(unittest.TestCase)
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Import exclusion
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 			# peakInfo
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
 
 		with self.subTest(msg='Checking filterTargetLynxSamples, default parameter, sampleTypeToProcess = [\'Study Sample\',\'QC\']'):
 			# Expected
@@ -2607,43 +2606,43 @@ class test_targeteddataset_import_targetlynx_filtertargetlynx(unittest.TestCase)
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Import exclusion
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 			# peakInfo
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
 
 		with self.subTest(msg='Checking filterTargetLynxSamples, default parameter no previous exclusions, sampleTypeToProcess = [\'Study Sample\',\'QC\']'):
 			# Expected
@@ -2674,43 +2673,43 @@ class test_targeteddataset_import_targetlynx_filtertargetlynx(unittest.TestCase)
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1), expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Import exclusion
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 			# peakInfo
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
 
 
 	def test_targeteddataset_filtertargetlynxsamples_raise(self):
@@ -2762,43 +2761,43 @@ class test_targeteddataset_import_targetlynx_filtertargetlynx(unittest.TestCase)
 		# Class
 		self.assertEqual(type(result), type(expected))
 		# sampleMetadata
-		pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+		pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 		# featureMetadata
-		pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1), expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+		pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1), expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 		# intensityData
 		numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 		# expectedConcentration
-		pandas.util.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1),expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
+		pandas.testing.assert_frame_equal(result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1),expected.expectedConcentration.reindex(sorted(expected.expectedConcentration), axis=1))
 		# Calibration
-		pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+		pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+		pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 		numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+		pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+		pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+		pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+		pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+		pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+		pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 		# Import exclusion
 		self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 		for i in range(len(result.sampleMetadataExcluded)):
-			pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+			pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 		self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 		for j in range(len(result.featureMetadataExcluded)):
-			pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+			pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 		self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 		for k in range(len(result.intensityDataExcluded)):
 			numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 		self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 		for l in range(len(result.expectedConcentrationExcluded)):
-			pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+			pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 		self.assertEqual(result.excludedFlag, expected.excludedFlag)
 		# peakInfo
-		pandas.util.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
-		pandas.util.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
-		pandas.util.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
-		pandas.util.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
-		pandas.util.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
+		pandas.testing.assert_frame_equal(result.peakInfo['peakResponse'], expected.peakInfo['peakResponse'])
+		pandas.testing.assert_frame_equal(result.peakInfo['peakArea'], expected.peakInfo['peakArea'])
+		pandas.testing.assert_frame_equal(result.peakInfo['peakConcentrationDeviation'], expected.peakInfo['peakConcentrationDeviation'])
+		pandas.testing.assert_frame_equal(result.peakInfo['peakIntegrationFlag'], expected.peakInfo['peakIntegrationFlag'])
+		pandas.testing.assert_frame_equal(result.peakInfo['peakRT'], expected.peakInfo['peakRT'])
 
 		expectedStdOut = '1 feature are kept for processing, 1 IS removed\n-----\n'
 		self.assertEqual(mock_stdout.getvalue(), expectedStdOut)
@@ -2868,7 +2867,7 @@ class test_targeteddataset_read_data_from_targetlynx(unittest.TestCase):
 		self.expected = dict()
 		self.expected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001', 'UnitTest4_targeted_file_002'], 'TargetLynx Sample ID': [1, 2], 'MassLynx Row ID': [1, 2],'Sample Name': ['Calibration 1', 'Study Sample 1'], 'Sample Type': ['Standard', 'Analyte'],'Acqu Date': ['11-Sep-16', '11-Sep-16'], 'Acqu Time': ['02:14:32', '09:23:02'], 'Vial': ['1:A,1', '1:A,2'],'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest'], 'Calibrant': [True, False],'Study Sample': [False, True], 'Blank': [False, False], 'QC': [False, False], 'Other': [False, False],'Acquired Time': [datetime(2016, 9, 11, 2, 14, 32),datetime(2016, 9, 11, 9, 23, 2)], 'Run Order': [0, 1],'Batch': [1, 1],'AssayRole': [numpy.nan,numpy.nan],'SampleType': [numpy.nan,numpy.nan],'Dilution': [numpy.nan,numpy.nan],'Correction Batch': [numpy.nan,numpy.nan],'Sample ID': [numpy.nan,numpy.nan],'Exclusion Details': [numpy.nan,numpy.nan]})
 		self.expected['sampleMetadata']['Sample Base Name'] = self.expected['sampleMetadata']['Sample File Name']
-		self.expected['sampleMetadata']['Acquired Time'] = self.expected['sampleMetadata']['Acquired Time'].dt.to_pydatetime()
+		self.expected['sampleMetadata']['Acquired Time'] = self.expected['sampleMetadata']['Acquired Time']
 		self.expected['sampleMetadata']['Metadata Available'] = False
 		self.expected['featureMetadata'] = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2'], 'TargetLynx Feature ID':[1, 2], 'TargetLynx IS ID': ['', '1'],'IS':[True, False], 'calibrationEquation':['', '((area * responseFactor)-b)/a'],'calibrationMethod': [CalibrationMethod.noIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue], 'unitCorrectionFactor': [1.,1.], 'Unit': ['noUnit','pg/uL'], 'Cpd Info': ['uM','fg/uL'], 'LLOQ': [25., 10.], 'Noise (area)': [38.95, 14.7], 'ULOQ': [1000., 2500.], 'a': [0.997431, 1.04095], 'another column': [numpy.nan, 'something'],'b': [-2.19262, numpy.nan], 'r': [0.997931, 0.999556], 'r2': [0.995866, 0.999113]})
 		self.expected['featureMetadata']['IS'] = numpy.array([True, False], dtype=object)
@@ -2883,7 +2882,7 @@ class test_targeteddataset_read_data_from_targetlynx(unittest.TestCase):
 		self.expected['peakRT'] = pandas.DataFrame(numpy.array([[11.4263000488, 11.4921998978], [11.4306001663, 11.5010004044]]), columns=self.expected['featureMetadata']['Feature Name'].values)
 		# Excluded
 		self.expected['sampleMetadataExcluded'] = [self.expected['sampleMetadata'][['Sample File Name', 'Sample Base Name', 'TargetLynx Sample ID', 'MassLynx Row ID', 'Sample Name', 'Sample Type', 'Acqu Date', 'Acqu Time', 'Vial', 'Instrument']]]
-		self.expected['sampleMetadataExcluded'][0]['Metadata Available'] = False
+		self.expected['sampleMetadataExcluded'][0].loc[:, 'Metadata Available'] = False
 		featureMetadataExcluded = pandas.DataFrame({'Feature Name': ['Feature3'], 'TargetLynx Feature ID': [3], 'TargetLynx IS ID': ['1'], 'IS': [numpy.nan],'calibrationEquation': [numpy.nan], 'calibrationMethod': [numpy.nan], 'compoundID': [numpy.nan], 'compoundName': [numpy.nan], 'quantificationType': [numpy.nan],'unitCorrectionFactor': [numpy.nan], 'Unit': [numpy.nan], 'Cpd Info': [numpy.nan],'LLOQ': [numpy.nan], 'Noise (area)': [numpy.nan], 'ULOQ': [numpy.nan], 'a': [numpy.nan],'another column': [numpy.nan], 'b': [numpy.nan], 'r': [numpy.nan], 'r2': [numpy.nan]})
 		featureMetadataExcluded.index = [2]
 		featureMetadataExcluded['IS'] = numpy.array([numpy.nan], dtype=object)
@@ -2918,20 +2917,20 @@ class test_targeteddataset_read_data_from_targetlynx(unittest.TestCase):
 				warnings.simplefilter('ignore', UserWarning)
 				result._readTargetLynxDataset(datapath=XMLpath, calibrationReportPath=reportPath)
 			# Test
-			pandas.util.testing.assert_frame_equal(self.expected['sampleMetadata'].reindex(sorted(self.expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-			pandas.util.testing.assert_frame_equal(self.expected['featureMetadata'].reindex(sorted(self.expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['sampleMetadata'].reindex(sorted(self.expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['featureMetadata'].reindex(sorted(self.expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 			numpy.testing.assert_array_almost_equal(self.expected['intensityData'], result._intensityData)
-			pandas.util.testing.assert_frame_equal(self.expected['expectedConcentration'].reindex(sorted(self.expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
-			pandas.util.testing.assert_frame_equal(self.expected['sampleMetadataExcluded'][0].reindex(sorted(self.expected['sampleMetadataExcluded'][0]), axis=1), result.sampleMetadataExcluded[0].reindex(sorted(result.sampleMetadataExcluded[0]), axis=1))
-			pandas.util.testing.assert_frame_equal(self.expected['featureMetadataExcluded'][0].reindex(sorted(self.expected['featureMetadataExcluded'][0]), axis=1), result.featureMetadataExcluded[0].reindex(sorted(result.featureMetadataExcluded[0]), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['expectedConcentration'].reindex(sorted(self.expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['sampleMetadataExcluded'][0].reindex(sorted(self.expected['sampleMetadataExcluded'][0]), axis=1), result.sampleMetadataExcluded[0].reindex(sorted(result.sampleMetadataExcluded[0]), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['featureMetadataExcluded'][0].reindex(sorted(self.expected['featureMetadataExcluded'][0]), axis=1), result.featureMetadataExcluded[0].reindex(sorted(result.featureMetadataExcluded[0]), axis=1))
 			numpy.testing.assert_array_almost_equal(self.expected['intensityDataExcluded'][0], result.intensityDataExcluded[0])
-			pandas.util.testing.assert_frame_equal(self.expected['expectedConcentrationExcluded'][0].reindex(sorted(self.expected['expectedConcentrationExcluded'][0]), axis=1), result.expectedConcentrationExcluded[0].reindex(sorted(result.expectedConcentrationExcluded[0]), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['expectedConcentrationExcluded'][0].reindex(sorted(self.expected['expectedConcentrationExcluded'][0]), axis=1), result.expectedConcentrationExcluded[0].reindex(sorted(result.expectedConcentrationExcluded[0]), axis=1))
 			self.assertEqual(self.expected['excludedFlag'], result.excludedFlag)
-			pandas.util.testing.assert_frame_equal(self.expected['peakResponse'].reindex(sorted(self.expected['peakResponse']), axis=1), result.peakInfo['peakResponse'].reindex(sorted(result.peakInfo['peakResponse']), axis=1))
-			pandas.util.testing.assert_frame_equal(self.expected['peakArea'].reindex(sorted(self.expected['peakArea']), axis=1), result.peakInfo['peakArea'].reindex(sorted(result.peakInfo['peakArea']), axis=1))
-			pandas.util.testing.assert_frame_equal(self.expected['peakConcentrationDeviation'].reindex(sorted(self.expected['peakConcentrationDeviation']), axis=1), result.peakInfo['peakConcentrationDeviation'].reindex(sorted(result.peakInfo['peakConcentrationDeviation']), axis=1))
-			pandas.util.testing.assert_frame_equal(self.expected['peakIntegrationFlag'].reindex(sorted(self.expected['peakIntegrationFlag']), axis=1), result.peakInfo['peakIntegrationFlag'].reindex(sorted(result.peakInfo['peakIntegrationFlag']), axis=1))
-			pandas.util.testing.assert_frame_equal(self.expected['peakRT'].reindex(sorted(self.expected['peakRT']), axis=1), result.peakInfo['peakRT'].reindex(sorted(result.peakInfo['peakRT']), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['peakResponse'].reindex(sorted(self.expected['peakResponse']), axis=1), result.peakInfo['peakResponse'].reindex(sorted(result.peakInfo['peakResponse']), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['peakArea'].reindex(sorted(self.expected['peakArea']), axis=1), result.peakInfo['peakArea'].reindex(sorted(result.peakInfo['peakArea']), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['peakConcentrationDeviation'].reindex(sorted(self.expected['peakConcentrationDeviation']), axis=1), result.peakInfo['peakConcentrationDeviation'].reindex(sorted(result.peakInfo['peakConcentrationDeviation']), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['peakIntegrationFlag'].reindex(sorted(self.expected['peakIntegrationFlag']), axis=1), result.peakInfo['peakIntegrationFlag'].reindex(sorted(result.peakInfo['peakIntegrationFlag']), axis=1))
+			pandas.testing.assert_frame_equal(self.expected['peakRT'].reindex(sorted(self.expected['peakRT']), axis=1), result.peakInfo['peakRT'].reindex(sorted(result.peakInfo['peakRT']), axis=1))
 			self.assertEqual(len(self.expected['Attributes'].keys()), len(result.Attributes.keys())-1)
 			for i in self.expected['Attributes']:
 				self.assertEqual(self.expected['Attributes'][i], result.Attributes[i])
@@ -2946,7 +2945,7 @@ class test_targeteddataset_limitsofquantification(unittest.TestCase):
 		# 2 features, (1 Monitored, 2 normal (make them fail LLOQ/ULOQ later)) a fake exclusion
 		self.targetedDataset = nPYc.TargetedDataset('', fileType='empty')
 		self.targetedDataset.sampleMetadata = pandas.DataFrame({'Sample File Name': ['UnitTest_targeted_file_002', 'UnitTest_targeted_file_003','UnitTest_targeted_file_004'], 'Sample Name': ['Sample1-LLOQ', 'Sample2', 'Sample3-ULOQ'], 'Sample Type': ['Analyte', 'Analyte', 'Analyte'], 'Acqu Date': ['10-Sep-16', '10-Sep-16','10-Sep-16'], 'Acqu Time': ['03:23:02', '04:52:35', '05:46:40'], 'Vial': ['1:A,2', '1:A,3', '1:A,4'], 'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'], 'Acquired Time': [datetime(2016, 9, 10, 3, 23, 2), datetime(2016, 9, 10, 4, 52, 35), datetime(2016, 9, 10, 5, 46, 40)],'Run Order': [0, 1, 2], 'Batch': [1, 1, 1]})
-		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time']
 		self.targetedDataset.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1-Monitored', 'Feature2','Feature3'], 'TargetLynx Feature ID': [1, 2,3], 'calibrationEquation': ['', '10**((numpy.log10(area * responseFactor)-b)/a)','10**((numpy.log10(area * responseFactor)-b)/a)'], 'calibrationMethod': [CalibrationMethod.noCalibration, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.Monitored, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue], 'unitCorrectionFactor': [numpy.nan, 1.,1.], 'Unit': ['noUnit', 'pg/uL','another Unit'], 'Cpd Info': ['info cpd1', 'info cpd2', 'indo cpd3'], 'LLOQ': [numpy.nan, 100., 100.], 'ULOQ': [numpy.nan, 1000.,1000.], 'another column': ['something 1', 'something 2', 'something 3']})
 		self.targetedDataset._intensityData = numpy.array([[50., 50., 50.], [500., 500., 500.], [5000., 5000., 5000.]])
 		self.targetedDataset.expectedConcentration = pandas.DataFrame(numpy.array([[1.,2.,3.], [4., 5.,6.], [7., 8., 9.]]), columns=self.targetedDataset.featureMetadata['Feature Name'].values.tolist())
@@ -2956,7 +2955,7 @@ class test_targeteddataset_limitsofquantification(unittest.TestCase):
 		self.targetedDataset.expectedConcentrationExcluded = [pandas.DataFrame(numpy.random.random((5, 2)))]
 		self.targetedDataset.excludedFlag = ['Samples']
 		calibSampleMetadata = pandas.DataFrame({'Sample File Name': ['UnitTest_targeted_file_001'],'Sample Name': ['Calib'],'Sample Type': ['Standard'],'Acqu Date': ['10-Sep-16'],'Acqu Time': ['02:14:32'],'Vial': ['1:A,1'],'Instrument': ['XEVO-TQS#UnitTest'],'Acquired Time': [datetime(2016, 9, 10, 2, 14, 32)],'Run Order': [0],'Batch': [1]})
-		calibSampleMetadata['Acquired Time'] = calibSampleMetadata['Acquired Time'].dt.to_pydatetime()
+		calibSampleMetadata['Acquired Time'] = calibSampleMetadata['Acquired Time']
 		calibFeatureMetadata = pandas.DataFrame({'Feature Name': ['Feature1-Monitored', 'Feature2','Feature3'], 'TargetLynx Feature ID': [1, 2,3], 'calibrationEquation': ['', '10**((numpy.log10(area * responseFactor)-b)/a)','10**((numpy.log10(area * responseFactor)-b)/a)'], 'calibrationMethod': [CalibrationMethod.noCalibration, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.Monitored, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue], 'unitCorrectionFactor': [numpy.nan, 1.,1.], 'Unit': ['noUnit', 'pg/uL','another Unit'], 'Cpd Info': ['info cpd1', 'info cpd2', 'indo cpd3'], 'LLOQ': [numpy.nan, 100., 100.], 'ULOQ': [numpy.nan, 1000.,1000.], 'another column': ['something 1', 'something 2', 'something 3']})
 		calibIntensityData = numpy.array([[100., 200., 300.]])
 		calibExpectedConcentration = pandas.DataFrame(numpy.array([[100.,200.,300.]]), columns=self.targetedDataset.featureMetadata['Feature Name'].values.tolist())
@@ -2985,31 +2984,31 @@ class test_targeteddataset_limitsofquantification(unittest.TestCase):
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+			pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 		with self.subTest(msg='Check ApplyLOQ with onlyLLOQ=True, previous exclusion'):
@@ -3031,31 +3030,31 @@ class test_targeteddataset_limitsofquantification(unittest.TestCase):
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+			pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 		with self.subTest(msg='Check ApplyLOQ missing \'LLOQ\' Feature2, previous exclusion'):
@@ -3084,31 +3083,31 @@ class test_targeteddataset_limitsofquantification(unittest.TestCase):
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+			pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 		with self.subTest(msg='Check ApplyLOQ missing \'ULOQ\' Feature2, previous exclusion'):
@@ -3137,31 +3136,31 @@ class test_targeteddataset_limitsofquantification(unittest.TestCase):
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+			pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 		with self.subTest(msg='Check ApplyLOQ missing \'LLOQ\' Feature2, No previous exclusion'):
@@ -3195,31 +3194,31 @@ class test_targeteddataset_limitsofquantification(unittest.TestCase):
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+			pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 		with self.subTest(msg='Check ApplyLOQ with QuantificationType.QuantOther and ULOQ NaN, onlyLLOQ=False, previous exclusion'):
@@ -3248,31 +3247,31 @@ class test_targeteddataset_limitsofquantification(unittest.TestCase):
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+			pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 
@@ -3313,7 +3312,7 @@ class test_targeteddataset_mergelimitsofquantification(unittest.TestCase):
 																'Subject ID': ['', '', ''], 'Sample ID': ['', '', ''],
 																'Sample Base Name': ['', '', ''],
 																'Exclusion Details': ['', '', '']})
-		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+		self.targetedDataset.sampleMetadata['Acquired Time'] = self.targetedDataset.sampleMetadata['Acquired Time']
 		self.targetedDataset.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2', 'Feature3'],
 																 'TargetLynx Feature ID': [1, 2, 3],
 																 'calibrationMethod': [CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS],
@@ -3362,13 +3361,13 @@ class test_targeteddataset_mergelimitsofquantification(unittest.TestCase):
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+			pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
 			self.assertEqual(result.calibration, expected.calibration)
 
@@ -3389,13 +3388,13 @@ class test_targeteddataset_mergelimitsofquantification(unittest.TestCase):
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+			pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
 			self.assertEqual(result.calibration, expected.calibration)
 
@@ -3417,13 +3416,13 @@ class test_targeteddataset_mergelimitsofquantification(unittest.TestCase):
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+			pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
 			self.assertEqual(result.calibration, expected.calibration)
 
@@ -3471,7 +3470,7 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 															 'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'],
 															 'Acquired Time': [datetime(2016, 9, 10, 2, 14, 32),datetime(2016, 9, 10, 3, 23, 2),datetime(2016, 9, 10, 4, 52, 35)],
 															 'Run Order': [0, 1, 2], 'Batch': [1, 1, 1]})
-		self.targetedIn.sampleMetadata['Acquired Time'] = self.targetedIn.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+		self.targetedIn.sampleMetadata['Acquired Time'] = self.targetedIn.sampleMetadata['Acquired Time']
 		self.targetedIn.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1-Monitored','Feature2-UnusableLLOQ','Feature3-UnusableULOQ','Feature4-UnusableNoiseFilled-Noise','Feature5-UnusableNoiseFilled-a','Feature6-UnusableNoiseFilled-b','Feature7-axb', 'Feature8-logaxb','Feature9-ax'],
 															  'TargetLynx Feature ID': [1, 2, 3, 4, 5, 6, 7, 8, 9],
 															  'calibrationEquation': ['', '', 'area/a', '', '', '','((area * responseFactor)-b)/a','10**((numpy.log10(area * responseFactor)-b)/a)','area/a'],
@@ -3504,7 +3503,7 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 												'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'],
 												'Acquired Time': [datetime(2016, 9, 10, 5, 46, 40), datetime(2016, 9, 10, 6, 5, 26), datetime(2016, 9, 10, 7, 26, 32)],
 												'Run Order': [3, 4, 5], 'Batch': [1, 1, 1]})
-		calibSampleMetadata['Acquired Time'] = calibSampleMetadata['Acquired Time'].dt.to_pydatetime()
+		calibSampleMetadata['Acquired Time'] = calibSampleMetadata['Acquired Time']
 		calibFeatureMetadata = copy.deepcopy(self.targetedIn.featureMetadata)
 		calibIntensityData = numpy.array([[250., 250., 250., 250., 250., 250., 250., 250., 250.],[500., 500., 500., 500., 500., 500., 500., 500., 500.],[750., 750., 750., 750., 750., 750., 750., 750., 750.]])
 		calibExpectedConcentration = copy.deepcopy(self.targetedIn.expectedConcentration)
@@ -3554,36 +3553,36 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),	expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 		with self.subTest(msg='Check ApplyLLOQ Noise Filled with onlyLLOQ=False, responseReference=None auto-ref, previous exclusion'):
@@ -3620,36 +3619,36 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 		with self.subTest(msg='Check ApplyLLOQ Noise Filled with onlyLLOQ=False, responseReference=None auto-ref, no previous exclusion'):
@@ -3692,36 +3691,36 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1),expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 		with self.subTest(msg='Check ApplyLLOQ Noise Filled with onlyLLOQ=False, responseReference=\'UnitTest_targeted_file_006\', previous exclusion'):
@@ -3756,36 +3755,36 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1), expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1), expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 		with self.subTest(msg='Check ApplyLLOQ Noise Filled with onlyLLOQ=False, responseReference=[\'UnitTest_targeted_file_005\',\'UnitTest_targeted_file_006\',\'UnitTest_targeted_file_005\'], previous exclusion'):
@@ -3822,36 +3821,36 @@ class test_targeteddataset_targetlynxlimitsofquantificationnoisefilled(unittest.
 			# Class
 			self.assertEqual(type(result), type(expected))
 			# sampleMetadata
-			pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+			pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 			# featureMetadata
-			pandas.util.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1), expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1), expected.featureMetadata.reindex(sorted(expected.featureMetadata), axis=1))
 			# intensityData
 			numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 			# expectedConcentration
-			pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+			pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 			# Calibration
-			pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+			pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
 			numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
-			pandas.util.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
+			pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakArea'], expected.calibration['calibPeakInfo']['peakArea'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakResponse'], expected.calibration['calibPeakInfo']['peakResponse'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakConcentrationDeviation'], expected.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakIntegrationFlag'], expected.calibration['calibPeakInfo']['peakIntegrationFlag'])
+			pandas.testing.assert_frame_equal(result.calibration['calibPeakInfo']['peakRT'], expected.calibration['calibPeakInfo']['peakRT'])
 			# Exclusions
 			self.assertEqual(len(result.sampleMetadataExcluded), len(expected.sampleMetadataExcluded))
 			for i in range(len(result.sampleMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
+				pandas.testing.assert_frame_equal(result.sampleMetadataExcluded[i], expected.sampleMetadataExcluded[i])
 			self.assertEqual(len(result.featureMetadataExcluded), len(expected.featureMetadataExcluded))
 			for j in range(len(result.featureMetadataExcluded)):
-				pandas.util.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
+				pandas.testing.assert_frame_equal(result.featureMetadataExcluded[j], expected.featureMetadataExcluded[j])
 			self.assertEqual(len(result.intensityDataExcluded), len(expected.intensityDataExcluded))
 			for k in range(len(result.intensityDataExcluded)):
 				numpy.testing.assert_array_equal(result.intensityDataExcluded[k], expected.intensityDataExcluded[k])
 			self.assertEqual(len(result.expectedConcentrationExcluded), len(expected.expectedConcentrationExcluded))
 			for l in range(len(result.expectedConcentrationExcluded)):
-				pandas.util.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
+				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
 
@@ -3966,10 +3965,10 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 
 		# Expected TargetedDataset
 		self.expected = dict()
-		self.expected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_002'],'TargetLynx Sample ID': [2], 'MassLynx Row ID': [2],'Sample Name': ['Study Sample 1'], 'Sample Type': ['Analyte'],'Acqu Date': ['11-Sep-16'], 'Acqu Time': ['09:23:02'], 'Vial': ['1:A,2'],'Instrument': ['XEVO-TQS#UnitTest'], 'Acquired Time': [datetime(2016, 9, 11, 9, 23, 2)], 'Run Order': [1],'Batch': [1],'AssayRole': [numpy.nan],'SampleType': [numpy.nan],'Dilution': [numpy.nan],'Correction Batch': [numpy.nan],'Sample ID': [numpy.nan],'Exclusion Details': [numpy.nan]})
+		self.expected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_002'],'TargetLynx Sample ID': [2], 'MassLynx Row ID': [2],'Sample Name': ['Study Sample 1'], 'Sample Type': ['Analyte'],'Acqu Date': ['11-Sep-16'], 'Acqu Time': ['09:23:02'], 'Vial': ['1:A,2'],'Instrument': ['XEVO-TQS#UnitTest'], 'Acquired Time': [pandas.Timestamp(datetime(2016, 9, 11, 9, 23, 2))], 'Run Order': [1],'Batch': [1],'AssayRole': [numpy.nan],'SampleType': [numpy.nan],'Dilution': [numpy.nan],'Correction Batch': [numpy.nan],'Sample ID': [numpy.nan],'Exclusion Details': [numpy.nan]})
 		self.expected['sampleMetadata']['Metadata Available'] = False
 		self.expected['sampleMetadata']['Sample Base Name'] = self.expected['sampleMetadata']['Sample File Name']
-		self.expected['sampleMetadata']['Acquired Time'] = self.expected['sampleMetadata']['Acquired Time'].dt.to_pydatetime()
+		self.expected['sampleMetadata']['Acquired Time'] = pandas.to_datetime(self.expected['sampleMetadata'].loc[:, 'Acquired Time'])
 		self.expected['featureMetadata'] = pandas.DataFrame({'Feature Name': ['Feature2','Feature3'], 'TargetLynx Feature ID':[2, 3], 'calibrationEquation':['((area * responseFactor)-b)/a', '((area * responseFactor)-b)/a'],'calibrationMethod': [CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantOwnLabeledAnalogue], 'unitCorrectionFactor': [1.,1.], 'Unit': ['pg/uL','pg/uL'], 'Cpd Info': ['fg/uL','fg/uL'], 'LLOQ': [300., 25.], 'Noise (area)': [14.7, 25.6], 'ULOQ': [2500., 350.], 'a': [1.04095, 1.19658], 'another column': ['something', 'something else'],'b': [-1.78935, -1.5875], 'r': [0.999556, 0.999], 'r2': [0.999113, 0.98995], 'extID1': ['F2','F3'],'extID2': ['ID2','ID3']})
 		#self.expected['intensityData'] = numpy.array([[-numpy.inf,  359.219531]]) # value for onlyLLOQ=True
 		self.expected['intensityData'] = numpy.array([[-numpy.inf, numpy.inf]])
@@ -3977,7 +3976,7 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 		# Calibration
 		self.expected['calibSampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001'], 'TargetLynx Sample ID': [1], 'MassLynx Row ID': [1], 'Sample Name': ['Calibration 1'], 'Sample Type': ['Standard'], 'Acqu Date': ['11-Sep-16'], 'Acqu Time': ['02:14:32'], 'Vial': ['1:A,1'], 'Instrument': ['XEVO-TQS#UnitTest'], 'Calibrant': [True], 'Study Sample': [False], 'Blank': [False], 'QC': [False], 'Other': [False], 'Acquired Time': [datetime(2016, 9, 11, 2, 14, 32)], 'Run Order': [0], 'Batch': [1], 'AssayRole': [numpy.nan], 'SampleType': [numpy.nan], 'Dilution': [numpy.nan], 'Correction Batch': [numpy.nan], 'Sample ID': [numpy.nan], 'Exclusion Details': [numpy.nan]})
 		self.expected['calibSampleMetadata']['Sample Base Name'] = self.expected['calibSampleMetadata']['Sample File Name']
-		self.expected['calibSampleMetadata']['Acquired Time'] = self.expected['calibSampleMetadata']['Acquired Time'].dt.to_pydatetime()
+		self.expected['calibSampleMetadata']['Acquired Time'] = self.expected['calibSampleMetadata']['Acquired Time']
 		self.expected['calibSampleMetadata']['Metadata Available'] = False
 		self.expected['calibFeatureMetadata'] = copy.deepcopy(self.expected['featureMetadata'])
 		self.expected['calibFeatureMetadata']['IS'] = numpy.array([False, False])
@@ -4024,15 +4023,15 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
-				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-				pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+				pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 				# Calibration
-				pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
 				# No peakInfo
 				# No exclusions
 				# Attributes
@@ -4077,15 +4076,15 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=True, noiseFilled=False, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
-				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-				pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+				pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 				# Calibration
-				pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
 				# No peakInfo
 				# No Exclusions
 				# Attributes
@@ -4112,15 +4111,15 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, onlyLLOQ=True, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
-				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-				pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+				pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 				# Calibration
-				pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
 				# No peakInfo
 				# No exclusions
 				# Attributes
@@ -4149,15 +4148,15 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=True, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
-				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-				pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+				pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 				# Calibration
-				pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
 				# No peakInfo
 				# No Exclusions
 				# Attributes
@@ -4186,15 +4185,15 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, onlyLLOQ=False, keepIS=False, noiseFilled=True, keepPeakInfo=False, keepExcluded=False)
 
 				# Test
-				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-				pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+				pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 				# Calibration
-				pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
 				# No peakInfo
 				# No Exclusions
 				# Attributes
@@ -4241,27 +4240,27 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=False, keepPeakInfo=True, keepExcluded=False)
 
 				# Test
-				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-				pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+				pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 				# Calibration
-				pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
 				# Calibration peakInfo
-				pandas.util.testing.assert_frame_equal(expected['calibPeakArea'], result.calibration['calibPeakInfo']['peakArea'])
-				pandas.util.testing.assert_frame_equal(expected['calibPeakResponse'], result.calibration['calibPeakInfo']['peakResponse'])
-				pandas.util.testing.assert_frame_equal(expected['calibPeakConcentrationDeviation'], result.calibration['calibPeakInfo']['peakConcentrationDeviation'])
-				pandas.util.testing.assert_frame_equal(expected['calibPeakIntegrationFlag'], result.calibration['calibPeakInfo']['peakIntegrationFlag'])
-				pandas.util.testing.assert_frame_equal(expected['calibPeakRT'], result.calibration['calibPeakInfo']['peakRT'])
+				pandas.testing.assert_frame_equal(expected['calibPeakArea'], result.calibration['calibPeakInfo']['peakArea'])
+				pandas.testing.assert_frame_equal(expected['calibPeakResponse'], result.calibration['calibPeakInfo']['peakResponse'])
+				pandas.testing.assert_frame_equal(expected['calibPeakConcentrationDeviation'], result.calibration['calibPeakInfo']['peakConcentrationDeviation'])
+				pandas.testing.assert_frame_equal(expected['calibPeakIntegrationFlag'], result.calibration['calibPeakInfo']['peakIntegrationFlag'])
+				pandas.testing.assert_frame_equal(expected['calibPeakRT'], result.calibration['calibPeakInfo']['peakRT'])
 				# peakInfo
-				pandas.util.testing.assert_frame_equal(expected['peakArea'], result.peakInfo['peakArea'])
-				pandas.util.testing.assert_frame_equal(expected['peakResponse'], result.peakInfo['peakResponse'])
-				pandas.util.testing.assert_frame_equal(expected['peakConcentrationDeviation'], result.peakInfo['peakConcentrationDeviation'])
-				pandas.util.testing.assert_frame_equal(expected['peakIntegrationFlag'], result.peakInfo['peakIntegrationFlag'])
-				pandas.util.testing.assert_frame_equal(expected['peakRT'], result.peakInfo['peakRT'])
+				pandas.testing.assert_frame_equal(expected['peakArea'], result.peakInfo['peakArea'])
+				pandas.testing.assert_frame_equal(expected['peakResponse'], result.peakInfo['peakResponse'])
+				pandas.testing.assert_frame_equal(expected['peakConcentrationDeviation'], result.peakInfo['peakConcentrationDeviation'])
+				pandas.testing.assert_frame_equal(expected['peakIntegrationFlag'], result.peakInfo['peakIntegrationFlag'])
+				pandas.testing.assert_frame_equal(expected['peakRT'], result.peakInfo['peakRT'])
 				# No exclusions
 				# Attributes
 				self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
@@ -4286,29 +4285,29 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=True)
 
 				# Test
-				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-				pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+				pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 				# Calibration
-				pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
 				# No peakInfo
 				# Exclusions
 				self.assertEqual(len(expected['sampleMetadataExcluded']), len(result.sampleMetadataExcluded))
 				for i in range(len(result.sampleMetadataExcluded)):
-					pandas.util.testing.assert_frame_equal(expected['sampleMetadataExcluded'][i].reindex(sorted(expected['sampleMetadataExcluded'][i]), axis=1), result.sampleMetadataExcluded[i].reindex(sorted(result.sampleMetadataExcluded[i]), axis=1))
+					pandas.testing.assert_frame_equal(expected['sampleMetadataExcluded'][i].reindex(sorted(expected['sampleMetadataExcluded'][i]), axis=1), result.sampleMetadataExcluded[i].reindex(sorted(result.sampleMetadataExcluded[i]), axis=1))
 				self.assertEqual(len(expected['featureMetadataExcluded']), len(result.featureMetadataExcluded))
 				for j in range(len(result.featureMetadataExcluded)):
-					pandas.util.testing.assert_frame_equal(expected['featureMetadataExcluded'][j].reindex(sorted(expected['featureMetadataExcluded'][j]), axis=1), result.featureMetadataExcluded[j].reindex(sorted(result.featureMetadataExcluded[j]), axis=1))
+					pandas.testing.assert_frame_equal(expected['featureMetadataExcluded'][j].reindex(sorted(expected['featureMetadataExcluded'][j]), axis=1), result.featureMetadataExcluded[j].reindex(sorted(result.featureMetadataExcluded[j]), axis=1))
 				self.assertEqual(len(expected['intensityDataExcluded']), len(result.intensityDataExcluded))
 				for k in range(len(result.intensityDataExcluded)):
 					numpy.testing.assert_array_almost_equal(expected['intensityDataExcluded'][k], result.intensityDataExcluded[k])
 				self.assertEqual(len(expected['expectedConcentrationExcluded']), len(result.expectedConcentrationExcluded))
 				for l in range(len(result.expectedConcentrationExcluded)):
-					pandas.util.testing.assert_frame_equal(expected['expectedConcentrationExcluded'][l].reindex(sorted(expected['expectedConcentrationExcluded'][l]), axis=1), result.expectedConcentrationExcluded[l].reindex(sorted(result.expectedConcentrationExcluded[l]), axis=1))
+					pandas.testing.assert_frame_equal(expected['expectedConcentrationExcluded'][l].reindex(sorted(expected['expectedConcentrationExcluded'][l]), axis=1), result.expectedConcentrationExcluded[l].reindex(sorted(result.expectedConcentrationExcluded[l]), axis=1))
 				self.assertEqual(result.excludedFlag, expected['excludedFlag'])
 				# Attributes
 				self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
@@ -4347,15 +4346,15 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 																				 'UnitTest1_Urine_Rack1_SLL_270814/80',
 																				 'UnitTest1_Urine_Rack1_SLL_270814/90'],
 															'expno': [10, 20, 30, 40, 50, 60, 70, 80, 90],
-															'Acquired Time': [datetime(2017, 8, 23, 19, 39, 1),
-																			  datetime(2017, 8, 23, 19, 56, 55),
-																			  datetime(2017, 8, 23, 20, 14, 50),
-																			  datetime(2017, 8, 23, 20, 32, 35),
-																			  datetime(2017, 8, 23, 20, 50, 9),
-																			  datetime(2017, 8, 23, 21, 7, 48),
-																			  datetime(2017, 8, 23, 21, 25, 38),
-																			  datetime(2017, 8, 23, 21, 42, 57),
-																			  datetime(2017, 8, 23, 22, 00, 53)],
+															'Acquired Time': [pandas.Timestamp(datetime(2017, 8, 23, 19, 39, 1)),
+																			  pandas.Timestamp(datetime(2017, 8, 23, 19, 56, 55)),
+																			  pandas.Timestamp(datetime(2017, 8, 23, 20, 14, 50)),
+																			  pandas.Timestamp(datetime(2017, 8, 23, 20, 32, 35)),
+																			  pandas.Timestamp(datetime(2017, 8, 23, 20, 50, 9)),
+																			  pandas.Timestamp(datetime(2017, 8, 23, 21, 7, 48)),
+																			  pandas.Timestamp(datetime(2017, 8, 23, 21, 25, 38)),
+																			  pandas.Timestamp(datetime(2017, 8, 23, 21, 42, 57)),
+																			  pandas.Timestamp(datetime(2017, 8, 23, 22, 00, 53))],
 															'Run Order': [0, 1, 2, 3, 4, 5, 6, 7, 8],
 															'AssayRole': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'SampleType': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
@@ -4646,16 +4645,16 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 																					   'UnitTest3_Serum_Rack01_RCM_190116/170',
 																					   'UnitTest3_Serum_Rack01_RCM_190116/180'],
 																  'expno': [ 10, 100, 110, 120, 130, 140, 150, 160, 170, 180],
-																  'Acquired Time': [datetime(2017, 5, 2, 12, 39, 12),
-																					datetime(2017, 5, 5, 21, 32, 37),
-																					datetime(2017, 5, 2, 16, 3, 59),
-																					datetime(2017, 5, 2, 16, 49, 39),
-																					datetime(2017, 5, 2, 17, 12, 42),
-																					datetime(2017, 5, 5, 21, 56, 7),
-																					datetime(2017, 5, 5, 22, 19, 12),
-																					datetime(2017, 5, 5, 22, 42, 32),
-																					datetime(2017, 5, 2, 18, 45, 32),
-																					datetime(2017, 5, 2, 19, 8, 37)],
+																  'Acquired Time': [pandas.Timestamp(datetime(2017, 5, 2, 12, 39, 12)),
+																					pandas.Timestamp(datetime(2017, 5, 5, 21, 32, 37)),
+																					pandas.Timestamp(datetime(2017, 5, 2, 16, 3, 59)),
+																					pandas.Timestamp(datetime(2017, 5, 2, 16, 49, 39)),
+																					pandas.Timestamp(datetime(2017, 5, 2, 17, 12, 42)),
+																					pandas.Timestamp(datetime(2017, 5, 5, 21, 56, 7)),
+																					pandas.Timestamp(datetime(2017, 5, 5, 22, 19, 12)),
+																					pandas.Timestamp(datetime(2017, 5, 5, 22, 42, 32)),
+																					pandas.Timestamp(datetime(2017, 5, 2, 18, 45, 32)),
+																					pandas.Timestamp(datetime(2017, 5, 2, 19, 8, 37))],
 															'Run Order': [0, 6, 1, 2, 3, 7, 8, 9, 4, 5],
 															'AssayRole': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 															'SampleType': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
@@ -5057,15 +5056,15 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 			result.expectedConcentration = result.expectedConcentration.reset_index(drop=True)
 
 			# Test
-			pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-			pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+			pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 			numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-			pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 			# Calibration
-			pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-			pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 			numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
+			pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
 			# Attributes, no check of 'Log'
 			self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
 			for i in expected['Attributes']:
@@ -5088,15 +5087,15 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 			result.expectedConcentration = result.expectedConcentration.reset_index(drop=True)
 
 			# Test
-			pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-			pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+			pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 			numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-			pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+			pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 			# Calibration
-			pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-			pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 			numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-			pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
+			pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
 			# Attributes, no check of 'Log'
 			self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
 			for i in expected['Attributes']:
@@ -5134,15 +5133,15 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 				result.expectedConcentration = result.expectedConcentration.reset_index(drop=True)
 
 				# Test
-				pandas.util.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+				pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-				pandas.util.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+				pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 				# Calibration
-				pandas.util.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-				pandas.util.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+				pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-				pandas.util.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
+				pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
 				# Attributes, no check of 'Log'
 				self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
 				for i in expected['Attributes']:
@@ -5184,13 +5183,13 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 										name='Sample ID',
 										dtype='str')
 
-			pandas.util.testing.assert_series_equal(dataset.sampleMetadata['Sample ID'], expected)
+			pandas.testing.assert_series_equal(dataset.sampleMetadata['Sample ID'], expected)
 
 			expected = pandas.Series(['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9'],
 										name='Sample position',
 										dtype='str')
 
-			pandas.util.testing.assert_series_equal(dataset.sampleMetadata['Sample position'], expected)
+			pandas.testing.assert_series_equal(dataset.sampleMetadata['Sample position'], expected)
 
 
 		with self.subTest(msg='UnitTest3'):
@@ -5213,14 +5212,14 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 										name='Sample ID',
 										dtype='str')
 
-			pandas.util.testing.assert_series_equal(dataset.sampleMetadata['Sample ID'], expected)
+			pandas.testing.assert_series_equal(dataset.sampleMetadata['Sample ID'], expected)
 
 			expected = pandas.Series(['A1', 'A2', 'A3', 'A4', 'A5',
 									'A6', 'A7', 'A8', 'A9', 'A10'],
 										name='Sample position',
 										dtype='str')
 
-			pandas.util.testing.assert_series_equal(dataset.sampleMetadata['Sample position'], expected)
+			pandas.testing.assert_series_equal(dataset.sampleMetadata['Sample position'], expected)
 
 
 class test_targeteddataset_exportdataset(unittest.TestCase):
@@ -5231,7 +5230,7 @@ class test_targeteddataset_exportdataset(unittest.TestCase):
 		self.targeted = nPYc.TargetedDataset('', fileType='empty')
 		self.targeted.name = 'UnitTest'
 		self.targeted.sampleMetadata = pandas.DataFrame({'Sample File Name': ['UnitTest_targeted_file_004','UnitTest_targeted_file_005','UnitTest_targeted_file_006', 'UnitTest_targeted_file_007', 'UnitTest_targeted_file_008', 'UnitTest_targeted_file_009'],'TargetLynx Sample ID': [4, 5, 6, 7, 8, 9], 'MassLynx Row ID': [4, 5, 6, 7, 8, 9], 'Sample Name': ['Sample-LLOQ', 'Sample-Fine', 'Sample-ULOQ', 'Blank', 'QC', 'Other'],'Sample Type': ['Analyte', 'Analyte', 'Analyte', 'Blank','QC', 'Solvent'], 'Acqu Date': ['10-Sep-16', '10-Sep-16', '10-Sep-16','10-Sep-16', '10-Sep-16', '10-Sep-16'], 'Acqu Time': ['05:46:40', '06:05:26', '07:26:32','08:25:53', '09:16:04', '10:50:46'], 'Vial': ['1:A,4', '1:A,5', '1:A,6', '1:A,7', '1:A,8','1:A,9'], 'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest'], 'Acquired Time': [datetime(2016, 9, 10, 5, 46, 40), datetime(2016, 9, 10, 6, 5, 26), datetime(2016, 9, 10, 7, 26, 32), datetime(2016, 9, 10, 8, 25, 53), datetime(2016, 9, 10, 9, 16, 4),datetime(2016, 9, 10, 10, 50, 46)], 'Run Order': [3, 4, 5, 6, 7, 8],'Batch': [1, 1, 1, 1, 1, 1],'Dilution': [100, 100, 100, 100, 100, 100]})
-		self.targeted.sampleMetadata['Acquired Time'] = self.targeted.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+		self.targeted.sampleMetadata['Acquired Time'] = self.targeted.sampleMetadata['Acquired Time']
 		self.targeted.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1-IS','Feature2-Monitored','Feature3-Unusable','Feature4-Unusable','Feature5-UnusableNoiseFilled','Feature6-UnusableNoiseFilled','Feature7-UnusableNoiseFilled','Feature8-axb','Feature9-logaxb','Feature10-ax'], 'TargetLynx Feature ID': [1,2,3,4,5,6,7,8,9,10], 'TargetLynx IS ID': ['1','1','1','1','1','1','1','1','1','1'], 'IS': [True, False, False, False, False, False, False, False, False, False], 'calibrationEquation': ['','','','','','','','((area * responseFactor)-b)/a','10**((numpy.log10(area * responseFactor)-b)/a)','area/a'], 'calibrationMethod': [CalibrationMethod.noIS, CalibrationMethod.noCalibration, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.noIS], 'quantificationType': [QuantificationType.IS, QuantificationType.Monitored, QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue,QuantificationType.QuantOwnLabeledAnalogue,QuantificationType.QuantAltLabeledAnalogue,QuantificationType.QuantOther], 'unitCorrectionFactor': [1.,1.,1.,1.,1.,1.,1.,1.,1.,1.], 'Unit': ['noUnit','pg/uL','uM','pg/uL','uM','pg/uL','uM','pg/uL','uM','pg/uL'], 'Cpd Info': ['info cpd1','info cpd2','info cpd3','info cpd4','info cpd5','info cpd6','info cpd7','info cpd8','info cpd9','info cpd10'], 'LLOQ': [100.,numpy.nan,numpy.nan,100.,100.,100.,100.,100.,100.,100.], 'ULOQ': [1000., numpy.nan, 1000, numpy.nan, 1000., 1000., 1000., 1000., 1000., 1000.], 'Noise (area)': [10.,numpy.nan,10.,10.,numpy.nan,10.,10.,10.,10.,10.], 'a': [2.,numpy.nan,2.,2.,2.,numpy.nan,2.,2.,2.,2.], 'another column': ['something 1','something 2','something 3','something 4','something 5','something 6','something 7','something 8','something 9','something 10'],'b': [1.,numpy.nan,1.,1.,1.,1.,numpy.nan,1.,1.,0.], 'r': [0.99,0.99,0.99,0.99,0.99,0.99,0.99,0.99,0.99,0.99], 'r2': [0.995,0.995,0.995,0.995,0.995,0.995,0.995,0.995,0.995,0.995]})
 		self.targeted.featureMetadata = self.targeted.featureMetadata.loc[[4, 5, 6, 7, 8, 9, 1], :]
 		self.targeted.featureMetadata = self.targeted.featureMetadata.drop(['IS', 'TargetLynx IS ID'], axis=1)
@@ -5248,8 +5247,8 @@ class test_targeteddataset_exportdataset(unittest.TestCase):
 		calibPeakIntegrationFlag.reset_index(drop=True, inplace=True)
 		calibPeakResponse = numpy.array([[2100., 2100., 2100., 2100., 2100., 2100., 2100.], [2100., 2100., 2100., 2100., 2100., 2100., 2100.], [2100., 2100., 2100., 2100., 2100., 2100., 2100.]])
 		calibPeakArea = numpy.array([[500., 500., 500., 500., 500., 500., 500.], [1000., 1000., 1000., 1000., 1000., 1000., 1000.], [1500., 1500., 1500., 1500., 1500., 1500., 1500.]])
-		calibSampleMetadata = pandas.DataFrame({'Sample File Name': ['UnitTest_targeted_file_001', 'UnitTest_targeted_file_002', 'UnitTest_targeted_file_003','UnitTest_targeted_file_004', 'UnitTest_targeted_file_005', 'UnitTest_targeted_file_006','UnitTest_targeted_file_007', 'UnitTest_targeted_file_008', 'UnitTest_targeted_file_009'], 'TargetLynx Sample ID': [1, 2, 3, 4, 5, 6, 7, 8, 9], 'MassLynx Row ID': [1, 2, 3, 4, 5, 6, 7, 8, 9], 'Sample Name': ['Calib-Low', 'Calib-Mid', 'Calib-High', 'Sample-LLOQ', 'Sample-Fine','Sample-ULOQ', 'Blank', 'QC', 'Other'], 'Sample Type': ['Standard', 'Standard', 'Standard','Analyte', 'Analyte', 'Analyte', 'Blank', 'QC', 'Solvent'],'Acqu Date': ['10-Sep-16', '10-Sep-16', '10-Sep-16','10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16'], 'Acqu Time': ['02:14:32', '03:23:02', '04:52:35', '05:46:40', '06:05:26', '07:26:32', '08:25:53', '09:16:04', '10:50:46'], 'Vial': ['1:A,1', '1:A,2', '1:A,3', '1:A,4', '1:A,5','1:A,6', '1:A,7', '1:A,8', '1:A,9'],'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'],'Calibrant': [True, True, True, False, False, False, False, False, False],'Study Sample': [False, False, False, True, True, True, False, False, False], 'Blank': [False, False, False, False, False, False, True, False, False], 'QC': [False, False, False, False, False, False, False,True, False],'Other': [False, False, False, False, False, False, False, False, True], 'Acquired Time': [datetime(2016, 9, 10, 2, 14, 32), datetime(2016, 9, 10, 3, 23, 2), datetime(2016, 9, 10, 4, 52, 35), datetime(2016, 9, 10, 5, 46, 40), datetime(2016, 9, 10, 6, 5, 26), datetime(2016, 9, 10, 7, 26, 32), datetime(2016, 9, 10, 8, 25, 53), datetime(2016, 9, 10, 9, 16, 4), datetime(2016, 9, 10, 10, 50, 46)],'Run Order': [0, 1, 2, 3, 4, 5, 6, 7, 8], 'Batch': [1, 1, 1, 1, 1, 1, 1, 1, 1]})
-		calibSampleMetadata['Acquired Time'] = calibSampleMetadata['Acquired Time'].dt.to_pydatetime()
+		calibSampleMetadata = pandas.DataFrame({'Sample File Name': ['UnitTest_targeted_file_001', 'UnitTest_targeted_file_002', 'UnitTest_targeted_file_003','UnitTest_targeted_file_004', 'UnitTest_targeted_file_005', 'UnitTest_targeted_file_006','UnitTest_targeted_file_007', 'UnitTest_targeted_file_008', 'UnitTest_targeted_file_009'], 'TargetLynx Sample ID': [1, 2, 3, 4, 5, 6, 7, 8, 9], 'MassLynx Row ID': [1, 2, 3, 4, 5, 6, 7, 8, 9], 'Sample Name': ['Calib-Low', 'Calib-Mid', 'Calib-High', 'Sample-LLOQ', 'Sample-Fine','Sample-ULOQ', 'Blank', 'QC', 'Other'], 'Sample Type': ['Standard', 'Standard', 'Standard','Analyte', 'Analyte', 'Analyte', 'Blank', 'QC', 'Solvent'],'Acqu Date': ['10-Sep-16', '10-Sep-16', '10-Sep-16','10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16'], 'Acqu Time': ['02:14:32', '03:23:02', '04:52:35', '05:46:40', '06:05:26', '07:26:32', '08:25:53', '09:16:04', '10:50:46'], 'Vial': ['1:A,1', '1:A,2', '1:A,3', '1:A,4', '1:A,5','1:A,6', '1:A,7', '1:A,8', '1:A,9'],'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'],'Calibrant': [True, True, True, False, False, False, False, False, False],'Study Sample': [False, False, False, True, True, True, False, False, False], 'Blank': [False, False, False, False, False, False, True, False, False], 'QC': [False, False, False, False, False, False, False,True, False],'Other': [False, False, False, False, False, False, False, False, True], 'Acquired Time': [pandas.Timestamp(datetime(2016, 9, 10, 2, 14, 32)), pandas.Timestamp(datetime(2016, 9, 10, 3, 23, 2)), pandas.Timestamp(datetime(2016, 9, 10, 4, 52, 35)), pandas.Timestamp(datetime(2016, 9, 10, 5, 46, 40)), pandas.Timestamp(datetime(2016, 9, 10, 6, 5, 26)), pandas.Timestamp(datetime(2016, 9, 10, 7, 26, 32)), pandas.Timestamp(datetime(2016, 9, 10, 8, 25, 53)), pandas.Timestamp(datetime(2016, 9, 10, 9, 16, 4)), pandas.Timestamp(datetime(2016, 9, 10, 10, 50, 46))],'Run Order': [0, 1, 2, 3, 4, 5, 6, 7, 8], 'Batch': [1, 1, 1, 1, 1, 1, 1, 1, 1]})
+		calibSampleMetadata['Acquired Time'] = calibSampleMetadata['Acquired Time']
 		calibSampleMetadata = calibSampleMetadata.loc[[0, 1, 2], :]
 		calibSampleMetadata = calibSampleMetadata.drop(['Calibrant', 'Study Sample', 'Blank', 'QC', 'Other'], axis=1)
 		self.targeted.calibration = dict({'calibSampleMetadata': calibSampleMetadata, 'calibFeatureMetadata': calibFeatureMetadata, 'calibIntensityData': calibIntensityData, 'calibPeakResponse': calibPeakResponse, 'calibPeakArea': calibPeakArea, 'calibPeakExpectedConcentration': calibPeakExpectedConcentration, 'calibPeakConcentrationDeviation': calibPeakConcentrationDeviation, 'calibPeakIntegrationFlag': calibPeakIntegrationFlag})
@@ -5258,7 +5257,7 @@ class test_targeteddataset_exportdataset(unittest.TestCase):
 
 	def test_exportdataset_exportcsv(self):
 		expectedSampleMetadata = copy.deepcopy(self.targeted.sampleMetadata)
-		expectedSampleMetadata['Acquired Time'] = expectedSampleMetadata['Acquired Time'].dt.to_pydatetime()
+		expectedSampleMetadata['Acquired Time'] = expectedSampleMetadata['Acquired Time']
 		expectedFeatureMetadata = copy.deepcopy(self.targeted.featureMetadata)
 		expectedFeatureMetadata['calibrationEquation'] = [numpy.nan, numpy.nan, numpy.nan, '((area * responseFactor)-b)/a', '10**((numpy.log10(area * responseFactor)-b)/a)', 'area/a', numpy.nan]
 		expectedFeatureMetadata['calibrationMethod'] = ['Backcalculated with Internal Standard', 'Backcalculated with Internal Standard', 'Backcalculated with Internal Standard', 'Backcalculated with Internal Standard', 'Backcalculated with Internal Standard', 'No Internal Standard', 'No calibration']
@@ -5273,16 +5272,16 @@ class test_targeteddataset_exportdataset(unittest.TestCase):
 			exportedFeatureMetadata = pandas.read_csv(os.path.join(tmpdirname, self.targeted.name + '_featureMetadata.csv'), index_col=0)
 			exportedIntensityData   = pandas.read_csv(os.path.join(tmpdirname, self.targeted.name + '_intensityData.csv'),   index_col=False, header=None)
 			# Check
-			pandas.util.testing.assert_frame_equal(expectedSampleMetadata, exportedSampleMetadata, check_dtype=True)
-			pandas.util.testing.assert_frame_equal(expectedFeatureMetadata, exportedFeatureMetadata)
-			pandas.util.testing.assert_frame_equal(expectedIntensityData, exportedIntensityData)
+			pandas.testing.assert_frame_equal(expectedSampleMetadata, exportedSampleMetadata, check_dtype=True)
+			pandas.testing.assert_frame_equal(expectedFeatureMetadata, exportedFeatureMetadata)
+			pandas.testing.assert_frame_equal(expectedIntensityData, exportedIntensityData)
 
 
 	def test_exportdataset_exportunifiedcsv(self):
 		expectedCombined = pandas.DataFrame({'Acqu Date': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16'],'Acqu Time': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, '05:46:40', '06:05:26', '07:26:32', '08:25:53', '09:16:04', '10:50:46'],'Acquired Time': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, '2016-09-10 05:46:40','2016-09-10 06:05:26', '2016-09-10 07:26:32', '2016-09-10 08:25:53', '2016-09-10 09:16:04', '2016-09-10 10:50:46'], 'Batch': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 1.0, 1.0, 1.0, 1.0, 1.0,  1.0], 'Dilution': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 100.0, 100.0, 100.0, 100.0, 100.0,  100.0], 'Instrument': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest'], 'MassLynx Row ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 4., 5., 6., 7.,8., 9.], 'Run Order': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 3., 4., 5., 6., 7., 8.],'Sample File Name': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'UnitTest_targeted_file_004', 'UnitTest_targeted_file_005', 'UnitTest_targeted_file_006', 'UnitTest_targeted_file_007', 'UnitTest_targeted_file_008', 'UnitTest_targeted_file_009'],'Sample Name': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'Sample-LLOQ', 'Sample-Fine', 'Sample-ULOQ', 'Blank', 'QC', 'Other'], 'Sample Type': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 'Analyte', 'Analyte','Analyte', 'Blank', 'QC', 'Solvent'],'TargetLynx Sample ID': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,numpy.nan, 4., 5., 6., 7., 8., 9.],'Vial': [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,  numpy.nan, numpy.nan, '1:A,4', '1:A,5', '1:A,6', '1:A,7', '1:A,8', '1:A,9'],'0': ['info cpd5', 'Feature5-UnusableNoiseFilled', '100.0', numpy.nan, '5', '1000.0', 'uM', '2.0', 'something 5', '1.0', numpy.nan, 'Backcalculated with Internal Standard',  'Quantified and validated with own labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'1': ['info cpd6', 'Feature6-UnusableNoiseFilled', '100.0', '10.0', '6', '1000.0', 'pg/uL', numpy.nan,'something 6', '1.0', numpy.nan, 'Backcalculated with Internal Standard', 'Quantified and validated with own labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'2': ['info cpd7', 'Feature7-UnusableNoiseFilled', '100.0', '10.0', '7', '1000.0', 'uM', '2.0', 'something 7', numpy.nan, numpy.nan, 'Backcalculated with Internal Standard', 'Quantified and validated with alternative labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'3': ['info cpd8', 'Feature8-axb', '100.0', '10.0', '8', '1000.0', 'pg/uL', '2.0', 'something 8', '1.0','((area * responseFactor)-b)/a', 'Backcalculated with Internal Standard', 'Quantified and validated with own labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'4': ['info cpd9', 'Feature9-logaxb', '100.0', '10.0', '9', '1000.0', 'uM', '2.0', 'something 9', '1.0', '10**((numpy.log10(area * responseFactor)-b)/a)', 'Backcalculated with Internal Standard', 'Quantified and validated with alternative labeled analogue', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'], '5': ['info cpd10', 'Feature10-ax', '100.0', '10.0', '10', '1000.0', 'pg/uL', '2.0', 'something 10', '0.0', 'area/a', 'No Internal Standard', 'Other quantification', '0.99', '0.995', '1.0', '<LLOQ', '500.0', '>ULOQ', '500.0', '500.0', '500.0'],'6': ['info cpd2', 'Feature2-Monitored', numpy.nan, numpy.nan, '2', numpy.nan, 'pg/uL', numpy.nan, 'something 2', numpy.nan, numpy.nan, 'No calibration', 'Monitored for relative information', '0.99', '0.995', '1.0', '50.0', '500.0', '5000.0', '500.0', '500.0', '500.0']})
-		expectedCombined['Acqu Time'] = pandas.to_datetime(expectedCombined['Acqu Time']).dt.to_pydatetime()
-		expectedCombined['Acqu Date'] = pandas.to_datetime(expectedCombined['Acqu Date']).dt.to_pydatetime()
-		expectedCombined['Acquired Time'] = pandas.to_datetime(expectedCombined['Acquired Time']).dt.to_pydatetime()
+		expectedCombined['Acqu Time'] = pandas.to_datetime(expectedCombined['Acqu Time'])
+		expectedCombined['Acqu Date'] = pandas.to_datetime(expectedCombined['Acqu Date'])
+		expectedCombined['Acquired Time'] = pandas.to_datetime(expectedCombined['Acquired Time'])
 
 		expectedCombined.index = ['Cpd Info', 'Feature Name', 'LLOQ', 'Noise (area)', 'TargetLynx Feature ID', 'ULOQ', 'Unit', 'a', 'another column', 'b', 'calibrationEquation', 'calibrationMethod', 'quantificationType', 'r', 'r2', 'unitCorrectionFactor', '0', '1', '2', '3', '4', '5']
 		expectedCombined = expectedCombined.loc[('Feature Name','TargetLynx Feature ID','calibrationEquation','calibrationMethod','quantificationType','unitCorrectionFactor','Unit','Cpd Info','LLOQ','ULOQ','Noise (area)','a','another column','b','r','r2','0','1','2','3','4','5'),:]
@@ -5293,7 +5292,7 @@ class test_targeteddataset_exportdataset(unittest.TestCase):
 			# Read
 			exportedCombined = pandas.read_csv(os.path.join(tmpdirname, self.targeted.name + '_combinedData.csv'), index_col=0, parse_dates=['Acqu Date', 'Acqu Time', 'Acquired Time'])
 			# Check
-			pandas.util.testing.assert_frame_equal(expectedCombined.reindex(sorted(expectedCombined), axis=1), exportedCombined.reindex(sorted(exportedCombined), axis=1), check_dtype=False)
+			pandas.testing.assert_frame_equal(expectedCombined.reindex(sorted(expectedCombined), axis=1), exportedCombined.reindex(sorted(exportedCombined), axis=1), check_dtype=False)
 
 
 	def test_exportdataset_raise_warning(self):

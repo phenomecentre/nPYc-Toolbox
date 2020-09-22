@@ -599,7 +599,7 @@ class MSDataset(Dataset):
 
 		featureMetadata['Feature Name'] = feature_names
 
-		if  variableType is 'Continuum':
+		if  variableType == 'Continuum':
 			featureMetadata['m/z'] = feature_names
 
 		self.featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T,
@@ -1354,12 +1354,12 @@ class MSDataset(Dataset):
 		self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False, 'correlationToDilutionFilter': False,
 											 'artifactualFilter': self.Attributes['featureFilters']['artifactualFilter'], 'blankFilter': False}
 
-		self.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+		self.featureMetadata.loc[:, ['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
 							  'artifactualFilter']] = True
 
-		self.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] = numpy.nan
-		self.featureMetadata['User Excluded'] = False
-		self.featureMetadata['Exclusion Details'] = None
+		self.featureMetadata.loc[:, ['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] = numpy.nan
+		self.featureMetadata.loc[:, 'User Excluded'] = False
+		self.featureMetadata.loc[:, 'Exclusion Details'] = None
 
 	def _exportISATAB(self, destinationPath, detailsDict):
 		"""
