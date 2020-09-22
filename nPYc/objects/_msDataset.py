@@ -745,7 +745,7 @@ class MSDataset(Dataset):
 		self.sampleMetadata['Sample Bar Code'] = self.sampleMetadata['Sample Bar Code'].astype(int)
 		self.sampleMetadata['Well Position'] = self.sampleMetadata['Well Position'].astype(int)
 		self.sampleMetadata['Run Number'] = self.sampleMetadata['Run Number'].astype(int)
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Measurement Time'].dt.to_pydatetime()
+		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Measurement Time']
 
 		# Rename sample IDs
 		ids = self.sampleMetadata['Sample Identification']
@@ -896,7 +896,7 @@ class MSDataset(Dataset):
 		# Generate the integer run order.
 		# Explicity convert datetime format
 		# Explicity convert datetime format
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time']
 		self.sampleMetadata['Order'] = self.sampleMetadata.sort_values(by='Acquired Time').index
 		self.sampleMetadata['Run Order'] = self.sampleMetadata.sort_values(by='Order').index
 		self.sampleMetadata.drop('Order', axis=1, inplace=True)
