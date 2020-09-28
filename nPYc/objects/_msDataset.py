@@ -599,7 +599,7 @@ class MSDataset(Dataset):
 
 		featureMetadata['Feature Name'] = feature_names
 
-		if  variableType is 'Continuum':
+		if  variableType == 'Continuum':
 			featureMetadata['m/z'] = feature_names
 
 		self.featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T,
@@ -724,7 +724,7 @@ class MSDataset(Dataset):
 		##
 		# Sample info
 		##
-		self.sampleMetadata = pandas.read_excel(path, sheet_name=sheetName, skiprows=[0, 2,3], usecols=noSampleParams)
+		self.sampleMetadata = pandas.read_excel(path, sheet_name=sheetName, skiprows=[0, 2, 3], usecols=range(noSampleParams + 1))
 
 		# If there are multiple 'LOD (calc.) ' strings we have several sheets concatenated.
 		sampleMask = self.sampleMetadata['Measurement Time'].str.match('LOD \(calc\.\).+').values
@@ -745,7 +745,7 @@ class MSDataset(Dataset):
 		self.sampleMetadata['Sample Bar Code'] = self.sampleMetadata['Sample Bar Code'].astype(int)
 		self.sampleMetadata['Well Position'] = self.sampleMetadata['Well Position'].astype(int)
 		self.sampleMetadata['Run Number'] = self.sampleMetadata['Run Number'].astype(int)
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Measurement Time'].dt.to_pydatetime()
+		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Measurement Time']
 
 		# Rename sample IDs
 		ids = self.sampleMetadata['Sample Identification']
@@ -896,7 +896,7 @@ class MSDataset(Dataset):
 		# Generate the integer run order.
 		# Explicity convert datetime format
 		# Explicity convert datetime format
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time']
 		self.sampleMetadata['Order'] = self.sampleMetadata.sort_values(by='Acquired Time').index
 		self.sampleMetadata['Run Order'] = self.sampleMetadata.sort_values(by='Order').index
 		self.sampleMetadata.drop('Order', axis=1, inplace=True)
@@ -1354,12 +1354,12 @@ class MSDataset(Dataset):
 		self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False, 'correlationToDilutionFilter': False,
 											 'artifactualFilter': self.Attributes['featureFilters']['artifactualFilter'], 'blankFilter': False}
 
-		self.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+		self.featureMetadata.loc[:, ['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
 							  'artifactualFilter']] = True
 
-		self.featureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] = numpy.nan
-		self.featureMetadata['User Excluded'] = False
-		self.featureMetadata['Exclusion Details'] = None
+		self.featureMetadata.loc[:, ['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] = numpy.nan
+		self.featureMetadata.loc[:, 'User Excluded'] = False
+		self.featureMetadata.loc[:, 'Exclusion Details'] = None
 
 	def _exportISATAB(self, destinationPath, detailsDict):
 		"""

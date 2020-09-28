@@ -5,7 +5,6 @@ import types
 import numpy
 import scipy
 import warnings
-from scipy import interp
 from scipy.signal import savgol_filter
 import statsmodels.api as sm
 lowess = sm.nonparametric.lowess
@@ -296,7 +295,7 @@ def doLOESScorrection(QCdata, QCrunorder, data, runorder, window=11):
 		z = lowess(QCdata, QCrunorder, frac=frac)
 
 		# Divide by fit, then rescale to batch median
-		fit = interp(runorder, z[:,0], z[:,1])
+		fit = numpy.interp(runorder, z[:,0], z[:,1])
 	
 		# Fit can go negative if too many adjacent QC samples == 0; set any negative fit values to zero
 		fit[fit < 0] = 0
@@ -319,7 +318,7 @@ def doSavitzkyGolayCorrection(QCdata, QCrunorder, data, runorder, window=11, pol
 	# actually do the work
 	z = savgol_filter(QCdataSorted, window, polyOrder)
 
-	fit = interp(runorder, sortedRO2, z)
+	fit = numpy.interp(runorder, sortedRO2, z)
 
 	corrected = numpy.divide(data, fit)
 	corrected = numpy.multiply(corrected, numpy.median(QCdata))
