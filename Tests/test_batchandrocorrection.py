@@ -8,7 +8,6 @@ import numpy
 import seaborn as sns
 import sys
 import unittest
-from pandas.util.testing import assert_frame_equal
 import os
 
 sys.path.append("..")

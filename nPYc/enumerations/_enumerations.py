@@ -116,6 +116,7 @@ class CalibrationMethod(enum.Enum):
 	* *noIS* for compounds without Internal Standard (and Internal Standards themselves)
 	* *backcalculatedIS* for compounds using an Internal Standard
 	* *otherCalibration* for compounds employing another calibration approach
+	* *nmrCalibration* for compounds quantified by NMR
 	"""
 	def __repr__(self):
 		return '<%s.%s>' % (self.__class__.__name__, self.name)
@@ -127,6 +128,7 @@ class CalibrationMethod(enum.Enum):
 	noIS = 'No Internal Standard'
 	backcalculatedIS = 'Backcalculated with Internal Standard'
 	otherCalibration = 'Other calibration method'
+	nmrCalibration = 'NMR quantitation'
 
 class QuantificationType(enum.Enum):
 	"""
@@ -137,6 +139,9 @@ class QuantificationType(enum.Enum):
 	* *QuantAltLabeledAnalogue* for compounds quantified and validated with alternative labeled analogue
 	* *QuantOther* for compounds quantified using another method
 	* *Monitored* for compounds monitored for relative information
+	* *BrukerivDrQuant* for compounds quantified with Bruker ivDr methods
+	* *BrukerivDrEstimate* for compounds estimated with Bruker ivDr methods
+
 	"""
 	def __repr__(self):
 		return '<%s.%s>' % (self.__class__.__name__, self.name)
@@ -149,6 +154,8 @@ class QuantificationType(enum.Enum):
 	QuantAltLabeledAnalogue = 'Quantified and validated with alternative labeled analogue'
 	QuantOther = 'Other quantification'
 	Monitored = 'Monitored for relative information'
+	BrukerivDrQuant = 'Quantified using Bruker Biospin ivDr methods'
+	BrukerivDrEstimate = 'Estimated from other parameters using Bruker Biospin ivDr methods'
 
 class AnalyticalPlatform(enum.Enum):
 	"""

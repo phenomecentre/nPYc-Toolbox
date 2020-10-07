@@ -4,6 +4,7 @@ import numpy
 import pandas
 from collections import OrderedDict
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 import copy
 from IPython.display import display
@@ -910,12 +911,9 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
 
     fig, ax = plt.subplots(1, figsize=dataset.Attributes['figureSize'], dpi=dataset.Attributes['dpi'])
     sns.heatmap(test, annot=True, fmt='g', cbar=False)
-    x_format = ax.xaxis.get_major_formatter()
-    x_format.seq = ["{:0.0f}".format(float(s)) for s in x_format.seq]
-    y_format = ax.yaxis.get_major_formatter()
-    y_format.seq = ["{:0.2f}".format(float(s)) for s in y_format.seq]
-    ax.xaxis.set_major_formatter(x_format)
-    ax.yaxis.set_major_formatter(y_format)
+    # the formatters require two args, hence the "useless" in lambda
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, y: "{:0.0f}".format(float(x))))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, y: "{:0.2f}".format(float(x))))
     plt.tight_layout()
 
     if destinationPath:

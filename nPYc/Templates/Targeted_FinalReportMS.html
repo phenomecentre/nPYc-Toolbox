@@ -99,9 +99,11 @@
     {{ pca.basicPCAReport(pcaPlots)}}
 {% endif %}
 
-<!--Samples missing from acquisition-->
-{% if sampleSummary %}
-    {{ sampleReport.sampleReport(sampleSummary) }}
+<!--Details of any missing/excluded samples-->
+{% if 'StudySamples Exclusion Details' in item.sampleSummary %}
+	<h2>Missing/Excluded Study Samples</h2>
+	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
+	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
 {% endif %}
 
 {% endblock %}

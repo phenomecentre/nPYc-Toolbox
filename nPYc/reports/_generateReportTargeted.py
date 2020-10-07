@@ -134,7 +134,6 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 	item['TextQType'] = textQType
 	item['CountQType'] = countQType
 	item['pcaModel'] = None
-
 	sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
 
 	if reportType.lower() == 'feature summary':
@@ -647,7 +646,7 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 			print('\033[1m' + 'Features ' + item['TextQType'][i] + ' (' + item['CountQType'][i] + ')' + '\033[0m')
 
 		# Table: summary (only if multiple quantification types)
-		if item['nQType'] > 1:
+		if item['nQType'] >= 1:
 
 			item['FeatureQuantParamTable'].append(tmpData.featureMetadata)
 			if not destinationPath:

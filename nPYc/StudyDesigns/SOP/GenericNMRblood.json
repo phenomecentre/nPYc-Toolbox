@@ -28,10 +28,10 @@
     "excludeFromPlotting": ["Sample File Name", "Sample Base Name", "Data Present", "Study Reference",
       "Long-Term Reference", "Study Sample", "Status", "Exclusion Details", "LIMS Present", "LIMS Marked Missing",
       "path", "Assay data name", "Assay data location", "Assay protocol", "titleFileContent", "SF"],
-    "sampleMetadataNotExported" : ["AUNM", "BF1", "BYTORDP", "Computer", "File Path", "NC_proc", "NS", "O1",
+    "sampleMetadataNotExported" : ["AUNM", "BYTORDP", "Computer", "File Path", "NC_proc", "NS", "O1",
       "OFFSET", "OWNER", "P", "PROBHD", "PULPROG", "RG", "SF", "SFO1", "SI", "SW", "SW_p",
 		"TD", "XDIM", "Delta PPM", "ERETIC Integral","ERETIC Concentration (mM)",
       "Line Width (Hz)", "Exclusion Details", "CalibrationFail", "LineWidthFail",
-      "WaterPeakFail", "BaselineFail", "Sample Base Name", "expno"],
+      "WaterPeakFail", "SolventPeakFail", "BaselineFail", "Sample Base Name", "expno"],
     "featureMetadataNotExported" : []
 }

@@ -4,7 +4,7 @@ import numpy
 import sys
 import unittest
 from datetime import datetime
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 import os
 import copy
 sys.path.append("..")
@@ -136,7 +136,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								  name='Sample Base Name',
 								  dtype='str')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Sample Base Name'], basename)
+		assert_series_equal(msData.sampleMetadata['Sample Base Name'], basename)
 
 		##
 		# Check Study
@@ -159,7 +159,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 							   name='Study',
 							   dtype='str')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Study'], study)
+		assert_series_equal(msData.sampleMetadata['Study'], study)
 
 		##
 		#
@@ -182,7 +182,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 										name='Chromatography',
 										dtype='str')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Chromatography'], chromatography)
+		assert_series_equal(msData.sampleMetadata['Chromatography'], chromatography)
 
 		##
 		#
@@ -205,7 +205,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 									name='Ionisation',
 									dtype='str')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Ionisation'], ionisation)
+		assert_series_equal(msData.sampleMetadata['Ionisation'], ionisation)
 
 		##
 		#
@@ -228,7 +228,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 									name='Instrument',
 									dtype='str')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Instrument'], instrument)
+		assert_series_equal(msData.sampleMetadata['Instrument'], instrument)
 
 		##
 		#
@@ -251,7 +251,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 							name='Re-Run',
 							dtype='str')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Re-Run'], reRun)
+		assert_series_equal(msData.sampleMetadata['Re-Run'], reRun)
 
 		##
 		#
@@ -274,7 +274,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 									name='Suplemental Injections',
 									dtype='str')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Suplemental Injections'], suplemental)
+		assert_series_equal(msData.sampleMetadata['Suplemental Injections'], suplemental)
 
 		##
 		#
@@ -297,7 +297,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								name='Skipped',
 								dtype='bool')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Skipped'], skipped)
+		assert_series_equal(msData.sampleMetadata['Skipped'], skipped)
 
 		##
 		#
@@ -320,7 +320,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								name='Matrix',
 								dtype='str')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Matrix'], matrix)
+		assert_series_equal(msData.sampleMetadata['Matrix'], matrix)
 
 		##
 		#
@@ -343,7 +343,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 							name='Well',
 							dtype='int')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Well'], well, check_dtype=False)
+		assert_series_equal(msData.sampleMetadata['Well'], well, check_dtype=False)
 		self.assertEqual(msData.sampleMetadata['Well'].dtype.kind, well.dtype.kind)
 
 		##
@@ -367,7 +367,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								name='Plate',
 								dtype='int')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Plate'], plate, check_dtype=False)
+		assert_series_equal(msData.sampleMetadata['Plate'], plate, check_dtype=False)
 		self.assertEqual(msData.sampleMetadata['Plate'].dtype.kind, well.dtype.kind)
 
 		##
@@ -391,7 +391,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 							name='Batch',
 							dtype='float')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Batch'], batch)
+		assert_series_equal(msData.sampleMetadata['Batch'], batch)
 
 		##
 		#
@@ -414,7 +414,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								name='Dilution',
 								dtype='float')
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['Dilution'], dilution)
+		assert_series_equal(msData.sampleMetadata['Dilution'], dilution)
 
 		##
 		#
@@ -437,7 +437,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								name='AssayRole',
 								dtype=object)
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['AssayRole'], assayRole)
+		assert_series_equal(msData.sampleMetadata['AssayRole'], assayRole)
 
 		##
 		#
@@ -460,7 +460,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								name='SampleType',
 								dtype=object)
 
-		pandas.util.testing.assert_series_equal(msData.sampleMetadata['SampleType'], sampleType)
+		assert_series_equal(msData.sampleMetadata['SampleType'], sampleType)
 
 
 	def test_updateMasks_features(self):
@@ -595,7 +595,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 			msData.updateMasks(featureFilters={'rsdFilter':True, 'correlationToDilutionFilter':True, 'varianceRatioFilter':True,
 											   'artifactualFilter': True,'blankFilter':True})
 
-			pandas.util.testing.assert_frame_equal(expectedTempArtifactualLinkageMatrix, msData._tempArtifactualLinkageMatrix)
+			assert_frame_equal(expectedTempArtifactualLinkageMatrix, msData._tempArtifactualLinkageMatrix)
 
 		with self.subTest(msg='Altered withArtifactualFiltering parameters'):
 			expectedArtifactualLinkageMatrix = pandas.DataFrame(data=[[0,1]],columns=['node1','node2'])
@@ -609,7 +609,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 			self.assertEqual(msData.Attributes['filterParameters']['deltaMzArtifactual'], 300)
 			self.assertEqual(msData.Attributes['filterParameters']['overlapThresholdArtifactual'], 0.1)
 			self.assertEqual(msData.Attributes['filterParameters']['corrThresholdArtifactual'], 0.2)
-			pandas.util.testing.assert_frame_equal(expectedArtifactualLinkageMatrix, msData._artifactualLinkageMatrix)
+			assert_frame_equal(expectedArtifactualLinkageMatrix, msData._artifactualLinkageMatrix)
 
 		with self.subTest(msg='withArtifactualFiltering=None, Attribute[artifactualFilter]=False'):
 			msData2 = copy.deepcopy(msData)
@@ -631,7 +631,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 			msData2.updateMasks(featureFilters={'rsdFilter': True, 'correlationToDilutionFilter': True, 'varianceRatioFilter': True,
 											   'artifactualFilter': True,'blankFilter':True})
 
-			pandas.util.testing.assert_frame_equal(expectedTempArtifactualLinkageMatrix, msData2._tempArtifactualLinkageMatrix)
+			assert_frame_equal(expectedTempArtifactualLinkageMatrix, msData2._tempArtifactualLinkageMatrix)
 
 
 	def test_updateMasks_samples(self):
@@ -1351,7 +1351,7 @@ class test_msdataset_batch_inference(unittest.TestCase):
 										name='Correction Batch',
 										dtype='float')
 
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
+		assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
 
 
 	def test_fillbatches_warns(self):
@@ -1376,7 +1376,7 @@ class test_msdataset_batch_inference(unittest.TestCase):
 										name='Correction Batch',
 										dtype='float')
 
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
+		assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
 
 
 	def test_msdataset_addsampleinfo_batches(self):
@@ -1389,7 +1389,7 @@ class test_msdataset_batch_inference(unittest.TestCase):
 										name='Correction Batch',
 										dtype='float')
 
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
+		assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
 
 
 class test_msdataset_import_undefined(unittest.TestCase):
@@ -1480,7 +1480,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 								name='Sample File Name',
 								dtype=str)
 
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample File Name'], samples)
+		assert_series_equal(self.msData.sampleMetadata['Sample File Name'], samples)
 
 
 	def test_featuremetadata_import(self):
@@ -1493,7 +1493,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 									name='Feature Name',
 									dtype='str')
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Feature Name'], features)
+			assert_series_equal(self.msData.featureMetadata['Feature Name'], features)
 
 		with self.subTest(msg='Checking Peak Widths'):
 			peakWidth = pandas.Series([0.03931667,
@@ -1503,7 +1503,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 									name='Peak Width',
 									dtype='float')
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Peak Width'], peakWidth)
+			assert_series_equal(self.msData.featureMetadata['Peak Width'], peakWidth)
 
 		with self.subTest(msg='Checking m/z'):
 			mz = pandas.Series([262.0378339,
@@ -1513,7 +1513,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 							name='m/z',
 							dtype='float')
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['m/z'], mz)
+			assert_series_equal(self.msData.featureMetadata['m/z'], mz)
 
 		with self.subTest(msg='Checking Retention Time'):
 			rt = pandas.Series([3.17485,
@@ -1523,7 +1523,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 							name='Retention Time',
 							dtype='float')
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Retention Time'], rt)
+			assert_series_equal(self.msData.featureMetadata['Retention Time'], rt)
 
 		with self.subTest(msg='Checking Isotope Distribution'):
 			isotope = pandas.Series(['100 - 36.9',
@@ -1533,7 +1533,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 							name='Isotope Distribution',
 							dtype='str')
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Isotope Distribution'], isotope)
+			assert_series_equal(self.msData.featureMetadata['Isotope Distribution'], isotope)
 
 
 	def test_dilutionlevels(self):
@@ -1547,7 +1547,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 								name='Dilution',
 								dtype='float')
 
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
+		assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
 
 
 	def test_feature_correlation(self):
@@ -1654,8 +1654,8 @@ class test_msdataset_import_xcms(unittest.TestCase):
 								name='Sample File Name',
 								dtype=str)
 
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample File Name'], samples)
-		pandas.util.testing.assert_series_equal(self.msData_PeakTable.sampleMetadata['Sample File Name'], samples)
+		assert_series_equal(self.msData.sampleMetadata['Sample File Name'], samples)
+		assert_series_equal(self.msData_PeakTable.sampleMetadata['Sample File Name'], samples)
 
 
 	def test_featuremetadata_import(self):
@@ -1668,8 +1668,8 @@ class test_msdataset_import_xcms(unittest.TestCase):
 									name='Feature Name',
 									dtype='str')
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Feature Name'], features)
-			pandas.util.testing.assert_series_equal(self.msData_PeakTable.featureMetadata['Feature Name'], features)
+			assert_series_equal(self.msData.featureMetadata['Feature Name'], features)
+			assert_series_equal(self.msData_PeakTable.featureMetadata['Feature Name'], features)
 
 		with self.subTest(msg='Checking m/z'):
 			mz = pandas.Series([262.0378339,
@@ -1679,8 +1679,8 @@ class test_msdataset_import_xcms(unittest.TestCase):
 							name='m/z',
 							dtype='float')
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['m/z'], mz)
-			pandas.util.testing.assert_series_equal(self.msData_PeakTable.featureMetadata['m/z'], mz)
+			assert_series_equal(self.msData.featureMetadata['m/z'], mz)
+			assert_series_equal(self.msData_PeakTable.featureMetadata['m/z'], mz)
 
 
 		with self.subTest(msg='Checking Retention Time'):
@@ -1691,8 +1691,8 @@ class test_msdataset_import_xcms(unittest.TestCase):
 								name='Retention Time',
 								dtype='float')
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Retention Time'], rt)
-			pandas.util.testing.assert_series_equal(self.msData_PeakTable.featureMetadata['Retention Time'], rt)
+			assert_series_equal(self.msData.featureMetadata['Retention Time'], rt)
+			assert_series_equal(self.msData_PeakTable.featureMetadata['Retention Time'], rt)
 
 
 	def test_dilutionlevels(self):
@@ -1706,8 +1706,8 @@ class test_msdataset_import_xcms(unittest.TestCase):
 								name='Dilution',
 								dtype='float')
 
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
-		pandas.util.testing.assert_series_equal(self.msData_PeakTable.sampleMetadata['Dilution'], dilution)
+		assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
+		assert_series_equal(self.msData_PeakTable.sampleMetadata['Dilution'], dilution)
 
 
 	def test_feature_correlation(self):
@@ -1824,7 +1824,7 @@ class test_msdataset_import_csvimport_discrete(unittest.TestCase):
 								name='Sample File Name',
 								dtype=str)
 
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample File Name'], samples)
+		assert_series_equal(self.msData.sampleMetadata['Sample File Name'], samples)
 
 	def test_featuremetadata_import(self):
 
@@ -1836,7 +1836,7 @@ class test_msdataset_import_csvimport_discrete(unittest.TestCase):
 									name='Feature Name',
 									dtype='str')
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Feature Name'], features)
+			assert_series_equal(self.msData.featureMetadata['Feature Name'], features)
 
 	def test_dilutionlevels(self):
 
@@ -1849,7 +1849,7 @@ class test_msdataset_import_csvimport_discrete(unittest.TestCase):
 								name='Dilution',
 								dtype='float')
 
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
+		assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
 
 	def test_feature_correlation(self):
 
@@ -1968,8 +1968,8 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 								name='Sample File Name',
 								dtype=str)
 
-		pandas.util.testing.assert_series_equal(self.lcData.sampleMetadata['Sample File Name'], samples)
-		pandas.util.testing.assert_series_equal(self.diData.sampleMetadata['Sample File Name'], samples)
+		assert_series_equal(self.lcData.sampleMetadata['Sample File Name'], samples)
+		assert_series_equal(self.diData.sampleMetadata['Sample File Name'], samples)
 
 
 	def test_featuremetadata_import(self):
@@ -1982,7 +1982,7 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 									name='Feature Name',
 									dtype='str')
 
-			pandas.util.testing.assert_series_equal(self.lcData.featureMetadata['Feature Name'], features)
+			assert_series_equal(self.lcData.featureMetadata['Feature Name'], features)
 
 			features = pandas.Series(['262.0378339m/z',
 									  '293.1811941m/z',
@@ -1991,7 +1991,7 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 									  name='Feature Name',
 									  dtype='str')
 
-			pandas.util.testing.assert_series_equal(self.diData.featureMetadata['Feature Name'], features)
+			assert_series_equal(self.diData.featureMetadata['Feature Name'], features)
 
 		with self.subTest(msg='Checking m/z'):
 			mz = pandas.Series([262.0378,
@@ -2001,8 +2001,8 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 								name='m/z',
 								dtype='float')
 
-			pandas.util.testing.assert_series_equal(self.lcData.featureMetadata['m/z'], mz)
-			pandas.util.testing.assert_series_equal(self.diData.featureMetadata['m/z'], mz)
+			assert_series_equal(self.lcData.featureMetadata['m/z'], mz)
+			assert_series_equal(self.diData.featureMetadata['m/z'], mz)
 
 		with self.subTest(msg='Checking Retention Time'):
 			rt = pandas.Series([3.17485,
@@ -2012,7 +2012,7 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 								name='Retention Time',
 								dtype='float')
 
-			pandas.util.testing.assert_series_equal(self.lcData.featureMetadata['Retention Time'], rt)
+			assert_series_equal(self.lcData.featureMetadata['Retention Time'], rt)
 
 		with self.subTest(msg='Checking ΔRT'):
 			deltaRT = pandas.Series([0,
@@ -2022,7 +2022,7 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 							name='ΔRT',
 							dtype='object')
 
-			pandas.util.testing.assert_series_equal(self.lcData.featureMetadata['ΔRT'], deltaRT)
+			assert_series_equal(self.lcData.featureMetadata['ΔRT'], deltaRT)
 
 
 	def test_dilutionlevels(self):
@@ -2036,8 +2036,8 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 								name='Dilution',
 								dtype='float')
 
-		pandas.util.testing.assert_series_equal(self.lcData.sampleMetadata['Dilution'], dilution)
-		pandas.util.testing.assert_series_equal(self.diData.sampleMetadata['Dilution'], dilution)
+		assert_series_equal(self.lcData.sampleMetadata['Dilution'], dilution)
+		assert_series_equal(self.diData.sampleMetadata['Dilution'], dilution)
 
 
 	def test_feature_correlation(self):
@@ -2100,14 +2100,14 @@ class test_msdataset_import_biocrates(unittest.TestCase):
 									name='Sample ID',
 									dtype=str)
 
-			pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample ID'], samples)
+			assert_series_equal(self.msData.sampleMetadata['Sample ID'], samples)
 
 		with self.subTest(msg='Checking Sample Bar Code'):
 			samples = pandas.Series([1010751983, 1010751983, 1010751983, 1010751983, 1010751983, 1010751998, 1010751998, 1010751998, 1010751998],
 									name='Sample Bar Code',
 									dtype=int)
 
-			pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample Bar Code'], samples)
+			assert_series_equal(self.msData.sampleMetadata['Sample Bar Code'], samples)
 
 
 	def test_featuremetadata_import(self):
@@ -2131,7 +2131,7 @@ class test_msdataset_import_biocrates(unittest.TestCase):
 									name='Feature Name',
 									dtype=str)
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Feature Name'], features)
+			assert_series_equal(self.msData.featureMetadata['Feature Name'], features)
 
 		with self.subTest(msg='Class'):
 			classField = pandas.Series(['acylcarnitines', 'acylcarnitines', 'acylcarnitines', 'acylcarnitines', 'acylcarnitines', 'acylcarnitines',
@@ -2168,7 +2168,7 @@ class test_msdataset_import_biocrates(unittest.TestCase):
 								name='Class',
 								dtype=str)
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['Class'], classField)
+			assert_series_equal(self.msData.featureMetadata['Class'], classField)
 
 		with self.subTest(msg='Checking LOD'):
 			lod = pandas.Series([2.1, 0.08, 1.08, 0.156, 0.064, 0.151, 0.857, 0.023, 0.009, 0.015, 0.049, 0.019, 0.018, 0.009, 0.017, 0.029, 0.023, 0.035,
@@ -2182,7 +2182,7 @@ class test_msdataset_import_biocrates(unittest.TestCase):
 							name='LOD (μM)',
 							dtype=float)
 
-			pandas.util.testing.assert_series_equal(self.msData.featureMetadata['LOD (μM)'], lod)
+			assert_series_equal(self.msData.featureMetadata['LOD (μM)'], lod)
 
 
 	def test_variabletype(self):
@@ -2232,7 +2232,7 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 		samplingIDs = samplingIDs.astype(str)
 
 		self.msData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
-		pandas.util.testing.assert_series_equal(self.msData.sampleMetadata['Sample ID'], samplingIDs)
+		assert_series_equal(self.msData.sampleMetadata['Sample ID'], samplingIDs)
 
 
 	def test_msdataset_load_watersraw_metadata(self):
@@ -2304,7 +2304,7 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 
 		with self.subTest(msg='Default Path'):
 			for series in testSeries:
-				pandas.util.testing.assert_series_equal(self.msData.sampleMetadata[series], expected[series])
+				assert_series_equal(self.msData.sampleMetadata[series], expected[series])
 
 		with self.subTest(msg='No Exclusion details'):
 			self.msData.sampleMetadata.drop(columns='Exclusion Details', inplace=True)
@@ -2623,9 +2623,9 @@ class test_msdataset_initialiseFromCSV(unittest.TestCase):
 			numpy.testing.assert_array_equal(rebuiltData.intensityData, dataset.intensityData)
 
 			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
-				pandas.util.testing.assert_series_equal(rebuiltData.sampleMetadata[column], dataset.sampleMetadata[column])
+				assert_series_equal(rebuiltData.sampleMetadata[column], dataset.sampleMetadata[column])
 			for column in rebuiltData.featureMetadata.columns:
-				pandas.util.testing.assert_series_equal(rebuiltData.featureMetadata[column], dataset.featureMetadata[column])
+				assert_series_equal(rebuiltData.featureMetadata[column], dataset.featureMetadata[column])
 
 			self.assertEqual(rebuiltData.name, dataset.name)
 

@@ -1604,7 +1604,7 @@ class Dataset:
 		sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
 
 		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].apply(pandas.to_datetime)
-		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].dt.to_pydatetime()
+		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time']
 
 		# If AssayRole or SampleType columns are present parse strings into enums
 		if 'AssayRole' in sampleMetadata.columns:
@@ -1764,7 +1764,7 @@ class Dataset:
 
 		# Explicity convert datetime format
 		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].apply(pandas.to_datetime,dayfirst=True)
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].dt.to_pydatetime()
+		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time']
 
 		#automatically mark samples that have no 'Acquired Time' for exclusion
 		if sum(self.sampleMetadata['Acquired Time'].isnull()) > 0:
