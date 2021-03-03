@@ -2304,7 +2304,7 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 
 		with self.subTest(msg='Default Path'):
 			for series in testSeries:
-				assert_series_equal(self.msData.sampleMetadata[series], expected[series])
+				assert_series_equal(self.msData.sampleMetadata[series], expected[series], check_dtype=False)
 
 		with self.subTest(msg='No Exclusion details'):
 			self.msData.sampleMetadata.drop(columns='Exclusion Details', inplace=True)
