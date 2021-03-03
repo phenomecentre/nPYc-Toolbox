@@ -2250,8 +2250,8 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 		##
 		testSeries = ['Sampling Cone', 'Scan Time (sec)', 'Source Offset', 'Source Temperature (°C)', 'Start Mass', 'End Mass', 'Column Serial Number:', 'ColumnType:']
 		expected['Sampling Cone'] = 20.0
-		expected['Scan Time (sec)']  = 0.15
-		expected['Source Offset'] = 80.0
+		expected['Scan Time (sec)'] = 0.15
+		expected['Source Offset'] = 80
 		expected['Source Temperature (°C)'] = 120.0
 		expected['Start Mass'] = 50.0
 		expected['End Mass'] = 1200.0
