@@ -43,7 +43,7 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 
 	data.sampleMetadata['SampleType'] = nPYc.enumerations.SampleType.StudySample
 	data.sampleMetadata['AssayRole'] = nPYc.enumerations.AssayRole.Assay
-	data.sampleMetadata['Run Order'] = numpy.arange(noSamp)
+	data.sampleMetadata['Run Order'] = numpy.arange(noSamp, dtype='int64')
 	data.sampleMetadata['Detector'] = numpy.arange(noSamp) * 5
 	data.sampleMetadata['Batch'] = 1
 	data.sampleMetadata['Correction Batch'] = 2

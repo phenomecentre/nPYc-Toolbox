@@ -2,7 +2,6 @@ import pandas
 import numpy
 import sys
 import unittest
-from pandas.util.testing import assert_frame_equal
 import os
 import tempfile
 import random
@@ -151,20 +150,20 @@ class test_dataset_synthetic(unittest.TestCase):
 		maskedDataset.applyMasks()
 
 		with self.subTest(msg='Checking sampleMetadata'):
-			pandas.util.testing.assert_frame_equal(maskedDataset.sampleMetadata, expectedDataset.sampleMetadata)
+			pandas.testing.assert_frame_equal(maskedDataset.sampleMetadata, expectedDataset.sampleMetadata)
 		with self.subTest(msg='Checking featureMetadata'):
-			pandas.util.testing.assert_frame_equal(	maskedDataset.featureMetadata.reindex(sorted(maskedDataset.featureMetadata), axis=1), expectedDataset.featureMetadata.reindex(sorted(expectedDataset.featureMetadata), axis=1))
+			pandas.testing.assert_frame_equal(	maskedDataset.featureMetadata.reindex(sorted(maskedDataset.featureMetadata), axis=1), expectedDataset.featureMetadata.reindex(sorted(expectedDataset.featureMetadata), axis=1))
 		with self.subTest(msg='Checking intensityData'):
 			numpy.testing.assert_array_equal(maskedDataset.intensityData, expectedDataset.intensityData)
 		with self.subTest(msg='Checking sampleMetadataExcluded'):
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0], maskedDataset.sampleMetadataExcluded[0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1], maskedDataset.sampleMetadataExcluded[1])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[0], maskedDataset.sampleMetadataExcluded[0])
+			pandas.testing.assert_frame_equal(expectedDataset.sampleMetadataExcluded[1], maskedDataset.sampleMetadataExcluded[1])
 		with self.subTest(msg='Checking intensityMetadataExcluded'):
 			numpy.testing.assert_array_equal(expectedDataset.intensityDataExcluded[0], maskedDataset.intensityDataExcluded[0])
 			numpy.testing.assert_array_equal(expectedDataset.intensityDataExcluded[1], maskedDataset.intensityDataExcluded[1])
 		with self.subTest(msg='Checking featureMetadataExcluded'):
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0], maskedDataset.featureMetadataExcluded[0])
-			pandas.util.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1], maskedDataset.featureMetadataExcluded[1])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[0], maskedDataset.featureMetadataExcluded[0])
+			pandas.testing.assert_frame_equal(expectedDataset.featureMetadataExcluded[1], maskedDataset.featureMetadataExcluded[1])
 		with self.subTest(msg='Checking excludedFlag'):
 			self.assertListEqual(expectedDataset.excludedFlag, maskedDataset.excludedFlag)
 		with self.subTest(msg='Checking featureMask'):
@@ -774,8 +773,8 @@ class test_dataset_synthetic(unittest.TestCase):
 			sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
 
 		numpy.testing.assert_array_almost_equal_nulp(self.data.intensityData, intensityData)
-		pandas.util.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
-		pandas.util.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
 
 
 	def test_exportcsv(self):
@@ -800,8 +799,8 @@ class test_dataset_synthetic(unittest.TestCase):
 			sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
 
 		numpy.testing.assert_array_almost_equal_nulp(self.data.intensityData, intensityData)
-		pandas.util.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
-		pandas.util.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
 
 
 	def test_exportunifiedcsv(self):
@@ -830,8 +829,8 @@ class test_dataset_synthetic(unittest.TestCase):
 			sampleMetadata.reset_index(drop=True, inplace=True)
 
 		numpy.testing.assert_array_almost_equal(self.data.intensityData, intensityData)
-		pandas.util.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
-		pandas.util.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
 
 
 	def test_exportdataset_withexclusions(self):
@@ -873,8 +872,8 @@ class test_dataset_synthetic(unittest.TestCase):
 		self.data.applyMasks()
 
 		numpy.testing.assert_equal(self.data.intensityData, intensityData)
-		pandas.util.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
-		pandas.util.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
 
 
 	def test_exportdataset_filterMetadata(self):
@@ -922,9 +921,9 @@ class test_dataset_synthetic(unittest.TestCase):
 		# Check we did not break the data we kept
 		numpy.testing.assert_array_almost_equal(self.data.intensityData, intensityData)
 		for column in featureMetadata.columns:
-			pandas.util.testing.assert_series_equal(self.data.featureMetadata[column], featureMetadata[column], check_dtype=False)
+			pandas.testing.assert_series_equal(self.data.featureMetadata[column], featureMetadata[column], check_dtype=False)
 		for column in sampleMetadata.columns:
-			pandas.util.testing.assert_series_equal(self.data.sampleMetadata[column], sampleMetadata[column], check_dtype=False)
+			pandas.testing.assert_series_equal(self.data.sampleMetadata[column], sampleMetadata[column], check_dtype=False)
 
 		# Check excluded columns are not in the new tables
 		for column in randomFeatCols:
@@ -1092,7 +1091,7 @@ class test_dataset_synthetic(unittest.TestCase):
 			features, measuments = self.data.getFeatures(featureNames, by='Feature Name')
 
 			numpy.testing.assert_array_equal(self.data.intensityData[:, featureList], measuments)
-			pandas.util.testing.assert_frame_equal(self.data.featureMetadata.iloc[featureList], features)
+			pandas.testing.assert_frame_equal(self.data.featureMetadata.iloc[featureList], features)
 
 		with self.subTest(msg='Single feature'):
 			# Select a random set of features
@@ -1102,7 +1101,7 @@ class test_dataset_synthetic(unittest.TestCase):
 			features, measuments = self.data.getFeatures(featureName, by='Feature Name')
 
 			numpy.testing.assert_array_equal(self.data.intensityData[:, featureList], numpy.squeeze(measuments))
-			pandas.util.testing.assert_frame_equal(self.data.featureMetadata.iloc[[featureList]], features)
+			pandas.testing.assert_frame_equal(self.data.featureMetadata.iloc[[featureList]], features)
 
 
 	def test_get_features_spectral(self):
@@ -1142,7 +1141,7 @@ class test_dataset_synthetic(unittest.TestCase):
 				ppmRange.append((data.featureMetadata.loc[startIndex, 'ppm'], data.featureMetadata.loc[endIndex, 'ppm']))
 
 			features, measuments = data.getFeatures(ppmRange, by='ppm')
-			pandas.util.testing.assert_frame_equal(data.featureMetadata.loc[rangeMask], features)
+			pandas.testing.assert_frame_equal(data.featureMetadata.loc[rangeMask], features)
 			numpy.testing.assert_array_equal(data.intensityData[:, rangeMask], measuments)
 
 
@@ -1156,7 +1155,7 @@ class test_dataset_synthetic(unittest.TestCase):
 			features, measuments = data.getFeatures(ppmRange, by='ppm')
 
 			numpy.testing.assert_array_equal(data.intensityData[:, startIndex:endIndex+1], measuments)
-			pandas.util.testing.assert_frame_equal(data.featureMetadata.iloc[startIndex:endIndex+1], features)
+			pandas.testing.assert_frame_equal(data.featureMetadata.iloc[startIndex:endIndex+1], features)
 
 		with self.subTest(msg='Fliped range feature'):
 			# Select a random set of features
@@ -1168,7 +1167,7 @@ class test_dataset_synthetic(unittest.TestCase):
 			features, measuments = data.getFeatures(ppmRange, by='ppm')
 
 			numpy.testing.assert_array_equal(data.intensityData[:, startIndex:endIndex+1], measuments)
-			pandas.util.testing.assert_frame_equal(data.featureMetadata.iloc[startIndex:endIndex+1], features)
+			pandas.testing.assert_frame_equal(data.featureMetadata.iloc[startIndex:endIndex+1], features)
 
 
 	def test_get_features_autofeaturename(self):
@@ -1187,7 +1186,7 @@ class test_dataset_synthetic(unittest.TestCase):
 		features, measuments = self.data.getFeatures(featureNames)
 
 		numpy.testing.assert_array_equal(self.data.intensityData[:, featureList], measuments)
-		pandas.util.testing.assert_frame_equal(self.data.featureMetadata.iloc[featureList], features)
+		pandas.testing.assert_frame_equal(self.data.featureMetadata.iloc[featureList], features)
 
 
 	def test_get_features_raises(self):
@@ -1336,7 +1335,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 		data = copy.deepcopy(self.Data)
 		data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
-		pandas.util.testing.assert_series_equal(data.sampleMetadata['Sample ID'], samplingIDs)
+		pandas.testing.assert_series_equal(data.sampleMetadata['Sample ID'], samplingIDs)
 
 
 	def test_dataset_load_npc_subjectinfo_columns(self):
@@ -1568,7 +1567,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 											  100, 100, 100, 100, 100, 0, 0, 100, 100, 100, 100, 100, 100,
 											  100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
 
-		pandas.util.testing.assert_frame_equal(expectedSampleMetadata, data.sampleMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(expectedSampleMetadata, data.sampleMetadata, check_dtype=False)
 		numpy.testing.assert_array_equal(expectedSampleMask, data.sampleMask)
 
 
@@ -1657,7 +1656,7 @@ class test_dataset_addfeatureinfo(unittest.TestCase):
 			 'Retention Time': [3.17, 3.17, 3.17, 3.17],
 			 'm/z': [262.0378, 293.1812, 145.0686, 258.1033]})
 
-		pandas.util.testing.assert_frame_equal(expectedFeatureMetadata, data.featureMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(expectedFeatureMetadata, data.featureMetadata, check_dtype=False)
 
 
 class test_dataset_initialiseFromCSV(unittest.TestCase):
@@ -1681,9 +1680,9 @@ class test_dataset_initialiseFromCSV(unittest.TestCase):
 			numpy.testing.assert_array_equal(intensityData, dataset.intensityData)
 
 			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
-				pandas.util.testing.assert_almost_equal(sampleMetadata[column], dataset.sampleMetadata[column])
+				pandas.testing.assert_series_equal(sampleMetadata[column], dataset.sampleMetadata[column])
 			for column in featureMetadata.columns:
-				pandas.util.testing.assert_series_equal(featureMetadata[column], dataset.featureMetadata[column])
+				pandas.testing.assert_series_equal(featureMetadata[column], dataset.featureMetadata[column])
 
 			self.assertEqual(objectName, dataset.name)
 

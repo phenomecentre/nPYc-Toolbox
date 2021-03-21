@@ -741,7 +741,7 @@ class Dataset:
 			if condition:
 				# if (self.sampleMask.all() != numpy.array(False, dtype=bool)):
 				# self.sampleMask is bool
-				condition = (self.sampleMask.dtype == numpy.dtype(numpy.bool))
+				condition = (self.sampleMask.dtype == numpy.dtype(bool))
 				success = 'Check self.sampleMask is bool:\tOK'
 				failure = 'Check self.sampleMask is bool:\tFailure, \'self.sampleMask\' is ' + str(
 					self.sampleMask.dtype)
@@ -768,7 +768,7 @@ class Dataset:
 			if condition:
 				# if (self.featureMask.all() != numpy.array(False, dtype=bool)):
 				# self.featureMask is bool
-				condition = (self.featureMask.dtype == numpy.dtype(numpy.bool))
+				condition = (self.featureMask.dtype == numpy.dtype(bool))
 				success = 'Check self.featureMask is bool:\tOK'
 				failure = 'Check self.featureMask is bool:\tFailure, \'self.featureMask\' is ' + str(
 					self.featureMask.dtype)
@@ -1571,14 +1571,14 @@ class Dataset:
 		else:
 			return False
 
-
 	def _initialiseFromCSV(self, sampleMetadataPath):
 		"""
 		Initialise the object from the three csv outputs of :py:meth:`~nPYc.Dataset.exportDataset()`.
 
-		NOTE: This function assumes that the saved dataset was well formed with all the expected columns in the metadta tables.
+		NOTE: This function assumes that the saved dataset was well formed with all the expected columns in the metadata tables.
 
-		:param str sampleMetadataPath: Path to the *Name_sampleMetadata.csv* table, the file names of the featureMetadata and intensityData talbes are infered from the provided filename.
+		:param str sampleMetadataPath: Path to the *Name_sampleMetadata.csv* table, the file names of the featureMetadata
+		and intensityData tables are inferred from the provided filename.
 		"""
 		##
 		# Determine object name and paths
@@ -1613,7 +1613,6 @@ class Dataset:
 		if 'SampleType' in sampleMetadata.columns:
 			for stype in SampleType:
 				sampleMetadata.loc[sampleMetadata['SampleType'].values == str(stype), 'SampleType'] = stype
-
 
 		return (objectName, intensityData, featureMetadata, sampleMetadata)
 
