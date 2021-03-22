@@ -2549,7 +2549,7 @@ class TargetedDataset(Dataset):
                 failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=LookupError(failure))
                 if condition:
                     # featureMetadata['LLOQ'] is a float, try on first found
-                    condition = ((self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.float)) | (self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.int32)) | (self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.int64)))
+                    condition = ((self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype == numpy.dtype(float)) | (self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.int32)) | (self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.int64)))
                     success = 'Check self.featureMetadata[\'' + str(self.featureMetadata.columns[tmpLLOQMatch][0]) + '\'] is int or float:\tOK'
                     failure = 'Check self.featureMetadata[\'' + str(self.featureMetadata.columns[tmpLLOQMatch][0]) + '\'] is int or float:\tFailure, \'self.featureMetadata[\'' + str(self.featureMetadata.columns[tmpLLOQMatch][0]) + '\']\' is ' + str(self.featureMetadata.loc[:, tmpLLOQMatch].iloc[:, 0].dtype)
                     failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=TypeError(failure))
@@ -2562,7 +2562,7 @@ class TargetedDataset(Dataset):
                 failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=LookupError(failure))
                 if condition:
                     # featureMetadata['ULOQ'] is a float, try on first found
-                    condition = ((self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.float)) | (self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.int32)) | (self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.int64)))
+                    condition = ((self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype == numpy.dtype(float)) | (self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.int32)) | (self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype == numpy.dtype(numpy.int64)))
                     success = 'Check self.featureMetadata[\'' + str(self.featureMetadata.columns[tmpULOQMatch][0]) + '\'] is int or float:\tOK'
                     failure = 'Check self.featureMetadata[\'' + str(self.featureMetadata.columns[tmpULOQMatch][0]) + '\'] is int or float:\tFailure, \'self.featureMetadata[\'' + str(self.featureMetadata.columns[tmpULOQMatch][0]) + '\']\' is ' + str(self.featureMetadata.loc[:, tmpULOQMatch].iloc[:, 0].dtype)
                     failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=TypeError(failure))
