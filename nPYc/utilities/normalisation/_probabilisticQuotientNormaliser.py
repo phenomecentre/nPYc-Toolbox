@@ -3,6 +3,7 @@ from hashlib import sha1
 
 from ._normaliserABC import Normaliser
 
+
 class ProbabilisticQuotientNormaliser(Normaliser):
 	"""
 	Normalisation object which performs Probabilistic Quotient normalisation (Dieterle *et al* Analytical Chemistry, 78(13):4281 – 90, 2006)
@@ -18,32 +19,29 @@ class ProbabilisticQuotientNormaliser(Normaliser):
 	def __init__(self, reference=None, referenceDescription=None):
 
 		self._normalisationcoefficients = None
-		self.reference = reference
-		self._data_hash = None
+		self._reference = reference
+		self._norm_hash = None
 		self._referenceDescription = referenceDescription
-
 
 	def _reset(self):
 		"""
 		Resets :py:attr:`normalisation_coefficients` causing them to be calculated again next time :py:meth`normalise` is called.
 		"""
 		self._normalisationcoefficients = None
-		self._data_hash = None
+		self._norm_hash = None
 		self._reference = None
 		self._referenceDescription = None
-
 
 	@property
 	def normalisation_coefficients(self):
 		return self._normalisationcoefficients
-
 
 	@property
 	def reference(self):
 		"""
 		Allows the reference profile used to calculated fold-changes to be queried or set.
 
-		:return: The reference profile used to calculare normalisation coefficients
+		:return: The reference profile used to calculate normalisation coefficients
 		"""
 		return self._reference
 
@@ -56,8 +54,7 @@ class ProbabilisticQuotientNormaliser(Normaliser):
 		# The whole object has to be reset
 		self._reset()
 
-
-	def normalise(self, X, reference=None):
+	def normalise(self, X):
 		"""
 		Apply Probabilistic Quotient normalisation to a dataset.
 
@@ -71,22 +68,23 @@ class ProbabilisticQuotientNormaliser(Normaliser):
 		"""
 		try:
 
+			if X.ndim != 2:
+				raise ValueError('X is not a valid data intensity matrix')
+			# Assume reference = nanmedian if None is passed
+			if self._reference is None:
+				self._reference = numpy.nanmedian(X, axis=0)
+			else:
+				if self._reference.shape[0] != X.shape[1]:
+					raise ValueError('The dimensions of X and the reference provided do not match')
+
 			# Do not repeat coefficient calculation if unnecessary
-			hash = sha1(numpy.ascontiguousarray(X)).hexdigest()
-			if self._data_hash == hash:
+			currentNormHash = sha1(numpy.ascontiguousarray(self._reference)).hexdigest() + \
+							sha1(numpy.ascontiguousarray(X)).hexdigest()
+
+			if self._norm_hash == currentNormHash:
 				X = X / self._normalisationcoefficients[:, None]
 
 			else:
-
-				if X.ndim != 2:
-					raise ValueError('X is not a valid data intensity matrix')
-
-				if reference is None:
-					self._reference = numpy.nanmedian(X, axis=0)
-				else:
-					if reference.shape[0] != X.shape[1]:
-						raise ValueError('The dimensions of X and the reference provided do not match')
-
 				##
 				# Mask out features that are not finite or 0 
 				##
@@ -105,11 +103,9 @@ class ProbabilisticQuotientNormaliser(Normaliser):
 
 				X = X / self._normalisationcoefficients[:, None]
 
-				self._data_hash = hash
+				self._norm_hash = currentNormHash
 
-			##
-			# Prevent writing back to the normlised array
-			##
+			# Prevent writing back to the normalised array
 			X.setflags(write=False)
 
 			return X
@@ -117,14 +113,12 @@ class ProbabilisticQuotientNormaliser(Normaliser):
 		except ValueError as valerr:
 			raise valerr
 
-
 	def __eq__(self, other):
 
 		if isinstance(other, ProbabilisticQuotientNormaliser):
 			return self.reference == other.reference
 		else:
 			return False
-
 
 	def __str__(self):
 		if self._reference is None:

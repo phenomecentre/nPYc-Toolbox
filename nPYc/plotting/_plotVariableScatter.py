@@ -210,7 +210,7 @@ def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='',
 
     # Log scale axis
     if logX:
-        ax.set_xscale('symlog', nonposy='clip')
+        ax.set_xscale('symlog')
         for axis in [ax.xaxis, ax.yaxis]:
             axis.set_major_formatter(ScalarFormatter())
 

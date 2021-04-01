@@ -271,7 +271,7 @@ def _featureLOQViolinPlotHelper(ax, tData, featID, splitByBatch=True, plotBatchL
             currentYlims = ax.get_ylim()
             if currentYlims[0] < 0.:
                 ax.set_ylim(0, currentYlims[1])
-            ax.set_yscale('symlog', nonposy='clip')
+            ax.set_yscale('symlog')
         else:
             ax.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 

@@ -190,7 +190,7 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 			label.set_rotation(30) 
 			label.set_horizontalalignment('right')
 		if logy:
-			ax.set_yscale('symlog', nonposy='clip')
+			ax.set_yscale('symlog')
 		else:
 			ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 		if addViolin:
