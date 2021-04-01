@@ -218,7 +218,7 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	except:
 		pass
 	if logy:
-		ax.set_yscale('symlog', nonposy='clip')
+		ax.set_yscale('symlog', nonpositive='clip')
 	else:
 		ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 

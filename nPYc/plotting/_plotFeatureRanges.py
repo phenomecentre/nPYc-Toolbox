@@ -142,7 +142,7 @@ def plotFeatureRanges(dataset, compounds, logx=False, histBins=20, savePath=None
 			formatter = matplotlib.ticker.FormatStrFormatter('%.2g')
 			ax[i].xaxis.set_major_formatter(formatter)
 
-			ax[i].set_xscale('symlog', nonposy='clip')
+			ax[i].set_xscale('symlog', nonpositive='clip')
 
 			majorTickLocations = [globalMinV]
 			position = 10
