@@ -42,9 +42,9 @@ def plotIonMap(msData, useRetention=True, title=None, savePath=None, xlim=None, 
 		ax.set_ylim([0, msData.featureMetadata['m/z'].max()+msData.featureMetadata['m/z'].min()])
 
 	if logy:
-		ax.set_yscale('symlog', nonpositive='clip')
+		ax.set_yscale('symlog')
 	if logx:
-		ax.set_xscale('symlog', nonpositive='clip')
+		ax.set_xscale('symlog')
 	if title:
 		fig.suptitle(title)
 

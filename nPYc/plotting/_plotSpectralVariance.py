@@ -51,7 +51,7 @@ def plotSpectralVariance(dataset, classes=None, quantiles=(25, 75), average='med
 	if title is not None:
 		ax.set_title(title)
 	if logy:
-		ax.set_yscale('symlog', nonpositive='clip')
+		ax.set_yscale('symlog')
 	else:
 		ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 	##
