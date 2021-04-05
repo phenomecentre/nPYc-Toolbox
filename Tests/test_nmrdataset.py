@@ -8,13 +8,12 @@ import warnings
 import tempfile
 from isatools import isatab
 
-
 sys.path.append("..")
 import nPYc
 from nPYc.enumerations import AssayRole, SampleType
 from nPYc.utilities._nmr import qcCheckBaseline
-
 from generateTestDataset import generateTestDataset
+
 
 class test_nmrdataset_synthetic(unittest.TestCase):
 
@@ -26,7 +25,6 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 		self.dataset = generateTestDataset(self.noSamp, self.noFeat, dtype='NMRDataset',
 																	 variableType=nPYc.enumerations.VariableType.Spectral,
 																	 sop='GenericNMRurine')
-
 
 	def test_getsamplemetadatafromfilename(self):
 		"""
@@ -57,14 +55,12 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 		pandas.util.testing.assert_series_equal(dataset.sampleMetadata['Study'], study)
 
-
 	def test_nmrdataset_raises(self):
 
 		self.assertRaises(NotImplementedError, nPYc.NMRDataset, '', fileType='Unknown import type')
 		self.assertRaises(TypeError, nPYc.NMRDataset, '', fileType='Bruker', bounds='not a list')
 		self.assertRaises(TypeError, nPYc.NMRDataset, '', fileType='Bruker', calibrateTo='not a number')
 		self.assertRaises(TypeError, nPYc.NMRDataset, '', fileType='Bruker', variableSize=0.1)
-
 
 	def test_load_npc_lims_masking_reruns(self):
 
@@ -287,9 +283,8 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['LineWidthFail'].values)
 
-			# Check other tests have not happend
+			# Check other tests have not happened
 			# Commented out assuming the test nmr dataset obtained with generateTestDataset always has these columns
-
 			#for skipedCheck in ['BaselineFail', 'WaterPeakFail']:
 			#		self.assertFalse(skipedCheck in self.dataset.sampleMetadata.columns)
 
@@ -307,7 +302,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 			numpy.testing.assert_array_equal(expected, self.dataset.sampleMetadata['BaselineFail'].values)
 
-			# Check other tests have not happend
+			# Check other tests have not happened
 			# Commented out assuming the test nmr dataset obtained with generateTestDataset always has these columns
 			#self.assertFalse('WaterPeakFail' in self.dataset.sampleMetadata.columns)
 
@@ -357,7 +352,6 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 		numpy.testing.assert_array_equal(baseline_fail_expected, baseline_fail_calculated)
 
 
-#unit test for Bruker data
 class test_nmrdataset_bruker(unittest.TestCase):
 
 	def setUp(self):
@@ -497,7 +491,6 @@ class test_nmrdataset_ISATAB(unittest.TestCase):
 			with open(investigatio_file) as fp:
 				report = isatab.validate(fp)
 				numerrors = len(report['errors'])
-
 
 			#self.assertTrue(os.path.exists(a))
 			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))

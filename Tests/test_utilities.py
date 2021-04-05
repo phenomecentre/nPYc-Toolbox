@@ -7,7 +7,6 @@ import pandas
 import numpy
 import sys
 import unittest
-from pandas.util.testing import assert_frame_equal
 import os
 import tempfile
 import inspect
@@ -352,7 +351,7 @@ class test_utilities_sample_ledger(unittest.TestCase):
 		expected = pandas.read_csv(os.path.join('..','..','npc-standard-project','Project_Description','UnitTest1_metadata_Unified.csv'), index_col=0)
 		expected['Date of Birth'] = expected['Date of Birth'].apply(pandas.to_datetime)
 
-		pandas.util.testing.assert_frame_equal(actual, expected)
+		pandas.testing.assert_frame_equal(actual, expected)
 
 
 class test_utilities_generic(unittest.TestCase):
@@ -553,7 +552,7 @@ class  test_utilities_addReferenceRanges(unittest.TestCase):
 										'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL',
 										'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL']
 
-		pandas.util.testing.assert_frame_equal(expectedFeatureMetadata, featureMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(expectedFeatureMetadata, featureMetadata, check_dtype=False)
 
 
 class test_utilities_read_bruker_xml(unittest.TestCase):
