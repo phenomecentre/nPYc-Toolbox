@@ -17,7 +17,7 @@ from .._toolboxPath import toolboxPath
 from ._dataset import Dataset
 from ..utilities import rsd
 from ..utilities._internal import _vcorrcoef
-from ..utilities._getMetadataFromWatersRaw import getSampleMetadataFromWatersRawFiles
+from ..utilities.extractParams import extractParams
 from ..enumerations import VariableType, DatasetLevel, AssayRole, SampleType
 from ..utilities import removeTrailingColumnNumbering
 from ..utilities._filters import blankFilter
@@ -124,7 +124,6 @@ class MSDataset(Dataset):
 
 		self.Attributes['Log'].append([datetime.now(), '%s instance inited, with %d samples, %d features, from \%s\'' % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
 
-
 	# When making a deepcopy, all artifactual linkage are reset
 	def __deepcopy__(self, memo):
 		cls = self.__class__
@@ -141,8 +140,6 @@ class MSDataset(Dataset):
 
 		return(result)
 
-
-	# Lazily calculate expensive operations
 	@property
 	def correlationToDilution(self):
 		"""
@@ -179,11 +176,9 @@ class MSDataset(Dataset):
 
 		return self._correlationToDilution
 
-
 	@correlationToDilution.deleter
 	def correlationToDilution(self):
 		self._correlationToDilution = numpy.array(None)
-
 
 	@property
 	def artifactualLinkageMatrix(self):
@@ -193,12 +188,10 @@ class MSDataset(Dataset):
 
 		return self._artifactualLinkageMatrix
 
-
 	@artifactualLinkageMatrix.deleter
 	def artifactualLinkageMatrix(self):
 		self._artifactualLinkageMatrix = pandas.DataFrame(None)
 		self._tempArtifactualLinkageMatrix = pandas.DataFrame(None)
-
 
 	@property
 	def rsdSP(self):
@@ -219,7 +212,6 @@ class MSDataset(Dataset):
 
 		return rsd(self._intensityData[mask & self.sampleMask])
 
-
 	@property
 	def rsdSS(self):
 		"""
@@ -238,7 +230,6 @@ class MSDataset(Dataset):
 								 self.sampleMetadata['SampleType'].values == SampleType.StudySample)
 
 		return rsd(self._intensityData[mask & self.sampleMask])
-    
 
 	def applyMasks(self):
 		"""
@@ -263,11 +254,10 @@ class MSDataset(Dataset):
 		# Reset correlations
 		del self.correlationToDilution
 
-
 	def updateMasks(self, filterSamples=True, filterFeatures=True, 
 					sampleTypes=list(SampleType), assayRoles=list(AssayRole),
-					featureFilters={'rsdFilter':True, 'correlationToDilutionFilter':True, 'varianceRatioFilter':True, 'artifactualFilter': False,
-									'blankFilter':False}, **kwargs):
+					featureFilters={'rsdFilter': True, 'correlationToDilutionFilter': True, 'varianceRatioFilter': True,
+									'artifactualFilter': False, 'blankFilter': False}, **kwargs):
 		"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to QC parameters.
 
@@ -468,7 +458,6 @@ class MSDataset(Dataset):
 																																							varianceRatio,
 																																							', '.join("{!s}={!r}".format(key,val) for (key,val) in kwargs.items()))])
 
-
 	def saveFeatureMask(self):
 		"""
 		Updates featureMask and saves as 'Passing Selection' in self.featureMetadata
@@ -482,8 +471,7 @@ class MSDataset(Dataset):
 
 		# Reset featureMask
 		self.initialiseMasks()
-        
-        
+
 	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`~Dataset.sampleMetadata` table.
@@ -513,7 +501,6 @@ class MSDataset(Dataset):
 			self._fillBatches()
 		else:
 			super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, filenameSpec=filenameSpec, **kwargs)
-
 
 	def _loadQIDataset(self, path):
 
@@ -763,7 +750,6 @@ class MSDataset(Dataset):
 
 		self.Attributes['Log'].append([datetime.now(), 'Biocrates dataset loaded from %s' % (path)])
 
-
 	def _loadMetaboscapeDataset(self, path, noFeatureParams=None, sheetName=None):
 
 		prefix, fileType = os.path.splitext(path)
@@ -858,8 +844,7 @@ class MSDataset(Dataset):
 
 		self.Attributes['Log'].append([datetime.now(), 'Metaboscape dataset loaded from %s' % (path)])
 
-
-	def _getSampleMetadataFromRawData(self, rawDataPath):
+	def _getSampleMetadataFromRawData(self, rawDataPath, filetype="Waters .raw"):
 		"""
 		Pull metadata out of raw experiment files.
 		"""
@@ -868,7 +853,7 @@ class MSDataset(Dataset):
 			raise ValueError('No directory found at %s' % (rawDataPath))
 
 		# Infer data format here - for now assume Waters RAW.
-		instrumentParams = getSampleMetadataFromWatersRawFiles(rawDataPath)
+		instrumentParams = extractParams(rawDataPath, filetype=filetype)
 
 		# Store the location
 		# Appending is supported to allow reading from multiple folders and directories
@@ -879,7 +864,7 @@ class MSDataset(Dataset):
 
 		# Merge back into sampleMetadata
 		# Check if we already have these columns in sampleMetadata, if not, merge, if so, use combine_first to patch
-		if not 'Acquired Time' in self.sampleMetadata.columns:
+		if 'Acquired Time' not in self.sampleMetadata.columns:
 			self.sampleMetadata = pandas.merge(self.sampleMetadata, instrumentParams, left_on='Sample File Name', right_on='Sample File Name', how='left', sort=False)
 			self.Attributes['Log'].append([datetime.now(), 'Acquisition metadata added from raw data at: %s' % (rawDataPath)])
 
@@ -894,7 +879,6 @@ class MSDataset(Dataset):
 			self.Attributes['Log'].append([datetime.now(), 'Additional acquisition metadata added from raw data at: %s' % (rawDataPath)])
 
 		# Generate the integer run order.
-		# Explicity convert datetime format
 		# Explicity convert datetime format
 		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time']
 		self.sampleMetadata['Order'] = self.sampleMetadata.sort_values(by='Acquired Time').index
@@ -911,7 +895,7 @@ class MSDataset(Dataset):
 
 		# Output sample names to screen, for user checking
 		# Exclude samples from subsequent processing
-		if(headerNull.shape[0] != 0):
+		if (headerNull.shape[0] != 0):
 			print('\n_HEADER.txt file (raw data folder) missing for:')
 			for i in headerNull:
 				print(i)
@@ -926,7 +910,6 @@ class MSDataset(Dataset):
 		if((headerNull.shape[0] != 0) | (externNull.shape[0] != 0)):
 			print('\n****** Please check and correct before continuing - samples without acquisition time cannot'
 			 ' be displayed correctly in the summary reports ******\n')
-
 
 	def _getSampleMetadataFromFilename(self, filenameSpec):
 		"""
@@ -950,7 +933,7 @@ class MSDataset(Dataset):
 		fileNameParts.drop('exclusion2', axis=1, inplace=True)
 
 		# Pass masks into enum fields
-		fileNameParts.loc[:,'AssayRole'] = AssayRole.Assay
+		fileNameParts.loc[:, 'AssayRole'] = AssayRole.Assay
 		fileNameParts.loc[fileNameParts['reference'] == 'SR', 'AssayRole'] = AssayRole.PrecisionReference
 		fileNameParts.loc[fileNameParts['baseName'].str.match('.+[B]\d+?[SE]\d+?', na=False).astype(bool), 'AssayRole'] = AssayRole.PrecisionReference
 		fileNameParts.loc[fileNameParts['reference'] == 'LTR', 'AssayRole'] = AssayRole.PrecisionReference
@@ -1024,7 +1007,6 @@ class MSDataset(Dataset):
 		self.sampleMetadata['Metadata Available'] = True
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
-
 	def _fillBatches(self):
 		"""
 		Use sample names and acquisition times to infer batch info
@@ -1073,7 +1055,6 @@ class MSDataset(Dataset):
 
 					self.sampleMetadata.loc[index, 'Dilution Series'] = dilutionSeries
 
-
 	def amendBatches(self, sampleRunOrder):
 		"""
 		Creates a new batch starting at the sample index in *sampleRunOrder*, and amends subsequent batch numbers in :py:attr:`~Dataset.sampleMetadata`\ ['Correction Batch']
@@ -1085,7 +1066,6 @@ class MSDataset(Dataset):
 		newBatch[self.sampleMetadata['Run Order'] >= sampleRunOrder] = newBatch[self.sampleMetadata['Run Order'] >= sampleRunOrder] + 1
 
 		self.sampleMetadata.loc[:, 'Correction Batch'] = newBatch
-
 
 	def __correlateToDilution(self, method='pearson', sampleType=SampleType.StudyPool, assayRole=AssayRole.LinearityReference, exclusions=True):
 		"""
@@ -1149,7 +1129,6 @@ class MSDataset(Dataset):
 		self.Attributes['Log'].append([datetime.now(), 'Feature correlation to dilution calculated with : method(%s); exclusions(%s)' % (method, exclusions)])
 
 		return returnValues
-
 
 	def __generateArtifactualLinkageMatrix(self,corrOnly=False):
 		""" Identify potentially artifactual features, generate the linkage between similar features
@@ -1234,11 +1213,9 @@ class MSDataset(Dataset):
 
 		return(artifactualLinkageMatrix)
 
-
 	def updateArtifactualLinkageMatrix(self):
 		self._artifactualLinkageMatrix = self.__generateArtifactualLinkageMatrix()
 		return
-
 
 	def artifactualFilter(self,featMask=None):
 		"""
@@ -1275,10 +1252,8 @@ class MSDataset(Dataset):
 
 		return(newFeatureMask)
 
-
 	def extractRTslice(msrun, target_rt):
 		pass
-
 
 	def getFuctionNo(self, spectrum):
 		pass
@@ -1341,7 +1316,6 @@ class MSDataset(Dataset):
 			raise ValueError('Unknown VariableType.')
 
 		return notFound
-
 
 	def initialiseMasks(self):
 		"""
@@ -1555,7 +1529,6 @@ class MSDataset(Dataset):
 			ie.appendStudytoISA(study, destinationPath)
 		else:
 			isatab.dump(isa_obj=investigation, output_path=destinationPath)
-
 
 	def validateObject(self, verbose=True, raiseError=False, raiseWarning=True):
 		"""

@@ -357,13 +357,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 		numpy.testing.assert_array_equal(baseline_fail_expected, baseline_fail_calculated)
 
 
-##
 #unit test for Bruker data
-##
-from nPYc.utilities._nmr import interpolateSpectrum
-from nPYc.reports._generateReportNMR import _generateReportNMR
-from math import ceil
-
 class test_nmrdataset_bruker(unittest.TestCase):
 
 	def setUp(self):
@@ -371,8 +365,7 @@ class test_nmrdataset_bruker(unittest.TestCase):
 		setup the pulseprogram and path for purpose of testing NMR bruker data functions
 		"""
 		self.pulseProgram = 'noesygppr1d'
-		self.path=os.path.join('..','..','npc-standard-project','unitTest_Data','nmr')#where path is location of test files
-
+		self.path = os.path.join('..', '..', 'npc-standard-project', 'unitTest_Data', 'nmr')
 
 	def test_addSampleInfo_npclims(self):
 

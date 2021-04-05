@@ -255,7 +255,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     else:
         item['batchesCorrect'] =  'Run-order and batch correction not required' 
 
-    if ('Acquired Time' in dataset.sampleMetadata.columns):
+    if 'Acquired Time' in dataset.sampleMetadata.columns:
         start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
         end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
         item['start'] = start.strftime('%d/%m/%y')
