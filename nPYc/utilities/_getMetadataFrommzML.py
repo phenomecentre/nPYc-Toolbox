@@ -81,6 +81,7 @@ def extractmzMLParamsRegex(mzMLPath, queryItems=['startTimeStamp']):
     results['File Path'] = mzMLPath
     results['Sample File Name'] = os.path.splitext(filename)[0]
     preparedRegex = [re.compile('(?<=' + x + '=")(.*?)(?=")') for x in queryItems]
+    preparedRegex_value = [re.compile('(?<=name=\"' + x + '\" value=\")(.*?)(?=")') for x in queryItems]
     try:
         with open(mzMLPath, 'r') as xml_file:
             for line in xml_file:
@@ -88,6 +89,12 @@ def extractmzMLParamsRegex(mzMLPath, queryItems=['startTimeStamp']):
                     if currRegex.search(line):
                         results[queryItems[idx]] = currRegex.search(line).group(0)
                         del preparedRegex[idx]
+                        del preparedRegex_value[idx]
+                        del queryItems[idx]
+                    elif preparedRegex_value[idx].search(line):
+                        results[queryItems[idx]] = preparedRegex_value[idx].search(line).group(0)
+                        del preparedRegex[idx]
+                        del preparedRegex_value[idx]
                         del queryItems[idx]
                 if len(preparedRegex) == 0:
                     break

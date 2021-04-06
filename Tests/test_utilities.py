@@ -118,6 +118,7 @@ class test_utilities_internal(unittest.TestCase):
 				testPath = os.path.join(tmpdirname, expectedFile)
 				self.assertTrue(os.path.exists(testPath))
 
+
 class test_utilities_ms(unittest.TestCase):
 
 	def test_rsd(self):
@@ -170,27 +171,37 @@ class test_utilities_ms(unittest.TestCase):
 													'Test1_HPOS_ToF01_B3SRD47','Test1_HPOS_ToF01_B3SRD48','Test1_HPOS_ToF01_B3SRD49',
 													'Test1_HPOS_ToF01_B3SRD50','Test1_HPOS_ToF01_B3SRD51','Test1_HPOS_ToF01_B3SRD92']
 
-		msData.intensityData = numpy.zeros((39,2))
+		msData.intensityData = numpy.zeros((39, 2))
 		msData.initialiseMasks()
 		msData.sampleMetadata['Run Order'] = msData.sampleMetadata.index + 1
+		msData.sampleMetadata['Dilution Series'] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 3, 3, 3, 3, numpy.nan, numpy.nan,
+													numpy.nan, 4, 4, 4, 4, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7]
 		msData.addSampleInfo(descriptionFormat='Filenames')
-		msData.addSampleInfo(descriptionFormat='Batches')
 		msData.corrExclusions = msData.sampleMask
 
 		srdMask = nPYc.utilities.ms.generateLRmask(msData)
 
-		cannonicalMask = {'Batch 1.0, series 1.0': numpy.array([True, True, True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, False, 
-																False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False],
-															   dtype=bool),
-						  'Batch 2.0, series 1.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, True, True, True, True, True, True, False, False,
-						  										False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False],
-															   dtype=bool),
-						  'Batch 2.0, series 2.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
-						  										False, True, True, True, True, True, True, False, False, False, False, False, False, False, False, False, False, False, False],
-															   dtype=bool),
-						  'Batch 3.0, series 2.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
-																False, False, False, False, False, False, False, True, True, True, True, True, True, True, True, True, True, True, True],
-															   dtype=bool)}
+		cannonicalMask = {'Batch 1.0, series 1.0': numpy.array([True,  True,  True,  True,  True,  True,  True,  True,  True, True,  True, False, False, False, False, False, False, False,
+        													False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        													False, False, False], dtype=bool),
+						  'Batch 1.0, series 2.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False,  True, False, False, False, False, False, False,
+        														False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False], dtype=bool),
+						  'Batch 2.0, series 3.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False,  True,  True,  True,  True,  True,  True,
+        														False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False], dtype=bool),
+						  'Batch 2.0, series 4.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False,  True,  True,  True,  True,  True, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False], dtype=bool),
+						  'Batch 2.0, series 5.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False, False, False, False, False, False,  True, False, False, False, False, False, False, False, False, False,
+        														False, False, False], dtype=bool),
+						  'Batch 3.0, series 6.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False, False, False, False, False, False, False, True,  True,  True,  True,  True,  True,  True,  True,  True,
+         														True,  True, False], dtype=bool),
+						  'Batch 3.0, series 7.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+														  		False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+														  		False, False, True], dtype=bool)}
 
 		numpy.testing.assert_equal(srdMask, cannonicalMask)
 
