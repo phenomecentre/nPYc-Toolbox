@@ -2,15 +2,10 @@
 Test parameter extraction from raw data files
 """
 
-import scipy
-import pandas
-import numpy
 import sys
 import unittest
 import os
 import re
-import tempfile
-import inspect
 from nPYc.utilities.extractParams import extractWatersRAWParams, extractBrukerparams, \
 	extractmzMLParamsRegex, buildFileList
 sys.path.append("..")
@@ -319,15 +314,15 @@ class test_utilities_extractParams(unittest.TestCase):
 		pathHeader = os.path.join(self.pathHeader, 'ms', 'parameters_data')
 		filePath = os.path.join(pathHeader, 'UnitTest_RPOS_ToF10_U1W72_SR.mzML')
 
-		queryItems = ['startTimeStamp']
-		expected = {'File Path': os.path.join(pathHeader, 'UnitTest_RPOS_ToF10_U1W72_SR.mzML'),
+		queryItems = ['startTimeStamp', 'total ion current']
+		expected = {'Warnings': '', 'File Path': os.path.join(pathHeader, 'UnitTest_RPOS_ToF10_U1W72_SR.mzML'),
 					'Sample File Name': 'UnitTest_RPOS_ToF10_U1W72_SR',
 					'startTimeStamp': '2018-01-19T08:35:33Z',
-					'Warnings': ''}
+					'total ion current': '6.58408e05'}
 
-		obtained = extractmzMLParamsRegex(filePath, queryItems)
-
-		self.assertDictEqual(obtained, expected)
+		with self.subTest(msg='Regex mzML parser'):
+			obtained = extractmzMLParamsRegex(filePath, queryItems=['startTimeStamp', 'total ion current'])
+			self.assertDictEqual(obtained, expected)
 
 	def test_extractParams_extractmzMLParams_warns(self):
 
@@ -340,13 +335,3 @@ class test_utilities_extractParams(unittest.TestCase):
 				obtained = extractmzMLParamsRegex(filePath, queryItems)
 
 			self.assertEqual(obtained['Warnings'], 'Parameter Unknown param not found.')
-
-		from nPYc.utilities._getMetadataFrommzML import extractmzMLParams
-		with self.subTest(msg='XML mzML parser - missing parameter'):
-			queryItems = ['Unknown']
-
-			with self.assertWarnsRegex(UserWarning, 'Parameter Unknown param not found in file: '):
-				obtained = extractmzMLParams(filePath, queryItems)
-
-			self.assertEqual(obtained['Warnings'], 'Parameter Unknown param not found.')
-
