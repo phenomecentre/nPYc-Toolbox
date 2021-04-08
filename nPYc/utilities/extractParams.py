@@ -85,8 +85,11 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
             results.append(extractedWatersRaw)
         elif filetype == '.mzML':
             extractedmzML = extractmzMLParamsRegex(filename, queryItems)
-            extractedmzML['Acquired Time'] = datetime.strptime(str(extractedmzML['startTimeStamp']), '%d-%b-%Y %H:%M:%S')
-            results.append(extractmzMLParamsRegex(filename, queryItems))
+            try:
+                extractedmzML['Acquired Time'] = pandas.to_datetime(extractedmzML['startTimeStamp'], infer_datetime_format=True)
+            except KeyError:
+                extractedmzML['Acquired Time'] = numpy.nan
+            results.append(extractedmzML)
 
     resultsDF = pandas.DataFrame(results)
 
@@ -104,6 +107,9 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
 
         resultsDF = resultsDF.apply(lambda x: pandas.to_numeric(x, errors='ignore'))
         resultsDF['Acquired Time'] = pandas.to_datetime(resultsDF['Acquired Time'])
+    if filetype == '.mzML':
+        resultsDF.drop(columns=['startTimeStamp'], inplace=True)
+
     return resultsDF
 
 

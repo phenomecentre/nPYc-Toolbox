@@ -1114,7 +1114,7 @@ class Dataset:
 			# Build new masks
 			self.initialiseMasks()
 
-	def addSampleInfo(self, descriptionFormat=None, filePath=None, **kwargs):
+	def addSampleInfo(self, descriptionFormat=None, filePath=None, filetype=None, **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`sampleMetadata` table.
 
@@ -1142,7 +1142,7 @@ class Dataset:
 		elif descriptionFormat == 'NPC Subject Info':
 			self._matchDatasetToSubjectInfo(filePath)
 		elif descriptionFormat == 'Raw Data':
-			self._getSampleMetadataFromRawData(filePath)
+			self._getSampleMetadataFromRawData(filePath, filetype)
 		elif descriptionFormat == 'ISATAB':
 			self._matchDatasetToISATAB(filePath, **kwargs)
 		elif descriptionFormat == 'Filenames':
@@ -1245,7 +1245,6 @@ class Dataset:
 		# which are used in some plotting functions
 		if 'Acquired Time' in csvData:
 			csv_datetime = pandas.to_datetime(csvData['Acquired Time'], errors='ignore')
-			# msData.sampleMetadata['Acquired Time'] = z
 			csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
 			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype('O')
 

@@ -484,7 +484,7 @@ class MSDataset(Dataset):
 		# Reset featureMask
 		self.initialiseMasks()
 
-	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, **kwargs):
+	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, filetype='Waters .raw', **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`~Dataset.sampleMetadata` table.
 
@@ -496,7 +496,6 @@ class MSDataset(Dataset):
 		* **'ISATAB'** ISATAB study designs
 		* **'Filenames'** Parses sample information out of the filenames, based on the named capture groups in the regex passed in *filenamespec*
 		* **'Basic CSV'** Joins the :py:attr:`sampleMetadata` table with the data in the ``csv`` file at *filePath=*, matching on the 'Sample File Name' column in both.
-		* **'Batches'** Interpolate batch numbers for samples between those with defined batch numbers based on sample acquisitions times
 
 		:param str descriptionFormat: Format of metadata to be added
 		:param str filePath: Path to the additional data to be added
@@ -510,8 +509,10 @@ class MSDataset(Dataset):
 				filenameSpec = self.Attributes['filenameSpec']
 			self._getSampleMetadataFromFilename(filenameSpec)
 		else:
-			super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, filenameSpec=filenameSpec,
-								  **kwargs)
+			super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath,
+								  filetype=filetype, filenameSpec=filenameSpec, **kwargs)
+		if descriptionFormat in ['Filenames', 'Basic CSV', 'Raw Data']:
+			self._inferBatches()
 
 	def _loadQIDataset(self, path):
 
@@ -913,29 +914,10 @@ class MSDataset(Dataset):
 			self.sampleMetadata['Exclusion Details'] = None
 
 		# Flag samples with missing instrument parameters
-		headerNull = self.sampleMetadata.loc[
-			self.sampleMetadata['Measurement Date'].isnull(), 'Sample File Name'].values
-		externNull = self.sampleMetadata.loc[self.sampleMetadata['Backing'].isnull(), 'Sample File Name'].values
-
-		# Output sample names to screen, for user checking
-		# Exclude samples from subsequent processing
-		if (headerNull.shape[0] != 0):
-			print('\n_HEADER.txt file (raw data folder) missing for:')
-			for i in headerNull:
-				print(i)
-		# self.excludeSamples(headerNull, message='unable to load _HEADER.txt file')
-
-		if (externNull.shape[0] != 0):
-			print('\n_extern.inf file (raw data folder) missing for:')
-			for i in externNull:
-				print(i)
-		# self.excludeSamples(externNull, message='unable to load _extern.inf file')
-
-		if ((headerNull.shape[0] != 0) | (externNull.shape[0] != 0)):
-			print('\n****** Please check and correct before continuing - samples without acquisition time cannot'
-				  ' be displayed correctly in the summary reports ******\n')
-		# Sort batches
-		self._inferBatches()
+		missingSampleInfo = ~self.sampleMetadata['Sample File Name'].isin(instrumentParams['Sample File Name'])
+		if sum(missingSampleInfo) > 0:
+			print("Missing information for {0} samples\n".format(sum(missingSampleInfo)))
+			print(*self.sampleMetadata.loc[missingSampleInfo, 'Sample File Name'].values, sep='\n')
 
 	def _getSampleMetadataFromFilename(self, filenameSpec):
 		"""
@@ -1060,9 +1042,9 @@ class MSDataset(Dataset):
 		sampleMetadata = self.sampleMetadata.copy()
 		# Loop over samples in run order
 		if 'Run Order' not in sampleMetadata.columns or 'Acquired Time' not in sampleMetadata.columns:
-			raise ValueError('Unable to infer batches without run order and acquired time info, skipping.')
+			warnings.warn('Unable to infer batches without run order and acquired time info, skipping.')
 		elif sampleMetadata['Run Order'].isnull().all() or sampleMetadata['Acquired Time'].isnull().all():
-			raise ValueError('Unable to infer batches without run order and acquired time info, skipping.')
+			warnings.warn('Unable to infer batches without run order and acquired time info, skipping.')
 		else:
 			sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
 			sampleMetadata['Correction Batch'] = 1

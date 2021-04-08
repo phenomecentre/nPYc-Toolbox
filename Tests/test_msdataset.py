@@ -1345,13 +1345,11 @@ class test_msdataset_batch_inference(unittest.TestCase):
 	def test_inferbatches_warns(self):
 		msData = copy.deepcopy(self.msData)
 		msData.sampleMetadata.drop('Run Order', axis=1, inplace=True)
-		self.assertRaisesRegex(ValueError, 'Unable to infer batches without run order and acquired time info, skipping.',
+		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without run order and acquired time info, skipping.',
 							msData._inferBatches)
 
 	def test_amendbatches(self):
-		"""
 
-		"""
 		self.msData._inferBatches()
 		self.msData.amendBatches(20)
 
@@ -2270,7 +2268,8 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 										 '02:55:03', '03:10:49', '03:26:43', '03:42:35', '12:11:04', '12:26:51', '12:42:35', '12:58:13', '13:14:01', '13:45:26',
 										 '14:01:05', '14:16:51', '11:53:27', '13:29:48', '13:46:48']
 
-		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
+		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'),
+								  filetype='Waters .raw')
 
 		with self.subTest(msg='Default Path'):
 			for series in testSeries:
@@ -2280,7 +2279,6 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 			self.msData.sampleMetadata.drop(columns='Exclusion Details', inplace=True)
 
 			self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
-
 
 	def test_msdataset__getSampleMetadataFromRawData_invalidpath(self):
 

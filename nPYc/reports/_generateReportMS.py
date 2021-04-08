@@ -560,7 +560,6 @@ def _featureReport(dataset, destinationPath=None):
 
     _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
 
-
     if ('Acquired Time' in dataset.sampleMetadata.columns) and ('Run Order' in dataset.sampleMetadata.columns):
 
         # Figure 2: Sample intensity TIC and distribution by sample type
@@ -589,19 +588,21 @@ def _featureReport(dataset, destinationPath=None):
         else:
             print('Figure 3: Acquisition structure (coloured by detector voltage).')
 
-        # TIC all samples
-        plotTIC(dataset,
-                addViolin=False,
-                addBatchShading=True,
-                addLineAtGaps=True,
-                colourByDetectorVoltage=True,
-                savePath=saveAs,
-                title='',
-                figureFormat=dataset.Attributes['figureFormat'],
-                dpi=dataset.Attributes['dpi'],
-                figureSize=dataset.Attributes['figureSize'])
+        if 'Detector' in dataset.sampleMetadata.columns:
+                # TIC all samples
+                plotTIC(dataset,
+                        addViolin=False,
+                        addBatchShading=True,
+                        addLineAtGaps=True,
+                        colourByDetectorVoltage=True,
+                        savePath=saveAs,
+                        title='',
+                        figureFormat=dataset.Attributes['figureFormat'],
+                        dpi=dataset.Attributes['dpi'],
+                        figureSize=dataset.Attributes['figureSize'])
+        else:
+            print('Detector voltage information not available')
     else:
-
         if not destinationPath:
             print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
             print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
@@ -1642,14 +1643,14 @@ def _localLRPlots(dataset, LRmask, corToLR, saveName, figures=None, savePath=Non
     else:
         print(saveName + ' LR Sample TIC (coloured by change in detector voltage)')
         saveAs = None;
-
-    plotLRTIC(dataset,
-              sampleMask=LRmask,
-              colourByDetectorVoltage=True,
-              savePath=saveAs,
-              figureFormat=dataset.Attributes['figureFormat'],
-              dpi=dataset.Attributes['dpi'],
-              figureSize=dataset.Attributes['figureSize'])
+    if 'Detector' in dataset.sampleMetadata.columns:
+        plotLRTIC(dataset,
+                  sampleMask=LRmask,
+                  colourByDetectorVoltage=True,
+                  savePath=saveAs,
+                  figureFormat=dataset.Attributes['figureFormat'],
+                  dpi=dataset.Attributes['dpi'],
+                  figureSize=dataset.Attributes['figureSize'])
 
     # Plot histogram of correlation to dilution
     if savePath:

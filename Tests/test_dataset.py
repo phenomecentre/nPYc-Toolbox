@@ -750,7 +750,6 @@ class test_dataset_synthetic(unittest.TestCase):
 			self.assertFalse(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False))
 			self.assertRaises(ValueError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
-
 	def test_exportDataset(self):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
@@ -776,7 +775,6 @@ class test_dataset_synthetic(unittest.TestCase):
 		pandas.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
 		pandas.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
 
-
 	def test_exportcsv(self):
 		"""
 		Check that csvs as written match the data tables in memory.
@@ -801,7 +799,6 @@ class test_dataset_synthetic(unittest.TestCase):
 		numpy.testing.assert_array_almost_equal_nulp(self.data.intensityData, intensityData)
 		pandas.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
 		pandas.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
-
 
 	def test_exportunifiedcsv(self):
 		"""
@@ -831,7 +828,6 @@ class test_dataset_synthetic(unittest.TestCase):
 		numpy.testing.assert_array_almost_equal(self.data.intensityData, intensityData)
 		pandas.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
 		pandas.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
-
 
 	def test_exportdataset_withexclusions(self):
 		"""
@@ -874,7 +870,6 @@ class test_dataset_synthetic(unittest.TestCase):
 		numpy.testing.assert_equal(self.data.intensityData, intensityData)
 		pandas.testing.assert_frame_equal(self.data.featureMetadata, featureMetadata, check_dtype=False)
 		pandas.testing.assert_frame_equal(self.data.sampleMetadata, sampleMetadata, check_dtype=False)
-
 
 	def test_exportdataset_filterMetadata(self):
 		"""
@@ -931,7 +926,6 @@ class test_dataset_synthetic(unittest.TestCase):
 		for column in randomSampCols:
 			self.assertFalse(column in sampleMetadata.columns)
 
-
 	def test_exportDataset_raises(self):
 
 		self.assertRaises(TypeError, self.data.exportDataset, destinationPath=1)
@@ -941,7 +935,6 @@ class test_dataset_synthetic(unittest.TestCase):
 		self.assertRaises(TypeError, self.data.exportDataset, withExclusions='no')
 
 		self.assertRaises(TypeError, self.data.exportDataset, filterMetadata='no')
-
 
 	def test_print_log(self):
 		"""
@@ -983,7 +976,6 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		self.assertEqual(self.data.log, output)
 
-
 	def test_exclude_samples(self):
 
 		exclusionList = numpy.random.randint(1, self.noSamp, size=numpy.random.randint(1, int(self.noSamp / 2) + 1))
@@ -1004,7 +996,6 @@ class test_dataset_synthetic(unittest.TestCase):
 		numpy.testing.assert_array_equal(self.data.sampleMask, expectedSampleMask)
 		self.assertEqual(missingSamples, ['Not a sample in the list'])
 
-
 	def test_exclude_samples_raises(self):
 
 		exclusionList = numpy.random.randint(1, self.noSamp, size=numpy.random.randint(1, int(self.noSamp / 2) + 1))
@@ -1014,7 +1005,6 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		self.assertRaises(ValueError, self.data.excludeSamples, map(str, exclusionList), on='Not a real key', message='Test Excluded')
 		self.assertRaises(TypeError, self.data.excludeSamples, map(str, exclusionList), on='Sample File Name', message=list())
-
 
 	def test_exclude_features_discrete(self):
 
@@ -1036,7 +1026,6 @@ class test_dataset_synthetic(unittest.TestCase):
 		numpy.testing.assert_array_equal(self.data.featureMask, expectedFeatureMask)
 		self.assertEqual(missingFeatures, ['Not a feature in the list'])
 
-
 	def test_exclude_features_spectral(self):
 
 		noSamp = numpy.random.randint(5, high=10, size=None)
@@ -1057,7 +1046,6 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		numpy.testing.assert_array_equal(mask, dataset.featureMask)
 
-
 	def test_exclude_features_raises(self):
 
 		exclusionList = numpy.random.randint(1, self.noFeat, size=numpy.random.randint(1, int(self.noFeat / 2) + 1))
@@ -1071,12 +1059,10 @@ class test_dataset_synthetic(unittest.TestCase):
 		self.data.VariableType = 'Not a real type'
 		self.assertRaises(ValueError, self.data.excludeFeatures, ['unimportant'], on='Feature Name', message='Test Excluded')
 
-
 	def test_exclude_features_warns(self):
 
 		self.data.VariableType = VariableType.Spectral
 		self.assertWarns(UserWarning, self.data.excludeFeatures, [(1, 1)], on='Feature Name', message='Test Excluded')
-
 
 	def test_get_features_discrete(self):
 
