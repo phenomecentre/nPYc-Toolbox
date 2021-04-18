@@ -5,13 +5,12 @@ import numpy
 import copy
 import warnings
 
+
 def importBrukerXML(filelist):
 	"""
 	Load Bruker quantification data from the xml files listed in *fileList*, and return as data matrices.
 
 	Files that cannot be opened raise warnings, and are filtered from the returned matrices.
-
-	TODO: Reconcile LODS, LOQS, and ranges while importing
 
 	:param list filelist: List of paths to load data from
 	:return: intensityData, sampleMetadata, and featureMetadata
@@ -39,16 +38,17 @@ def importBrukerXML(filelist):
 				intensityData = numpy.zeros((len(filelist), len(quantList)))
 				featureMetadata = copy.deepcopy(df)
 				featureMetadata.drop('value', inplace=True, axis=1)
+				lodData = numpy.zeros((len(filelist), len(quantList)))
 
 			baseName = nameParser.match(sampleName).groups()
 
 			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample Base Name'] = baseName[0] + '/' + baseName[1]
-			#sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample File Name'] = sampleName  # Sample File Name should match Base Name, instead of the Sample File Name hardcoded in the XML file
 			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample File Name'] = baseName[0] + '/' + baseName[1]
 			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'expno'] = baseName[1]
 			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Acquired Time'] = processingDate
 
 			intensityData[sampleMetadata.loc[sampleMetadata['Path'] == filename].index.values, :] = df['value']
+			lodData[sampleMetadata.locSampleMetadata['Path'] == filename.index.values, :] = df['lodMask']
 		except ElementTree.ParseError:
 			warnings.warn('Error parsing xml in %s, skipping' % filename)
 
@@ -68,7 +68,7 @@ def importBrukerXML(filelist):
 	sampleMetadata['expno'] = pandas.to_numeric(sampleMetadata['expno'])
 	sampleMetadata['Acquired Time'] = pandas.to_datetime(sampleMetadata['Acquired Time'])
 
-	return (intensityData, sampleMetadata, featureMetadata)
+	return intensityData, sampleMetadata, featureMetadata, lodData
 
 
 def readBrukerXML(path):
@@ -102,11 +102,33 @@ def readBrukerXML(path):
 		qtype = analyte.attrib['type']
 
 		for element in analyte.findall('VALUE'):
+
 			reference = analyte.find('REFERENCE')
+
+			item = {'Feature Name': name,
+					'comment': comment,
+					'type': qtype,
+					'value': None,
+					'lod': to_numeric(element.attrib['lod']),
+					'loq': to_numeric(element.attrib['loq']),
+					'Unit': None,
+					'lodMask': True}
+
+			if analyte.find('RELDATA') is not None:
+				reldata = analyte.find('RELDATA')
+				item['value'] = to_numeric(reldata.attrib['rawConc'])
+				item['lodMask'] = item['value'] > item['lod']
+				item['Unit'] = reldata.attrib['rawConcUnit']
+				unitTag = 'concUnit'
+			else:
+				unitTag = 'unit'
+				item['Unit'] = to_numeric(element.attrib['unit'])
+				item['value'] = element.attrib['value']
+				item['lodMask'] = item['value'] > item['lod']
 
 			refDict = dict()
 			if reference is not None:
-				if element.attrib['unit'] == reference.attrib['unit']:
+				if element.attrib[unitTag] == reference.attrib['unit']:
 					# Implicitly 2.5 and 97.5 in lipo xml
 					refDict['Lower Reference Bound'] = 2.5
 					refDict['Upper Reference Bound'] = 97.5
@@ -114,17 +136,10 @@ def readBrukerXML(path):
 					refDict['Lower Reference Value'] = to_numeric(reference.attrib['vmin'])
 					refDict['Upper Reference Value'] = to_numeric(reference.attrib['vmax'])
 
-			item = {'Feature Name': name,
-					'comment': comment,
-					'type': qtype,
-					'value': element.attrib['value'],
-					'lod': to_numeric(element.attrib['lod']),
-					'loq': to_numeric(element.attrib['loq']),
-					'Unit': element.attrib['unit']}
 			item = {**item, **refDict}
 			quantList.append(item)
 
-	return (sampleName, processingDate, quantList)
+	return sampleName, processingDate, quantList
 
 
 def to_numeric(string):

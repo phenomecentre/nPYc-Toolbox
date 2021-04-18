@@ -554,7 +554,7 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 	def test_utilities_readBrukerXML(self):
 		
-		from nPYc.utilities._readBrukerXML import readBrukerXML
+		from nPYc.utilities._importBrukerXML import readBrukerXML
 		
 		with self.subTest(msg='BI-LISA type'):
 			expected = ('UnitTest6_expno10.100000.11r',
@@ -678,7 +678,7 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 	def test_utilities_readBrukerXML_warns(self):
 
-		from nPYc.utilities._readBrukerXML import importBrukerXML
+		from nPYc.utilities._importBrukerXML import importBrukerXML
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			tmpfile = os.path.join(tmpdirname, 'malformedxml.xml')
@@ -691,7 +691,7 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 	def test_utilities_importBrukerXML(self):
 
-		from nPYc.utilities._readBrukerXML import importBrukerXML
+		from nPYc.utilities._importBrukerXML import importBrukerXML
 
 		path = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','bruker_quant_urine.xml')
 		
@@ -734,7 +734,7 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 	def test_utilities_importBrukerXML_fails(self):
 
-		from nPYc.utilities._readBrukerXML import importBrukerXML
+		from nPYc.utilities._importBrukerXML import importBrukerXML
 
 		path = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','bruker_quant_urine.xml')
 

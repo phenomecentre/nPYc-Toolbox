@@ -62,6 +62,7 @@ class SampleType(enum.Enum):
 	MethodReference = 'Method Reference'
 	ProceduralBlank = 'Procedural Blank'
 
+
 class AssayRole(enum.Enum):
 	"""
 	Enumeration of assay roles.
@@ -83,6 +84,7 @@ class AssayRole(enum.Enum):
 	PrecisionReference = 'Precision Reference'
 	LinearityReference = 'Linearity Reference'
 
+
 class SampleMatrix(enum.Enum):
 	"""
 	Enumeration of sample types
@@ -99,6 +101,7 @@ class SampleMatrix(enum.Enum):
 	BloodProduct = 'Blood Product'
 	CerebrospinalFluid = 'Cerebrospinal Fluid'
 
+
 class DatasetLevel(enum.Enum):
 	def __repr__(self):
 		return '<%s.%s>' % (self.__class__.__name__, self.name)
@@ -107,6 +110,7 @@ class DatasetLevel(enum.Enum):
 	Empty = 1
 	ValuesOnly = 2
 	QCReady = 3
+
 
 class CalibrationMethod(enum.Enum):
 	"""
@@ -129,6 +133,7 @@ class CalibrationMethod(enum.Enum):
 	backcalculatedIS = 'Backcalculated with Internal Standard'
 	otherCalibration = 'Other calibration method'
 	nmrCalibration = 'NMR quantitation'
+
 
 class QuantificationType(enum.Enum):
 	"""
@@ -155,7 +160,7 @@ class QuantificationType(enum.Enum):
 	QuantOther = 'Other quantification'
 	Monitored = 'Monitored for relative information'
 	BrukerivDrQuant = 'Quantified using Bruker Biospin ivDr methods'
-	BrukerivDrEstimate = 'Estimated from other parameters using Bruker Biospin ivDr methods'
+
 
 class AnalyticalPlatform(enum.Enum):
 	"""

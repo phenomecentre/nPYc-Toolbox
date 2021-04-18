@@ -1073,7 +1073,7 @@ class TargetedDataset(Dataset):
         :raises ValueError: if `unit` is not one of the unit in the input data
         :return: None
         """
-        from ..utilities._readBrukerXML import importBrukerXML
+        from ..utilities._importBrukerXML import importBrukerXML
         from ..utilities.extractParams import buildFileList
 
         if fileNamePattern is None:
