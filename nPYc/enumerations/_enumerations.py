@@ -83,6 +83,7 @@ class AssayRole(enum.Enum):
 	Assay = 'Assay'
 	PrecisionReference = 'Precision Reference'
 	LinearityReference = 'Linearity Reference'
+	Blank = 'Blank'
 
 
 class SampleMatrix(enum.Enum):

@@ -9,6 +9,7 @@ import warnings
 from ._dataset import Dataset
 from ..enumerations import VariableType, AssayRole, SampleType
 from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
+from ..utilities._importBrukerSpectrum import importBrukerSpectra
 from plotly.offline import iplot
 
 
@@ -55,7 +56,7 @@ class NMRDataset(Dataset):
 		self.fileName, fileExtension = os.path.splitext(fileName)
 
 		if fileType.lower() == 'bruker':
-			from ..utilities._importBrukerSpectrum import importBrukerSpectra
+
 
 			self.Attributes['Feature Names'] = 'ppm'
 
@@ -87,8 +88,8 @@ class NMRDataset(Dataset):
 			self.sampleMetadata['Acquired Time'] = pandas.to_datetime(self.sampleMetadata['Acquired Time'], utc=True).dt.tz_localize(None)
 			self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 
-			self.sampleMetadata['AssayRole'] = None#AssayRole.Assay
-			self.sampleMetadata['SampleType'] = None#SampleType.StudySample
+			self.sampleMetadata['AssayRole'] = None
+			self.sampleMetadata['SampleType'] = None
 			self.sampleMetadata['Dilution'] = 100
 			self.sampleMetadata['Batch'] = numpy.nan
 			self.sampleMetadata['Correction Batch'] = numpy.nan

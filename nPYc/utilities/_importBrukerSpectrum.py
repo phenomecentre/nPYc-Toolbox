@@ -9,6 +9,7 @@ from ..utilities._fitPeak import integrateResonance
 from ..utilities._nmr import interpolateSpectrum
 from ..utilities import extractParams
 
+
 def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
 	"""
 	Load processed Bruker spectra found under *path*, with a pulse program that matches *pulseProgram*.
@@ -40,9 +41,7 @@ def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
 	if metadata.shape[0] == 0:
 		raise ValueError("No Bruker format spectra found in '%s'." % (path))
 
-	##
 	# Trim spectra that do not match pulseProgram
-	##
 	metadata = metadata.loc[metadata['PULPROG'] == pulseProgram]
 	metadata.reset_index(inplace=True)
 
@@ -60,9 +59,7 @@ def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
 	ppm = numpy.linspace(Attributes['bounds'][1], Attributes['bounds'][0], Attributes['variableSize'])
 	for row in metadata.iterrows():
 		try:
-			##
 			# Load spectral data
-			##
 			spectrum, localPPM = importBrukerSpectrum(row[1]['File Path'],
 													row[1]['OFFSET'],
 													row[1]['SW_p'],
@@ -71,12 +68,8 @@ def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
 													row[1]['SI'],
 													row[1]['BYTORDP'])
 
-			##
 			# Do per-spectrum QC work here
-			##
-			##
 			# If QuantFactorSample.xml exists, intergrate ERETIC siginal
-			##
 			quantFilePath = os.path.dirname(row[1]['File Path'])
 			quantFilePath = os.path.join(quantFilePath, '..', '..', 'QuantFactorSample.xml')
 
@@ -86,13 +79,11 @@ def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
 
 					metadata.loc[row[0], 'ERETIC Concentration (mM)'] = concentration
 					metadata.loc[row[0], 'ERETIC Integral'] = integrateResonance(spectrum, localPPM, position)
-				except:
+				except Exception:
 					metadata.loc[row[0], 'Warnings'] = 'Error calculating ERETIC integral'
 					warnings.warn('Error parsing `QuantFactorSample`.\nSkipping integration of ERETIC signal for %s.' % (row[1]['File Path']))
 
-			##
 			# Calibrate PPM scale
-			##
 			spectrum, localPPM, deltaPPM = calibratePPM(Attributes['alignTo'], Attributes['calibrateTo'], Attributes['ppmSearchRange'], localPPM, spectrum)
 			metadata.loc[row[0], 'Delta PPM'] = deltaPPM
 
@@ -101,12 +92,9 @@ def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
 							peakIntesityFraction=Attributes['LWpeakIntesityFraction'])
 			metadata.loc[row[0], 'Line Width (Hz)'] = lwHz
 
-			##
 			# Interpolate onto common scale
-			##
 			intensityData[row[0], :] = interpolateSpectrum(spectrum, localPPM, ppm)
-
-		except:
+		except Exception:
 			metadata.loc[row[0], 'Warnings'] = 'Error loading file'
 			warnings.warn("Error loading '%s'" % (row[1]['File Path']))
 
@@ -127,41 +115,31 @@ def importBrukerSpectrum(path, offset, sw_p, nc_proc, sf, si, bytordp):
 	:param int xdim: *XDIM* (submatrix size) parameter from *procs* file (only relevant for 2D data)
 	"""
 
-	##
 	# Determine type of spectrum from filename
-	##
 	fileName = os.path.basename(path)
 	if fileName == '1r':
 		dimensions = 1
 	elif fileName == '2rr':
 		raise NotImplementedError('Reading of 2D NMR data is not implemented')
 
-	##
 	# Check file exists
-	##
 	if not os.path.isfile(path):
 		raise IOError('Unable to read %s' % (path))
 
-	##
 	# Parse endianness for numpy
-	##
 	if int(bytordp) == 0:
 		machine_format = '<i4'
 	else:
 		machine_format = '>i4'
 
-	##
 	# Open and read spectrum
-	##
 	fid = open(path, 'rb')
 	x1 = pow(2, int(nc_proc))
 	dim1 = numpy.fromfile(fid, dtype=machine_format)
 	spectra_real = (dim1 * x1)
 	fid.close()
 
-	##
 	# Build ppm scale
-	##
 	swp = float(sw_p) / float(sf)
 	dppm = swp / float(si)
 	spectra_ppm = numpy.arange(float(offset), (float(offset) - swp), -dppm)
