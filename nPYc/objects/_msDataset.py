@@ -1071,11 +1071,13 @@ class MSDataset(Dataset):
 			if sum(sampleMetadata['AssayRole'] == AssayRole.LinearityReference) > 0:
 				SRD_series = 1
 				previousDilutionRunOrder = sortedSampleMetadata.loc[sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, 'Run Order'].min()
+				previousBatch = 1
 				for idx, row in sortedSampleMetadata.loc[sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, :].iterrows():
-					if row['Run Order'] - previousDilutionRunOrder > 1:
+					if (row['Run Order'] - previousDilutionRunOrder > 1) or (row['Batch'] > previousBatch):
 						SRD_series += 1
 					sampleMetadata.loc[idx, 'Dilution Series'] = SRD_series
 					previousDilutionRunOrder = row['Run Order']
+					previousBatch = row['Batch']
 			# Handle cases where a first batch contains only blanks or pre-injection samples.
 			if min(sampleMetadata['Correction Batch']) > 1:
 				sampleMetadata['Correction Batch'] -= 1
