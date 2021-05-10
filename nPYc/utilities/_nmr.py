@@ -1,7 +1,7 @@
 import numpy
 import pandas
 import math
-
+import os
 
 def interpolateSpectrum(spectrum, originalScale, targetScale):
 	"""
@@ -45,7 +45,7 @@ def generateBaseName(sampleMetadata):
 	"""
 	# Spliting expno from 'Sample File Name'
 	def splitExpno(sampleFileName):
-		output = sampleFileName.split(sep='/')
+		output = os.path.split(sampleFileName)
 		return output[-1]
 
 	# Rounding expno down by 10s
@@ -53,7 +53,7 @@ def generateBaseName(sampleMetadata):
 		return int(math.floor(expno / 10.0) * 10)
 
 	def splitRack(sampleFileName):
-		output = sampleFileName.split(sep='/')
+		output = os.path.split(sampleFileName)
 		return output[-2]
 
 	if not 'expno' in sampleMetadata.columns:
@@ -66,7 +66,7 @@ def generateBaseName(sampleMetadata):
 	roundedExpno = expno.map(roundExpno)
 	roundedExpno = roundedExpno.astype(str)
 
-	return sampleMetadata.loc[:,'Sample File Name'].apply(splitRack).str.cat(roundedExpno, sep='/').values, expno.values
+	return sampleMetadata.loc[:, 'Sample File Name'].apply(splitRack).str.cat(roundedExpno, sep='/').values, expno.values
 
 
 def qcCheckBaseline(spectrum, alpha):

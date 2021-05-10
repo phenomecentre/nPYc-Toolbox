@@ -14,6 +14,7 @@ sys.path.append("..")
 import nPYc
 from generateTestDataset import generateTestDataset
 
+
 class test_rocorrection(unittest.TestCase):
 	"""
 	Use stored and synthetic datasets to validate run-order correction.
@@ -40,9 +41,8 @@ class test_rocorrection(unittest.TestCase):
 class test_rocorrection_sythetic(unittest.TestCase):
 
 	def setUp(self):
-		##
+
 		# Generate synthetic data
-		##
 		#Use a random number of samples
 		noSamples = numpy.random.randint(100, high=500, size=None)
 
@@ -58,7 +58,6 @@ class test_rocorrection_sythetic(unittest.TestCase):
 		self.testSRmask[:2] = True
 		self.testSRmask[-2:] = True
 
-
 	def test_runOrderCompensation_synthetic(self):
 		"""
 		Testing unpacking of parameters for RO correction.
@@ -73,7 +72,6 @@ class test_rocorrection_sythetic(unittest.TestCase):
 		numpy.testing.assert_array_almost_equal(self.testD, fit)
 		numpy.testing.assert_array_almost_equal(numpy.std(corrected), 0.)
 
-
 	def test_doLOESScorrection_synthetic(self):
 		"""
 		Correction of a monotonically increasing trend should be essentially perfect.
@@ -87,7 +85,6 @@ class test_rocorrection_sythetic(unittest.TestCase):
 
 		numpy.testing.assert_array_almost_equal(self.testD, fit)
 		numpy.testing.assert_array_almost_equal(numpy.std(corrected), 0.)
-
 
 	def test_batchCorrection_sythetic(self):
 
@@ -150,7 +147,6 @@ class test_batchcorrection(unittest.TestCase):
 			sigma = numpy.random.randn(1)
 			self.testD[batchMask] = sigma * numpy.random.randn(noSamples) + batchMean
 
-
 	def test_batchCorrection_sythetic(self):
 		"""
 		Check we can correct the offset in averages of two normal distributions
@@ -197,14 +193,13 @@ class test_batchcorrection(unittest.TestCase):
 
 			numpy.testing.assert_allclose(medians, overallMedian)
 
-
 		def test_correctMSdataset_raises(self):
 
 			with self.subTest(msg='Object type'):
 				self.assertRaises(TypeError, nPYc.batchAndROCorrection.correctMSdataset, 's')
 
 			with self.subTest(msg='Parallelise type'):
-				dataset = nPYc.MSDataset('', type='empty')
+				dataset = nPYc.MSDataset('')
 				self.assertRaises(TypeError, nPYc.batchAndROCorrection.correctMSdataset, dataset, parallelise=1)
 
 
