@@ -1063,10 +1063,6 @@ class MSDataset(Dataset):
 				sampleMetadata.loc[currentBatchIndex, 'Batch'] = batchNumber
 				batchNumber += 1
 
-			# Method Reference, Dilution Series, and Blanks should have "Correction Batch" = nan
-			SamplesNoBatchCorrection = ~sampleMetadata['AssayRole'].isin([AssayRole.Assay, AssayRole.PrecisionReference])
-			SamplesNoBatchCorrection &= ~sampleMetadata['SampleType'].isin([SampleType.StudySample, SampleType.StudyPool, SampleType.ExternalReference])
-			sampleMetadata.loc[SamplesNoBatchCorrection, 'Correction Batch'] = numpy.nan
 			# Handle the 'Dilution Series' field
 			if sum(sampleMetadata['AssayRole'] == AssayRole.LinearityReference) > 0:
 				SRD_series = 1
@@ -1078,9 +1074,13 @@ class MSDataset(Dataset):
 					sampleMetadata.loc[idx, 'Dilution Series'] = SRD_series
 					previousDilutionRunOrder = row['Run Order']
 					previousBatch = row['Batch']
-			# Handle cases where a first batch contains only blanks or pre-injection samples.
+			# Method Reference, Dilution Series, and Blanks should have "Correction Batch" = nan
+			SamplesNoBatchCorrection = sampleMetadata['AssayRole'].isin([AssayRole.Blank, AssayRole.LinearityReference])
+			sampleMetadata.loc[SamplesNoBatchCorrection, 'Correction Batch'] = numpy.nan
+			# Handle cases where a first batch contains only blanks or pre-injection blanks.
 			if min(sampleMetadata['Correction Batch']) > 1:
 				sampleMetadata['Correction Batch'] -= 1
+
 		self.sampleMetadata = sampleMetadata
 
 	def amendBatches(self, sampleRunOrder):
