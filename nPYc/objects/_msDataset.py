@@ -1078,8 +1078,9 @@ class MSDataset(Dataset):
 			SamplesNoBatchCorrection = sampleMetadata['AssayRole'].isin([AssayRole.Blank, AssayRole.LinearityReference])
 			sampleMetadata.loc[SamplesNoBatchCorrection, 'Correction Batch'] = numpy.nan
 			# Handle cases where a first batch contains only blanks or pre-injection blanks.
-			if min(sampleMetadata['Correction Batch']) > 1:
-				sampleMetadata['Correction Batch'] -= 1
+			if numpy.nanmin(sampleMetadata['Correction Batch']) > 1:
+				batchDiff = numpy.nanmin(sampleMetadata['Correction Batch']) - 1
+				sampleMetadata['Correction Batch'] -= batchDiff
 
 		self.sampleMetadata = sampleMetadata
 
@@ -1093,6 +1094,14 @@ class MSDataset(Dataset):
 		newBatch = copy.deepcopy(self.sampleMetadata['Correction Batch'])
 		newBatch[self.sampleMetadata['Run Order'] >= sampleRunOrder] = newBatch[self.sampleMetadata[
 																					'Run Order'] >= sampleRunOrder] + 1
+
+		# Method Reference, Dilution Series, and Blanks should have "Correction Batch" = nan
+		SamplesNoBatchCorrection = self.sampleMetadata['AssayRole'].isin([AssayRole.Blank, AssayRole.LinearityReference])
+		newBatch[SamplesNoBatchCorrection] = numpy.nan
+		# Tidy up cases where batch start position is added to positions with only blanks and linearity reference
+		if numpy.nanmin(newBatch) > 1:
+			batchDiff = numpy.nanmin(newBatch) - 1
+			newBatch -= batchDiff
 
 		self.sampleMetadata.loc[:, 'Correction Batch'] = newBatch
 
