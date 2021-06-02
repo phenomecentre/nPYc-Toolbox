@@ -18,7 +18,7 @@ from ..objects._msDataset import MSDataset
 from ..enumerations import AssayRole, SampleType
 
 
-def correctMSdataset(data, window=11, method='LOWESS', align='median', parallelise=True, excludeFailures=True):
+def correctMSdataset(data, window=11, method='LOWESS', align='median', parallelise=True, excludeFailures=True, correctionSampleType=SampleType.StudyPool):
 	"""
 	Conduct run-order correction and batch alignment on the :py:class:`~nPYc.objects.MSDataset` instance *data*, returning a new instance with corrected intensity values.
 
@@ -31,6 +31,7 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 	:param str align: Average calculation of batch and feature intensity for correction, one of 'median' (default) or 'mean'
 	:param bool parallelise: If ``True``, use multiple cores
 	:param bool excludeFailures: If ``True``, remove features where a correct fit could not be calculated from the dataset
+	:param enum correctionSampleType: Which SampleType to use for the correction, default SampleType.StudyPool
 	:return: Duplicate of *data*, with run-order correction applied
 	:rtype: MSDataset
 	"""
@@ -50,13 +51,15 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 		raise TypeError("parallelise must be a boolean")
 	if not isinstance(excludeFailures, bool):
 		raise TypeError("excludeFailures must be a boolean")
+	if not isinstance(correctionSampleType,SampleType):
+		raise TypeError("correctionType must be a SampleType")
 
 	with warnings.catch_warnings():
 		warnings.simplefilter('ignore', category=RuntimeWarning)
 
 		correctedP = _batchCorrectionHead(data.intensityData,
 									 data.sampleMetadata['Run Order'].values,
-									 (data.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
+									 (data.sampleMetadata['SampleType'].values == correctionSampleType) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
 									 data.sampleMetadata['Correction Batch'].values,
 									 window=window,
 									 method=method,
