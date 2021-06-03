@@ -161,36 +161,46 @@ class test_utilities_probabilisticQuotientNormaliser(unittest.TestCase):
 		numpy.testing.assert_array_almost_equal(pqn_norm_coefs, pqn_norm.normalisation_coefficients, err_msg="PQN normaliser not working correctly - non-matching PQN coefficients")
 		numpy.testing.assert_array_equal(reference, pqn_norm.reference)
 
-
 	def test_nans(self):
-		##
-		# Check we dont crash with NaNs
-		##
-		self.X[0,0] = numpy.nan
 
+		self.X[0, 0] = numpy.nan
 		pqn_norm = ProbabilisticQuotientNormaliser()
 
 		pqn_norm.normalise(self.X)
 
-
 	def test_repr(self):
 
 		with self.subTest(msg='Default reference profile'):
-
 			pqn_norm = ProbabilisticQuotientNormaliser()
 			strform = str(pqn_norm)
 			self.assertEqual(strform, 'Normalised to median fold-change, reference profile was the median profile.')
-
 
 	def test_delete_reference(self):
 
 		pqn_norm = ProbabilisticQuotientNormaliser()
 		pqn_norm.normalise(self.X)
 
-		del(pqn_norm.reference)
+		del pqn_norm.reference
 
 		self.assertIsNone(pqn_norm.normalisation_coefficients)
 
+	def test_pass_reference(self):
+
+		X = numpy.copy(self.X)
+		reference = numpy.abs(numpy.random.randn(self.noFeat))
+		pqn_norm = ProbabilisticQuotientNormaliser(reference=reference)
+		pqn_norm.normalise(X)
+
+		featureMask = numpy.logical_and(numpy.isfinite(reference), reference != 0)
+		fold_change_matrix = X[:, featureMask] / reference[featureMask]
+		fold_change_matrix[fold_change_matrix == 0] = numpy.nan
+		pqn_norm_coefs = numpy.absolute(numpy.median(fold_change_matrix, axis=1))
+		# Set 0 cofficients to 1
+		pqn_norm_coefs[pqn_norm_coefs == 0] = 1
+
+		numpy.testing.assert_array_almost_equal(pqn_norm_coefs,
+												pqn_norm.normalisation_coefficients,
+												err_msg="Change of reference does not work")
 
 	def test_raises(self):
 

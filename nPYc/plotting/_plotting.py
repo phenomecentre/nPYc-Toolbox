@@ -186,7 +186,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 
 	ax.set_ylabel('Count')
 	if logy:
-		ax.set_yscale('log', nonposy='clip')
+		ax.set_yscale('log', nonpositive='clip')
 	if not xlim is None:
 		ax.set_xlim(xlim)
 	ax.set_xlabel(xlabel)	

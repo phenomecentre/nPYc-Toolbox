@@ -3,15 +3,13 @@ import pandas
 import numpy
 import sys
 import unittest
-from pandas.util.testing import assert_frame_equal
 import os
-import tempfile
-import inspect
-import copy
+
 import warnings
 
 sys.path.append("..")
 import nPYc
+
 
 class test_utilities_importBruker(unittest.TestCase):
 
@@ -61,14 +59,12 @@ class test_utilities_importBruker(unittest.TestCase):
 			numpy.testing.assert_allclose(maxPPM, expectedMaxPPM)
 			numpy.testing.assert_allclose(deltaPPM, expectedDeltaPPM)
 
-
 	def test_importBrukerSpectrum_raises(self):
 		from nPYc.utilities._importBrukerSpectrum import importBrukerSpectrum
 
 		self.assertRaises(IOError, importBrukerSpectrum, 'not a valid path to a file', None, None, None, None, None, None)
 
 		self.assertRaises(NotImplementedError, importBrukerSpectrum, 'path to/2rr', None, None, None, None, None, None)
-
 
 	def test_importBrukerSpectra_raises(self):
 		from nPYc.utilities._importBrukerSpectrum import importBrukerSpectra
@@ -84,7 +80,6 @@ class test_utilities_importBruker(unittest.TestCase):
 								'UnitTest3_Serum_Rack01_RCM_190116')
 
 			self.assertRaises(ValueError, importBrukerSpectra, path, 'notpresent', 1, dict())
-
 
 	def test_importBrukerSpectra(self):
 		from nPYc.utilities._importBrukerSpectrum import importBrukerSpectra
@@ -132,7 +127,7 @@ class test_utilities_importBruker(unittest.TestCase):
 									'Error loading file'],
 									name='Warnings',
 									dtype='str')
-		pandas.util.testing.assert_series_equal(metadata['Warnings'], warningsCol)
+		pandas.testing.assert_series_equal(metadata['Warnings'], warningsCol)
 
 		sampleName = pandas.Series(['UnitTest3_Serum_Rack01_RCM_190116/10',
 									'UnitTest3_Serum_Rack01_RCM_190116/100',
@@ -146,7 +141,7 @@ class test_utilities_importBruker(unittest.TestCase):
 									'UnitTest3_Serum_Rack01_RCM_190116/180'],
 									name='Sample File Name',
 									dtype='str')
-		pandas.util.testing.assert_series_equal(metadata['Sample File Name'], sampleName)
+		pandas.testing.assert_series_equal(metadata['Sample File Name'], sampleName)
 
 		sumFailedImports = numpy.sum(intensityData[1:, :])
 		numpy.testing.assert_allclose(sumFailedImports, 0)
@@ -160,7 +155,6 @@ class test_utilities_importBruker(unittest.TestCase):
 
 		expectedERETIC = 181331824.09952235
 		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Integral'], expectedERETIC)
-
 
 	def test_importBrukerSpectra_pdata(self):
 		from nPYc.utilities._importBrukerSpectrum import importBrukerSpectra
@@ -186,9 +180,8 @@ class test_utilities_importBruker(unittest.TestCase):
 			intensityData, ppm, metadata = importBrukerSpectra(os.path.join('..', '..', 'npc-standard-project',
 																			'Raw_Data', 'nmr', 'UnitTest1'),
 																			'noesygppr1d', 2, Attributes)
-		##
+
 		# Sort to account for filesystem ordering
-		##
 		metadata.sort_values('Sample File Name', inplace=True)
 		sortIndex = metadata.index.values
 		intensityData = intensityData[sortIndex, :]
@@ -197,12 +190,12 @@ class test_utilities_importBruker(unittest.TestCase):
 		warningsCol = pandas.Series([''],
 									name='Warnings',
 									dtype='str')
-		pandas.util.testing.assert_series_equal(metadata['Warnings'], warningsCol)
+		pandas.testing.assert_series_equal(metadata['Warnings'], warningsCol)
 
 		sampleName = pandas.Series(['UnitTest1_Urine_Rack1_SLL_270814/30'],
 									name='Sample File Name',
 									dtype='str')
-		pandas.util.testing.assert_series_equal(metadata['Sample File Name'], sampleName)
+		pandas.testing.assert_series_equal(metadata['Sample File Name'], sampleName)
 
 		self.assertEqual(len(ppm), Attributes['variableSize'])
 		numpy.testing.assert_allclose(numpy.min(ppm), Attributes['bounds'][0])
@@ -213,7 +206,6 @@ class test_utilities_importBruker(unittest.TestCase):
 
 		expectedERETIC = 152106691.42761227
 		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Integral'], expectedERETIC)
-
 
 	def test_importBrukerSpectra_malformederetic(self):
 		from nPYc.utilities._importBrukerSpectrum import importBrukerSpectra
@@ -242,7 +234,6 @@ class test_utilities_importBruker(unittest.TestCase):
 
 		expectedERETIC = numpy.nan
 		numpy.testing.assert_allclose(metadata.loc[0, 'ERETIC Integral'], expectedERETIC)
-
 
 	def test_parseQuantFactorSample(self):
 		from nPYc.utilities._importBrukerSpectrum import parseQuantFactorSample

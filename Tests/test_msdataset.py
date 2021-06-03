@@ -431,7 +431,7 @@ class test_msdataset_synthetic(unittest.TestCase):
 								AssayRole.PrecisionReference,
 								AssayRole.PrecisionReference,
 								AssayRole.LinearityReference,
-								AssayRole.LinearityReference,
+								AssayRole.Blank,
 								AssayRole.Assay,
 								AssayRole.Assay],
 								name='AssayRole',
@@ -1299,95 +1299,77 @@ class test_msdataset_batch_inference(unittest.TestCase):
 	"""
 	Check batches are generated and amended correctly
 	"""
-
 	def setUp(self):
-		self.msData = nPYc.MSDataset('', fileType='empty')
 
-		self.msData.sampleMetadata['Sample File Name'] = ['Test_RPOS_ToF04_B1S1_SR',
-														'Test_RPOS_ToF04_B1S2_SR',
-														'Test_RPOS_ToF04_B1S3_SR',
-														'Test_RPOS_ToF04_B1S4_SR',
-														'Test_RPOS_ToF04_B1S5_SR',
-														'Test_RPOS_ToF04_P1W01',
-														'Test_RPOS_ToF04_P1W02_SR',
-														'Test_RPOS_ToF04_P1W03',
-														'Test_RPOS_ToF04_B1E1_SR',
-														'Test_RPOS_ToF04_B1E2_SR',
-														'Test_RPOS_ToF04_B1E3_SR',
-														'Test_RPOS_ToF04_B1E4_SR',
-														'Test_RPOS_ToF04_B1E5_SR',
-														'Test_RPOS_ToF04_B2S1_SR',
-														'Test_RPOS_ToF04_B2S2_SR',
-														'Test_RPOS_ToF04_B2S3_SR',
-														'Test_RPOS_ToF04_B2S4_SR',
-														'Test_RPOS_ToF04_B2S5_SR',
-														'Test_RPOS_ToF04_P2W01',
-														'Test_RPOS_ToF04_P2W02_SR',
-														'Test_RPOS_ToF04_P3W03',
-														'Test_RPOS_ToF04_B2S1_SR_2',
-														'Test_RPOS_ToF04_B2S2_SR_2',
-														'Test_RPOS_ToF04_B2S3_SR_2',
-														'Test_RPOS_ToF04_B2S4_SR_2',
-														'Test_RPOS_ToF04_B2S5_SR_2',
-														'Test_RPOS_ToF04_P3W03_b',
-														'Test_RPOS_ToF04_B2E1_SR',
-														'Test_RPOS_ToF04_B2E2_SR',
-														'Test_RPOS_ToF04_B2E3_SR',
-														'Test_RPOS_ToF04_B2E4_SR',
-														'Test_RPOS_ToF04_B2E5_SR',
-														'Test_RPOS_ToF04_B2SRD1']
-
+		self.msData = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_xcms.csv'),
+			fileType='XCMS', noFeatureParams=9)
 		self.msData.addSampleInfo(descriptionFormat='Filenames')
-		self.msData.sampleMetadata['Run Order'] = self.msData.sampleMetadata.index + 1
+		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project',
+																					  'Raw_Data'))
 
+	def test_inferBatches(self):
 
-	def test_fillbatches_correctionbatch(self):
+		self.msData._inferBatches(gapLength=24)
 
-		self.msData._fillBatches()
+		correctionBatch = pandas.Series([numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+       									 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+       									 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+       									 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+       									 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+       									 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 3., 3., 3., 3., 3., 1., 1., 1., 1., 1.,
+       									 2., 2., 2., 2., 2., 2., 2., 2., 2.],name='Correction Batch', dtype='float')
 
-		correctionBatch = pandas.Series([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-										1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0,
-										3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, numpy.nan],
-										name='Correction Batch',
-										dtype='float')
+		batchNumber = pandas.Series([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       								 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       								 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+       								 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+       								 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+									name='Batch', dtype='int64')
+
+		dilutionSeries = pandas.Series([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
+       									1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
+        								1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
+        								1., 1., 1., 1., 1., 1., 1., 2., 2., 2., 2., 2., 2.,
+        								2., 2., 2., 2., 2., 2., 2., 2., 2., 2., 2., 2., 2.,
+        								2., 2., 2., 2., 2., 2., 2., 2., 2., 2., 2., 2., 2.,
+        								2., 2., 2., 2., 2., 2., 2., 2., 2., 2., 2., 2., 2.,
+        								2., numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
+									   name='Dilution Series', dtype='float')
 
 		assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
+		assert_series_equal(self.msData.sampleMetadata['Batch'], batchNumber)
+		assert_series_equal(self.msData.sampleMetadata['Dilution Series'], dilutionSeries)
 
-
-	def test_fillbatches_warns(self):
-
-		self.msData.sampleMetadata.drop('Run Order', axis=1, inplace=True)
-
-		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without run order, skipping\.', self.msData._fillBatches)
-
+	def test_inferbatches_warns(self):
+		msData = copy.deepcopy(self.msData)
+		msData.sampleMetadata.drop('Run Order', axis=1, inplace=True)
+		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without run order and acquired time info, skipping.',
+							msData._inferBatches)
 
 	def test_amendbatches(self):
-		"""
 
-		"""
+		self.msData._inferBatches()
+		self.msData.amendBatches(54)
 
-		self.msData._fillBatches()
-
-		self.msData.amendBatches(20)
-
-		correctionBatch = pandas.Series([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-										1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 4.0,
-										4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, numpy.nan],
-										name='Correction Batch',
-										dtype='float')
-
-		assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
-
-
-	def test_msdataset_addsampleinfo_batches(self):
-
-		self.msData.addSampleInfo(descriptionFormat='Batches')
-
-		correctionBatch = pandas.Series([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-										1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0,
-										3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, numpy.nan],
-										name='Correction Batch',
-										dtype='float')
+		correctionBatch = pandas.Series([numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+        		 						 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+        								 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+        								 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+        								 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+        								 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 4., 4., 4., 4., 4., 1., 1., 1., 1., 1.,
+        								 2., 2., 3., 3., 3., 3., 3., 2., 3.], name='Correction Batch', dtype='float')
 
 		assert_series_equal(self.msData.sampleMetadata['Correction Batch'], correctionBatch)
 
@@ -1535,7 +1517,6 @@ class test_msdataset_import_QI(unittest.TestCase):
 
 			assert_series_equal(self.msData.featureMetadata['Isotope Distribution'], isotope)
 
-
 	def test_dilutionlevels(self):
 
 		dilution = pandas.Series([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 20., 20., 20., 20., 20.,
@@ -1549,11 +1530,9 @@ class test_msdataset_import_QI(unittest.TestCase):
 
 		assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
 
-
 	def test_feature_correlation(self):
 
 		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
-		self.msData.addSampleInfo(descriptionFormat='Batches')
 
 		with self.subTest(msg='Testing Pearson correlations'):
 			correlations = numpy.array([0.99999997, 0.32017508, 1., -0.0693418])
@@ -1566,7 +1545,6 @@ class test_msdataset_import_QI(unittest.TestCase):
 			self.msData.Attributes['corrMethod'] = 'spearman'
 
 			numpy.testing.assert_array_almost_equal(self.msData.correlationToDilution, correlations)
-
 
 	def test_variabletype(self):
 
@@ -1713,10 +1691,10 @@ class test_msdataset_import_xcms(unittest.TestCase):
 	def test_feature_correlation(self):
 
 		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
-		self.msData.addSampleInfo(descriptionFormat='Batches')
+		# self.msData.addSampleInfo(descriptionFormat='Batches')
 
 		self.msData_PeakTable.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
-		self.msData_PeakTable.addSampleInfo(descriptionFormat='Batches')
+		# self.msData_PeakTable.addSampleInfo(descriptionFormat='Batches')
 
 		with self.subTest(msg='Testing Pearson correlations'):
 			correlations = numpy.array([0.99999997, 0.32017508, 1., -0.0693418])
@@ -1854,7 +1832,7 @@ class test_msdataset_import_csvimport_discrete(unittest.TestCase):
 	def test_feature_correlation(self):
 
 		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
-		self.msData.addSampleInfo(descriptionFormat='Batches')
+		# self.msData.addSampleInfo(descriptionFormat='Batches')
 
 		with self.subTest(msg='Testing Pearson correlations'):
 			correlations = numpy.array([0.99999997, 0.32017508, 1., -0.0693418])
@@ -2043,7 +2021,7 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 	def test_feature_correlation(self):
 
 		self.lcData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
-		self.lcData.addSampleInfo(descriptionFormat='Batches')
+		# self.lcData.addSampleInfo(descriptionFormat='Batches')
 
 		with self.subTest(msg='Testing Pearson correlations'):
 			correlations = numpy.array([0.99999997, 0.32017508, 1., -0.0693418])
@@ -2076,7 +2054,7 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 
 class test_msdataset_import_biocrates(unittest.TestCase):
 	"""
-	Test import of Biocrate sheets
+	Test import of Biocrates sheets
 	"""
 
 	def setUp(self):
@@ -2300,7 +2278,8 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 										 '02:55:03', '03:10:49', '03:26:43', '03:42:35', '12:11:04', '12:26:51', '12:42:35', '12:58:13', '13:14:01', '13:45:26',
 										 '14:01:05', '14:16:51', '11:53:27', '13:29:48', '13:46:48']
 
-		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
+		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'),
+								  filetype='Waters .raw')
 
 		with self.subTest(msg='Default Path'):
 			for series in testSeries:
@@ -2310,7 +2289,6 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 			self.msData.sampleMetadata.drop(columns='Exclusion Details', inplace=True)
 
 			self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
-
 
 	def test_msdataset__getSampleMetadataFromRawData_invalidpath(self):
 
@@ -2560,7 +2538,7 @@ class test_msdataset_ISATAB(unittest.TestCase):
 			'Assay data name': ['', '', '', 'SS_LNEG_ToF02_S1W4', 'SS_LNEG_ToF02_S1W5']
 		}
 
-		msData.sampleMetadata = pandas.DataFrame(raw_data, columns = ['Acquired Time', 'AssayRole', 'Status','Subject ID','Sampling ID','Dilution','Study',
+		msData.sampleMetadata = pandas.DataFrame(raw_data, columns= ['Acquired Time', 'AssayRole', 'Status','Subject ID','Sampling ID','Dilution','Study',
 																'Gender','Age','Sampling Date','Detector','Sample batch','Well',
 																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name','Sample File Name'])
 

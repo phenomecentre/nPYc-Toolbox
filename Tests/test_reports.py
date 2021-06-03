@@ -229,7 +229,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
 		data.sampleMetadata.loc[:10, 'SampleType'] = SampleType.StudyPool
 		data.sampleMetadata.loc[:10, 'AssayRole'] = AssayRole.LinearityReference
-		data.sampleMetadata.loc[:10, 'Dilution'] = [0,1,2,3,4,5,6,7,8,9,10]
+		data.sampleMetadata.loc[:10, 'Dilution'] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
@@ -246,14 +246,12 @@ class test_reports_ms_generatereport(unittest.TestCase):
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
-
 	def test_reports_ms_correlationtodilution(self):
 
 		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
-		data.addSampleInfo(descriptionFormat='Batches')
-		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
+		# data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
 		data.corrExclusions = data.sampleMask
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
@@ -263,9 +261,9 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_correlationToDilutionSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
-			testFiles = ['Batch 1.0, series 1.0 Histogram of Correlation To Dilution.png', 'Batch 1.0, series 1.0 LR Sample TIC (coloured by change in detector voltage).png',
-						 'Batch 1.0, series 1.0 LR Sample TIC (coloured by dilution).png', 'Batch 1.0, series 2.0 Histogram of Correlation To Dilution.png',
-						 'Batch 1.0, series 2.0 LR Sample TIC (coloured by change in detector voltage).png', 'Batch 1.0, series 2.0 LR Sample TIC (coloured by dilution).png',
+			testFiles = ['Batch 2, series 1.0 Histogram of Correlation To Dilution.png', 'Batch 2, series 1.0 LR Sample TIC (coloured by change in detector voltage).png',
+						 'Batch 2, series 1.0 LR Sample TIC (coloured by dilution).png', 'Batch 4, series 2.0 Histogram of Correlation To Dilution.png',
+						 'Batch 4, series 2.0 LR Sample TIC (coloured by change in detector voltage).png', 'Batch 4, series 2.0 LR Sample TIC (coloured by dilution).png',
 						 'MeanAllSubsets Histogram of Correlation To Dilution.png', 'MeanAllSubsets LR Sample TIC (coloured by change in detector voltage).png',
 						 'MeanAllSubsets LR Sample TIC (coloured by dilution).png', 'UnitTest1_PCSOP.069_QI_satFeaturesHeatmap.png']
 
@@ -273,13 +271,12 @@ class test_reports_ms_generatereport(unittest.TestCase):
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_correlationToDilutionSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
-
 	def test_reports_ms_batchcorrectiontest(self):
 
 		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
-		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
+		# data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
@@ -295,13 +292,12 @@ class test_reports_ms_generatereport(unittest.TestCase):
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_batchCorrectionAssessment', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
-
 	def test_reports_ms_batchcorrectionresults(self):
 
 		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
-		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
+		# data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
 		datacorrected = nPYc.batchAndROCorrection.correctMSdataset(data, parallelise=True)
 		
 		with tempfile.TemporaryDirectory() as tmpdirname:
@@ -320,7 +316,6 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_batchCorrectionSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
-
 
 	def test_reports_ms_featureselection(self):
 
@@ -342,7 +337,6 @@ class test_reports_ms_generatereport(unittest.TestCase):
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSelectionSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
 
-
 	def test_reports_ms_finalreport(self):
 
 		data = nPYc.MSDataset(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
@@ -363,7 +357,6 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
-
 
 	def test_reports_ms_raises(self):
 

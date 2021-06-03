@@ -7,7 +7,6 @@ import pandas
 import numpy
 import sys
 import unittest
-from pandas.util.testing import assert_frame_equal
 import os
 import tempfile
 import inspect
@@ -48,7 +47,6 @@ class test_utilities_internal(unittest.TestCase):
 		with self.subTest(msg='Testing Pearson Correlation'):
 			numpy.testing.assert_allclose(pearson, pearson_scipy, err_msg='Pearson Correlation output does not equal scipy.')
 
-
 	def test_correlation_masking(self):
 		"""
 		Validate _vcorrcoef by comparing output to scipy's functions.
@@ -84,7 +82,6 @@ class test_utilities_internal(unittest.TestCase):
 		with self.subTest(msg='Testing Pearson Correlation'):
 			numpy.testing.assert_allclose(pearson, pearson_scipy, err_msg='Pearson Correlation output does not equal scipy.')
 
-
 	def test_copybackingfiles(self):
 		"""
 		Check files are copied to the location specified (we trust the shutil.copy call to preserve contents).
@@ -101,7 +98,6 @@ class test_utilities_internal(unittest.TestCase):
 			for expectedFile in expectedFiles:
 				testPath = os.path.join(tmpdirname, expectedFile)
 				self.assertTrue(os.path.exists(testPath))
-
 
 	def test_copybackingfiles_withgraphics(self):
 		"""
@@ -136,7 +132,6 @@ class test_utilities_ms(unittest.TestCase):
 		numpy.testing.assert_allclose(testResults, [0., 628.4902545, 828.65352631], err_msg='RSD calculations not correct.')
 		numpy.testing.assert_allclose(testResultsWithNaNs, [0, 0, numpy.finfo(numpy.float64).max], err_msg='RSD calculation not handling NaNs correctly.')
 
-
 	def test_sequentialPrecision(self):
 		# Fix the random seed for reproducible results
 		numpy.random.seed(seed=200)
@@ -157,7 +152,6 @@ class test_utilities_ms(unittest.TestCase):
 		numpy.testing.assert_allclose(postDrift, [7.42880240e+000, 1.16717529e+001, numpy.finfo(numpy.float64).max], err_msg='SP calculations not correct.')
 		numpy.random.seed()
 
-
 	def test_generatesrdmask(self):
 
 		# Create an empty object with simple filenames
@@ -177,37 +171,45 @@ class test_utilities_ms(unittest.TestCase):
 													'Test1_HPOS_ToF01_B3SRD47','Test1_HPOS_ToF01_B3SRD48','Test1_HPOS_ToF01_B3SRD49',
 													'Test1_HPOS_ToF01_B3SRD50','Test1_HPOS_ToF01_B3SRD51','Test1_HPOS_ToF01_B3SRD92']
 
-		msData.intensityData = numpy.zeros((39,2))
+		msData.intensityData = numpy.zeros((39, 2))
 		msData.initialiseMasks()
 		msData.sampleMetadata['Run Order'] = msData.sampleMetadata.index + 1
+		msData.sampleMetadata['Dilution Series'] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 3, 3, 3, 3, numpy.nan, numpy.nan,
+													numpy.nan, 4, 4, 4, 4, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7]
 		msData.addSampleInfo(descriptionFormat='Filenames')
-		msData.addSampleInfo(descriptionFormat='Batches')
 		msData.corrExclusions = msData.sampleMask
 
 		srdMask = nPYc.utilities.ms.generateLRmask(msData)
 
-		cannonicalMask = {'Batch 1.0, series 1.0': numpy.array([True, True, True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, False, 
-																False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False],
-															   dtype=bool),
-						  'Batch 2.0, series 1.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, True, True, True, True, True, True, False, False,
-						  										False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False],
-															   dtype=bool),
-						  'Batch 2.0, series 2.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
-						  										False, True, True, True, True, True, True, False, False, False, False, False, False, False, False, False, False, False, False],
-															   dtype=bool),
-						  'Batch 3.0, series 2.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
-																False, False, False, False, False, False, False, True, True, True, True, True, True, True, True, True, True, True, True],
-															   dtype=bool)}
+		cannonicalMask = {'Batch 1.0, series 1.0': numpy.array([True,  True,  True,  True,  True,  True,  True,  True,  True, True,  True, False, False, False, False, False, False, False,
+        													False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        													False, False, False], dtype=bool),
+						  'Batch 1.0, series 2.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False,  True, False, False, False, False, False, False,
+        														False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False], dtype=bool),
+						  'Batch 2.0, series 3.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False,  True,  True,  True,  True,  True,  True,
+        														False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False], dtype=bool),
+						  'Batch 2.0, series 4.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False,  True,  True,  True,  True,  True, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False], dtype=bool),
+						  'Batch 2.0, series 5.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False, False, False, False, False, False,  True, False, False, False, False, False, False, False, False, False,
+        														False, False, False], dtype=bool),
+						  'Batch 3.0, series 6.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+        														False, False, False, False, False, False, False, False, False, True,  True,  True,  True,  True,  True,  True,  True,  True,
+         														True,  True, False], dtype=bool),
+						  'Batch 3.0, series 7.0': numpy.array([False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+														  		False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+														  		False, False, True], dtype=bool)}
 
 		numpy.testing.assert_equal(srdMask, cannonicalMask)
-
 
 	def test_generatesrdmask_raises(self):
 
 		dataset = nPYc.MSDataset('', fileType='empty')
 		dataset.corrExclusions = None
 		self.assertRaises(ValueError, nPYc.utilities.ms.generateLRmask, dataset)
-
 
 	def test_rsdsBySampleType(self):
 
@@ -232,8 +234,22 @@ class test_utilities_ms(unittest.TestCase):
 			self.assertTrue('Study Sample' in rsds.keys())
 			self.assertTrue(len(rsds.keys()) == 3)
 
-
 	def test_rsdsBySampleType_raises(self):
+
+		self.assertRaises(TypeError, nPYc.utilities.rsdsBySampleType, 'Not a Dataset')
+		self.assertRaises(KeyError, nPYc.utilities.rsdsBySampleType, nPYc.Dataset(), useColumn='Not There')
+
+	def test_inferBatches(self):
+
+		from generateTestDataset import generateTestDataset
+
+		noSamp = numpy.random.randint(100, high=500, size=None)
+		noFeat = numpy.random.randint(200, high=400, size=None)
+
+		data = generateTestDataset(noSamp, noFeat)
+
+
+	def test_inferBatches_raises(self):
 
 		self.assertRaises(TypeError, nPYc.utilities.rsdsBySampleType, 'Not a Dataset')
 		self.assertRaises(KeyError, nPYc.utilities.rsdsBySampleType, nPYc.Dataset(), useColumn='Not There')
@@ -346,7 +362,7 @@ class test_utilities_sample_ledger(unittest.TestCase):
 		expected = pandas.read_csv(os.path.join('..','..','npc-standard-project','Project_Description','UnitTest1_metadata_Unified.csv'), index_col=0)
 		expected['Date of Birth'] = expected['Date of Birth'].apply(pandas.to_datetime)
 
-		pandas.util.testing.assert_frame_equal(actual, expected)
+		pandas.testing.assert_frame_equal(actual, expected)
 
 
 class test_utilities_generic(unittest.TestCase):
@@ -547,7 +563,7 @@ class  test_utilities_addReferenceRanges(unittest.TestCase):
 										'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL',
 										'mg/dL', 'mg/dL', 'mg/dL', 'mg/dL']
 
-		pandas.util.testing.assert_frame_equal(expectedFeatureMetadata, featureMetadata, check_dtype=False)
+		pandas.testing.assert_frame_equal(expectedFeatureMetadata, featureMetadata, check_dtype=False)
 
 
 class test_utilities_read_bruker_xml(unittest.TestCase):

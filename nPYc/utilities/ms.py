@@ -11,7 +11,7 @@ def rsd(data):
 
 	:math:`\mathit{{rsd(x)}} = \\frac{\mathit{\sigma_{x}}}{\mathit{\mu_{x}}} \\times 100`
 
-	Where RSDs cannot be caluclated, (i.e. means of zero), ``numpy.finfo(numpy.float64).max`` is returned.
+	Where RSDs cannot be calculated, (i.e. means of zero), ``numpy.finfo(numpy.float64).max`` is returned.
 
 	:param numpy.ndarray data: *n* by *m* numpy array of data, with features in columns, and samples in rows
 	:return: *m* vector of RSDs
