@@ -1,5 +1,4 @@
 import numpy
-import numpy.matlib
 from scipy.stats import kruskal
 from ..utilities._internal import _vcorrcoef
 import datetime
