@@ -39,18 +39,6 @@ setup(name='nPYc',
 		Toolbox for preprocessing of metabolic profiling datasets
 		---------------------------------------------------------
 
-		.. image:: https://travis-ci.org/phenomecentre/nPYc-Toolbox.svg?branch=master
-		   :target: https://travis-ci.org/phenomecentre/nPYc-Toolbox
-		   :alt: Travis CI build status
-
-		.. image:: https://readthedocs.org/projects/npyc-toolbox/badge/?version=latest
-		   :target: http://npyc-toolbox.readthedocs.io/en/latest/?badge=latest
-		   :alt: Documentation Status
-
-		.. image:: https://codecov.io/gh/phenomecentre/nPYc-Toolbox/branch/master/graph/badge.svg
-		   :target: https://codecov.io/gh/phenomecentre/nPYc-Toolbox
-		   :alt: Test coverage
-
 		|
 
 		The nPYc toolbox offers functions for the import, preprocessing, and QC of metabolic profiling datasets.
