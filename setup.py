@@ -75,6 +75,7 @@ setup(name='nPYc',
 
 		The nPYc toolbox is `developed <https://github.com/phenomecentre/npyc-toolbox>`_ by the informatics team at `The National Phenome Centre <http://phenomecentre.org/>`_ at `Imperial College London <http://imperial.ac.uk/>`_.
 		""",
+        long_description_content_type="text/markdown",
 		documentation='http://npyc-toolbox.readthedocs.io/en/latest/?badge=stable',
 		include_package_data=True,
 		zip_safe=False

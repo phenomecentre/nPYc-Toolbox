@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install .
-        git clone https://github.com/phenomecentre/npc-standard-project.git --single-branch --depth 1 --branch ${GITHUB_REF##*/} ../npc-standard-project
+        git clone https://github.com/phenomecentre/npc-standard-project.git --single-branch --depth 1 --branch develop ../npc-standard-project
         pip install -r requirements.txt
         pip install xlrd
         pip install coverage
@@ -33,12 +33,6 @@ jobs:
       run: |
         cd Tests
         coverage run -m unittest discover
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: true
     - name: Build dists
       if: success()
       run: |

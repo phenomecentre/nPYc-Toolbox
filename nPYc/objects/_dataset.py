@@ -1170,9 +1170,10 @@ class Dataset:
 			# Read new data and copy the current state of featureMetadata
 			csvData = pandas.read_csv(filePath)
 
-			if  not any(csvData[featureId].isin(self.featureMetadata['Feature Name'])):
+			if not any(csvData[featureId].isin(self.featureMetadata['Feature Name'])):
 				raise ValueError('No matching features found in csv file provided.')
-
+			if any(csvData[featureId].duplicated()):
+				raise ValueError('Duplicated features found in csv file provided')
 			currentMetadata = self.featureMetadata.copy()
 
 			# Overwrite previously existing columns
