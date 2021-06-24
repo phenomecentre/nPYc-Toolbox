@@ -38,7 +38,7 @@ class test_rocorrection(unittest.TestCase):
 		numpy.testing.assert_array_almost_equal(correctedDataP.intensityData, correctedDataS.intensityData, err_msg="Serial and parallel corrected data not equal.")
 
 
-class test_rocorrection_sythetic(unittest.TestCase):
+class test_rocorrection_synthetic(unittest.TestCase):
 
 	def setUp(self):
 
@@ -67,7 +67,7 @@ class test_rocorrection_sythetic(unittest.TestCase):
 		(corrected,fit) = nPYc.batchAndROCorrection._batchAndROCorrection.runOrderCompensation(self.testD,
 																							self.testRO,
 																							self.testSRmask,
-																							{'window':11, 'method':'LOWESS'})
+																							{'window':11, 'method':'LOWESS', 'align':'median'})
 
 		numpy.testing.assert_array_almost_equal(self.testD, fit)
 		numpy.testing.assert_array_almost_equal(numpy.std(corrected), 0.)
@@ -97,7 +97,7 @@ class test_rocorrection_sythetic(unittest.TestCase):
 																				self.testSRmask,
 																				numpy.ones_like(self.testRO),
 																				[featureNo],
-																				{'align':'mean', 'window':11, 'method':'LOWESS'},
+																				{'align': 'mean', 'window': 11, 'method': 'LOWESS'},
 																				0)
 
 		featureNo_out = output[featureNo][0]
