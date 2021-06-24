@@ -62,7 +62,6 @@ class SampleType(enum.Enum):
 	MethodReference = 'Method Reference'
 	ProceduralBlank = 'Procedural Blank'
 
-
 class AssayRole(enum.Enum):
 	"""
 	Enumeration of assay roles.

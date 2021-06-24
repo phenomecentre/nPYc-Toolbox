@@ -7,7 +7,7 @@ import warnings
 
 
 def importBrukerXML(filelist):
-	"""
+    """
 	Load Bruker quantification data from the xml files listed in *fileList*, and return as data matrices.
 
 	Files that cannot be opened raise warnings, and are filtered from the returned matrices.
@@ -17,136 +17,155 @@ def importBrukerXML(filelist):
 	:rtype: tuple of (intensityData, sampleMetadata, featureMetadata)
 	"""
 
-	sampleMetadata = pandas.DataFrame([], columns=['Sample File Name', 'Sample Base Name', 'expno', 'Path', 'Acquired Time', 'Run Order'])
-	sampleMetadata['Path'] = filelist
-	sampleMetadata['Acquired Time'] = None
-	sampleMetadata['Run Order'] = None
-	intensityData = None
-	featureMetadata = None
+    sampleMetadata = pandas.DataFrame([], columns=['Sample File Name',
+                                                   'Sample Base Name', 'expno',
+                                                   'Path', 'Acquired Time',
+                                                   'Run Order'])
+    sampleMetadata['Path'] = filelist
+    sampleMetadata['Acquired Time'] = None
+    sampleMetadata['Run Order'] = None
+    intensityData = None
+    featureMetadata = None
 
-	importPass = numpy.ones(len(filelist), dtype=bool)
+    importPass = numpy.ones(len(filelist), dtype=bool)
 
-	nameParser = re.compile(r'^(.+?)_expno(\d+)\..+?$')
+    nameParser = re.compile(r'^(.+?)_expno(\d+)\..+?$')
 
-	for filename in filelist:
-		try:
-			sampleName, processingDate, quantList = readBrukerXML(filename)
+    for filename in filelist:
+        try:
+            sampleName, processingDate, quantList = readBrukerXML(filename)
 
-			df = pandas.DataFrame.from_dict(quantList)
+            df = pandas.DataFrame.from_dict(quantList)
 
-			if intensityData is None:
-				intensityData = numpy.zeros((len(filelist), len(quantList)))
-				featureMetadata = copy.deepcopy(df)
-				featureMetadata.drop('value', inplace=True, axis=1)
-				lodData = numpy.zeros((len(filelist), len(quantList)))
+            if intensityData is None:
+                intensityData = numpy.zeros((len(filelist), len(quantList)))
+                featureMetadata = copy.deepcopy(df)
+                featureMetadata.drop('value', inplace=True, axis=1)
 
-			baseName = nameParser.match(sampleName).groups()
+            baseName = nameParser.match(sampleName).groups()
 
-			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample Base Name'] = baseName[0] + '/' + baseName[1]
-			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample File Name'] = baseName[0] + '/' + baseName[1]
-			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'expno'] = baseName[1]
-			sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Acquired Time'] = processingDate
+            sampleMetadata.loc[
+                sampleMetadata['Path'] == filename, 'Sample Base Name'] = \
+            baseName[0] + '/' + baseName[1]
+            # sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample File Name'] = sampleName  # Sample File Name should match Base Name, instead of the Sample File Name hardcoded in the XML file
+            sampleMetadata.loc[
+                sampleMetadata['Path'] == filename, 'Sample File Name'] = \
+            baseName[0] + '/' + baseName[1]
+            sampleMetadata.loc[sampleMetadata['Path'] == filename, 'expno'] = \
+            baseName[1]
+            sampleMetadata.loc[sampleMetadata[
+                                   'Path'] == filename, 'Acquired Time'] = processingDate
 
-			intensityData[sampleMetadata.loc[sampleMetadata['Path'] == filename].index.values, :] = df['value']
-			lodData[sampleMetadata.locSampleMetadata['Path'] == filename.index.values, :] = df['lodMask']
-		except ElementTree.ParseError:
-			warnings.warn('Error parsing xml in %s, skipping' % filename)
+            intensityData[
+            sampleMetadata.loc[sampleMetadata['Path'] == filename].index.values,
+            :] = df['value']
+        except ElementTree.ParseError:
+            warnings.warn('Error parsing xml in %s, skipping' % filename)
 
-			importPass[sampleMetadata.loc[sampleMetadata['Path'] == filename].index.values] = False
+            importPass[sampleMetadata.loc[
+                sampleMetadata['Path'] == filename].index.values] = False
 
-	runOrder = sampleMetadata.sort_values(by='Acquired Time').index.values
-	sampleMetadata['Run Order'] = numpy.argsort(runOrder)
+    runOrder = sampleMetadata.sort_values(by='Acquired Time').index.values
+    sampleMetadata['Run Order'] = numpy.argsort(runOrder)
 
-	##
-	# Drop failed imports
-	##
-	if intensityData is not None:
-		intensityData = intensityData[importPass, :]
-	sampleMetadata = sampleMetadata.loc[importPass, :]
-	sampleMetadata.reset_index(drop=True, inplace=True)
+    ##
+    # Drop failed imports
+    ##
+    if intensityData is not None:
+        intensityData = intensityData[importPass, :]
+    sampleMetadata = sampleMetadata.loc[importPass, :]
+    sampleMetadata.reset_index(drop=True, inplace=True)
 
-	sampleMetadata['expno'] = pandas.to_numeric(sampleMetadata['expno'])
-	sampleMetadata['Acquired Time'] = pandas.to_datetime(sampleMetadata['Acquired Time'])
+    sampleMetadata['expno'] = pandas.to_numeric(sampleMetadata['expno'])
+    sampleMetadata['Acquired Time'] = pandas.to_datetime(
+        sampleMetadata['Acquired Time'])
 
-	return intensityData, sampleMetadata, featureMetadata, lodData
+    return (intensityData, sampleMetadata, featureMetadata)
 
 
 def readBrukerXML(path):
-	"""
-	Extract Bruker quatification data from the XML file at *path* and return as a dict, with one element for each value.
+    """
+	Extract Bruker quantification data from the XML file at *path* and return as a dict, with one element for each value.
 
 	:param str path: Path to Bruker XML quantification report
 	:returns: List of dicts
 	:rtype: tuple of (filename, processing date, dict of measurements)
 	"""
 
-	tree = ElementTree.parse(path)
-	root = tree.getroot()
-	quantData = root.find('QUANTIFICATION')
+    tree = ElementTree.parse(path)
+    root = tree.getroot()
+    quantData = root.find('QUANTIFICATION')
 
-	sampleName = root.find('SAMPLE').attrib['name']
-	processingDate = root.find('SAMPLE').attrib['date']
+    sampleName = root.find('SAMPLE').attrib['name']
+    processingDate = root.find('SAMPLE').attrib['date']
 
-	root.find('SAMPLE').attrib['name']
+    root.find('SAMPLE').attrib['name']
 
-	quantList = list()
+    quantList = list()
 
-	for analyte in quantData:
+    for analyte in quantData:
 
-		name = analyte.attrib['name']
-		if 'comment' in analyte.attrib.keys():
-			comment = analyte.attrib['comment']
-		else:
-			comment = ''
+        name = analyte.attrib['name']
+        if 'comment' in analyte.attrib.keys():
+            comment = analyte.attrib['comment']
+        else:
+            comment = ''
 
-		qtype = analyte.attrib['type']
+        qtype = analyte.attrib['type']
 
-		for element in analyte.findall('VALUE'):
+        for element in analyte.findall('VALUE'):
 
-			reference = analyte.find('REFERENCE')
+            reference = analyte.find('REFERENCE')
 
-			item = {'Feature Name': name,
-					'comment': comment,
-					'type': qtype,
-					'value': None,
-					'lod': to_numeric(element.attrib['lod']),
-					'loq': to_numeric(element.attrib['loq']),
-					'Unit': None,
-					'lodMask': True}
+            item = {'Feature Name': name,
+                    'comment': comment,
+                    'type': qtype,
+                    'value': None,
+                    'lod': to_numeric(element.attrib['lod']),
+                    'loq': to_numeric(element.attrib['loq']),
+                    'Unit': None,
+                    'lodMask': True}
 
-			if analyte.find('RELDATA') is not None:
-				reldata = analyte.find('RELDATA')
-				item['value'] = to_numeric(reldata.attrib['rawConc'])
-				item['lodMask'] = item['value'] > item['lod']
-				item['Unit'] = reldata.attrib['rawConcUnit']
-				unitTag = 'concUnit'
-			else:
-				unitTag = 'unit'
-				item['Unit'] = to_numeric(element.attrib['unit'])
-				item['value'] = element.attrib['value']
-				item['lodMask'] = item['value'] > item['lod']
+            if analyte.find('RELDATA') is not None:
+                reldata = analyte.find('RELDATA')
+                item['value'] = to_numeric(reldata.attrib['rawConc'])
+                item['lodMask'] = item['value'] > item['lod']
+                item['Unit'] = reldata.attrib['rawConcUnit']
+                if item['value'] <= item['lod']:
+                    item['value'] = -numpy.inf
+                unitTag = 'concUnit'
+            else:
+                unitTag = 'unit'
+                item['Unit'] = to_numeric(element.attrib['unit'])
+                item['value'] = to_numeric(element.attrib['value'])
+                if type(item['lod']) == float:
+                    item['lodMask'] = item['value'] > item['lod']
+                else:
+                    item['lodMask'] = True
 
-			refDict = dict()
-			if reference is not None:
-				if element.attrib[unitTag] == reference.attrib['unit']:
-					# Implicitly 2.5 and 97.5 in lipo xml
-					refDict['Lower Reference Bound'] = 2.5
-					refDict['Upper Reference Bound'] = 97.5
+            refDict = dict()
+            if reference is not None:
+                if element.attrib[unitTag] == reference.attrib['unit']:
+                    # Implicitly 2.5 and 97.5 in lipo xml
+                    refDict['Lower Reference Bound'] = 2.5
+                    refDict['Upper Reference Bound'] = 97.5
 
-					refDict['Lower Reference Value'] = to_numeric(reference.attrib['vmin'])
-					refDict['Upper Reference Value'] = to_numeric(reference.attrib['vmax'])
+                    refDict['Lower Reference Value'] = to_numeric(
+                        reference.attrib['vmin'])
+                    refDict['Upper Reference Value'] = to_numeric(
+                        reference.attrib['vmax'])
 
-			item = {**item, **refDict}
-			quantList.append(item)
+            item = {**item, **refDict}
+            quantList.append(item)
 
-	return sampleName, processingDate, quantList
+    return sampleName, processingDate, quantList
 
 
 def to_numeric(string):
-	try:
-		return int(string)
-	except ValueError:
-		try:
-			return float(string)
-		except ValueError:
-			return string
+    try:
+        return int(string)
+    except ValueError:
+        try:
+            return float(string)
+        except ValueError:
+            return string

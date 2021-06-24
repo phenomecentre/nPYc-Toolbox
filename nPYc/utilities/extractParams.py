@@ -103,7 +103,7 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
         if duplicateSamples.size > 0:
             warnings.warn('Duplicate raw data loaded, discarding duplicates.', UserWarning)
             # Drop duplicate files
-            resultsDF = resultsDF.loc[resultsDF['Sample File Name'].duplicated(keep='first') is False]
+            resultsDF = resultsDF.loc[~resultsDF['Sample File Name'].duplicated(keep='first')]
 
         resultsDF = resultsDF.apply(lambda x: pandas.to_numeric(x, errors='ignore'))
         resultsDF['Acquired Time'] = pandas.to_datetime(resultsDF['Acquired Time'])

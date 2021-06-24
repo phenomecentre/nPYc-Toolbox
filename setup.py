@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='nPYc',
-	version='1.2.4',
+	version='1.2.6',
 	description='National Phenome Centre toolbox',
 	url='https://github.com/phenomecentre/npyc-toolbox',
 	author='National Phenome Centre',
@@ -29,7 +29,7 @@ setup(name='nPYc',
 	],
 	classifiers = [
 		"Programming Language :: Python",
-		"Programming Language :: Python :: 3.6",
+		"Programming Language :: Python :: 3.9",
 		"Intended Audience :: Science/Research",
 		"License :: OSI Approved :: MIT License",
 		"Operating System :: OS Independent",
@@ -75,6 +75,7 @@ setup(name='nPYc',
 
 		The nPYc toolbox is `developed <https://github.com/phenomecentre/npyc-toolbox>`_ by the informatics team at `The National Phenome Centre <http://phenomecentre.org/>`_ at `Imperial College London <http://imperial.ac.uk/>`_.
 		""",
+        long_description_content_type="text/markdown",
 		documentation='http://npyc-toolbox.readthedocs.io/en/latest/?badge=stable',
 		include_package_data=True,
 		zip_safe=False

@@ -232,12 +232,12 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 				tempdata = pandas.DataFrame(tempdata, columns=[plotTitle, 'PC'+str(components[i]+1), 'PC'+str(components[j]+1)])
 
 				# Association for component[i]
-				ax1 = sns.swarmplot(x=plotTitle, y='PC'+str(components[i]+1), data=tempdata, ax=ax1, palette=colors_sns)
+				ax1 = sns.stripplot(x=plotTitle, y='PC'+str(components[i]+1), data=tempdata, ax=ax1, palette=colors_sns)
 				ax1.set(xticklabels=[])
 				ax1.set(xlabel='')
 
 				# Association for component[j]
-				ax2 = sns.swarmplot(x=plotTitle, y='PC'+str(components[j]+1), data=tempdata, ax=ax2, palette=colors_sns)
+				ax2 = sns.stripplot(x=plotTitle, y='PC'+str(components[j]+1), data=tempdata, ax=ax2, palette=colors_sns)
 				ax2.set(xticklabels=[])
 
 			ax.legend(loc='upper left', bbox_to_anchor=(1, 1))

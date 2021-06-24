@@ -113,7 +113,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 
 	# Summary table for samples acquired
-	temp = numpy.zeros([7,2], dtype=numpy.int)
+	temp = numpy.zeros([7,2], dtype=int)
 	# Total numbers
 	temp[:,0] = [data.sampleMetadata.shape[0], sum(SSmask), sum(SPmask), sum(ERmask), sum(SRDmask), sum(Blankmask), sum(UnclearRolemask)]
 	# Numbers marked for exclusion (either skipped or in sampleMask)
