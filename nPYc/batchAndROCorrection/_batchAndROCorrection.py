@@ -45,8 +45,8 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 	if method is not None:
 		if not isinstance(method, str) & (method in {'LOWESS', 'SavitzkyGolay'}):
 			raise ValueError('method must be == LOWESS or SavitzkyGolay')
-	if not isinstance(align, str) & (align in {'mean', 'median'}):
-		raise ValueError('align must be == mean or median')
+	if not isinstance(align, str) & (align in {'mean', 'median', 'no'}):
+		raise ValueError('align must be == mean, median or no')
 	if not isinstance(parallelise, bool):
 		raise TypeError("parallelise must be a boolean")
 	if not isinstance(excludeFailures, bool):
@@ -104,8 +104,8 @@ def _batchCorrectionHead(data, runOrder, referenceSamples, batchList, window=11,
 	if method is not None:
 		if not isinstance(method, str) & (method in {'LOWESS', 'SavitzkyGolay'}):
 			raise ValueError('method must be == LOWESS or SavitzkyGolay')	
-	if not isinstance(align, str) & (align in {'mean', 'median'}):
-			raise ValueError('align must be == mean or median')
+	if not isinstance(align, str) & (align in {'mean', 'median', 'no'}):
+			raise ValueError('align must be == mean, median or no')
 	if not isinstance(parallelise, bool):
 		raise TypeError('parallelise must be True or False')
 	if not isinstance(savePlots, bool):
@@ -208,8 +208,8 @@ def _batchCorrection(data, runOrder, QCsamples, batchList, featureIndex, paramet
 			featureAverage = numpy.mean(feature[QCsamples])
 		elif parameters['align'] == 'median':
 			featureAverage = numpy.median(feature[QCsamples])
-		else:
-			return numpy.zeros_like(data)
+		#else:
+			#return numpy.zeros_like(data)
 				
 		# Iterate over batches.
 		for batch in batches:
@@ -233,11 +233,11 @@ def _batchCorrection(data, runOrder, QCsamples, batchList, featureIndex, paramet
 					batchMean = numpy.mean(feature[batchMask & QCsamples])
 				elif parameters['align'] == 'median':
 					batchMean = numpy.median(feature[batchMask & QCsamples])
-				else:
-					batchMean = numpy.nan_like(feature[batchMask])
-
-				feature[batchMask] = numpy.divide(feature[batchMask], batchMean)
-				feature[batchMask] = numpy.multiply(feature[batchMask], featureAverage)
+				#else:
+				#	batchMean = numpy.nan_like(feature[batchMask])
+				if parameters['align'] != 'no':
+					feature[batchMask] = numpy.divide(feature[batchMask], batchMean)
+					feature[batchMask] = numpy.multiply(feature[batchMask], featureAverage)
 				
 #				# If negative data mark for exclusion (occurs when too many QCsamples have intensity==0)
 #				if sum(feature[batchMask]<0) != 0:  # CJS 240816
@@ -261,11 +261,13 @@ def runOrderCompensation(data, runOrder, referenceSamples, parameters):
 	# Select model
 	# Optimisation of window would happen here.
 	window = parameters['window']
+	align = parameters['align']
 	if parameters['method'] == 'LOWESS':
 		(data, fit) = doLOESScorrection(QCdata, 
 										QCrunorder, 
 										data, 
-										runOrder, 
+										runOrder,
+										align=align,
 										window=window)
 	elif parameters['method'] == 'SavitzkyGolay':
 		(data, fit) = doSavitzkyGolayCorrection(QCdata, 
@@ -279,7 +281,7 @@ def runOrderCompensation(data, runOrder, referenceSamples, parameters):
 	return (data, fit)
 
 
-def doLOESScorrection(QCdata, QCrunorder, data, runorder, window=11):
+def doLOESScorrection(QCdata, QCrunorder, data, runorder, align='median', window=11):
 	"""
 	Fit a LOWESS regression to the data.
 	"""
@@ -304,9 +306,12 @@ def doLOESScorrection(QCdata, QCrunorder, data, runorder, window=11):
 		fit[fit < 0] = 0
 
 		corrected = numpy.divide(data, fit)
-		corrected = numpy.multiply(corrected, numpy.median(QCdata))
+		if align == 'median':
+			corrected = numpy.multiply(corrected, numpy.median(QCdata))
+		elif align == 'mean':
+			corrected = numpy.multiply(corrected, numpy.mean(QCdata))
 
-	return (corrected, fit)
+	return corrected, fit
 
 
 def doSavitzkyGolayCorrection(QCdata, QCrunorder, data, runorder, window=11, polyOrder=3):
@@ -326,7 +331,7 @@ def doSavitzkyGolayCorrection(QCdata, QCrunorder, data, runorder, window=11, pol
 	corrected = numpy.divide(data, fit)
 	corrected = numpy.multiply(corrected, numpy.median(QCdata))
 
-	return (corrected, fit)
+	return corrected, fit
 
 
 def optimiseCorrection(feature, optimise):
