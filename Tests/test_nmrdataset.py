@@ -47,13 +47,13 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 							name='Rack',
 							dtype=int)
 
-		pandas.util.testing.assert_series_equal(dataset.sampleMetadata['Rack'], rack)
+		pandas.testing.assert_series_equal(dataset.sampleMetadata['Rack'], rack)
 
 		study = pandas.Series(['Test1', 'Test', 'Test2', 'Test2', 'Test2', 'Test1'],
 							name='Study',
 							dtype=str)
 
-		pandas.util.testing.assert_series_equal(dataset.sampleMetadata['Study'], study)
+		pandas.testing.assert_series_equal(dataset.sampleMetadata['Study'], study)
 
 	def test_nmrdataset_raises(self):
 
@@ -397,7 +397,7 @@ class test_nmrdataset_bruker(unittest.TestCase):
 
 			for series in testSeries:
 				with self.subTest(msg='Testing %s' % series):
-					pandas.util.testing.assert_series_equal(dataset.sampleMetadata[series], expected[series])
+					pandas.testing.assert_series_equal(dataset.sampleMetadata[series], expected[series])
 
 		with self.subTest(msg='Serum dataset (UnitTest3).'):
 			dataPath = os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'nmr', 'UnitTest3')
@@ -432,7 +432,7 @@ class test_nmrdataset_bruker(unittest.TestCase):
 
 			for series in testSeries:
 				with self.subTest(msg='Testing %s' % series):
-					pandas.util.testing.assert_series_equal(dataset.sampleMetadata[series], expected[series])
+					pandas.testing.assert_series_equal(dataset.sampleMetadata[series], expected[series])
 
 
 class test_nmrdataset_ISATAB(unittest.TestCase):
@@ -517,9 +517,9 @@ class test_nmrdataset_initialiseFromCSV(unittest.TestCase):
 			numpy.testing.assert_array_equal(rebuitData.intensityData, dataset.intensityData)
 
 			for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
-				pandas.util.testing.assert_series_equal(rebuitData.sampleMetadata[column], dataset.sampleMetadata[column], check_dtype=False)
+				pandas.testing.assert_series_equal(rebuitData.sampleMetadata[column], dataset.sampleMetadata[column], check_dtype=False)
 			for column in ['ppm']:
-				pandas.util.testing.assert_series_equal(rebuitData.featureMetadata[column], dataset.featureMetadata[column], check_dtype=False)
+				pandas.testing.assert_series_equal(rebuitData.featureMetadata[column], dataset.featureMetadata[column], check_dtype=False)
 
 			self.assertEqual(rebuitData.name, dataset.name)
 
