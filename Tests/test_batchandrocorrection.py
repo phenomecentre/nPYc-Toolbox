@@ -2,17 +2,14 @@
 Test that batch and run-order correction behaves sensibly with a combination of synthetic and model datasets.
 """
 
-import scipy
-import pandas
 import numpy
-import seaborn as sns
 import sys
 import unittest
-import os
 
 sys.path.append("..")
 import nPYc
 from generateTestDataset import generateTestDataset
+from nPYc.enumerations import SampleType
 
 
 class test_rocorrection(unittest.TestCase):
@@ -20,22 +17,44 @@ class test_rocorrection(unittest.TestCase):
 	Use stored and synthetic datasets to validate run-order correction.
 	"""
 
-	def test_correctmsdataset_parallelisation(self):
-		"""
-		Check that parallel and single threaded code paths return the same result.
-		"""
+	def setUp(self):
+		self.noSamp = numpy.random.randint(500, high=2000, size=None)
+		self.noFeat = numpy.random.randint(50, high=100, size=None)
 
-		noSamp = numpy.random.randint(500, high=2000, size=None)
-		noFeat = numpy.random.randint(50, high=100, size=None)
+		self.msData = generateTestDataset(self.noSamp, self.noFeat, dtype='MSDataset')
+		self.msDataERCorrection = generateTestDataset(20, 2, dtype='MSDataset')
+		self.msDataERCorrection._intensityData[self.msDataERCorrection.sampleMetadata['SampleType'] == SampleType.StudyPool, :] = 0.5
+		self.msDataERCorrection._intensityData[self.msDataERCorrection.sampleMetadata['SampleType'] == SampleType.StudySample, :] = 2
+		self.msDataERCorrection._intensityData[self.msDataERCorrection.sampleMetadata['SampleType'] == SampleType.ExternalReference, :] = 1
 
-		msData = generateTestDataset(noSamp, noFeat, dtype='MSDataset')
+	def test_correctMSDataset(self):
+		with self.subTest(msg='Test correctMSdataset parallelisation'):
+			"""
+			Check that parallel and single threaded code paths return the same result.
+			"""
 
-		correctedDataP = nPYc.batchAndROCorrection.correctMSdataset(msData, parallelise=True)
-		correctedDataS = nPYc.batchAndROCorrection.correctMSdataset(msData, parallelise=False)
+			correctedDataP = nPYc.batchAndROCorrection.correctMSdataset(self.msData, parallelise=True)
+			correctedDataS = nPYc.batchAndROCorrection.correctMSdataset(self.msData, parallelise=False)
 
-		numpy.testing.assert_array_almost_equal(correctedDataP.fit, correctedDataS.fit, err_msg="Serial and parallel fits not equal.")
+			numpy.testing.assert_array_almost_equal(correctedDataP.fit, correctedDataS.fit, err_msg="Serial and parallel fits not equal.")
 
-		numpy.testing.assert_array_almost_equal(correctedDataP.intensityData, correctedDataS.intensityData, err_msg="Serial and parallel corrected data not equal.")
+			numpy.testing.assert_array_almost_equal(correctedDataP.intensityData, correctedDataS.intensityData, err_msg="Serial and parallel corrected data not equal.")
+
+		with self.subTest(msg='Test correctMSdataset correction sample selection'):
+			"""
+			Check that parallel and single threaded code paths return the same result.
+			"""
+			expectedCorrectedERDataFit = numpy.ones((20, 2))
+
+			expectedCorrectedERDataIntensity = numpy.ones((20, 2))
+			expectedCorrectedERDataIntensity[self.msDataERCorrection.sampleMetadata['SampleType'] == SampleType.StudyPool, :] = 0.5
+			expectedCorrectedERDataIntensity[self.msDataERCorrection.sampleMetadata['SampleType'] == SampleType.StudySample, :] = 2
+
+			correctedDataER = nPYc.batchAndROCorrection.correctMSdataset(self.msDataERCorrection, parallelise=False, correctionSampleType=SampleType.ExternalReference)
+
+			numpy.testing.assert_array_almost_equal(correctedDataER.fit, expectedCorrectedERDataFit, err_msg="Correction trendlines are not equal.")
+
+			numpy.testing.assert_array_almost_equal(correctedDataER.intensityData, expectedCorrectedERDataIntensity, err_msg="Corrected intensities are not equal")
 
 
 class test_rocorrection_synthetic(unittest.TestCase):
@@ -64,10 +83,12 @@ class test_rocorrection_synthetic(unittest.TestCase):
 		(only testing LOWESS at present)
 		"""
 
-		(corrected,fit) = nPYc.batchAndROCorrection._batchAndROCorrection.runOrderCompensation(self.testD,
+		corrected, fit = nPYc.batchAndROCorrection._batchAndROCorrection.runOrderCompensation(self.testD,
 																							self.testRO,
 																							self.testSRmask,
-																							{'window':11, 'method':'LOWESS', 'align':'median'})
+																							{'window': 11,
+																							 'method': 'LOWESS',
+																							 'align': 'median'})
 
 		numpy.testing.assert_array_almost_equal(self.testD, fit)
 		numpy.testing.assert_array_almost_equal(numpy.std(corrected), 0.)
@@ -77,7 +98,7 @@ class test_rocorrection_synthetic(unittest.TestCase):
 		Correction of a monotonically increasing trend should be essentially perfect.
 		"""
 
-		(corrected,fit) = nPYc.batchAndROCorrection._batchAndROCorrection.doLOESScorrection(self.testD[self.testSRmask],
+		corrected, fit = nPYc.batchAndROCorrection._batchAndROCorrection.doLOESScorrection(self.testD[self.testSRmask],
 																							self.testRO[self.testSRmask],
 																							self.testD,
 																							self.testRO,
@@ -86,7 +107,7 @@ class test_rocorrection_synthetic(unittest.TestCase):
 		numpy.testing.assert_array_almost_equal(self.testD, fit)
 		numpy.testing.assert_array_almost_equal(numpy.std(corrected), 0.)
 
-	def test_batchCorrection_sythetic(self):
+	def test_batchCorrection_synthetic(self):
 
 		# We need at least two features - pick which randomly
 		testD2 = numpy.array([self.testD, self.testD]).T
@@ -147,7 +168,7 @@ class test_batchcorrection(unittest.TestCase):
 			sigma = numpy.random.randn(1)
 			self.testD[batchMask] = sigma * numpy.random.randn(noSamples) + batchMean
 
-	def test_batchCorrection_sythetic(self):
+	def test_batchCorrection_synthetic(self):
 		"""
 		Check we can correct the offset in averages of two normal distributions
 		"""
@@ -163,7 +184,7 @@ class test_batchcorrection(unittest.TestCase):
 																					self.testSRmask,
 																					self.batch,
 																					[featureNo],
-																					{'align':'mean', 'window':11, 'method':None},
+																					{'align': 'mean', 'window': 11, 'method': None},
 																					0)
 
 			means = list()
@@ -182,7 +203,7 @@ class test_batchcorrection(unittest.TestCase):
 																					self.testSRmask,
 																					self.batch,
 																					[featureNo],
-																					{'align':'median', 'window':11, 'method':None},
+																					{'align': 'median', 'window': 11, 'method': None},
 																					0)
 
 			medians = list()
@@ -192,6 +213,50 @@ class test_batchcorrection(unittest.TestCase):
 				medians.append(numpy.median(feature[(self.batch == batch) & self.testSRmask]))
 
 			numpy.testing.assert_allclose(medians, overallMedian)
+
+		with self.subTest(msg='Checking alignment=\'none\', with method == None'):
+
+			output = nPYc.batchAndROCorrection._batchAndROCorrection._batchCorrection(testD2,
+																					self.testRO,
+																					self.testSRmask,
+																					self.batch,
+																					[featureNo],
+																					{'align': 'no', 'window': 11, 'method': None},
+																					0)
+			# Check if means are unchanged before and after correction (with method == None)
+			means = list()
+			batchWiseMeans = list()
+			batches = list(set(self.batch))
+			for batch in batches:
+				feature = output[featureNo][1]
+				batchWiseMeans.append(numpy.mean(self.testD[(self.batch == batch) & self.testSRmask]))
+				means.append(numpy.mean(feature[(self.batch == batch) & self.testSRmask]))
+
+			numpy.testing.assert_allclose(means, batchWiseMeans)
+
+			with self.subTest(msg='Checking alignment=\'none\', with method == LOWESS'):
+
+				output = nPYc.batchAndROCorrection._batchAndROCorrection._batchCorrection(
+					testD2,
+					self.testRO,
+					self.testSRmask,
+					self.batch,
+					[featureNo],
+					{'align': 'no', 'window': 11, 'method': 'LOWESS'},
+					0)
+
+				# Check if means are unchanged before and after correction (with method == 'LOWESS')
+				# Without alignment, the mean of corrected data is expected to be close to 1 if batch
+				# contains positive values and -np.inf if batch contains negative values
+				batches = list(set(self.batch))
+				expectedMeans = numpy.array([1 if numpy.mean(self.testD[(self.batch == x) & self.testSRmask]) > 0 else -numpy.inf for x in batches])
+				means = list()
+				for batch in batches:
+					feature = output[featureNo][1]
+					means.append(numpy.mean(
+						feature[(self.batch == batch) & self.testSRmask]))
+
+				numpy.testing.assert_allclose(means, expectedMeans,  rtol=1e-03)
 
 		def test_correctMSdataset_raises(self):
 
