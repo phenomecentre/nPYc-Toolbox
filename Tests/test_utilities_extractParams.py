@@ -335,7 +335,7 @@ class test_utilities_extractParams(unittest.TestCase):
 			expected.sort_values('File Path', inplace=True)
 			expected.reset_index(inplace=True)
 			obtained.reset_index(inplace=True)
-			pandas.testing.assert_frame_equal(obtained, expected)
+			pandas.testing.assert_frame_equal(obtained, expected, check_like=True)
 
 	def test_extractParams_extractmzMLParams_warns(self):
 
