@@ -73,7 +73,7 @@ class test_utilities_massSpectrumBuilder_synthetic(unittest.TestCase):
 		expectedFeatureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
 			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=expectedFeatureMetadata.index)
 
-		pandas.util.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
+		pandas.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
 
 
 	def test_utilities_massSpectrumBuilder_rtwindow(self):
@@ -100,14 +100,14 @@ class test_utilities_massSpectrumBuilder_synthetic(unittest.TestCase):
 				= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]],
 								   index=expectedFeatureMetadata.index)
 
-			pandas.util.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
+			pandas.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
 
 		with self.subTest(msg='Restrictive window'):
 			filteredData = massSpectrumBuilder(self.msData, correlationThreshold=0.95, rtWindow=0.1, simulatedSpecra=False)
 
 			expectedFeatureMetadata = copy.copy(self.msData.featureMetadata)
 			expectedFeatureMetadata['Correlated Features'] = ''
-			pandas.util.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
+			pandas.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
 
 
 	def test_utilities_massSpectrumBuilder_correlationThreshold(self):
@@ -130,7 +130,7 @@ class test_utilities_massSpectrumBuilder_synthetic(unittest.TestCase):
 		expectedFeatureMetadata[['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] \
 			= pandas.DataFrame([[numpy.nan, numpy.nan, numpy.nan, numpy.nan]], index=expectedFeatureMetadata.index)
 
-		pandas.util.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
+		pandas.testing.assert_frame_equal(filteredData.featureMetadata.sort_index(axis=1), expectedFeatureMetadata.sort_index(axis=1))
 
 
 	def test_utilities_massSpectrumBuilder_log(self):
