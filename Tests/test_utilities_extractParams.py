@@ -333,8 +333,10 @@ class test_utilities_extractParams(unittest.TestCase):
 			obtained = extractParams(pathHeader, filetype='.mzML')
 			obtained.sort_values('File Path', inplace=True)
 			expected.sort_values('File Path', inplace=True)
-			expected.reset_index(inplace=True)
-			obtained.reset_index(inplace=True)
+			expected.reset_index(axis=1, inplace=True)
+			obtained.reset_index(axis=1, inplace=True)
+			expected.reset_index(axis=0, inplace=True)
+			obtained.reset_index(axis=0, inplace=True)
 			pandas.testing.assert_frame_equal(obtained, expected, check_like=True)
 
 	def test_extractParams_extractmzMLParams_warns(self):
