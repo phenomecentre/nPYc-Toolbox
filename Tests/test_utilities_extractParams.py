@@ -327,9 +327,9 @@ class test_utilities_extractParams(unittest.TestCase):
 			self.assertDictEqual(obtained, expected)
 
 		with self.subTest(msg='extractParams with mzML filetype'):
-			expected = pandas.DataFrame.from_dict({'Warnings': {0: numpy.nan, 1: numpy.nan},
-												   'File Path': {0: '../../npc-standard-project/Raw_Data/ms/parameters_data/UnitTest_RPOS_ToF10_U1W72_SR.mzML', 1: '../../npc-standard-project/Raw_Data/ms/parameters_data/UnitTest_RPOS_ToF10_U1W82_SR.mzML'}, 'Sample File Name': {0: 'UnitTest_RPOS_ToF10_U1W72_SR', 1: 'UnitTest_RPOS_ToF10_U1W82_SR'},
-												   'Acquired Time': {0: pandas.Timestamp('2018-01-19 08:35:33'), 1: pandas.Timestamp('2018-01-19 08:35:33')}})
+			expected = pandas.DataFrame.from_dict({'Warnings': [numpy.nan, numpy.nan],
+												   'File Path': ['../../npc-standard-project/Raw_Data/ms/parameters_data/UnitTest_RPOS_ToF10_U1W72_SR.mzML', '../../npc-standard-project/Raw_Data/ms/parameters_data/UnitTest_RPOS_ToF10_U1W82_SR.mzML'], 'Sample File Name': ['UnitTest_RPOS_ToF10_U1W72_SR', 'UnitTest_RPOS_ToF10_U1W82_SR'],
+												   'Acquired Time': [pandas.Timestamp('2018-01-19 08:35:33'), pandas.Timestamp('2018-01-19 08:35:33')]})
 			obtained = extractParams(pathHeader, filetype='.mzML')
 			obtained.sort_values('File Path', inplace=True)
 			expected.sort_values('File Path', inplace=True)
