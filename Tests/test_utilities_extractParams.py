@@ -331,7 +331,7 @@ class test_utilities_extractParams(unittest.TestCase):
 												   'File Path': {0: '../../npc-standard-project/Raw_Data/ms/parameters_data/UnitTest_RPOS_ToF10_U1W72_SR.mzML', 1: '../../npc-standard-project/Raw_Data/ms/parameters_data/UnitTest_RPOS_ToF10_U1W82_SR.mzML'}, 'Sample File Name': {0: 'UnitTest_RPOS_ToF10_U1W72_SR', 1: 'UnitTest_RPOS_ToF10_U1W82_SR'},
 												   'Acquired Time': {0: pandas.Timestamp('2018-01-19 08:35:33'), 1: pandas.Timestamp('2018-01-19 08:35:33')}})
 			obtained = extractParams(pathHeader, filetype='.mzML')
-			pandas.testing.assert_frame_equal(obtained, expected, check_like=False)
+			pandas.testing.assert_frame_equal(obtained, expected, check_like=True)
 
 	def test_extractParams_extractmzMLParams_warns(self):
 
