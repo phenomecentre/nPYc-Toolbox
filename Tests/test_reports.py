@@ -323,6 +323,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
+		# New version of the report requires dilution series and
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
@@ -336,6 +337,12 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSelectionSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
+
+		with self.subTest(msg='Test raise ValueError when no dilution series or QC available'):
+
+			data.updateMasks(sampleTypes=[SampleType.StudySample], assayRoles=[AssayRole.Assay])
+			data.applyMasks()
+			self.assertRaises(ValueError, nPYc.reports.generateReport, data, 'feature selection')
 
 	def test_reports_ms_finalreport(self):
 
@@ -558,18 +565,18 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		# Class
 		self.assertEqual(type(result), type(expected))
 		# sampleMetadata
-		pandas.util.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
+		pandas.testing.assert_frame_equal(result.sampleMetadata, expected.sampleMetadata)
 		# featureMetadata
-		pandas.util.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
+		pandas.testing.assert_frame_equal(result.featureMetadata, expected.featureMetadata)
 		# intensityData
 		numpy.testing.assert_array_equal(result._intensityData, expected._intensityData)
 		# expectedConcentration
-		pandas.util.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
+		pandas.testing.assert_frame_equal(result.expectedConcentration, expected.expectedConcentration)
 		# Calibration
 		numpy.testing.assert_array_equal(result.calibration['calibIntensityData'], expected.calibration['calibIntensityData'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
-		pandas.util.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
+		pandas.testing.assert_frame_equal(result.calibration['calibSampleMetadata'], expected.calibration['calibSampleMetadata'])
+		pandas.testing.assert_frame_equal(result.calibration['calibFeatureMetadata'], expected.calibration['calibFeatureMetadata'])
+		pandas.testing.assert_frame_equal(result.calibration['calibExpectedConcentration'], expected.calibration['calibExpectedConcentration'])
 
 
 	def test_report_prePostMergeLOQSummaryTable(self):
@@ -580,11 +587,11 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		result = _prePostMergeLOQSummaryTable(inputDataset)
 
 		# LOQTable
-		pandas.util.testing.assert_frame_equal(result['LOQTable'],  expected['LOQTable'])
+		pandas.testing.assert_frame_equal(result['LOQTable'],  expected['LOQTable'])
 		# LLOQTable
-		pandas.util.testing.assert_frame_equal(result['LLOQTable'], expected['LLOQTable'])
+		pandas.testing.assert_frame_equal(result['LLOQTable'], expected['LLOQTable'])
 		# ULOQTable
-		pandas.util.testing.assert_frame_equal(result['ULOQTable'], expected['ULOQTable'])
+		pandas.testing.assert_frame_equal(result['ULOQTable'], expected['ULOQTable'])
 
 
 	def test_report_getaccuracyprecisiontable(self):
@@ -614,11 +621,11 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		resultAccPre.sort_index(axis=1, inplace=True)
 		# Accuracy Table
 		
-		pandas.util.testing.assert_frame_equal(resultAcc, expectedAcc, check_dtype=False, check_index_type=False, check_column_type=False, check_like=False)
+		pandas.testing.assert_frame_equal(resultAcc, expectedAcc, check_dtype=False, check_index_type=False, check_column_type=False, check_like=False)
 		# Precision Table
-		pandas.util.testing.assert_frame_equal(resultPre, expectedPre, check_dtype=False, check_index_type=False, check_column_type=False, check_like=False)
+		pandas.testing.assert_frame_equal(resultPre, expectedPre, check_dtype=False, check_index_type=False, check_column_type=False, check_like=False)
 		# Both Tables
-		pandas.util.testing.assert_frame_equal(resultAccPre, expectedAccPre, check_dtype=False, check_index_type=False, check_column_type=False, check_like=False)
+		pandas.testing.assert_frame_equal(resultAccPre, expectedAccPre, check_dtype=False, check_index_type=False, check_column_type=False, check_like=False)
 
 
 	def test_reports_targeted_featuresummary(self):
