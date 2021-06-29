@@ -323,6 +323,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms', 'parameters_data'))
 		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
+		# New version of the report requires dilution series and
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
@@ -336,6 +337,12 @@ class test_reports_ms_generatereport(unittest.TestCase):
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSelectionSummary', testFile)
 				self.assertTrue(os.path.exists(expectedPath))
+
+		with self.subTest(msg='Test raise ValueError when no dilution series or QC available'):
+
+			data.updateMasks(sampleTypes=[SampleType.StudySample], assayRoles=[AssayRole.Assay])
+			data.applyMasks()
+			self.assertRaises(ValueError, nPYc.reports.generateReport, data, 'feature selection')
 
 	def test_reports_ms_finalreport(self):
 

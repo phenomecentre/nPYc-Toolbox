@@ -800,6 +800,10 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
     Blankmask = dataset.sampleMetadata['SampleType'] == SampleType.ProceduralBlank
 
+    if (sum(SRDmask) <= 2) | (sum(SRmask) <= 1):
+        raise ValueError('Cannot generate report - No linearity reference or '
+                         'precision reference samples available')
+
     # Define passmask as current featureMask
     passMask = dataset.featureMask
 
