@@ -256,7 +256,7 @@ class test_batchcorrection(unittest.TestCase):
 					means.append(numpy.mean(
 						feature[(self.batch == batch) & self.testSRmask]))
 
-				numpy.testing.assert_allclose(means, expectedMeans,  rtol=1e-03)
+				numpy.testing.assert_allclose(means, expectedMeans,  rtol=1e-02)
 
 		def test_correctMSdataset_raises(self):
 
