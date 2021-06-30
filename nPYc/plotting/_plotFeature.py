@@ -1,0 +1,247 @@
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy
+import pandas
+import copy
+from ..objects._msDataset import MSDataset
+from ._violinPlot import _violinPlotHelper
+from ..enumerations import AssayRole, SampleType
+import matplotlib.dates as mdates
+from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
+from matplotlib.dates import WeekdayLocator
+from matplotlib.dates import DateFormatter
+from matplotlib import gridspec
+from matplotlib.patches import Rectangle
+
+
+# General function to be re-used in TIC and other plots
+def _scatterplot(x, y, colourBy=None, ax=None, title='', savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+    return None
+
+
+def _boxplot(x, y, colourBy, ax=None, title='', savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+    return None
+
+
+def plotFeature(msData, featureName, xAxis='Acquired Time', colourBy=None, addViolin=True, addBatchShading=False, logy=False, title='', withExclusions=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+    """
+    Visualise Feature intensity across run order. Feature can be colored by continuous or discrete markers. if addBatchShading is True, plot is shaded by 'Batch'.
+
+    :param MSDataset msData: Dataset object
+    :param bool addViolin: If ``True`` adds violin plots of TIC distribution pre and post correction split by sample type
+    :param bool addBatchShading: If ``True`` shades plot according to sample batch
+    :param bool addLineAtGaps: If ``True`` adds line where acquisition time is greater than double the norm
+    :param bool colourByDetectorVoltage: If ``True`` colours points by detector voltage, else colours by dilution
+    :param bool logy: If ``True`` plot y on a log scale
+    :param str title: Title for the plot
+    :param bool withExclusions: If ``False``, discard masked features from the sum
+    :param savePath: If ``None`` plot interactively, otherwise save the figure to the path specified
+    :type savePath: None or str
+    :param str figureFormat: If saving the plot, use this format
+    :param int dpi: Plot resolution
+    :param figureSize: Dimensions of the figure
+    :type figureSize: tuple(float, float)
+    """
+    # Check inputs
+    if (addBatchShading) & (xAxis == 'Batch'):
+        raise ValueError('addBatchShading=True option incompatible with xAxis=\'Batch\'')
+    sns.set_color_codes(palette='deep')
+    fig = plt.figure(figsize=figureSize, dpi=dpi)
+    gs = gridspec.GridSpec(1, 5)
+
+    if addViolin:
+        ax = plt.subplot(gs[0, :-1])
+        ax2 = plt.subplot(gs[0, -1])
+    else:
+        ax = plt.subplot(gs[0, :-1])
+
+    # Load toolbox wide color scheme
+    if 'sampleTypeColours' in msData.Attributes.keys():
+        sTypeColourDict = copy.deepcopy(msData.Attributes['sampleTypeColours'])
+        for stype in SampleType:
+            if stype.name in sTypeColourDict.keys():
+                sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
+    else:
+        sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
+                            SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
+
+    # Mask features with inf values
+    tempFeatureMask = numpy.sum(numpy.isfinite(msData.intensityData), axis=0)
+    tempFeatureMask = tempFeatureMask < msData.intensityData.shape[0]
+    tempFeatureMask = (tempFeatureMask==False)
+
+    if withExclusions:
+        tempFeatureMask = numpy.logical_and(tempFeatureMask, msData.sampleMask)
+        tempSamplesMask = msData.sampleMask
+
+    else:
+        tempSamplesMask = numpy.ones(shape=msData.sampleMask.shape, dtype=bool)
+
+    # Define sample types
+    SSmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)) & tempSamplesMask
+    SPmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSamplesMask
+    ERmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSamplesMask
+    LRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)) & tempSamplesMask
+
+    # X axis limits for formatting
+    if xAxis == 'Acquired Time':
+        minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
+        maxX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
+        delta = maxX - minX
+        days = delta.astype('timedelta64[D]')
+        days = days / numpy.timedelta64(1, 'D')
+        if days < 7:
+            loc = WeekdayLocator(byweekday=(MO, TU, WE, TH, FR, SA, SU))
+        else:
+            loc = WeekdayLocator(byweekday=(MO, SA))
+        formatter = DateFormatter('%d/%m/%y')
+    elif xAxis == 'Run Order':
+        pass
+    elif xAxis == 'Batch':
+        pass
+
+    featureIndex = numpy.where(msData.featureMetadata['Feature Name'] == featureName)[0]
+    featureIntensity = msData.intensityData[msData.sampleMask, featureIndex]
+
+    # If colouring by detector voltage
+    if colourBy is not None:
+        # Check
+        if (msData.sampleMetadata[colourBy].dtype == float) or (msData.sampleMetadata[colourBy].dtype == int and len(msData.sampleMetadata[colourBy].unique()) > 10):
+            # Generate sample change in detector voltage
+            cMax = max(abs(colourBy))  	# colorbar symmetrical around 0
+            cMin = -cMax
+            colourMap = plt.cm.get_cmap('bwr')
+        # Discrete data
+        else:
+            sns.set_color_codes(palette='deep')
+            pass
+        # Ensure 'Acquired Time' is datetime.datetime, if it's already a datetime it will trigger an AttributeError
+        try:
+            acqTime = numpy.array([xtime.to_pydatetime() for xtime in msData.sampleMetadata['Acquired Time'].tolist()])
+        except AttributeError:
+            acqTime = numpy.array(msData.sampleMetadata['Acquired Time'].tolist())
+
+        # Plot TIC for different sample types, colored by change in detector voltage
+        if cMax != 0:
+            sc = ax.scatter(xAxis, featureIntensity, marker='o', c=colourBy, cmap=colourMap, vmin=cMin, vmax=cMax, edgecolors='grey')
+        # For the specific case where there is no detector voltage and colorscale collapses
+        else:
+            sc = ax.scatter(xAxis, featureIntensity, marker='^', s=30, linewidth=0.9, c='w', edgecolors='grey')
+
+    # Assume colorBy = None Colour by sample type
+    else:
+        # Plot TIC for different sample types
+        if sum(SSmask != 0):
+            ax.plot_date(xAxis[SSmask], featureIntensity[SSmask], c=sTypeColourDict[SampleType.StudySample], fmt='o', ms=6, label='Study Sample') # c='y',
+        if sum(SPmask != 0):
+            ax.plot_date(xAxis[SPmask], featureIntensity[SPmask], c=sTypeColourDict[SampleType.StudyPool], fmt='v', ms=8, label='Study Reference') # c='m',
+        if sum(ERmask != 0):
+            ax.plot_date(xAxis[ERmask], featureIntensity[ERmask], c=sTypeColourDict[SampleType.ExternalReference], fmt='^', ms=8, label='Long-Term Reference')
+        if sum(LRmask != 0):
+            ax.plot_date(xAxis[LRmask], featureIntensity[LRmask], c=sTypeColourDict[SampleType.MethodReference], fmt='s', ms=6, label='Serial Dilution')
+
+    # Shade by automatically defined batches (if required)
+    if addBatchShading:
+
+        sampleMask = SSmask | SPmask | ERmask
+
+        # Unique batches
+        if 'Correction Batch' in msData.sampleMetadata.columns:
+            batches = (numpy.unique(msData.sampleMetadata.loc[sampleMask, 'Correction Batch'].values[~numpy.isnan(msData.sampleMetadata.loc[sampleMask, 'Correction Batch'].values)])).astype(int)
+        else:
+            batches = (numpy.unique(msData.sampleMetadata.loc[sampleMask, 'Batch'].values[~numpy.isnan(msData.sampleMetadata.loc[sampleMask, 'Batch'].values)])).astype(int)
+
+        # Define the colours (different for each batch) and get axis y-limits
+        cmap = plt.get_cmap('gnuplot')
+        colors = [cmap(i) for i in numpy.linspace(0, 1, len(batches)+1)]
+        ymin, ymax = ax.get_ylim()
+        colIX = 1
+
+        # Add shading for each batch
+        for i in batches:
+
+            # Create rectangle x coordinates
+            start = msData.sampleMetadata[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata[msData.sampleMetadata['Correction Batch'].values== i]['Run Order'])]['Acquired Time']
+            end = msData.sampleMetadata[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata[msData.sampleMetadata['Correction Batch'].values== i]['Run Order'])]['Acquired Time']
+
+            # Convert to matplotlib date representation
+            start = mdates.date2num(start)
+            end = mdates.date2num(end)
+
+            # Plot rectangle
+            rect = Rectangle((start, ymin), end-start, abs(ymin)+abs(ymax), color=colors[colIX], alpha=0.4, label='Batch %d' % (i), zorder=0)
+            ax.add_patch(rect)
+            colIX = colIX + 1
+    else:
+        # Still might need the batch information even if not using it for batch shading
+        sampleMask = SSmask | SPmask | ERmask
+        if 'Correction Batch' in msData.sampleMetadata.columns:
+            batches = (numpy.unique(msData.sampleMetadata.loc[sampleMask, 'Correction Batch'].values[~numpy.isnan(msData.sampleMetadata.loc[sampleMask, 'Correction Batch'].values)])).astype(int)
+        else:
+            batches = (numpy.unique(msData.sampleMetadata.loc[sampleMask, 'Batch'].values[~numpy.isnan(msData.sampleMetadata.loc[sampleMask, 'Batch'].values)])).astype(int)
+
+    # Add violin plot of data distribution (if required)
+    if addViolin:
+
+        sampleMasks = list()
+        palette = {}
+        if sum(SSmask)>0:
+            sampleMasks.append(('SS', SSmask))
+            palette['SS'] = sTypeColourDict[SampleType.StudySample]
+        if sum(SPmask)>0:
+            sampleMasks.append(('SR', SPmask))
+            palette['SR'] = sTypeColourDict[SampleType.StudyPool]
+        if sum(ERmask)>0:
+            sampleMasks.append(('LTR', ERmask))
+            palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
+        if sum(LRmask)>0:
+            sampleMasks.append(('SRD', LRmask))
+            palette['SRD'] = sTypeColourDict[SampleType.MethodReference]
+
+        limits = ax.get_ylim()
+
+        _violinPlotHelper(ax2, tic, sampleMasks, None, 'Sample Type', palette=palette, ylimits=limits, logy=logy)
+
+        sns.despine(trim=True, ax=ax2)
+
+    # Annotate figure
+    ax.set_xlabel('Acquisition Date')
+    ax.set_ylabel('TIC')
+    ax.set_xlim(minX, maxX)
+    ax.set_xticklabels(ax.xaxis.get_majorticklabels(), rotation=45)
+    ax.xaxis.set_major_locator(loc)
+    ax.xaxis.set_major_formatter(formatter)
+    try:
+        ax.set_ylim(ymin, ymax)
+    except:
+        pass
+    if logy:
+        ax.set_yscale('symlog')
+    else:
+        ax.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+
+    if colourBy and cMax != 0:
+        cbaxes = fig.add_axes([0.81, 0.15, 0.03, 0.64 - (len(batches) * 0.04)]) # shorter color bar as more batches are present
+        cbar = plt.colorbar(sc, cax=cbaxes)
+        cbar.set_label('Change in Detector Voltage')
+        leg = ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+    elif addViolin == False:
+        ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+
+    fig.suptitle(title)
+
+    # Save or output
+    if savePath:
+        try:
+            plt.savefig(savePath, bbox_extra_artists=(leg, ), bbox_inches='tight', format=figureFormat, dpi=dpi)
+        except UnboundLocalError:
+            plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
+        plt.close()
+    else:
+
+        plt.show()
+
+def plotFeatureInteractive():
+
+    return NotImplementedError
