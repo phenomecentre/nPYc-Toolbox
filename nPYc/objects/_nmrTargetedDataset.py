@@ -22,17 +22,13 @@ class NMRTargetedDataset(AbstractTargetedDataset):
         """
 
         super().__init__(sop=sop, **kwargs)
-        self.filePath, fileName = os.path.split(datapath)
-        self.fileName, fileExtension = os.path.splitext(fileName)
-        self.name = self.fileName
 
         # Load files and match data, calibration report and SOP, then Apply the limits of quantification
         if fileType == 'Bruker IvDR':
-            self._loadBrukerNMRTargeted(datapath, sop=sop)
+            self._loadBrukerNMRTargeted(datapath, sop=sop, **kwargs)
             self.VariableType = VariableType.Discrete
-            self.AnalyticalPlatform = AnalyticalPlatform.MS
+            self.AnalyticalPlatform = AnalyticalPlatform.NMR
             self.initialiseMasks()
-            self._lodData = None
         elif fileType == 'empty':
             # Build empty object for testing
             pass
@@ -50,29 +46,84 @@ class NMRTargetedDataset(AbstractTargetedDataset):
                                        '%s instance initiated, with %d samples, %d features, from %s'
                                        % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
 
-    @property
-    def intensityData(self):
+    def validateObject(self, verbose=True, raiseError=False, raiseWarning=True):
         """
-        Return intensity data matrix filtered by LODs
-        """
-        intensityData = self._intensityData * (100 / self.sampleMetadata['Dilution']).values[:,
-                                                          numpy.newaxis]
+        Checks that all the attributes specified in the class definition are present and of the required class and/or values.
 
-        # Filter data as < limit of quantification on a sample per sample basis.
-        if self._lodData is not None:
-            intensityData[self._lodData == True] = -numpy.inf
+        Returns 4 boolean: is the object a *Dataset* < a *basic TargetedDataset*
+            < *has the object parameters for QC*
+            < *has the object sample metadata*.
 
-        return intensityData
+        To employ all class methods, the most inclusive (*has the object sample metadata*) must be successful:
 
-    @property
-    def rawIntensityData(self):
+        * *'Basic TargetedDataset'* checks :py:class:`~TargetedDataset` types and uniqueness as well as additional attributes.
+        * *'has parameters for QC'* is *'Basic TargetedDataset'* + sampleMetadata[['SampleType, AssayRole, Dilution, Run Order, Batch, Correction Batch, Sample Base Name]]
+        * *'has sample metadata'* is *'has parameters for QC'* + sampleMetadata[['Sample ID', 'Subject ID', 'Matrix']]
+
+        If *'sampleMetadataExcluded'*, *'intensityDataExcluded'*, *'featureMetadataExcluded'*, *'expectedConcentrationExcluded'* or *'excludedFlag'* exist, the existence and number of exclusions (based on *'sampleMetadataExcluded'*) is checked
+
+        Column type() in pandas.DataFrame are established on the first sample (for non int/float)
+        featureMetadata are search for column names containing *'LLOQ'* & *'ULOQ'* to allow for *'LLOQ_batch...'* after :py:meth:`~TargetedDataset.__add__`, the first column matching is then checked for dtype
+        If datasets are merged, calibration is a list of dict, and number of features is only kept constant inside each dict
+        Does not check for uniqueness in :py:attr:`~sampleMetadata['Sample File Name']`
+        Does not currently check for :py:attr:`~Attributes['Feature Name']`
+
+        :param verbose: if True the result of each check is printed (default True)
+        :type verbose: bool
+        :param raiseError: if True an error is raised when a check fails and the validation is interrupted (default False)
+        :type raiseError: bool
+        :param raiseWarning: if True a warning is raised when a check fails
+        :type raiseWarning: bool
+        :return: A dictionary of 4 boolean with True if the Object conforms to the corresponding test. 'Dataset' conforms to :py:class:`Dataset`, 'BasicTargetedDataset' conforms to :py:class:`Dataset` + basic :py:class:`TargetedDataset`, 'QC' BasicTargetedDataset + object has QC parameters, 'sampleMetadata' QC + object has sample metadata information
+        :rtype: dict
         """
-        Return the raw
-        :return: raw (non-LOD masked intensityData)
+
+        def conditionTest(successCond, successMsg, failureMsg, allFailures,
+                          verb, raiseErr, raiseWarn, exception):
+            if not successCond:
+                allFailures.append(failureMsg)
+                msg = failureMsg
+                if raiseWarn:
+                    warnings.warn(msg)
+                if raiseErr:
+                    raise exception
+            else:
+                msg = successMsg
+            if verb:
+                print(msg)
+
+            return allFailures
+
+        # init
+        failureListBasic = []
+        failureListQC = []
+        failureListMeta = []
+        # reference number of samples / features, from _intensityData
+        refNumSamples = None
+        refNumFeatures = None
+        # reference ['Feature Name'], from featureMetadata
+        refFeatureName = None
+        # reference number of calibration samples, from calibration['calibIntensityData']
+        refNumCalibSamples = None
+        # reference number of exclusions in list, from sampleMetadataExcluded
+        refNumExcluded = None
+
+        # TODO: review at the end what checks are not covered in abstractTargetedDataset
+
+        super().validateObject(verbose, raiseError, raiseWarning)
+
+    def __add__(self, other):
+        return NotImplementedError
+
+    def __radd__(self, other):
         """
-        intensityData = self._intensityData * (100 / self.sampleMetadata['Dilution']).values[:,
-                                                          numpy.newaxis]
-        return intensityData
+        :param other: Another NMRTargetedDataset
+        :return: NMRTargetedDataset containing all samples in the individual dataset objects
+        """
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
 
     def _loadBrukerNMRTargeted(self, filepath, unit=None, pdata=1, fileNamePattern=None, **kwargs):
         """
@@ -168,7 +219,7 @@ class NMRTargetedDataset(AbstractTargetedDataset):
         self._intensityData = intensityData
         self.sampleMetadata = sampleMetadata
         self.featureMetadata = featureMetadata
-        self._lodData = lodData
+        self._lodMatrix = lodData
 
         self.expectedConcentration = pandas.DataFrame(None, index=list(self.sampleMetadata.index),
                                                       columns=self.featureMetadata['Feature Name'].tolist())
@@ -179,16 +230,3 @@ class NMRTargetedDataset(AbstractTargetedDataset):
         print(str(self.featureMetadata.shape[0]) + ' features')
 
         return None
-
-    def __add__(self, other):
-        return NotImplementedError
-
-    def __radd__(self, other):
-        """
-        :param other: Another NMRTargetedDataset
-        :return: NMRTargetedDataset containing all samples in the individual dataset objects
-        """
-        if other == 0:
-            return self
-        else:
-            return self.__add__(other)

@@ -39,9 +39,6 @@ class MSTargetedDataset(AbstractTargetedDataset):
             self.VariableType = VariableType.Discrete
             self.AnalyticalPlatform = AnalyticalPlatform.MS
             self.initialiseMasks()
-            self.lodData = None
-            self.ISIntensityData = None
-            self.expectedConcentration = None
         elif fileType == 'TargetLynx':
             return NotImplementedError
         elif fileType == 'Biocrates':
@@ -49,9 +46,7 @@ class MSTargetedDataset(AbstractTargetedDataset):
             self.VariableType = VariableType.Discrete
             self.AnalyticalPlatform = AnalyticalPlatform.MS
             self.initialiseMasks()
-            self.lodData = None
-            self.ISIntensityData = None
-            self.expectedConcentration = None
+
         elif fileType == 'empty':
             # Build empty object for testing
             pass

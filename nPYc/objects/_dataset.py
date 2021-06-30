@@ -552,17 +552,17 @@ class Dataset:
 		# end self.Attributes dictionary
 		# end self.Attributes
 
-		## self.VariableType
-		# exist
-		condition = hasattr(self, 'VariableType')
-		success = 'Check self.VariableType exists:\tOK'
-		failure = 'Check self.VariableType exists:\tFailure, no attribute \'self.VariableType\''
-		failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
-									exception=AttributeError(failure))
-		# end Variabletype
+		## self.VariableType is a enum VariableType
+		condition = isinstance(self.VariableType, VariableType)
+		success = 'Check self.VariableType is an enum \'VariableType\':\tOK'
+		failure = 'Check self.VariableType is an enum \'VariableType\':\tFailure, \'self.VariableType\' is' + str(
+			type(self.VariableType))
+		failureListBasic = conditionTest(condition, success, failure,
+										 failureList, verbose, raiseError,
+										 raiseWarning,
+										 exception=TypeError(failure))
 
-		## self._Normalisation
-		# exist
+		## self._Normalisation exists
 		condition = hasattr(self, '_Normalisation')
 		success = 'Check self._Normalisation exists:\tOK'
 		failure = 'Check self._Normalisation exists:\tFailure, no attribute \'self._Normalisation\''
@@ -576,10 +576,8 @@ class Dataset:
 				type(self._Normalisation))
 			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
 										exception=TypeError(failure))
-		# end self._Normalisation
 
-		## self._name
-		# exist
+		## self._name exist
 		condition = hasattr(self, '_name')
 		success = 'Check self._name exists:\tOK'
 		failure = 'Check self._name exists:\tFailure, no attribute \'self._name\''
@@ -592,10 +590,8 @@ class Dataset:
 			failure = 'Check self._name is a str:\tFailure, \'self._name\' is ' + str(type(self._name))
 			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
 										exception=TypeError(failure))
-		# end self._name
 
-		## self._intensityData
-		# exist
+		## self._intensityData exist
 		condition = hasattr(self, '_intensityData')
 		success = 'Check self._intensityData exists:\tOK'
 		failure = 'Check self._intensityData exists:\tFailure, no attribute \'self._intensityData\''
@@ -609,11 +605,8 @@ class Dataset:
 				type(self._intensityData))
 			failureList = conditionTest(condition, success, failure, failureList, verbose, raiseError, raiseWarning,
 										exception=TypeError(failure))
-		# end self._intensityData numpy.ndarray
-		# end self._intensityData
 
-		## self.sampleMetadata
-		# exist
+		## self.sampleMetadata exist
 		condition = hasattr(self, 'sampleMetadata')
 		success = 'Check self.sampleMetadata exists:\tOK'
 		failure = 'Check self.sampleMetadata exists:\tFailure, no attribute \'self.sampleMetadata\''
@@ -1194,6 +1187,7 @@ class Dataset:
 
 			self.featureMetadata = currentMetadata
 
+		# TODO: decide if this should be in targeted only, or if should be eliminated in favour of addFeatureInfo
 		elif descriptionFormat.lower() == 'reference ranges':
 			from ..utilities._addReferenceRanges import addReferenceRanges
 			addReferenceRanges(self.featureMetadata, filePath)
