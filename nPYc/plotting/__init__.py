@@ -24,6 +24,7 @@ from ._plotNMRsolvent import plotSolventResonance, plotSolventResonanceInteracti
 from ._jointplotRSDvCorrelation import jointplotRSDvCorrelation
 from ._plotRSDs import plotRSDs, plotRSDsInteractive
 from ._plotTIC import plotTIC
+from ._plotFeature import plotFeature, plotFeatureInteractive
 from ._plotIonMap import plotIonMap
 from ._plotBatchAndROCorrection import plotBatchAndROCorrection
 from ._multivariatePlotting import plotScree, plotScores, plotOutliers, plotLoadings, plotScoresInteractive, plotLoadingsInteractive, plotMetadataDistribution
@@ -43,4 +44,4 @@ __all__ = ['histogram', 'plotBatchAndROCorrection', 'plotTIC', 'plotTICinteracti
 		   'plotLoadings', 'plotLoadingsInteractive', 'plotDiscreteLoadings', 'plotFeatureRanges', 'plotMetadataDistribution', 'plotLOQRunOrder', 
 		   'plotFeatureLOQ', 'plotVariableScatter', 'plotAccuracyPrecision', 'plotCalibrationInteractive', 'plotLineWidth', 'plotLineWidthInteractive',
 		   'plotBaseline', 'plotBaselineInteractive', 'plotSolventResonance', 'plotSolventResonanceInteractive', 'plotSpectraInteractive', 'plotIonMapInteractive',
-		   'plotSpectralVarianceInteractive', 'correlationSpectroscopyInteractive', 'plotTargetedFeatureDistribution']
+		   'plotSpectralVarianceInteractive', 'correlationSpectroscopyInteractive', 'plotTargetedFeatureDistribution', 'plotFeature', 'plotFeatureInteractive']

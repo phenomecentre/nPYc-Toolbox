@@ -1281,3 +1281,59 @@ class test_plotting_helpers(unittest.TestCase):
 		expected = [1.1, 4, 6, 8, 10, 12, 13.5]
 
 		self.assertEqual(obtained, expected)
+
+
+class test_plotting_plotFeature(unittest.TestCase):
+
+	def setUp(self):
+		self.noSamp = numpy.random.randint(50, high=100, size=None)
+		self.noFeat = numpy.random.randint(10, high=20, size=None)
+		self.msData = generateTestDataset(self.noSamp, self.noFeat)
+
+	def test_plotFeature(self):
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+
+			with self.subTest(msg='With a feature mask'):
+				outputPath = os.path.join(tmpdirname, 'basic')
+				nPYc.plotting.plotTIC(self.msData, savePath=outputPath)
+				self.assertTrue(os.path.exists(outputPath))
+			with self.subTest(msg='With a feature mask'):
+				outputPath = os.path.join(tmpdirname, 'noViolinByDetector')
+				nPYc.plotting.plotTIC(self.msData, addViolin=False, addBatchShading=True, colourByDetectorVoltage=True, savePath=outputPath)
+				self.assertTrue(os.path.exists(outputPath))
+			with self.subTest(msg='With a feature mask'):
+				outputPath = os.path.join(tmpdirname, 'withBatches')
+				nPYc.plotting.plotTIC(self.msData, addBatchShading=True, savePath=outputPath)
+				self.assertTrue(os.path.exists(outputPath))
+			with self.subTest(msg='With a feature mask'):
+				outputPath = os.path.join(tmpdirname, 'logY')
+				nPYc.plotting.plotTIC(self.msData, logy= True, addViolin=False, savePath=outputPath)
+				self.assertTrue(os.path.exists(outputPath))
+
+			with self.subTest(msg='With a feature mask'):
+				self.assertRaises(ValueError, nPYc.plotting.plotFeature, self.msData, addViolin=True, colourByDetectorVoltage=True)
+
+	def test_plotFeatureInteractive(self):
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+
+			with self.subTest(msg='With a feature mask'):
+				outputPath = os.path.join(tmpdirname, 'basic')
+				nPYc.plotting.plotTIC(self.msData, savePath=outputPath)
+				self.assertTrue(os.path.exists(outputPath))
+			with self.subTest(msg='With a feature mask'):
+				outputPath = os.path.join(tmpdirname, 'noViolinByDetector')
+				nPYc.plotting.plotTIC(self.msData, addViolin=False, addBatchShading=True, colourByDetectorVoltage=True, savePath=outputPath)
+				self.assertTrue(os.path.exists(outputPath))
+			with self.subTest(msg='With a feature mask'):
+				outputPath = os.path.join(tmpdirname, 'withBatches')
+				nPYc.plotting.plotTIC(self.msData, addBatchShading=True, savePath=outputPath)
+				self.assertTrue(os.path.exists(outputPath))
+			with self.subTest(msg='With a feature mask'):
+				outputPath = os.path.join(tmpdirname, 'logY')
+				nPYc.plotting.plotTIC(self.msData, logy= True, addViolin=False, savePath=outputPath)
+				self.assertTrue(os.path.exists(outputPath))
+
+			with self.subTest(msg='With a feature mask'):
+				self.assertRaises(ValueError, nPYc.plotting.plotFeature, self.msData, addViolin=True, colourByDetectorVoltage=True)
