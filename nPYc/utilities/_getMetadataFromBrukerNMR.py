@@ -33,7 +33,7 @@ def extractBrukerparams(path, queryItems, acqTimeRE):
 	path = os.path.dirname(path)
 
 	for inputFile in queryItems.keys():
-		localPath = os.path.normpath(os.path.join(os.path.relpath(path), inputFile))
+		localPath = os.path.normpath(os.path.join(path, inputFile))
 		try:
 			f = codecs.open(localPath, 'r', encoding='latin-1')
 			contents = f.read()
