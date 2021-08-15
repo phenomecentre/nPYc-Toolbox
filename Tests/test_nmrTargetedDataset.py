@@ -488,7 +488,7 @@ class test_nmrtargeteddataset_full_brukerxml_load(unittest.TestCase):
         self.expectedQuantUR['expectedConcentrationExcluded'] = []
         self.expectedQuantUR['excludedFlag'] = []
         # Attributes
-        tmpDataset = nPYc.TargetedDataset('', fileType='empty')
+        tmpDataset = nPYc.NMRTargetedDataset(datapath='', fileType='empty')
         self.expectedQuantUR['Attributes'] = {'methodName': "Bruker Quant-UR Data",
                                               'dpi': tmpDataset.Attributes['dpi'],
                                               'rsdThreshold': 30,
@@ -1217,16 +1217,15 @@ class test_nmrtargeteddataset_full_brukerxml_load(unittest.TestCase):
         with self.subTest(msg='Basic import BrukerQuant-UR with matching fileNamePattern'):
             expected = copy.deepcopy(self.expectedQuantUR)
             # Generate
-            result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR',
+            result = nPYc.NMRTargetedDataset(self.datapathQuantUR, fileType='Bruker IvDR', sop='BrukerQuant-UR',
                                           fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea')
             # Remove path from sampleMetadata
             result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
-            result.calibration['calibSampleMetadata'].drop(['Path'], axis=1, inplace=True)
 
             # Need to sort samples as different OS have different path order
             result.sampleMetadata.sort_values('Sample Base Name', inplace=True)
             sortIndex = result.sampleMetadata.index.values
-            result.intensityData = result.intensityData[sortIndex, :]
+            result._intensityData = result.intensityData[sortIndex, :]
             result.expectedConcentration = result.expectedConcentration.loc[sortIndex, :]
             result.sampleMetadata = result.sampleMetadata.reset_index(drop=True)
             result.expectedConcentration = result.expectedConcentration.reset_index(drop=True)
@@ -1242,21 +1241,7 @@ class test_nmrtargeteddataset_full_brukerxml_load(unittest.TestCase):
             pandas.testing.assert_frame_equal(
                 expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1),
                 result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
-            # Calibration
-            pandas.testing.assert_frame_equal(
-                expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1),
-                result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']),
-                                                                  axis=1))
-            pandas.testing.assert_frame_equal(
-                expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1),
-                result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']),
-                                                                   axis=1))
-            numpy.testing.assert_array_almost_equal(expected['calibIntensityData'],
-                                                    result.calibration['calibIntensityData'])
-            pandas.testing.assert_frame_equal(
-                expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1),
-                result.calibration['calibExpectedConcentration'].reindex(
-                    sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
+
             # Attributes, no check of 'Log'
             self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
             for i in expected['Attributes']:
@@ -1265,7 +1250,7 @@ class test_nmrtargeteddataset_full_brukerxml_load(unittest.TestCase):
         with self.subTest(msg='Basic import BrukerQuant-UR with implicit fileNamePattern from SOP'):
             expected = copy.deepcopy(self.expectedQuantUR)
             # Generate
-            result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR',
+            result = nPYc.NMRTargetedDataset(self.datapathQuantUR, fileType='Bruker IvDR', sop='BrukerQuant-UR',
                                           unit='mmol/mol Crea')
             # Remove path from sampleMetadata
             result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
@@ -1321,7 +1306,7 @@ class test_nmrtargeteddataset_full_brukerxml_load(unittest.TestCase):
                 # Cause all warnings to always be triggered.
 
                 warnings.simplefilter("always")
-                result = nPYc.TargetedDataset(self.datapathBILISA, fileType='Bruker Quantification',
+                result = nPYc.NMRTargetedDataset(self.datapathBILISA, fileType='Bruker IvDR',
                                               sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
                 # check each warning
                 self.assertEqual(len(w), 1)
@@ -1377,31 +1362,31 @@ class test_nmrtargeteddataset_full_brukerxml_load(unittest.TestCase):
 
         with self.subTest(msg='Raises TypeError if `fileNamePattern` is not a str'):
             self.assertRaises(TypeError,
-                              lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification',
+                              lambda: nPYc.NMRTargetedDataset(self.datapathQuantUR, fileType='Bruker IvDR',
                                                            sop='BrukerQuant-UR', fileNamePattern=5,
                                                            unit='mmol/mol Crea'))
 
         with self.subTest(msg='Raises TypeError if `pdata` is not am int'):
             self.assertRaises(TypeError,
-                              lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification',
+                              lambda: nPYc.NMRTargetedDataset(self.datapathQuantUR, fileType='Bruker IvDR',
                                                            sop='BrukerQuant-UR', pdata='notAnInt',
                                                            fileNamePattern='.*?urine_quant_report_b\.xml$',
                                                            unit='mmol/mol Crea'))
             self.assertRaises(TypeError,
-                              lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification',
+                              lambda: nPYc.NMRTargetedDataset(self.datapathQuantUR, fileType='Bruker IvDR',
                                                            sop='BrukerQuant-UR', pdata=1.0,
                                                            fileNamePattern='.*?urine_quant_report_b\.xml$',
                                                            unit='mmol/mol Crea'))
 
         with self.subTest(msg='Raises TypeError if `unit` is not None or a str'):
             self.assertRaises(TypeError,
-                              lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification',
+                              lambda: nPYc.NMRTargetedDataset(self.datapathQuantUR, fileType='Bruker IvDR',
                                                            sop='BrukerQuant-UR', unit=5,
                                                            fileNamePattern='.*?urine_quant_report_b\.xml$'))
 
         with self.subTest(msg='Raises ValueError if `unit` is not one of the unit in the input data'):
             self.assertRaises(ValueError,
-                              lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification',
+                              lambda: nPYc.NMRTargetedDataset(self.datapathQuantUR, fileType='Bruker IvDR',
                                                            sop='BrukerQuant-UR', unit='notAnExistingUnit',
                                                            fileNamePattern='.*?urine_quant_report_b\.xml$'))
 
@@ -1409,7 +1394,7 @@ class test_nmrtargeteddataset_full_brukerxml_load(unittest.TestCase):
     def test_loadlims(self, mock_stdout):
 
         with self.subTest(msg='UnitTest1'):
-            dataset = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR',
+            dataset = nPYc.NMRTargetedDataset(self.datapathQuantUR, fileType='Bruker IvDR', sop='BrukerQuant-UR',
                                            fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea')
 
             limspath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Worklists',
@@ -1438,7 +1423,7 @@ class test_nmrtargeteddataset_full_brukerxml_load(unittest.TestCase):
         with self.subTest(msg='UnitTest3'):
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', UserWarning)
-                dataset = nPYc.TargetedDataset(self.datapathBILISA, fileType='Bruker Quantification',
+                dataset = nPYc.NMRTargetedDataset(self.datapathBILISA, fileType='Bruker IvDR',
                                                sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
 
             limspath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Worklists',

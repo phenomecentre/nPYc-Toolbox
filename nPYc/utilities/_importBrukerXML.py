@@ -39,6 +39,7 @@ def importBrukerXML(filelist):
 
             if intensityData is None:
                 intensityData = numpy.zeros((len(filelist), len(quantList)))
+                lodData = numpy.zeros((len(filelist), len(quantList))).astype(bool)
                 featureMetadata = copy.deepcopy(df)
                 featureMetadata.drop('value', inplace=True, axis=1)
 
@@ -47,18 +48,17 @@ def importBrukerXML(filelist):
             sampleMetadata.loc[
                 sampleMetadata['Path'] == filename, 'Sample Base Name'] = \
             baseName[0] + '/' + baseName[1]
-            # sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample File Name'] = sampleName  # Sample File Name should match Base Name, instead of the Sample File Name hardcoded in the XML file
+            # sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Sample File Name'] = sampleName
+            # Sample File Name should match Base Name, instead of the Sample File Name hardcoded in the XML file
             sampleMetadata.loc[
                 sampleMetadata['Path'] == filename, 'Sample File Name'] = \
             baseName[0] + '/' + baseName[1]
             sampleMetadata.loc[sampleMetadata['Path'] == filename, 'expno'] = \
             baseName[1]
-            sampleMetadata.loc[sampleMetadata[
-                                   'Path'] == filename, 'Acquired Time'] = processingDate
+            sampleMetadata.loc[sampleMetadata['Path'] == filename, 'Acquired Time'] = processingDate
 
-            intensityData[
-            sampleMetadata.loc[sampleMetadata['Path'] == filename].index.values,
-            :] = df['value']
+            intensityData[sampleMetadata.loc[sampleMetadata['Path'] == filename].index.values, :] = df['value']
+            lodData[sampleMetadata.loc[sampleMetadata['Path'] == filename].index.values, :] = df['lodMask']
         except ElementTree.ParseError:
             warnings.warn('Error parsing xml in %s, skipping' % filename)
 
@@ -73,6 +73,7 @@ def importBrukerXML(filelist):
     ##
     if intensityData is not None:
         intensityData = intensityData[importPass, :]
+        lodData = lodData[importPass, :]
     sampleMetadata = sampleMetadata.loc[importPass, :]
     sampleMetadata.reset_index(drop=True, inplace=True)
 
@@ -80,7 +81,7 @@ def importBrukerXML(filelist):
     sampleMetadata['Acquired Time'] = pandas.to_datetime(
         sampleMetadata['Acquired Time'])
 
-    return (intensityData, sampleMetadata, featureMetadata)
+    return intensityData, sampleMetadata, featureMetadata, lodData
 
 
 def readBrukerXML(path):

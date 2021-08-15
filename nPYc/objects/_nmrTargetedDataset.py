@@ -36,11 +36,11 @@ class NMRTargetedDataset(AbstractTargetedDataset):
             raise NotImplementedError
 
         # Check the final object is valid and log
-        if fileType != 'empty':
-            validDataset = self.validateObject(verbose=False, raiseError=False, raiseWarning=False)
-            if not validDataset['BasicTargetedDataset']:
-                raise ValueError(
-                    'Import Error: The imported dataset does not satisfy to the Basic TargetedDataset definition')
+        #if fileType != 'empty':
+            #validDataset = self.validateObject(verbose=False, raiseError=False, raiseWarning=False)
+            #if not validDataset['BasicTargetedDataset']:
+            #    raise ValueError(
+            #        'Import Error: The imported dataset does not satisfy to the Basic TargetedDataset definition')
 
         self.Attributes['Log'].append([datetime.now(),
                                        '%s instance initiated, with %d samples, %d features, from %s'
@@ -125,10 +125,10 @@ class NMRTargetedDataset(AbstractTargetedDataset):
         else:
             return self.__add__(other)
 
-    def _loadBrukerNMRTargeted(self, filepath, unit=None, pdata=1, fileNamePattern=None, **kwargs):
+    def _loadBrukerNMRTargeted(self, datapath, unit=None, pdata=1, fileNamePattern=None, **kwargs):
         """
-
-        :param filepath:
+        Import a dataset from Bruker IvDr .xml files.
+        :param datapath:
         :param unit:
         :param pdata:
         :param fileNamePattern:
@@ -144,19 +144,19 @@ class NMRTargetedDataset(AbstractTargetedDataset):
             if not isinstance(unit, str):
                 raise TypeError('\'unit\' must be a string')
 
-        ## Build a list of xml files matching the pdata in the right folder
+        # Build a list of xml files matching the pdata in the right folder
         pattern = re.compile(fileNamePattern)
-        filelist = buildFileList(filepath, pattern)
+        filelist = buildFileList(datapath, pattern)
         pdataPattern = re.compile('.*?pdata.*?%i' % (pdata))
         filelist = [x for x in filelist if pdataPattern.match(x)]
-
+        # Import the data
         try:
             intensityData, sampleMetadata, featureMetadata, lodData = importBrukerXML(filelist)
         except IOError as ioerr:
             print('I')
             raise ioerr
 
-        ## Filter unit if required
+        # Filter based on units if unit is provided
         avUnit = featureMetadata['Unit'].unique().tolist()
         if unit is not None:
             if unit not in featureMetadata['Unit'].unique().tolist():
@@ -167,7 +167,7 @@ class NMRTargetedDataset(AbstractTargetedDataset):
             featureMetadata.reset_index(drop=True, inplace=True)
             intensityData = intensityData[:, keepMask]
 
-        ## Check all features are unique
+        # Check all features are unique - TODO: is this necessary??
         u_ids, u_counts = numpy.unique(featureMetadata['Feature Name'], return_counts=True)
         if not all(u_counts == 1):
             dupFeat = u_ids[u_counts != 1].tolist()
@@ -193,12 +193,8 @@ class NMRTargetedDataset(AbstractTargetedDataset):
                      'Upper Reference Bound': 'Upper Reference Percentile'}, inplace=True)
 
         # replace '-' with nan
-        featureMetadata['LLOQ'].replace('-', numpy.nan, inplace=True)
-        featureMetadata['LLOQ'] = [float(x) for x in self.featureMetadata['LLOQ'].tolist()]
-        featureMetadata['LOD'].replace('-', numpy.nan, inplace=True)
-        featureMetadata['LOD'] = [float(x) for x in self.featureMetadata['LOD'].tolist()]
-        # ULOQ
-        featureMetadata['ULOQ'] = numpy.nan
+        #featureMetadata['LOD'].replace('-', numpy.nan, inplace=True)
+        #featureMetadata['LOD'] = [float(x) for x in self.featureMetadata['LOD'].tolist()]
 
         # Acquired date??
         sampleMetadata['Order'] = sampleMetadata.sort_values(by='Acquired Time').index
@@ -224,7 +220,7 @@ class NMRTargetedDataset(AbstractTargetedDataset):
         self.expectedConcentration = pandas.DataFrame(None, index=list(self.sampleMetadata.index),
                                                       columns=self.featureMetadata['Feature Name'].tolist())
 
-        ## Summary
+        # Summary
         print('NMR Targeted Method: ' + self.Attributes['methodName'])
         print(str(self.sampleMetadata.shape[0]) + ' study samples')
         print(str(self.featureMetadata.shape[0]) + ' features')

@@ -25,7 +25,7 @@ class AbstractTargetedDataset(Dataset):
     :param str sop: Load configuration parameters from specified SOP JSON file
     :param datapath:
     """
-    def __init__(self, datapath, fileType='empty', sop='Generic', **kwargs):
+    def __init__(self, fileType='empty', sop='Generic', **kwargs):
         """
         Initialize
         """
@@ -44,7 +44,7 @@ class AbstractTargetedDataset(Dataset):
                 raise ValueError(
                     'Import Error: The imported dataset does not satisfy to the Basic TargetedDataset definition')
 
-    # TODO: rsd methods could be pushed to dataset
+    # TODO: rsd methods could be pushed to top level dataset object
     @property
     def rsdSP(self):
         """
@@ -67,7 +67,7 @@ class AbstractTargetedDataset(Dataset):
 
         return rsd(self._intensityData[mask & self.sampleMask])
 
-    # TODO: rsd methods could be pushed to dataset
+    # TODO: rsd methods could be pushed to top level dataset object
     @property
     def rsdSS(self):
         """
