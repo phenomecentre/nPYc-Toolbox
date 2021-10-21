@@ -34,7 +34,7 @@ from ..__init__ import __version__ as version
 
 
 def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactualFiltering=None, destinationPath=None,
-                          msDataCorrected=None, pcaModel=None, batch_correction_window=11, showSampleLabels=False):
+                          msDataCorrected=None, pcaModel=None, batch_correction_window=11, showSampleLabels=None):
     """
     Summarise different aspects of an MS dataset
 
@@ -55,6 +55,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
     :param None or bool withArtifactualFiltering: If ``None`` use the value from ``Attributes['artifactualFilter']``. If ``True`` apply artifactual filtering to the ``feature selection`` report and ``final report``
     :param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
     :type destinationPath: None or str
+    :param None or str showSampleLabels: If set, and str, uses this field to label the TIC plot.
     :param MSDataset msDataCorrected: Only if ``batch correction``, if msDataCorrected included will generate report post correction
     :param PCAmodel pcaModel: Only if ``final report``, if PCAmodel object is available PCA scores plots coloured by sample type will be added to report
     """
