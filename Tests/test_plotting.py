@@ -297,6 +297,8 @@ class test_plotting(unittest.TestCase):
 		msData = generateTestDataset(noSamp, noFeat)
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
+
+			print(tmpdirname)
 			outputPath = os.path.join(tmpdirname, 'basic')
 			nPYc.plotting.plotTIC(msData, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
@@ -311,6 +313,14 @@ class test_plotting(unittest.TestCase):
 
 			outputPath = os.path.join(tmpdirname, 'logY')
 			nPYc.plotting.plotTIC(msData, logy= True, addViolin=False, savePath=outputPath)
+			self.assertTrue(os.path.exists(outputPath))
+
+			outputPath = os.path.join(tmpdirname, 'sampleAnnotation')
+			sample_annotation = []
+			for index, row in msData.sampleMetadata.iterrows():
+				a_sample = dict(label=row['Sample File Name'], id=row['Sample File Name'], value=row['Sample File Name'])
+				sample_annotation.append(a_sample)
+			nPYc.plotting.plotTIC(msData, addViolin=False, addBatchShading=True, sampleAnnotation=sample_annotation, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
 

@@ -34,7 +34,7 @@ from ..__init__ import __version__ as version
 
 
 def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactualFiltering=None, destinationPath=None,
-                          msDataCorrected=None, pcaModel=None, batch_correction_window=11):
+                          msDataCorrected=None, pcaModel=None, batch_correction_window=11, showSampleLabels=False):
     """
     Summarise different aspects of an MS dataset
 
@@ -119,9 +119,9 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
     elif reportType.lower() == 'feature selection':
         _featureSelectionReport(msData, destinationPath)
     elif reportType.lower() == 'batch correction assessment':
-        _batchCorrectionAssessmentReport(msData, destinationPath)
+        _batchCorrectionAssessmentReport(msData, destinationPath,showSampleLabels=showSampleLabels)
     elif reportType.lower() == 'batch correction summary':
-        _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath)
+        _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath,showSampleLabels=showSampleLabels)
     elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged'):
         _finalReport(msData, destinationPath, pcaModel, reportType=reportType)
     elif (reportType.lower() == 'final report peakpanther'):
@@ -970,7 +970,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     return None
 
 
-def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correction_window=11):
+def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correction_window=11, showSampleLabels=False):
     """
     Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
     """
@@ -1032,13 +1032,26 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     else:
         print('Overall Total Ion Count (TIC) for all samples and features, coloured by batch.')
 
+    if showSampleLabels:
+        if isinstance(showSampleLabels,str) and showSampleLabels in dataset.sampleMetadata.columns:
+            label_field = showSampleLabels
+        else:
+            label_field = 'Sample File Name'
+        sampleAnnotation = []
+        for index, row in dataset.sampleMetadata.iterrows():
+            a_sample = dict(label=row[label_field], id=row['Sample File Name'], value=row['Sample File Name'])
+            sampleAnnotation.append(a_sample)
+    else:
+        sampleAnnotation=None
+
     plotTIC(dataset,
             addViolin=True,
             addBatchShading=True,
             savePath=saveAs,
             figureFormat=dataset.Attributes['figureFormat'],
             dpi=dataset.Attributes['dpi'],
-            figureSize=dataset.Attributes['figureSize'])
+            figureSize=dataset.Attributes['figureSize'],
+            sampleAnnotation=sampleAnnotation)
 
     # Remaining figures: Sample of fits for selection of features
     (preData, postData, maskNum) = batchCorrectionTest(dataset, nFeatures=10, window=batch_correction_window)
@@ -1105,7 +1118,7 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     return None
 
 
-def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=None):
+def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=None, showSampleLabels=False):
     """
     Generates a report post batch correction with pertinent figures (TIC, RSD etc.) before and after.
     """
@@ -1196,13 +1209,26 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
             print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
             print('Pre-correction.')
 
+        if showSampleLabels:
+            if isinstance(showSampleLabels,str) and showSampleLabels in dataset.sampleMetadata.columns:
+                label_field = showSampleLabels
+            else:
+                label_field = 'Sample File Name'
+            sampleAnnotation = []
+            for index, row in dataset.sampleMetadata.iterrows():
+                a_sample = dict(label=row[label_field], id=row['Sample File Name'], value=row['Sample File Name'])
+                sampleAnnotation.append(a_sample)
+        else:
+            sampleAnnotation=None
+
         plotTIC(dataset,
                 addViolin=True,
                 title='TIC Pre Batch-Correction',
                 savePath=saveAs,
                 figureFormat=dataset.Attributes['figureFormat'],
                 dpi=dataset.Attributes['dpi'],
-                figureSize=dataset.Attributes['figureSize'])
+                figureSize=dataset.Attributes['figureSize'],
+                sampleAnnotation=sampleAnnotation)
 
         # Post-correction
         if destinationPath:
@@ -1217,7 +1243,8 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
                 savePath=saveAs,
                 figureFormat=dataset.Attributes['figureFormat'],
                 dpi=dataset.Attributes['dpi'],
-                figureSize=dataset.Attributes['figureSize'])
+                figureSize=dataset.Attributes['figureSize'],
+                sampleAnnotation=sampleAnnotation)
 
     else:
         if not destinationPath:

@@ -16,7 +16,7 @@ from matplotlib.patches import Rectangle
 import os
 import re
 
-def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, colourByDetectorVoltage=False, logy=False, title='', withExclusions=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, colourByDetectorVoltage=False, logy=False, title='', withExclusions=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7),sampleAnnotation=None):
 	"""
 	Visualise TIC for all or a subset of features coloured by either dilution value or detector voltage. With the option to shade by batch.
 
@@ -36,6 +36,7 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	:param int dpi: Plot resolution
 	:param figureSize: Dimensions of the figure
 	:type figureSize: tuple(float, float)
+	:param dict sampleAnnotation: Samples for annotation in plot, must include fields 'rank': index (int) and 'id': sample name (str, as in msData.sampleMetadata['Sample File Name']). For example, item['AbundanceSamples'] in featureID.py.
 	"""
 
 	# Check inputs
@@ -205,6 +206,16 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		_violinPlotHelper(ax2, tic, sampleMasks, None, 'Sample Type', palette=palette, ylimits=limits, logy=logy)
 
 		sns.despine(trim=True, ax=ax2)
+
+	if sampleAnnotation is not None:
+		import numpy as np
+		for sample in sampleAnnotation:
+			index_match = np.where(msData.sampleMetadata.loc[:,'Sample File Name'] == sample['id'])
+			sampleIX = int(index_match[0])
+			acquired_time = msData.sampleMetadata.loc[sampleIX,'Acquired Time']
+			ax.annotate(str(sample['label']),
+						(acquired_time,tic[sampleIX]))
+
 
 	# Annotate figure
 	ax.set_xlabel('Acquisition Date')
