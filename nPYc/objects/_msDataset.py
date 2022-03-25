@@ -97,7 +97,7 @@ class MSDataset(Dataset):
 			self.Attributes['FeatureExtractionSoftware'] = 'Progenesis QI'
 			self.VariableType = VariableType.Discrete
 		elif fileType == 'mzmine':
-			self._loadMZmineLDataset(datapath)
+			self._loadMZmineDataset(datapath)
 			self.Attributes['FeatureExtractionSoftware'] = 'MZmine'
 			self.VariableType = VariableType.Discrete
 		elif fileType == 'msdial':
@@ -694,7 +694,7 @@ class MSDataset(Dataset):
 		featureMetadata = dict()
 		featureMetadata['Feature Name'] = feature_names
 		featureMetadata['m/z'] = dataT['Average Mz'].values
-		featureMetadata['Retention Time'] = dataT['Average RT(min)'].values
+		featureMetadata['Retention Time'] = dataT['Average Rt(min)'].values
 		featureMetadata['Isotope Distribution'] = dataT['MS1 isotopic spectrum'].values
 		featureMetadata['Adducts'] = dataT['Adduct type'].values
 
