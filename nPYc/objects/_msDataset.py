@@ -46,7 +46,8 @@ class MSDataset(Dataset):
 		However, the number of columns to skip is dataset dependent and can be set with the (e ``noFeatureParams=`` keyword argument.
 
 	* MZmine
-		MZmine import operates on csv files exported via the 'Export to CSV' file' menu option. Field separator should be comma "," and all export elements should be chosen for export.
+		MZmine2: import operates on csv files exported via the 'Export to CSV' file' menu option. Field separator should be comma "," and all export elements should be chosen for export.
+		MZmine3: choose 'Export feature list' -> 'CSV (legacy MZmine 2)' menu option. Field separator should be comma "," and all export elements should be chosen for export.
 
 	* MS-DIAL
 		MS-DIAL import operates on the .txt (MSP) files exported via the 'Export -> Alignment result' menu option. Export options to choose are preferably 'Raw data matrix (Area)' or 'Raw data matrix (Height)'.
@@ -712,26 +713,30 @@ class MSDataset(Dataset):
 		# Import only metadata information
 		metadataT = pandas.read_csv(path, delimiter="\t", index_col=None, header=[0], nrows=3)
 		file_types = metadataT.iloc[0, startIndex:startIndex + dataSize]
-		injection_order = metadataT.iloc[1, startIndex:startIndex + dataSize].astype('int64')
-		batch_id = metadataT.iloc[2, startIndex:startIndex + dataSize].astype('int64')
+		injection_order = metadataT.iloc[1, startIndex:startIndex + dataSize].astype('int64').reset_index(drop=True)
+		batch_id = metadataT.iloc[2, startIndex:startIndex + dataSize].astype('int64').reset_index(drop=True)
+		assay_roles = []
+		sample_types = []
 
 		# Extract as much metadata as possible
 		for i in file_types:
 			if i == "Sample":
-				self.sampleMetadata['AssayRole'] = 'Assay'
-				self.sampleMetadata['SampleType'] = 'Study Sample'
+				assay_roles.append('Assay')
+				sample_types.append('Study Sample')
 			elif i == "Standard":
-				self.sampleMetadata['AssayRole'] = 'Precision Reference'
-				self.sampleMetadata['SampleType'] = 'External Reference'
+				assay_roles.append('Precision Reference')
+				sample_types.append('External Reference')
 			elif i == "QC":
-				self.sampleMetadata['AssayRole'] = 'Precision Reference' # assuming it is an undiluted pool
-				self.sampleMetadata['SampleType'] = 'Study Pool'
+				assay_roles.append('Precision Reference') # assuming it is an undiluted pool
+				sample_types.append('Study Pool')
 			elif i == "Blank":
-				self.sampleMetadata['AssayRole'] = 'Assay'
-				self.sampleMetadata['SampleType'] = 'Procedural Blank'
+				assay_roles.append('Assay')
+				sample_types.append('Procedural Blank')
 			else:
-				self.sampleMetadata['AssayRole'] = None
-				self.sampleMetadata['SampleType'] = None
+				assay_roles.append(None)
+				sample_types.append(None)
+		self.sampleMetadata['AssayRole'] = assay_roles
+		self.sampleMetadata['SampleType'] = sample_types
 
 		self.sampleMetadata['Run Order'] = injection_order
 		self.sampleMetadata['Correction Batch'] = batch_id
