@@ -603,6 +603,10 @@ class MSDataset(Dataset):
 		# First import full table
 		dataT = pandas.read_csv(path, index_col=None)
 
+		# Raise error if MZmine3 csv format was chosen
+		if dataT.columns[0] == 'id':
+			raise NotImplementedError('MZmine3 export format not supported, choose legacy MZmine 2 export option')
+
 		# Read values as subset
 		values = dataT.filter(like="Peak area", axis=1)
 		self._intensityData = values.values.transpose()
@@ -626,9 +630,9 @@ class MSDataset(Dataset):
 					suffixCount += 1
 
 		# Calculate more feature metadata
-		peak_durations = dataT.filter(like="Peak duration time", axis=1).mean(skipna=True, axis=1)
-		RT_min = dataT.filter(like="Peak RT start", axis=1).min(skipna=True, axis=1)
-		RT_max = dataT.filter(like="Peak RT end", axis=1).max(skipna=True, axis=1)
+		peak_durations = dataT.filter(like="duration time", axis=1).mean(skipna=True, axis=1).round(3)
+		RT_min = dataT.filter(like="RT start", axis=1).replace(0,999999).min(skipna=True, axis=1).round(3)
+		RT_max = dataT.filter(like="RT end", axis=1).max(skipna=True, axis=1).round(3)
 
 		# Peak info
 		featureMetadata = dict()
