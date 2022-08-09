@@ -1,5 +1,6 @@
 cycler
 iPython
+isaExplorer
 isatools
 Jinja2
 lmfit
