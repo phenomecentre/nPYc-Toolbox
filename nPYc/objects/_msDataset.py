@@ -150,6 +150,7 @@ class MSDataset(Dataset):
 		else:
 			raise NotImplementedError
 
+		self._intensityData = self._intensityData.astype(float)
 		self.featureMetadata['Exclusion Details'] = None
 		self.featureMetadata['User Excluded'] = False
 		self.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
@@ -2455,7 +2456,8 @@ class MSDataset(Dataset):
 
 			## self._intensityData
 			# Use _intensityData as size reference for all future tables
-			if (self._intensityData.all() != numpy.array(None).all()):
+			# if (self._intensityData.all() != numpy.array(None).all()):
+			if self._intensityData.shape != ():
 				refNumSamples = self._intensityData.shape[0]
 				refNumFeatures = self._intensityData.shape[1]
 				if verbose:
