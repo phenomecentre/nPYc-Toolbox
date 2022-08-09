@@ -1,4 +1,3 @@
-wheel
 cycler
 iPython
 isaExplorer
