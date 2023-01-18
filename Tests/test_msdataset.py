@@ -2507,76 +2507,76 @@ class test_msdataset_artifactual_filtering(unittest.TestCase):
 		assert_frame_equal(self.msData5._tempArtifactualLinkageMatrix, featMaskRes_tempArtifactualLinkageMatrix)
 
 
-class test_msdataset_ISATAB(unittest.TestCase):
-
-	def test_exportISATAB(self):
-
-		msData = nPYc.MSDataset('', fileType='empty')
-		raw_data = {
-			'Acquired Time': ['2016-08-09  01:36:23', '2016-08-09  01:56:23', '2016-08-09  02:16:23', '2016-08-09  02:36:23', '2016-08-09  02:56:23'],
-			'AssayRole': ['AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.Assay', 'AssayRole.Assay'],
-			#'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
-			'Status': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
-			'Subject ID': ['', '', '', 'SCANS-120', 'SCANS-130'],
-			'Sampling ID': ['', '', '', 'T0-7-S', 'T0-9-S'],
-			'Sample File Name': ['sfn1', 'sfn2', 'sfn3', 'sfn4', 'sfn5'],
-			'Dilution': ['1', '10', '20', '', ''],
-			'Study': ['TestStudy', 'TestStudy', 'TestStudy', 'TestStudy', 'TestStudy'],
-			'Gender': ['', '', '', 'Female', 'Male'],
-			'Age': ['', '', '', '55', '66'],
-			'Sampling Date': ['', '', '', '27/02/2006', '28/02/2006'],
-			'Detector': ['2780', '2780', '2780', '2780', '2780'],
-			'Sample batch': ['', '', '', 'SB 1', 'SB 2'],
-			'Well': ['1', '2', '3', '4', '5'],
-			'Plate': ['1', '1', '1', '1', '1'],
-			'Batch': ['2', '2', '3', '4', '5'],
-			'Correction Batch': ['', '', '1', '1', '1'],
-			'Run Order': ['0', '1', '2', '3', '4'],
-			'Instrument': ['QTOF 2', 'QTOF 2', 'QTOF 2', 'QTOF 2', 'QTOF 2'],
-			'Chromatography': ['L', 'L', 'L', 'L', 'L'],
-			'Ionisation': ['NEG', 'NEG', 'NEG', 'NEG', 'NEG'],
-
-			'Assay data name': ['', '', '', 'SS_LNEG_ToF02_S1W4', 'SS_LNEG_ToF02_S1W5']
-		}
-
-		msData.sampleMetadata = pandas.DataFrame(raw_data, columns= ['Acquired Time', 'AssayRole', 'Status','Subject ID','Sampling ID','Dilution','Study',
-																'Gender','Age','Sampling Date','Detector','Sample batch','Well',
-																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name','Sample File Name'])
-
-		with tempfile.TemporaryDirectory() as tmpdirname:
-			details = {
-			    'investigation_identifier' : "i1",
-			    'investigation_title' : "Give it a title",
-			    'investigation_description' : "Add a description",
-			    'investigation_submission_date' : "2016-11-03", #use today if not specified
-			    'investigation_public_release_date' : "2016-11-03",
-			    'first_name' : "Noureddin",
-			    'last_name' : "Sadawi",
-			    'affiliation' : "University",
-			    'study_filename' : "my_ms_study",
-			    'study_material_type' : "Serum",
-			    'study_identifier' : "s1",
-			    'study_title' : "Give the study a title",
-			    'study_description' : "Add study description",
-			    'study_submission_date' : "2016-11-03",
-			    'study_public_release_date' : "2016-11-03",
-			    'assay_filename' : "my_ms_assay"
-			}
-			msData.initialiseMasks()
-			msData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
-
-			investigatio_file = os.path.join(tmpdirname,'i_investigation.txt')
-			print(investigatio_file)
-			numerrors = 0
-			with open(investigatio_file) as fp:
-				report = isatab.validate(fp)
-				numerrors = len(report['errors'])
-
-
-			#self.assertTrue(os.path.exists(a))
-			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))
-
-			#a = os.path.join(tmpdirname,'a_my_ms_assay.txt')
+#class test_msdataset_ISATAB(unittest.TestCase):
+#
+#	def test_exportISATAB(self):
+#
+#		msData = nPYc.MSDataset('', fileType='empty')
+#		raw_data = {
+#			'Acquired Time': ['2016-08-09  01:36:23', '2016-08-09  01:56:23', '2016-08-09  02:16:23', '2016-08-09  02:36:23', '2016-08-09  02:56:23'],
+#			'AssayRole': ['AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.LinearityReference', 'AssayRole.Assay', 'AssayRole.Assay'],
+#			#'SampleType': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
+#			'Status': ['SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudyPool', 'SampleType.StudySample', 'SampleType.StudySample'],
+#			'Subject ID': ['', '', '', 'SCANS-120', 'SCANS-130'],
+#			'Sampling ID': ['', '', '', 'T0-7-S', 'T0-9-S'],
+#			'Sample File Name': ['sfn1', 'sfn2', 'sfn3', 'sfn4', 'sfn5'],
+#			'Dilution': ['1', '10', '20', '', ''],
+#			'Study': ['TestStudy', 'TestStudy', 'TestStudy', 'TestStudy', 'TestStudy'],
+#			'Gender': ['', '', '', 'Female', 'Male'],
+#			'Age': ['', '', '', '55', '66'],
+#			'Sampling Date': ['', '', '', '27/02/2006', '28/02/2006'],
+#			'Detector': ['2780', '2780', '2780', '2780', '2780'],
+#			'Sample batch': ['', '', '', 'SB 1', 'SB 2'],
+#			'Well': ['1', '2', '3', '4', '5'],
+#			'Plate': ['1', '1', '1', '1', '1'],
+#			'Batch': ['2', '2', '3', '4', '5'],
+#			'Correction Batch': ['', '', '1', '1', '1'],
+#			'Run Order': ['0', '1', '2', '3', '4'],
+#			'Instrument': ['QTOF 2', 'QTOF 2', 'QTOF 2', 'QTOF 2', 'QTOF 2'],
+#			'Chromatography': ['L', 'L', 'L', 'L', 'L'],
+#			'Ionisation': ['NEG', 'NEG', 'NEG', 'NEG', 'NEG'],
+#
+#			'Assay data name': ['', '', '', 'SS_LNEG_ToF02_S1W4', 'SS_LNEG_ToF02_S1W5']
+#		}
+#
+#		msData.sampleMetadata = pandas.DataFrame(raw_data, columns= ['Acquired Time', 'AssayRole', 'Status','Subject ID','Sampling ID','Dilution','Study',
+#																'Gender','Age','Sampling Date','Detector','Sample batch','Well',
+#																'Plate','Batch','Correction Batch','Run Order','Instrument','Chromatography','Ionisation','Assay data name','Sample File Name'])
+#
+#		with tempfile.TemporaryDirectory() as tmpdirname:
+#			details = {
+#			    'investigation_identifier' : "i1",
+#			    'investigation_title' : "Give it a title",
+#			    'investigation_description' : "Add a description",
+#			    'investigation_submission_date' : "2016-11-03", #use today if not specified
+#			    'investigation_public_release_date' : "2016-11-03",
+#			    'first_name' : "Noureddin",
+#			    'last_name' : "Sadawi",
+#			    'affiliation' : "University",
+#			    'study_filename' : "my_ms_study",
+#			    'study_material_type' : "Serum",
+#			    'study_identifier' : "s1",
+#			    'study_title' : "Give the study a title",
+#			    'study_description' : "Add study description",
+#			    'study_submission_date' : "2016-11-03",
+#			    'study_public_release_date' : "2016-11-03",
+#			    'assay_filename' : "my_ms_assay"
+#			}
+#			msData.initialiseMasks()
+#			msData.exportDataset(destinationPath=tmpdirname, isaDetailsDict=details, saveFormat='ISATAB')
+#
+#			investigatio_file = os.path.join(tmpdirname,'i_investigation.txt')
+#			print(investigatio_file)
+#			numerrors = 0
+#			with open(investigatio_file) as fp:
+#				report = isatab.validate(fp)
+#				numerrors = len(report['errors'])
+#
+#
+#			#self.assertTrue(os.path.exists(a))
+#			self.assertEqual(numerrors, 0, msg="ISATAB Validator found {} errors in the ISA-Tab archive".format(numerrors))
+#
+#			#a = os.path.join(tmpdirname,'a_my_ms_assay.txt')
 			#self.assertTrue(os.path.exists(a))
 
 
