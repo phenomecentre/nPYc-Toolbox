@@ -270,7 +270,7 @@ def _msIDreport(msData, feature, outputDir='', rawData=None, dbConnection=None, 
 					space=1, height=6, ratio=50,
 					xlim=(msData.featureMetadata['m/z'].min(), msData.featureMetadata['m/z'].max()),
 					ylim=(msData.featureMetadata['Retention Time'].min(), msData.featureMetadata['Retention Time'].max()))
-	
+
 	grid.plot_joint(sns.scatterplot, color=color, alpha=.8)
 	grid.plot_marginals(sns.rugplot, color=color)
 
