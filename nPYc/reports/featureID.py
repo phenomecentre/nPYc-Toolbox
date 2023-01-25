@@ -267,7 +267,7 @@ def _msIDreport(msData, feature, outputDir='', rawData=None, dbConnection=None, 
 
 	color = sns.color_palette()[1]
 	grid = sns.JointGrid(pandas.DataFrame(data={'m/z':msData.featureMetadata[intCorrs > msData.Attributes['corrThreshold']]['m/z'].values,'Retention Time':msData.featureMetadata[intCorrs > msData.Attributes['corrThreshold']]['Retention Time'].values}),
-					space=1, height=6, ratio=50,
+					space=1, height=6, ratio=50, x='Retention Time', y='m/z',
 					xlim=(msData.featureMetadata['m/z'].min(), msData.featureMetadata['m/z'].max()),
 					ylim=(msData.featureMetadata['Retention Time'].min(), msData.featureMetadata['Retention Time'].max()))
 
