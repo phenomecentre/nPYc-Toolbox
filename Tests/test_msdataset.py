@@ -815,7 +815,8 @@ class test_msdataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='BasicMSDataset fails on empty MSDataset'):
 			badDataset = nPYc.MSDataset('', fileType='empty')
-			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset':False ,'QC':False, 'sampleMetadata':False})
+			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False),
+							 {'Dataset': True, 'BasicMSDataset':False ,'QC':False, 'sampleMetadata':False})
 
 		with self.subTest(msg='check raise no warnings with raiseWarning=False'):
 			badDataset = copy.deepcopy(self.msData)

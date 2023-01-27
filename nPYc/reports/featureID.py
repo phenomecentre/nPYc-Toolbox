@@ -266,11 +266,12 @@ def _msIDreport(msData, feature, outputDir='', rawData=None, dbConnection=None, 
 	intCorrs[numpy.isnan(intCorrs)] = 0
 
 	color = sns.color_palette()[1]
-	grid = sns.JointGrid(msData.featureMetadata[intCorrs > msData.Attributes['corrThreshold']]['m/z'].values, msData.featureMetadata[intCorrs > msData.Attributes['corrThreshold']]['Retention Time'].values,
-					space=1, size=6, ratio=50,
+	grid = sns.JointGrid(pandas.DataFrame(data={'m/z':msData.featureMetadata[intCorrs > msData.Attributes['corrThreshold']]['m/z'].values,'Retention Time':msData.featureMetadata[intCorrs > msData.Attributes['corrThreshold']]['Retention Time'].values}),
+					space=1, height=6, ratio=50, x='Retention Time', y='m/z',
 					xlim=(msData.featureMetadata['m/z'].min(), msData.featureMetadata['m/z'].max()),
 					ylim=(msData.featureMetadata['Retention Time'].min(), msData.featureMetadata['Retention Time'].max()))
-	grid.plot_joint(plt.scatter, color=color, alpha=.8)
+
+	grid.plot_joint(sns.scatterplot, color=color, alpha=.8)
 	grid.plot_marginals(sns.rugplot, color=color)
 
 	grid.set_axis_labels('m/z', 'Retention Time')
