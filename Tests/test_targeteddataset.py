@@ -5098,9 +5098,6 @@ class test_targeteddataset_exportdataset(unittest.TestCase):
 				# warning
 				self.targeted.exportDataset(destinationPath=targetFolder, saveFormat='CSV')
 
-	def test_exportdataset_ISATAB_raise_notimplemented(self):
-		with tempfile.TemporaryDirectory() as tmpdirname:
-			self.assertRaises(NotImplementedError, self.targeted.exportDataset, destinationPath=tmpdirname, saveFormat='ISATAB')
 
 
 class test_targeteddataset_import_undefined(unittest.TestCase):

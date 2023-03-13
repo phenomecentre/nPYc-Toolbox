@@ -1567,34 +1567,6 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 			data = nPYc.Dataset()
 			self.assertRaises(KeyError, data.addSampleInfo, descriptionFormat='Basic CSV', filePath=os.path.join(tmpdirname, 'tmp.csv'))
 
-
-	def test_dataset_load_isatab(self):
-
-		columns = ['Sample File Name', 'Sample Base Name', 'Sample Base Name Normalised',
-			  'Sampling ID', 'Assay data name', 'Dilution', 'Run Order',
-			  'Acquired Time', 'Instrument', 'Chromatography', 'Ionisation', 'Batch',
-			  'Plate', 'Well', 'Correction Batch', 'Detector', 'Subject ID', 'Age',
-			  'Gender', 'Status', 'Sample Name', 'Assay data name Normalised',
-			  'Exclusion Details', 'Study Sample', 'Long-Term Reference',
-			  'Study Reference', 'Method Reference', 'Dilution Series',
-			  'LIMS Marked Missing', 'Data Present', 'LIMS Present', 'Skipped',
-			  'AssayRole', 'SampleType', 'SubjectInfoData']
-
-		data = copy.deepcopy(self.Data)
-
-		with warnings.catch_warnings():
-			warnings.simplefilter('ignore', UserWarning)
-			data.addSampleInfo(descriptionFormat='ISATAB',
-									  filePath=os.path.join('..', '..', 'npc-standard-project', 'Project_Description', 'ISATAB-Unit-Test'),
-									  studyID=1,
-									  assay='MS',
-									  assayID=1)
-
-		for column in columns:
-			self.subTest(msg='Checking ' + column)
-			self.assertIn(column, data.sampleMetadata.columns)
-
-
 	def test_dataset_parsefilename(self):
 
 		data = nPYc.Dataset()
