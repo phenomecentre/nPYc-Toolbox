@@ -6,6 +6,7 @@ lmfit
 matplotlib
 networkx
 numpy
+openpyxl
 pandas
 plotly
 scikit-learn
