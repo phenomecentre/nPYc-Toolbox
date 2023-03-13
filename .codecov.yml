@@ -1,6 +1,9 @@
 # codecov:
 #   branch: develop
 
+codecov:
+ token: 73119899-7005-46ac-8f65-ebbfacaec8c1
+
 coverage:
   status:
     project:

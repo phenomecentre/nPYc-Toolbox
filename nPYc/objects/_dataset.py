@@ -2,7 +2,6 @@ import scipy
 import numpy
 import pandas
 import os
-import isatools.isatab as isatab
 import json
 import inspect
 import re
@@ -1123,7 +1122,6 @@ class Dataset:
 		* **'Basic CSV'** Joins the :py:attr:`sampleMetadata` table with the data in the ``csv`` file at *filePath=*, matching on the 'Sample File Name' column in both (see :doc:`samplemetadata`).
 		* **'Filenames'** Parses sample information out of the filenames, based on the named capture groups in the regex passed in *filenamespec*
 		* **'Raw Data'** Extract analytical parameters from raw data files
-		* **'ISATAB'** ISATAB study designs
 
 		:param str descriptionFormat: Format of metadata to be added
 		:param str filePath: Path to the additional data to be added
@@ -1143,8 +1141,6 @@ class Dataset:
 			self._matchDatasetToSubjectInfo(filePath)
 		elif descriptionFormat == 'Raw Data':
 			self._getSampleMetadataFromRawData(filePath, filetype)
-		elif descriptionFormat == 'ISATAB':
-			self._matchDatasetToISATAB(filePath, **kwargs)
 		elif descriptionFormat == 'Filenames':
 			self._getSampleMetadataFromFilename(kwargs['filenameSpec'])
 		else:
@@ -1617,262 +1613,6 @@ class Dataset:
 		return (objectName, intensityData, featureMetadata, sampleMetadata)
 
 
-	def _matchDatasetToISATAB(self, pathToISATABFile, filenameSpec=None, studyID = 1, assayID=1, assay='MS'):
-		"""
-		Match the Sample IDs in :py:attr:`sampleMetadata` to the subject and assay information in the ISATAB File.
-
-		The column *Sampling ID* in :py:attr:`sampleMetadata` is matched to *Sample Name* in the *ISATAB Study* sheet
-
-		:param str pathToISATABFile: path to the ISATAB File
-		:param int studyID: the Study index in the ISATAB File
-		:param int assayID: the Assay index in the ISATAB File
-		:param str assay: the assay type 'MS' or 'NMR'
-		"""
-
-
-		#if 'Dilution' in self.sampleMetadata.columns:
-		#	self.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
-
-		if not (assay in ['MS','NMR']):
-			raise ValueError('assay should be either \'MS\' or \'NMR\'')
-
-		# Load ISATAB file
-		with open(os.path.join(pathToISATABFile,'i_Investigation.txt')) as fp:
-			isa_tab_record = isatab.load(fp)
-
-		# subject info === study
-		# limsFile info === assay
-		study1 = isa_tab_record.studies[studyID - 1]  # get the 1st study
-		study_filename = study1.filename
-		subjectInfo = pandas.read_csv(os.path.join(pathToISATABFile, study_filename), sep='\t')
-		# We're only interested in these fields so keep them
-		subjectInfo = subjectInfo[
-			['Source Name', 'Characteristics[age]', 'Characteristics[gender]', 'Date', 'Comment[study name]',
-			 'Characteristics[organism]', 'Characteristics[material role]', 'Characteristics[material type]',
-			 'Sample Name']]
-		# rename Characteristics[material role] to Status
-		subjectInfo.rename(columns={'Characteristics[material role]': 'Status'}, inplace=True)
-		# rename these fields to something similar to excel sheet
-		subjectInfo.rename(columns={'Source Name': 'Subject ID'}, inplace=True)
-		subjectInfo.rename(columns={'Characteristics[age]': 'Age'}, inplace=True)
-		subjectInfo.rename(columns={'Characteristics[gender]': 'Gender'}, inplace=True)
-		subjectInfo.rename(columns={'Date': 'Sampling Date'}, inplace=True)
-		subjectInfo.rename(columns={'Characteristics[organism]': 'Organism'}, inplace=True)
-		subjectInfo.rename(columns={'Characteristics[material type]': 'Material Type'}, inplace=True)
-		subjectInfo.rename(columns={'Comment[study name]': 'Study'}, inplace=True)
-		# subjectInfo.rename(columns={'Characteristics[dilution factor]': 'Dilution'}, inplace=True)
-		# Enforce string type on Subject ID and Sampling ID columns
-		subjectInfo['Subject ID'] = subjectInfo['Subject ID'].astype('str')
-		subjectInfo['Sample Name'] = subjectInfo['Sample Name'].astype('str')
-
-		assay1 = study1.assays[assayID - 1]  # get the assay
-		assay_filename = assay1.filename
-		# Read in ISATAB file
-		# The reason it's called limsFile is because this object is used in other modules such as reports
-		limsFile = pandas.read_csv(os.path.join(pathToISATABFile, assay_filename), sep='\t')
-
-		if not self.__validateColumns(limsFile, assay):
-			warnings.warn("One or more required fields are missing in your Assay table, results maybe unreliable!")
-
-		# rename Sample Name column to Sampling ID
-		if any(limsFile.columns.str.match('Sample Name')):
-			limsFile.rename(columns={'Sample Name': 'Sampling ID'}, inplace=True)
-
-
-		#rename fields according to assay type
-		if assay == 'NMR':
-			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings','NMRFields.json')) as data_file:
-				nmrFieldDict = json.load(data_file)
-				limsFile.rename(columns = nmrFieldDict, inplace=True)
-				self.Attributes['Log'].append([datetime.now(), 'NMR Assay field names have been mapped into NPC field names' ])
-		else:
-			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'ISATABFieldMappings','MSFields.json')) as data_file:
-				msFieldDict = json.load(data_file)
-				limsFile.rename(columns=msFieldDict, inplace=True)
-				self.Attributes['Log'].append([datetime.now(), 'MS Assay field names have been mapped into NPC field names' ])
-
-		#remove fields inserted by ISATAB and only keep the fields we're interested in
-		if assay == 'MS':
-			limsFile = limsFile[['Sampling ID','Assay data name','Dilution','Run Order','Acquisition Date','Acquisition Time','Instrument','Chromatography','Ionisation','Batch','Sample batch','Plate','Well','Correction Batch','Detector']]
-		else:
-			limsFile = limsFile[['Sampling ID','Assay data name','Run Order','Acquisition Date','Acquisition Time','Instrument','Batch','Sample batch']]
-
-
-		#self.Attributes['DataPath'] = limsFile['Data Path'][0]
-
-		#merge the two fields 'Acquisition Date','Acquisition Time' into one field 'Acquired Time'
-		#a few lines down we make sure 'Acquired Time' is a proper date/time field that pandas is happy with!
-		limsFile['Acquired Time'] = limsFile[['Acquisition Date', 'Acquisition Time']].apply(lambda x: ' '.join(x), axis=1)
-		limsFile.drop(['Acquisition Date', 'Acquisition Time'], axis=1, inplace=True)
-		self.Attributes['Log'].append([datetime.now(), '\'Acquisition Date\', \'Acquisition Time\' read from ISATAB have been merged into \'Acquired Time\' and removed' ])
-
-		# retrieve the material role or Sample Type or Status of each sample in the assay
-		# one way to do this is by merging the assay and study based on sample name!
-		self.limsFile = pandas.merge(limsFile, subjectInfo, left_on='Sampling ID', right_on='Sample Name')
-		# Remove duplicate columns (these will be appended with _x or _y)
-		self.limsFile = removeDuplicateColumns(self.limsFile)
-
-		# this is becuase when NMR metadata is read from raw data, it already contains a field 'Acquired Time'
-		# remove this field so we don't confuse it with the one read from isatab
-		# Log it!
-		if any(self.sampleMetadata.columns.str.match('Acquired Time')):
-			self.sampleMetadata.drop('Acquired Time', axis=1, inplace=True)
-			self.Attributes['Log'].append(
-				[datetime.now(), 'Acquired Time has been read from ISATAB instead of raw data'])
-
-		# this is becuase when NMR metadata is read from raw data, it already contains a field 'Run Order'
-		# remove this field so we don't confuse it with the one read from isatab
-		if any(self.sampleMetadata.columns.str.match('Run Order')):
-			self.sampleMetadata.drop('Run Order', axis=1, inplace=True)
-			self.Attributes['Log'].append([datetime.now(), 'Run Order has been read from ISATAB instead of raw data'])
-
-		# Prepare data
-		self.sampleMetadata.loc[:, 'Sample Base Name'] = self.sampleMetadata['Sample File Name']
-		self.sampleMetadata.loc[:, 'Sample Base Name Normalised'] = self.sampleMetadata['Sample Base Name'].str.lower()
-
-		# Enforce string type on 'Sampling ID'
-		sampleIDmask = pandas.isnull(self.limsFile['Sampling ID']) == False
-		self.limsFile.loc[sampleIDmask, 'Sampling ID'] = self.limsFile.loc[sampleIDmask, 'Sampling ID'].astype('str')
-		self.limsFile.loc[:, 'Assay data name Normalised'] = self.limsFile['Assay data name'].str.lower()
-
-		# Match limsFile to sampleMetdata for samples with data PRESENT
-		self.sampleMetadata = pandas.merge(self.limsFile,self.sampleMetadata, left_on='Assay data name Normalised', right_on='Sample Base Name Normalised', how='right', sort=False)
-		self.sampleMetadata = removeDuplicateColumns(self.sampleMetadata)
-		#
-		if 'Exclusion Details' not in self.sampleMetadata:
-			self.sampleMetadata['Exclusion Details'] = ''
-
-		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
-		#self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Sampling ID'].notnull().astype(bool)
-		self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Status'].str.match('Sample', na=False).astype(bool)
-		self.sampleMetadata.loc[:,'Long-Term Reference'] = self.sampleMetadata['Status'].str.match('Long Term Reference', na=False).astype(bool)
-		self.sampleMetadata.loc[:,'Study Reference'] = self.sampleMetadata['Status'].str.match('Study Reference', na=False).astype(bool)
-		self.sampleMetadata.loc[:,'Method Reference'] = self.sampleMetadata['Status'].str.match('Method Reference', na=False).astype(bool)
-		self.sampleMetadata.loc[:,'Dilution Series'] = self.sampleMetadata['Status'].str.match('Dilution Series', na=False).astype(bool)
-		#why is this repeated?
-		#self.sampleMetadata.loc[:,'Study Sample'] = self.sampleMetadata['Study Sample'].where((self.sampleMetadata['Long-Term Reference'] | self.sampleMetadata['Study Reference']) == False, other=False)
-		self.sampleMetadata.loc[:,'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing', na=False).astype(bool)
-
-		# Complete/create set of boolean columns describing the data in each row for sampleMetadata
-		self.sampleMetadata.loc[:,'Data Present'] = self.sampleMetadata['Sample File Name'].str.match('.+', na=False)
-		self.sampleMetadata.loc[:,'LIMS Present'] = self.sampleMetadata['Assay data name'].str.match('.+', na=False, case=False)
-		self.sampleMetadata.loc[:,'LIMS Marked Missing'] = self.sampleMetadata['Status'].str.match('Missing', na=False)
-		self.sampleMetadata['Study Sample'].where((self.sampleMetadata['Study Sample'] & (self.sampleMetadata['LIMS Present'] == False)) == False, False, inplace=True)
-		#check with Jake/Caroline
-		self.sampleMetadata['Skipped'] = None
-
-		# Explicity convert datetime format
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time'].apply(pandas.to_datetime,dayfirst=True)
-		self.sampleMetadata['Acquired Time'] = self.sampleMetadata['Acquired Time']
-
-		#automatically mark samples that have no 'Acquired Time' for exclusion
-		if sum(self.sampleMetadata['Acquired Time'].isnull()) > 0:
-			self.excludeSamples(self.sampleMetadata[self.sampleMetadata['Acquired Time'].notnull()==False]['Sample File Name'], on='Sample File Name', message='Acquired time missing')
-			self.Attributes['Log'].append([datetime.now(), 'One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing'])
-			warnings.warn('One or more samples have been marked for exclusion because their Acquisition Date/Time values are missing!')
-
-		##
-		# If AssayRole or SampleType columns are present parse strings into enums
-		##
-		"""
-		self.sampleMetadata['AssayRole'] = AssayRole.Assay
-		if 'AssayRole' in self.sampleMetadata.columns:
-			for role in AssayRole:
-				self.sampleMetadata.loc[self.sampleMetadata['AssayRole'].values == role.name, 'AssayRole'] = role
-
-		self.sampleMetadata['SampleType'] = SampleType.StudySample
-		if 'SampleType' in self.sampleMetadata.columns:
-			for stype in SampleType:
-				self.sampleMetadata.loc[self.sampleMetadata['SampleType'].values == stype.name, 'SampleType'] = stype
-		"""
-		self.sampleMetadata['AssayRole'] = AssayRole.Assay
-		self.sampleMetadata.loc[self.sampleMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleMetadata.loc[self.sampleMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleMetadata.loc[self.sampleMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleMetadata.loc[self.sampleMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
-
-		self.sampleMetadata['SampleType'] = SampleType.StudySample
-		self.sampleMetadata.loc[self.sampleMetadata['Study Reference'].values, 'SampleType'] = SampleType.StudyPool
-		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
-		self.sampleMetadata.loc[self.sampleMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
-		self.sampleMetadata.loc[self.sampleMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
-		self.sampleMetadata.loc[self.sampleMetadata['Dilution Series'].values, 'SampleType'] = SampleType.StudyPool
-
-		# Remove duplicate columns (these will be appended with _x or _y)
-		self.sampleMetadata = removeDuplicateColumns(self.sampleMetadata)
-
-		# Find samples present in LIMS but not acquired - replace the deepcopy from python with pandas, to avoid error
-		# when the dataframe is empty
-		lims_butnotacq = self.limsFile.loc[self.limsFile['Assay data name Normalised'].isin(self.sampleMetadata['Sample Base Name Normalised'])==False,:]
-		self.sampleAbsentMetadata = lims_butnotacq.copy(deep=True)
-
-		# Complete/create set of boolean columns describing the data in each row for sampleAbsentMetadata
-		self.sampleAbsentMetadata.loc[:,'Study Sample'] = self.sampleAbsentMetadata['Status'].str.match('Sample', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'Long-Term Reference'] = self.sampleAbsentMetadata['Status'].str.match('Long Term Reference', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'Study Reference'] = self.sampleAbsentMetadata['Status'].str.match('Study Reference', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'Method Reference'] = self.sampleAbsentMetadata['Status'].str.match('Method Reference', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'Dilution Series'] = self.sampleAbsentMetadata['Status'].str.match('Dilution Series', na=False).astype(bool)
-		self.sampleAbsentMetadata.loc[:,'LIMS Marked Missing'] = self.sampleAbsentMetadata['Status'].str.match('Missing', na=False).astype(bool)
-
-		# Remove duplicate columns (these will be appended with _x or _y)
-		#self.sampleAbsentMetadata = removeDuplicateColumns(self.sampleAbsentMetadata)
-
-		#This should be done in a better way
-		self.sampleAbsentMetadata['AssayRole'] = AssayRole.Assay
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Study Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Long-Term Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Method Reference'].values, 'AssayRole'] = AssayRole.PrecisionReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Dilution Series'].values, 'AssayRole'] = AssayRole.LinearityReference
-
-
-		self.sampleAbsentMetadata['SampleType'] = SampleType.StudySample
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Study Reference'].values, 'SampleType'] = SampleType.StudyPool
-		#self.sampleMetadata.loc[self.sampleMetadata['Batch Termini'].values, 'SampleType'] = SampleType.StudyPool
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Long-Term Reference'].values, 'SampleType'] = SampleType.ExternalReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Method Reference'].values, 'SampleType'] = SampleType.MethodReference
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Dilution Series'].values, 'SampleType'] = SampleType.StudyPool
-
-		# Save biological parameters (for multivariate QC)
-		self.Attributes['Analytical Measurements'] = self.sampleMetadata.columns
-		self.Attributes['Log'].append([datetime.now(), 'ISATAB sample IDs matched from %s' % (pathToISATABFile)])
-
-		# subject info === study
-		# limsFile info === assay
-
-		# Create one overall samplingInfo sheet - combine subjectInfo and samplingEvents for samples present in samplingEvents
-		self.samplingInfo = pandas.merge(self.limsFile, subjectInfo, left_on='Sampling ID', right_on='Sample Name', how='left', sort=False)
-
-		# Remove duplicate columns (these will be appended with _x or _y)
-		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
-
-		# make sure these fields are of type string
-		self.samplingInfo['Subject ID'] = self.samplingInfo['Subject ID'].astype('str')
-		self.samplingInfo['Sample Name'] = self.samplingInfo['Sample Name'].astype('str')
-
-		self.sampleAbsentMetadata['SubjectInfoData'] = False
-		self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
-
-
-		self.sampleMetadata['SubjectInfoData'] = False
-		self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
-
-		"""
-		# Find subjects present in sampleInfo only
-		self.samplingInfo['inLIMS'] = False
-		tempP = [ numpy.sum(a == self.sampleMetadata['Sampling ID'] ) for a in self.samplingInfo['Sampling ID']]
-		tempA = [ numpy.sum(a == self.sampleAbsentMetadata['Sampling ID'] ) for a in self.samplingInfo['Sampling ID']]
-		for t in range(self.samplingInfo.shape[0]):
-				if ((tempP[t] != 0) | (tempA[t] != 0)):
-						self.samplingInfo.loc[t,'inLIMS'] = True
-		self.subjectAbsentMetadata = self.samplingInfo[self.samplingInfo['inLIMS']==False]
-
-		# Save biological parameters (for multivariate QC)
-		self.Attributes['Biological Measurements'] = self.samplingInfo.columns.drop('inLIMS')
-		"""
-		self.Attributes['Biological Measurements'] = self.samplingInfo.columns
-		self.Attributes['Log'].append([datetime.now(), 'Subject information matched from ISATAB %s' % (pathToISATABFile)])
 
 
 	def excludeSamples(self, sampleList, on='Sample File Name', message='User Excluded'):
@@ -1970,7 +1710,7 @@ class Dataset:
 		return notFound
 
 
-	def exportDataset(self, destinationPath='.', saveFormat='CSV', isaDetailsDict = {}, withExclusions=True, escapeDelimiters=False, filterMetadata=True):
+	def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False, filterMetadata=True):
 		"""
 		Export dataset object in a variety of formats for import in other software, the export is named according to the :py:attr:`name` attribute of the Dataset object.
 
@@ -1978,31 +1718,12 @@ class Dataset:
 
 		* **CSV** Basic CSV output, :py:attr:`featureMetadata`, :py:attr:`sampleMetadata` and :py:attr:`intensityData` are written to three separate CSV files in *desitinationPath*
 		* **UnifiedCSV** Exports :py:attr:`featureMetadata`, :py:attr:`sampleMetadata` and :py:attr:`intensityData` concatenated into a single CSV file
-		* **ISATAB** Exports the sampleMetadata in the `ISATAB <http://isa-tools.org>`_ format
 
 		:param str destinationPath: Save data into the directory specified here
 		:param str format: File format for saved data, defaults to CSV.
-		:param dict detailsDict: Contains several key: value pairs required to for exporting ISATAB.
 
-		detailsDict should have the format:
-		detailsDict = {
-			'investigation_identifier' : "i1",
-			'investigation_title' : "Give it a title",
-			'investigation_description' : "Add a description",
-			'investigation_submission_date' : "2016-11-03",
-			'investigation_public_release_date' : "2016-11-03",
-			'first_name' : "Noureddin",
-			'last_name' : "Sadawi",
-			'affiliation' : "University",
-			'study_filename' : "my_ms_study",
-			'study_material_type' : "Serum",
-			'study_identifier' : "s1",
-			'study_title' : "Give the study a title",
-			'study_description' : "Add study description",
-			'study_submission_date' : "2016-11-03",
-			'study_public_release_date' : "2016-11-03",
-			'assay_filename' : "my_ms_assay"
-		}
+
+
 
 		:param bool withExclusions: If ``True`` mask features and samples will be excluded
 		:param bool escapeDelimiters: If ``True`` remove characters commonly used as delimiters in csv files from metadata
@@ -2046,8 +1767,6 @@ class Dataset:
 		elif saveFormat == 'UnifiedCSV':
 			destinationPath = os.path.join(destinationPath, exportDataset.name)
 			exportDataset._exportUnifiedCSV(destinationPath, escapeDelimiters=escapeDelimiters)
-		elif saveFormat == 'ISATAB':
-			exportDataset._exportISATAB(destinationPath, isaDetailsDict)
 		else:
 			raise ValueError('Save format \'%s\' not understood.' % saveFormat)
 
@@ -2098,16 +1817,6 @@ class Dataset:
 		numpy.savetxt(destinationPath + '_intensityData.csv',
 					  self.intensityData, delimiter=",")
 
-
-	def _exportISATAB(self, destinationPath, isaDetailsDict, assay='MS'):
-		"""
-		Export the dataset's metadata to the directory *destinationPath* as ISATAB
-
-		:param str destinationPath: Path to a directory in which the output will be saved
-		:param bool escapeDelimiters: Remove characters commonly used as delimiters in csv files from metadata
-		:raises IOError: If writing one of the files fails
-		"""
-		raise NotImplementedError
 
 
 	def _exportUnifiedCSV(self, destinationPath, escapeDelimiters=True):
