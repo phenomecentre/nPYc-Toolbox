@@ -1,7 +1,5 @@
 cycler
 iPython
-isaExplorer
-isatools
 MarkupSafe==2.0.1
 Jinja2
 lmfit
