@@ -1561,7 +1561,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			# Generate a CSV with no 'Sample File Name' column
-			testDF = pandas.DataFrame([[1,2,3],[1,2,3]], columns={'a', 'b', 'c'})
+			testDF = pandas.DataFrame([[1,2,3],[1,2,3]], columns=['a', 'b', 'c'])
 			testDF.to_csv(os.path.join(tmpdirname, 'tmp.csv'))
 
 			data = nPYc.Dataset()
