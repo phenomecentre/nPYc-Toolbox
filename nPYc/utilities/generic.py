@@ -36,11 +36,7 @@ def print_dict(message, dict_obj):
     """
     Use JSON to print out a dict in an easily readable format
     """
-    my_complex_dict = json.dumps(dict_obj, indent=4, default=str)
+    my_complex_dict = json.dumps(dict_obj, indent=4, default=str, allow_nan=True)
     print(f"{message}:\n\t{my_complex_dict}")  
- 
-def print_dict_list(message, list_obj):
-	json_list = json.dumps(list_obj, indent=4, default=str)
-	print(f"{message}:\n\t{json_list}")
-	
+ 	
 	

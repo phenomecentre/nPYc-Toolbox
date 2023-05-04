@@ -86,81 +86,92 @@ def importBrukerXML(filelist):
 
 
 def readBrukerXML(path):
+
     """
-	Extract Bruker quantification data from the XML file at *path* and return as a dict, with one element for each value.
+    Extract Bruker quantification data from the XML file at *path* and return 
+    as a dict, with one element for each value.
 
-	:param str path: Path to Bruker XML quantification report
-	:returns: List of dicts
-	:rtype: tuple of (filename, processing date, dict of measurements)
-	"""
-
+    :param str path: Path to Bruker XML quantification report
+    :returns: List of dicts
+    :rtype: tuple of (filename, processing date, dict of measurements)
+    """
+    
     tree = ElementTree.parse(path)
     root = tree.getroot()
-    quantData = root.find('QUANTIFICATION')
-
-    sampleName = root.find('SAMPLE').attrib['name']
-    processingDate = root.find('SAMPLE').attrib['date']
-
-    root.find('SAMPLE').attrib['name']
+    
+    parameters = root.find('QUANTIFICATION')
+    sample  = root.find('SAMPLE')
+    
+    sampleName = sample.attrib['name']
+    processingDate = sample.attrib['date']
 
     quantList = list()
 
-    for analyte in quantData:
+    for param in parameters:
 
-        name = analyte.attrib['name']
-        if 'comment' in analyte.attrib.keys():
-            comment = analyte.attrib['comment']
+        name = param.attrib['name']
+        
+        qtype = param.attrib['type']
+        
+        if 'comment' in param.attrib.keys():
+            comment = param.attrib['comment']
         else:
             comment = ''
 
-        qtype = analyte.attrib['type']
+        reference = param.find('REFERENCE')
+        
+        #=======================================================================
+        # RELDATA section only occurs in BIQUANT v2 type data
+        #=======================================================================
+        reldata = param.find('RELDATA')
+                    
+        for value in param.findall('VALUE'):
+            
+            lod = to_numeric(value.attrib["lod"])            
+            loq = to_numeric(value.attrib["loq"])
 
-        for element in analyte.findall('VALUE'):
-
-            reference = analyte.find('REFERENCE')
-
-            item = {'Feature Name': name,
-                    'comment': comment,
-                    'type': qtype,
-                    'value': None,
-                    'lod': to_numeric(element.attrib['lod']),
-                    'loq': to_numeric(element.attrib['loq']),
-                    'Unit': None,
-                    'lodMask': True}
-
-            if analyte.find('RELDATA') is not None:
-                reldata = analyte.find('RELDATA')
-                item['value'] = to_numeric(reldata.attrib['rawConc'])
-                item['lodMask'] = item['value'] > item['lod']
-                item['Unit'] = reldata.attrib['rawConcUnit']
-                if item['value'] <= item['lod']:
-                    item['value'] = -numpy.inf
-                unitTag = 'concUnit'
+            #===================================================================
+            # BIQUANT v2 puts the value/unit in different fields: use 'rawConc'
+            #===================================================================
+            if reldata is not None:        
+                val = to_numeric(reldata.attrib["rawConc"])
+                unit = reldata.attrib["rawConcUnit"]    
+                if type(lod) != str and val <= lod:
+                    val = -numpy.inf
             else:
-                unitTag = 'unit'
-                item['Unit'] = to_numeric(element.attrib['unit'])
-                item['value'] = to_numeric(element.attrib['value'])
-                if type(item['lod']) == float:
-                    item['lodMask'] = item['value'] > item['lod']
-                else:
-                    item['lodMask'] = True
-
-            refDict = dict()
-            if reference is not None:
-                if element.attrib[unitTag] == reference.attrib['unit']:
-                    # Implicitly 2.5 and 97.5 in lipo xml
-                    refDict['Lower Reference Bound'] = 2.5
-                    refDict['Upper Reference Bound'] = 97.5
-
-                    refDict['Lower Reference Value'] = to_numeric(
-                        reference.attrib['vmin'])
-                    refDict['Upper Reference Value'] = to_numeric(
-                        reference.attrib['vmax'])
-
-            item = {**item, **refDict}
+                val = to_numeric(value.attrib["value"])    
+                unit = value.attrib["unit"]                
+            
+            if type(lod) == float:            
+                l_mask = val > lod
+            else:
+                l_mask = True
+                            
+            item = {
+                    'Feature Name': name,
+                    'comment':         comment,
+                    'type':         qtype,
+                    'lodMask' :     l_mask,
+                    'value':         val,
+                    'lod':             lod,
+                    'loq':             loq,
+                    'Unit':         unit
+                    }            
+            
+            if reference is not None and reference.attrib['unit'] == unit:
+                refDict = dict()
+                # Implicitly 2.5 and 97.5 in lipo xml
+                refDict['Lower Reference Bound'] = 2.5
+                refDict['Upper Reference Bound'] = 97.5                
+                refDict['Lower Reference Value'] = to_numeric(reference.attrib['vmin'])
+                refDict['Upper Reference Value'] = to_numeric(reference.attrib['vmax'])
+                item = {**item, **refDict}
+                
             quantList.append(item)
 
-    return sampleName, processingDate, quantList
+    return (sampleName, processingDate, quantList)
+
+
 
 
 def to_numeric(string):

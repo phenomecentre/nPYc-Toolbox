@@ -16,7 +16,6 @@ import warnings
 sys.path.append("..")
 import nPYc
 
-from nPYc.utilities.generic import print_dict, print_dict_list
 
 
 def L(x, x0, gamma):

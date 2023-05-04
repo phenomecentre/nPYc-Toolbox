@@ -16,19 +16,101 @@ import warnings
 sys.path.append("..")
 import nPYc
 
-from nPYc.utilities.generic import print_dict, print_dict_list
+from nPYc.utilities.generic import print_dict
 
-
-def L(x, x0, gamma):
-	""" Return Lorentzian line shape at x with HWHM gamma """
-	return (1 / numpy.pi) * ((gamma/2) / (((x-x0)**2) + ((gamma/2)**2)))
 
 
 class test_utilities_read_bruker_xml(unittest.TestCase):
 
+
+	def test_utilities_readBrukerBIQUANT2_XML(self):
+		
+		from nPYc.utilities._readBrukerXML import readBrukerXML
+		# show the whole diff on error
+		self.maxDiff = None
+		
+		expected = ("GutHorm_Plasma_Rack1_SLL_051218_expno10.100000.17r","05-Dec-2018 11:32:33",
+    				[
+				        {
+				            "Feature Name": "Ethanol",
+				            "comment": "",
+				            "type": "quantification",
+				            "value": -numpy.inf,
+				            "lod": 0.1,
+				            "loq": "-",
+				            "Unit": "mmol/L",
+				            "lodMask": False,
+				            "Lower Reference Bound": 2.5,
+				            "Upper Reference Bound": 97.5,
+				            "Lower Reference Value": "-",
+				            "Upper Reference Value": 0.82
+				        },
+				        {
+				            "Feature Name": "Trimethylamine-N-oxide",
+				            "comment": "",
+				            "type": "quantification",
+				            "value": -numpy.inf,
+				            "lod": 0.08,
+				            "loq": "-",
+				            "Unit": "mmol/L",
+				            "lodMask": False,
+				            "Lower Reference Bound": 2.5,
+				            "Upper Reference Bound": 97.5,
+				            "Lower Reference Value": "-",
+				            "Upper Reference Value": 0.08
+				        },
+				        {
+				            "Feature Name": "Alanine",
+				            "comment": "",
+				            "type": "quantification",
+				            "value": 0.517,
+				            "lod": 0.02,
+				            "loq": "-",
+				            "Unit": "mmol/L",
+				            "lodMask": True,
+				            "Lower Reference Bound": 2.5,
+				            "Upper Reference Bound": 97.5,
+				            "Lower Reference Value": 0.29,
+				            "Upper Reference Value": 0.64
+				        }
+				    ]
+			    	)
+		actual = readBrukerXML(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','bruker_biquant_2_plasma.xml'))
+		
+
+		self.assertEqual(expected, actual)
+		
+
+	def test_utilities_importBrukerBIQUANT2_XML(self):
+
+		from nPYc.utilities._readBrukerXML import importBrukerXML
+
+		path1 = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','bruker_biquant_2_plasma.xml')
+		
+		expectedID = numpy.array([[ -numpy.inf,  -numpy.inf, 0.517],
+ 								[ -numpy.inf,  -numpy.inf, 0.517],
+   								[ -numpy.inf,  -numpy.inf, 0.517]])
+		
+		expectedFM = pandas.DataFrame.from_dict({'Feature Name': {0: 'Ethanol', 1: 'Trimethylamine-N-oxide', 2: 'Alanine'}, 'comment': {0: '', 1: '', 2: ''}, 'type': {0: 'quantification', 1: 'quantification', 2: 'quantification'}, 'lodMask': {0: False, 1: False, 2: True}, 'lod': {0: 0.1, 1: 0.08, 2: 0.02}, 'loq': {0: '-', 1: '-', 2: '-'}, 'Unit': {0: 'mmol/L', 1: 'mmol/L', 2: 'mmol/L'}, 'Lower Reference Bound': {0: 2.5, 1: 2.5, 2: 2.5}, 'Upper Reference Bound': {0: 97.5, 1: 97.5, 2: 97.5}, 'Lower Reference Value': {0: '-', 1: '-', 2: 0.29}, 'Upper Reference Value': {0: 0.82, 1: 0.08, 2: 0.64}})
+		
+		expectedSM = pandas.DataFrame.from_dict({'Sample File Name': {0: 'GutHorm_Plasma_Rack1_SLL_051218/10', 1: 'GutHorm_Plasma_Rack1_SLL_051218/10', 2: 'GutHorm_Plasma_Rack1_SLL_051218/10'}, 'Sample Base Name': {0: 'GutHorm_Plasma_Rack1_SLL_051218/10', 1: 'GutHorm_Plasma_Rack1_SLL_051218/10', 2: 'GutHorm_Plasma_Rack1_SLL_051218/10'}, 'expno': {0: 10, 1: 10, 2: 10}, 'Path': {0: '../../npc-standard-project/Derived_Data/bruker_biquant_2_plasma.xml', 1: '../../npc-standard-project/Derived_Data/bruker_biquant_2_plasma.xml', 2: '../../npc-standard-project/Derived_Data/bruker_biquant_2_plasma.xml'}, 'Acquired Time': {0: pandas.Timestamp('2018-12-05 11:32:33'), 1: pandas.Timestamp('2018-12-05 11:32:33'), 2: pandas.Timestamp('2018-12-05 11:32:33')}, 'Run Order': {0: 0, 1: 1, 2: 2}})
+
+		paths = [path1, path1, path1]
+		
+		(intensityData, sampleMetadata, featureMetadata) = importBrukerXML(paths)
+		
+		self.assertEqual(len(intensityData), len(paths))
+		
+		numpy.testing.assert_array_equal(intensityData, expectedID)
+		
+		pandas.testing.assert_frame_equal(sampleMetadata, expectedSM)
+		
+		pandas.testing.assert_frame_equal(featureMetadata, expectedFM, check_like=True)
+
+		
 	def test_utilities_readBrukerXML(self):
 		
-		from nPYc.utilities._readBrukerCS import readBrukerXML
+		from nPYc.utilities._readBrukerXML import readBrukerXML
 		
 		self.maxDiff = None
 		
@@ -85,7 +167,7 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 						   'Lower Reference Value': 34.6,
 						   'Upper Reference Value': 96.25}])
 			actual = readBrukerXML(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','bruker_quant_BILISA.xml'))
-			print_dict_list("Actual", actual)
+			
 			self.assertEqual(expected, actual)
 			
 		with self.subTest(msg='Urine Quant type'):
@@ -167,7 +249,7 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 	def test_utilities_readBrukerXML_warns(self):
 
-		from nPYc.utilities._readBrukerCS import importBrukerXML
+		from nPYc.utilities._readBrukerXML import importBrukerXML
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			tmpfile = os.path.join(tmpdirname, 'malformedxml.xml')
@@ -180,7 +262,7 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 	def test_utilities_importBrukerXML(self):
 
-		from nPYc.utilities._readBrukerCS import importBrukerXML
+		from nPYc.utilities._readBrukerXML import importBrukerXML
 
 		path = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','bruker_quant_urine.xml')
 		
@@ -224,7 +306,7 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 
 	def test_utilities_importBrukerXML_fails(self):
 
-		from nPYc.utilities._readBrukerCS import importBrukerXML
+		from nPYc.utilities._readBrukerXML import importBrukerXML
 
 		path = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','bruker_quant_urine.xml')
 
