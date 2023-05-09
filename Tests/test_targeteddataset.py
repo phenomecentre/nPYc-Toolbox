@@ -3222,7 +3222,7 @@ class test_targeteddataset_limitsofquantification(unittest.TestCase):
 				pandas.testing.assert_frame_equal(result.expectedConcentrationExcluded[l], expected.expectedConcentrationExcluded[l])
 			self.assertEqual(result.excludedFlag, expected.excludedFlag)
 
-		with self.subTest(msg='Check ApplyLOQ with QuantificationType.QuantOther and ULOQ NaN, onlyLLOQ=False, previous exclusion'):
+		with self.subTest(msg='Check ApplyLOQ with QuantificationType.QuantOther and ULOQ numpy.nan, onlyLLOQ=False, previous exclusion'):
 			# Feature 1 is QuantificationType.QuantOther, ULOQ is nan, feature is retained and no LOQ applied where nan
 			# Expected
 			expected = copy.deepcopy(self.targetedDataset)
@@ -3294,7 +3294,7 @@ class test_targeteddataset_mergelimitsofquantification(unittest.TestCase):
 	Test merging of limits of quantification after __add__
 	"""
 	def setUp(self):
-		# Feature1 has lowest LLOQ and ULOQ in batch1, feature2 has lowest LLOQ and ULOQ in batch2, feature3 has NaN in batch1 LLOQ and batch2 ULOQ
+		# Feature1 has lowest LLOQ and ULOQ in batch1, feature2 has lowest LLOQ and ULOQ in batch2, feature3 has numpy.nan in batch1 LLOQ and batch2 ULOQ
 		# On feature1 and feature2, Sample1 will be <LLOQ, Sample2 >ULOQ, Sample3 same as input. Feature3 removed in applyLOQ to NA
 		self.targetedDataset = nPYc.TargetedDataset('', fileType='empty')
 		self.targetedDataset.sampleMetadata = pandas.DataFrame({'Sample File Name': ['UnitTest_targeted_file_001', 'UnitTest_targeted_file_002', 'UnitTest_targeted_file_003'],
@@ -4323,10 +4323,171 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 	Test BrukerQuant-UR until BrukerBI-LISA is definitive
 	"""
 	def setUp(self):
+		self.datapathQuantPS = os.path.join('..','..','npc-standard-project','Raw_Data','nmr','UnitTest2')
 		# 49 features, 9 samples, BrukerQuant-UR
 		self.datapathQuantUR = os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'nmr', 'UnitTest1')
 		# Expected TargetedDataset
 		# Do not check sampleMetadata['Path']
+		
+		self.expectedQuantPS = dict()
+					
+		plasma_sm = {
+			    "Sample File Name": {
+			        "0": "UnitTest2_Plasma_Rack1_SLL_051218/20",
+			        "1": "UnitTest2_Plasma_Rack1_SLL_051218/10"
+			    },
+			    "Sample Base Name": {
+			        "0": "UnitTest2_Plasma_Rack1_SLL_051218/20",
+			        "1": "UnitTest2_Plasma_Rack1_SLL_051218/10"
+			    },
+			    "expno": {
+			        "0": 20,
+			        "1": 10
+			    },
+			    "Path": {
+			        "0": "../../npc-standard-project/Raw_Data/nmr/UnitTest2/UnitTest2_Plasma_Rack1_SLL_051218/20/pdata/1/plasma_quant_report.xml",
+			        "1": "../../npc-standard-project/Raw_Data/nmr/UnitTest2/UnitTest2_Plasma_Rack1_SLL_051218/10/pdata/1/plasma_quant_report.xml"
+			    },
+			    "Acquired Time": {
+			        "0": "2018-12-05 11:54:31",
+			        "1": "2018-12-05 11:32:33"
+			    },
+			    "Run Order": {
+			        "0": 1,
+			        "1": 0
+			    },
+			    "AssayRole": {
+			        "0": numpy.nan,
+			        "1": numpy.nan
+			    },
+			    "SampleType": {
+			        "0": numpy.nan,
+			        "1": numpy.nan
+			    },
+			    "Dilution": {
+			        "0": 100,
+			        "1": 100
+			    },
+			    "Correction Batch": {
+			        "0": numpy.nan,
+			        "1": numpy.nan
+			    },
+			    "Sample ID": {
+			        "0": numpy.nan,
+			        "1": numpy.nan
+			    },
+			    "Exclusion Details": {
+			        "0": None,
+			        "1": None
+			    },
+			    "Batch": {
+			        "0": 1,
+			        "1": 1
+			    },
+			    "Metadata Available": {
+			        "0": False,
+			        "1": False
+			    }
+			}
+		
+		plasma_fm =	{
+		    "Feature Name": {
+		        "0": "Ethanol",
+		        "1": "Trimethylamine-N-oxide",
+		        "2": "2-Aminobutyric acid",
+		        "3": "Alanine",
+		        "4": "Asparagine"
+		    },
+		    "comment": {
+		        "0": "",
+		        "1": "",
+		        "2": "",
+		        "3": "",
+		        "4": ""
+		    },
+		    "LOD": {
+		        "0": 0.1,
+		        "1": 0.08,
+		        "2": 0.05,
+		        "3": 0.02,
+		        "4": 0.05
+		    },
+		    "LLOQ": {
+		        "0": numpy.nan,
+		        "1": numpy.nan,
+		        "2": numpy.nan,
+		        "3": numpy.nan,
+		        "4": numpy.nan
+		    },
+		    "Unit": {
+		        "0": "mmol/L",
+		        "1": "mmol/L",
+		        "2": "mmol/L",
+		        "3": "mmol/L",
+		        "4": "mmol/L"
+		    },
+		    "lodMask": {
+		        "0": False,
+		        "1": False,
+		        "2": False,
+		        "3": True,
+		        "4": False
+		    },
+		    "Lower Reference Percentile": {
+		        "0": 2.5,
+		        "1": 2.5,
+		        "2": 2.5,
+		        "3": 2.5,
+		        "4": 2.5
+		    },
+		    "Upper Reference Percentile": {
+		        "0": 97.5,
+		        "1": 97.5,
+		        "2": 97.5,
+		        "3": 97.5,
+		        "4": 97.5
+		    },
+		    "Lower Reference Value": {
+		        "0": "-",
+		        "1": "-",
+		        "2": "-",
+		        "3": 0.29,
+		        "4": "-"
+		    },
+		    "Upper Reference Value": {
+		        "0": 0.82,
+		        "1": 0.08,
+		        "2": 0.1,
+		        "3": 0.64,
+		        "4": 0.08
+		    },
+		    "quantificationType": {
+		        "0": "Other quantification",
+		        "1": "Other quantification",
+		        "2": "Other quantification",
+		        "3": "Other quantification",
+		        "4": "Other quantification"
+		    },
+		    "calibrationMethod": {
+		        "0": "Other calibration method",
+		        "1": "Other calibration method",
+		        "2": "Other calibration method",
+		        "3": "Other calibration method",
+		        "4": "Other calibration method"
+		    },
+		    "ULOQ": {
+		        "0": numpy.nan,
+		        "1": numpy.nan,
+		        "2": numpy.nan,
+		        "3": numpy.nan,
+		        "4": numpy.nan
+		    }
+		}
+
+		self.expectedQuantPS["featureMetadata"]  = pandas.DataFrame.from_dict(plasma_fm)
+		self.expectedQuantPS["sampleMetadata"]  = pandas.DataFrame.from_dict(plasma_sm)
+		
+		
 		self.expectedQuantUR = dict()
 		self.expectedQuantUR['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest1_Urine_Rack1_SLL_270814/10',
 																				 'UnitTest1_Urine_Rack1_SLL_270814/20',
@@ -4826,12 +4987,12 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		self.expectedBILISA['Attributes'] = copy.deepcopy(self.expectedQuantUR['Attributes'])
 		self.expectedBILISA['Attributes']['methodName'] = 'NMR Bruker - BI-LISA'
 
-
-	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
-	def test_loadBrukerXMLDataset(self, mock_stdout):
+	def test_loadBrukerXMLDataset(self):
 
 		with self.subTest(msg='Basic import BrukerQuant-UR with matching fileNamePattern'):
 			expected = copy.deepcopy(self.expectedQuantUR)
+			#result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerBI-QUANT-PS', fileNamePattern='.*?plasma_quant_report\.xml$', output='raw concentration')#, unit='mmol/mol Crea')
+
 			# Generate
 			result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea')
 			# Remove path from sampleMetadata
@@ -4864,7 +5025,83 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		with self.subTest(msg='Basic import BrukerQuant-UR with implicit fileNamePattern from SOP'):
 			expected = copy.deepcopy(self.expectedQuantUR)
 			# Generate
+			
 			result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', unit='mmol/mol Crea')
+			# Remove path from sampleMetadata
+			result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
+			result.calibration['calibSampleMetadata'].drop(['Path'], axis=1, inplace=True)
+
+			# Need to sort samples as different OS have different path order
+			result.sampleMetadata.sort_values('Sample Base Name', inplace=True)
+			sortIndex = result.sampleMetadata.index.values
+			result.intensityData = result.intensityData[sortIndex, :]
+			result.expectedConcentration = result.expectedConcentration.loc[sortIndex,:]
+			result.sampleMetadata = result.sampleMetadata.reset_index(drop=True)
+			result.expectedConcentration = result.expectedConcentration.reset_index(drop=True)
+
+			# Test
+			pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+			pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+			numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
+			pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+			# Calibration
+			pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+			numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
+			pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
+			# Attributes, no check of 'Log'
+			self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
+			for i in expected['Attributes']:
+				self.assertEqual(expected['Attributes'][i], result.Attributes[i])
+	
+	def test_loadBrukerBIQUANTXMLDataset(self):
+
+		from nPYc.utilities.generic import print_dict
+
+		with self.subTest(msg='Basic import BrukerQuant-PS with matching fileNamePattern'):
+			expected = copy.deepcopy(self.expectedQuantPS)
+			print("Datapath = ", self.datapathQuantPS)
+			result = nPYc.TargetedDataset(self.datapathQuantPS, fileType='Bruker Quantification', sop='BrukerBI-QUANT-PS', fileNamePattern='.*?plasma_quant_report\.xml$')
+			# Remove path from sampleMetadata
+			
+			sm = result.sampleMetadata.to_dict()
+			print_dict("sample metatdata", sm)
+			fm = result.featureMetadata.to_dict()
+			print_dict("feature metatdata", fm)
+			print(result.intensityData)
+			result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
+			result.calibration['calibSampleMetadata'].drop(['Path'], axis=1, inplace=True)
+
+			# Need to sort samples as different OS have different path order
+			result.sampleMetadata.sort_values('Sample Base Name', inplace=True)
+			sortIndex = result.sampleMetadata.index.values
+			result.intensityData = result.intensityData[sortIndex, :]
+			result.expectedConcentration = result.expectedConcentration.loc[sortIndex,:]
+			result.sampleMetadata = result.sampleMetadata.reset_index(drop=True)
+			result.expectedConcentration = result.expectedConcentration.reset_index(drop=True)
+
+			
+
+			# Test
+			pandas.testing.assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+			pandas.testing.assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+			numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
+			pandas.testing.assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+			# Calibration
+			pandas.testing.assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+			pandas.testing.assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+			numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
+			pandas.testing.assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1), check_index_type=False)
+			# Attributes, no check of 'Log'
+			self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
+			for i in expected['Attributes']:
+				self.assertEqual(expected['Attributes'][i], result.Attributes[i])
+
+		with self.subTest(msg='Basic import BrukerQuant-UR with implicit fileNamePattern from SOP'):
+			expected = copy.deepcopy(self.expectedQuantPS)
+			# Generate
+			print("Datapath = ", self.datapathQuantPS)
+			result = nPYc.TargetedDataset(self.datapathQuantPS, fileType='Bruker Quantification', sop='BrukerBI-QUANT-PS')
 			# Remove path from sampleMetadata
 			result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
 			result.calibration['calibSampleMetadata'].drop(['Path'], axis=1, inplace=True)
@@ -5146,7 +5383,7 @@ class test_targeteddataset_accuracy_precision(unittest.TestCase):
 			self.assertTrue(result['Precision'][SampleType.StudySample].shape == (len(numpy.unique(data.expectedConcentration)), noFeat))
 
 		with self.subTest(msg="Only Precision Reference"):
-			# test the masking of precisionReference replacement of NaN in Study Sample
+			# test the masking of precisionReference replacement of numpy.nan in Study Sample
 			result = data.accuracyPrecision(onlyPrecisionReferences=True)
 			self.assertTrue('Accuracy' in result.keys())
 			self.assertTrue(SampleType.ExternalReference in result['Accuracy'].keys())

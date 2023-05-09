@@ -168,7 +168,7 @@ class TargetedDataset(Dataset):
         * ``pdata``
             To select the right pdata folders (default 1)
 
-        Two form of Bruker quantification results are supported and selected using the ``sop`` option: *BrukerQuant-UR* and *Bruker BI-LISA*
+        Two form of Bruker quantification results are supported and selected using the ``sop`` option: *BrukerQuant-UR*, *Bruker BI-LISA* and *BrukerBI-QUANT-PS*
 
         * ``sop = 'BrukerQuant-UR'``
 
@@ -179,6 +179,10 @@ class TargetedDataset(Dataset):
 
         * ``sop = ''BrukerBI-LISA'``
             Example: ``TargetedDataset(nmrRawDataPath, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')``
+
+
+        * ``sop = ''BrukerBI-QUANT-PS'``
+            Example: ``TargetedDataset(nmrRawDataPath, fileType='Bruker Quantification', sop='BrukerBI-QUANT-PS', fileNamePattern='.*?plasma_quant_report\.xml$')``
 
     """
 
@@ -1076,9 +1080,11 @@ class TargetedDataset(Dataset):
         from ..utilities._readBrukerXML import importBrukerXML
         from ..utilities.extractParams import buildFileList
 
+        print("fileNamePattern passed in", fileNamePattern)
+
         if fileNamePattern is None:
             fileNamePattern = self.Attributes['fileNamePattern']
-
+            print("fileNamePattern not passed in", fileNamePattern)
         # Check inputs
         if not isinstance(fileNamePattern, str):
             raise TypeError('\'fileNamePattern\' must be a string')
