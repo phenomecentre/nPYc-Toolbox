@@ -31,13 +31,3 @@ def removeTrailingColumnNumbering(column_list):
 			tmp.append(s)
 
 	return tmp
-
-def print_dict(message, dict_obj):  
-    """
-    Use JSON to print out a dict or list of dicts
-    in an easily readable format
-    """
-    my_complex_dict = json.dumps(dict_obj, indent=4, default=str, allow_nan=True)
-    print(f"{message}: {my_complex_dict}")  
- 	
-	

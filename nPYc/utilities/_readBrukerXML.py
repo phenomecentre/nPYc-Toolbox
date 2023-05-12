@@ -4,7 +4,6 @@ import re
 import numpy
 import copy
 import warnings
-from nPYc.utilities.generic import print_dict
 
 
 def importBrukerXML(filelist):
@@ -37,9 +36,7 @@ def importBrukerXML(filelist):
     for filename in filelist:
         try:
             sampleName, processingDate, quantList = readBrukerXML(filename)
-            #print("sampleName", sampleName)
-            #print("Acquired Time", processingDate)
-            #print_dict("Quant list", quantList)
+
             df = pandas.DataFrame.from_dict(quantList)
 
             if intensityData is None:

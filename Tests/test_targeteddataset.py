@@ -5056,8 +5056,6 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 	
 	def test_loadBrukerBIQUANTXMLDataset(self):
 
-		from nPYc.utilities.generic import print_dict
-
 		expected = copy.deepcopy(self.expectedQuantPS)
 		expected["sampleMetadata"] = expected["sampleMetadata"].reset_index(drop=True)
 		expected["featureMetadata"] = expected["featureMetadata"].reset_index(drop=True)

@@ -16,9 +16,6 @@ import warnings
 sys.path.append("..")
 import nPYc
 
-from nPYc.utilities.generic import print_dict
-
-
 
 class test_utilities_read_bruker_xml(unittest.TestCase):
 
@@ -76,7 +73,6 @@ class test_utilities_read_bruker_xml(unittest.TestCase):
 				    ]
 			    	)
 		actual = readBrukerXML(os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','bruker_quant_v2_plasma.xml'))
-		#print_dict("Actual", actual)
 
 		self.assertEqual(expected, actual)
 		
