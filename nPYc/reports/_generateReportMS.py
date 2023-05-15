@@ -34,7 +34,7 @@ from ..__init__ import __version__ as version
 
 
 def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactualFiltering=None, destinationPath=None,
-                          msDataCorrected=None, pcaModel=None, batch_correction_window=11):
+                          msDataCorrected=None, pcaModel=None, batch_correction_window=11, logy=False):
     """
     Summarise different aspects of an MS dataset
 
@@ -119,7 +119,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
     elif reportType.lower() == 'feature selection':
         _featureSelectionReport(msData, destinationPath)
     elif reportType.lower() == 'batch correction assessment':
-        _batchCorrectionAssessmentReport(msData, destinationPath)
+        _batchCorrectionAssessmentReport(msData, destinationPath, batch_correction_window=batch_correction_window, logy=logy)
     elif reportType.lower() == 'batch correction summary':
         _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath)
     elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged'):
@@ -872,10 +872,11 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     item['featuresPassed'] = sum(passMask)
 
     # Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds
-    rsdVals = numpy.arange(5, 55, 5)
-    rVals = numpy.arange(0.5, 1.01, 0.05)
-    rValsRep = numpy.tile(numpy.arange(0.5, 1.01, 0.05), [1, len(rsdVals)])
-    rsdValsRep = numpy.reshape(numpy.tile(numpy.arange(5, 55, 5), [len(rVals), 1]), rValsRep.shape, order='F')
+    rsdVals = numpy.array([5, 10, 15, 20, 25, 30, 35, 40, 45, 50])
+    rVals = numpy.array([0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1])
+    rValsRep = numpy.tile(rVals, [1, len(rsdVals)])
+    rsdValsRep = numpy.reshape(numpy.tile(rsdVals, [len(rVals), 1]), rValsRep.shape, order='F')
+
     featureNos = numpy.zeros(rValsRep.shape, dtype=numpy.int)
     if withArtifactualFiltering:
         # with blankThreshold in heatmap
@@ -916,9 +917,6 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
 
     fig, ax = plt.subplots(1, figsize=dataset.Attributes['figureSize'], dpi=dataset.Attributes['dpi'])
     sns.heatmap(test, annot=True, fmt='g', cbar=False)
-    # the formatters require two args, hence the "useless" in lambda
-    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, y: "{:0.0f}".format(float(x))))
-    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, y: "{:0.2f}".format(float(x))))
     plt.tight_layout()
 
     if destinationPath:
@@ -970,7 +968,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     return None
 
 
-def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correction_window=11):
+def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correction_window=11, logy=True):
     """
     Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
     """
@@ -1036,6 +1034,7 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
             addViolin=True,
             addBatchShading=True,
             savePath=saveAs,
+            logy=logy,
             figureFormat=dataset.Attributes['figureFormat'],
             dpi=dataset.Attributes['dpi'],
             figureSize=dataset.Attributes['figureSize'])
@@ -1064,7 +1063,7 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
         plotBatchAndROCorrection(preData,
                                  postData,
                                  feature,
-                                 logy=True,
+                                 logy=logy, # True
                                  savePath=saveAs,
                                  figureFormat=dataset.Attributes['figureFormat'],
                                  dpi=dataset.Attributes['dpi'],

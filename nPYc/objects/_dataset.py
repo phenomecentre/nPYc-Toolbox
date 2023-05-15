@@ -2,6 +2,7 @@ import scipy
 import numpy
 import pandas
 import os
+#import isatools.isatab as isatab
 import json
 import inspect
 import re
