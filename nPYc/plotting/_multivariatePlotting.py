@@ -476,6 +476,7 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
 		maxval = numpy.max([numpy.abs(numpy.max(cVect)), numpy.abs(numpy.min(cVect))])
 		maxcol = maxval#numpy.max(cVect) # grab the maximum
 		mincol = -maxval#numpy.min(cVect) # Grab the minimum
+		#name = 'new_%s' % i
 		new_cmap = _shiftedColorMap(orig_cmap, start=0, midpoint=1 - maxcol/(maxcol + numpy.abs(mincol)), stop=1, name='new')
 
 		fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
@@ -1125,6 +1126,7 @@ def _shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 		cdict['alpha'].append((si, a, a))
 
 	newcmap = matplotlib.colors.LinearSegmentedColormap(name, cdict)
-	plt.register_cmap(cmap=newcmap)
+	matplotlib.colormaps.register(newcmap,force=True)
+	#plt.register_cmap(cmap=newcmap)
 
 	return newcmap
