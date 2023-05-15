@@ -204,7 +204,7 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 
 		_violinPlotHelper(ax2, tic, sampleMasks, None, 'Sample Type', palette=palette, ylimits=limits, logy=logy)
 
-		sns.despine(trim=True, ax=ax2)
+		#sns.despine(trim=True, ax=ax2)
 
 	# Annotate figure
 	ax.set_xlabel('Acquisition Date')
@@ -218,7 +218,8 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	except:
 		pass
 	if logy:
-		ax.set_yscale('symlog')
+		ax.set_yscale('log', nonpositive='clip')
+		ax.set_ylabel('TIC (log scale)')
 	else:
 		ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 

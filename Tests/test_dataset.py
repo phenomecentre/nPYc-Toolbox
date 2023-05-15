@@ -287,6 +287,8 @@ class test_dataset_synthetic(unittest.TestCase):
 		testDataset.intensityDataExcluded.append(testDataset.intensityData[[0, 2], :])
 		testDataset.featureMetadataExcluded.append(testDataset.featureMetadata)
 		testDataset.excludedFlag.append('Samples')
+
+		#print(testDataset.featureMetadata.to_string())
 		testDataset.featureMetadataExcluded.append(testDataset.featureMetadata.loc[3, :])
 		testDataset.intensityDataExcluded.append(testDataset.intensityData[:, 3])
 		testDataset.sampleMetadataExcluded.append(testDataset.sampleMetadata)

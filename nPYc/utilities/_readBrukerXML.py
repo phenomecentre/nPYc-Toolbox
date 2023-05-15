@@ -58,9 +58,8 @@ def importBrukerXML(filelist):
             sampleMetadata.loc[sampleMetadata[
                                    'Path'] == filename, 'Acquired Time'] = processingDate
 
-            intensityData[
-            sampleMetadata.loc[sampleMetadata['Path'] == filename].index.values,
-            :] = df['value']
+            intensityData[sampleMetadata.loc[sampleMetadata['Path'] == filename].index.values,:] = df['value']
+            
         except ElementTree.ParseError:
             warnings.warn('Error parsing xml in %s, skipping' % filename)
 

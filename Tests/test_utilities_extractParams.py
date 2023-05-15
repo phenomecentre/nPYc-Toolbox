@@ -93,6 +93,10 @@ class test_utilities_extractParams(unittest.TestCase):
 						os.path.join('UnitTest1', 'UnitTest1_Urine_Rack1_SLL_270814', '90', 'pdata', '1', '1r'),
 						os.path.join('UnitTest1', 'UnitTest1_Urine_Rack1_SLL_270814', '70', 'pdata', '1', '1r'),
 						os.path.join('UnitTest1', 'UnitTest1_Urine_Rack1_SLL_270814', '40', 'pdata', '1', '1r'),
+
+						os.path.join('UnitTest2', 'UnitTest2_Plasma_Rack1_SLL_051218', '10', 'pdata', '1', '1r'),
+						os.path.join('UnitTest2', 'UnitTest2_Plasma_Rack1_SLL_051218', '20', 'pdata', '1', '1r'),
+
 						os.path.join('UnitTest3', 'UnitTest3_Serum_Rack01_RCM_190116', '150', 'pdata', '1', '1r'),
 						os.path.join('UnitTest3', 'UnitTest3_Serum_Rack01_RCM_190116', '161', 'pdata', '1', '1r'),
 						os.path.join('UnitTest3', 'UnitTest3_Serum_Rack01_RCM_190116', '160', 'pdata', '1', '1r'),
