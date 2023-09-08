@@ -6,11 +6,11 @@ __version__ = '1.2.7'
 
 
 from . import enumerations
-from .objects import Dataset, MSDataset, NMRDataset, TargetedDataset
+from .objects import Dataset, MSDataset, NMRDataset, TargetedDataset, NMRTargetedDataset
 from . import utilities
 from . import plotting
 from . import reports
 from . import batchAndROCorrection
 from . import multivariate
 
-__all__ = ['Dataset', 'MSDataset', 'plotting', 'reports', 'extractParams', 'NMRDataset', 'multivariate', 'TargetedDataset']
+__all__ = ['Dataset', 'MSDataset', 'plotting', 'reports', 'extractParams', 'NMRDataset', 'multivariate', 'TargetedDataset','NMRTargetedDataset']

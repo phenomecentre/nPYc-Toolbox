@@ -12,7 +12,7 @@ import collections
 import warnings
 from .._toolboxPath import toolboxPath
 from ._dataset import Dataset
-from ..utilities import normalisation, rsd
+from ..utilities import normalisation, rsd, setupLogger
 from ..enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod, AnalyticalPlatform
 
 
@@ -182,12 +182,13 @@ class NMRTargetedDataset(Dataset):
 
     """
 
-    def __init__(self, datapath, fileType='TargetLynx', sop='Generic', **kwargs):
+    def __init__(self, datapath, fileType='Bruker Quantification', sop='Generic', **kwargs):
         """
         Initialisation and pre-processing of input data (load files and match data and calibration and SOP, apply limits of quantification).
         """
 
         super().__init__(sop=sop, **kwargs)
+        self.logger = setupLogger('NMRTargetedDataset')
         self.filePath, fileName = os.path.split(datapath)
         self.fileName, fileExtension = os.path.splitext(fileName)
 
@@ -197,29 +198,25 @@ class NMRTargetedDataset(Dataset):
         if fileType == 'Bruker Quantification':
             # Read files, clean object
             self._loadBrukerXMLDataset(datapath, **kwargs)
-            # Finalise object
-            self.VariableType = VariableType.Discrete
-            self.AnalyticalPlatform = AnalyticalPlatform.NMR
-            self.initialiseMasks()
         elif fileType == 'SMolESY Quantification':
             raise NotImplementedError
-            # Read files, clean object
-            # TODO self._loadSMolESYDataset(datapath, **kwargs)
-            # Finalise object
-            #self.VariableType = VariableType.Discrete
-            #self.AnalyticalPlatform = AnalyticalPlatform.NMR
-            #self.initialiseMasks()
         elif fileType == 'empty':
             # Build empty object for testing
             pass
         else:
             raise NotImplementedError
 
+        # Finalise object
+        self.VariableType = VariableType.Discrete
+        self.AnalyticalPlatform = AnalyticalPlatform.NMR
+        self.initialiseMasks()
+        
+        self.logger.debug("--------------->>>>> hello!")  
         # Check the final object is valid and log
         if fileType != 'empty':
             validDataset = self.validateObject(verbose=False, raiseError=False, raiseWarning=False)
             if not validDataset['BasicTargetedDataset']:
-                raise ValueError('Import Error: The imported dataset does not satisfy to the Basic TargetedDataset definition')
+                raise ValueError('Import Error: The imported dataset does not conform to the BasicTargetedDataset definition')
         self.Attributes['Log'].append([datetime.now(),
                                        '%s instance initiated, with %d samples, %d features, from %s'
                                        % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
@@ -268,7 +265,7 @@ class NMRTargetedDataset(Dataset):
 
     def _loadBrukerXMLDataset(self, datapath, fileNamePattern=None, pdata=1, unit=None, **kwargs):
         """
-        Initialise object from Bruker XML files. Read files and prepare a valid TargetedDataset.
+        Initialise object from Bruker XML files. Read files and prepare a valid NMRTargetedDataset.
 
         Targeted data measurements are read and mapped to pre-defined SOPs. Once the import is finished, only properly read samples are returned and only features mapped onto the pre-defined SOP and sufficiently described. Only the first instance of a duplicated feature is kept.
 
@@ -377,10 +374,10 @@ class NMRTargetedDataset(Dataset):
         self.calibration['calibExpectedConcentration'] = pandas.DataFrame(None, columns=self.featureMetadata['Feature Name'].tolist())
 
         ## Summary
-        print('Targeted Method: ' + self.Attributes['methodName'])
-        print(str(self.sampleMetadata.shape[0]) + ' study samples')
-        print(str(self.featureMetadata.shape[0]) + ' features (' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.IS)) + ' IS, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.QuantOwnLabeledAnalogue)) + ' quantified and validated with own labeled analogue, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.QuantAltLabeledAnalogue)) + ' quantified and validated with alternative labeled analogue, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.QuantOther)) + ' other quantification, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.Monitored)) + ' monitored for relative information)')
-        print('-----')
+        self.logger.info('NMR Targeted Method: ' + self.Attributes['methodName'])
+        self.logger.info(str(self.sampleMetadata.shape[0]) + ' study samples')
+        self.logger.info(str(self.featureMetadata.shape[0]) + ' features (' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.IS)) + ' IS, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.QuantOwnLabeledAnalogue)) + ' quantified and validated with own labeled analogue, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.QuantAltLabeledAnalogue)) + ' quantified and validated with alternative labeled analogue, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.QuantOther)) + ' other quantification, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.Monitored)) + ' monitored for relative information)')
+        self.logger.info('-----')
 
         ## Apply limit of quantification?
         self._applyLimitsOfQuantification(**kwargs)
@@ -448,7 +445,7 @@ class NMRTargetedDataset(Dataset):
         ## Features only Monitored are not processed and passed untouched (concatenated back at the end)
         untouched = (featureMetadata['quantificationType'] == QuantificationType.Monitored).values
         if sum(untouched) != 0:
-            print('The following features are only monitored and therefore not processed for LOQs: ' + str(featureMetadata.loc[untouched, 'Feature Name'].values.tolist()))
+            self.logger.info('The following features are only monitored and therefore not processed for LOQs: ' + str(featureMetadata.loc[untouched, 'Feature Name'].values.tolist()))
             untouchedFeatureMetadata = featureMetadata.loc[untouched, :]
             featureMetadata = featureMetadata.loc[~untouched, :]
             untouchedIntensityData = intensityData[:, untouched]
@@ -470,8 +467,8 @@ class NMRTargetedDataset(Dataset):
         if not onlyLLOQ:
             unusableFeat = unusableFeat | (featureMetadata['ULOQ'].isnull().values & (featureMetadata['quantificationType'] != QuantificationType.QuantOther).values)
         if sum(unusableFeat) != 0:
-            print(str(sum(unusableFeat)) + ' features cannot be pre-processed:')
-            print('\t' + str(sum(unusableFeat)) + ' features lack the required information to apply limits of quantification')
+            self.logger.info(str(sum(unusableFeat)) + ' features cannot be pre-processed:')
+            self.logger.info('\t' + str(sum(unusableFeat)) + ' features lack the required information to apply limits of quantification')
             # store
             sampleMetadataExcluded.append(sampleMetadata)
             featureMetadataExcluded.append(featureMetadata.loc[unusableFeat, :])
@@ -536,11 +533,11 @@ class NMRTargetedDataset(Dataset):
             self.initialiseMasks()
 
         ## Output and Log
-        print('Values <LLOQ replaced by -inf')
+        self.logger.info('Values <LLOQ replaced by -inf')
         if not onlyLLOQ:
-            print('Values >ULOQ replaced by +inf')
+            self.logger.info('Values >ULOQ replaced by +inf')
         if isinstance(calibration, dict):
-            print('\n')
+            self.logger.info('\n')
 
         # log the modifications
         if onlyLLOQ:
@@ -892,18 +889,18 @@ class NMRTargetedDataset(Dataset):
         onlyOtherAttr = otherAdditional - commonAttr
         # save a list [self, other] for each attribute
         if bool(commonAttr):
-            print('The following additional attributes are present in both datasets and stored as lists:')
-            print('\t' + str(commonAttr))
+            self.logger.info('The following additional attributes are present in both datasets and stored as lists:')
+            self.logger.info('\t' + str(commonAttr))
             for k in commonAttr:
                 setattr(targetedData, k, [getattr(self,k), getattr(other,k)])
         if bool(onlySelfAttr):
-            print('The following additional attributes are only present in the first dataset and stored as lists:')
-            print('\t' + str(onlySelfAttr))
+            self.logger.info('The following additional attributes are only present in the first dataset and stored as lists:')
+            self.logger.info('\t' + str(onlySelfAttr))
             for l in onlySelfAttr:
                 setattr(targetedData, l, [getattr(self, l), None])
         if bool(onlyOtherAttr):
-            print('The following additional attributes are only present in the second dataset and stored as lists:')
-            print('\t' + str(onlyOtherAttr))
+            self.logger.info('The following additional attributes are only present in the second dataset and stored as lists:')
+            self.logger.info('\t' + str(onlyOtherAttr))
             for m in onlyOtherAttr:
                 setattr(targetedData, m, [None, getattr(other, m)])
 
@@ -914,7 +911,7 @@ class NMRTargetedDataset(Dataset):
 
         ## Log
         targetedData.Attributes['Log'].append([datetime.now(), 'Concatenated datasets %s (%i samples and %i features) and %s (%i samples and %i features), to a dataset of %i samples and %i features.' % (self.name, self.noSamples, self.noFeatures, other.name, other.noSamples, other.noFeatures, targetedData.noSamples, targetedData.noFeatures)])
-        print('Concatenated datasets %s (%i samples and %i features) and %s (%i samples and %i features), to a dataset of %i samples and %i features.' % (self.name, self.noSamples, self.noFeatures, other.name, other.noSamples, other.noFeatures, targetedData.noSamples, targetedData.noFeatures))
+        self.logger.info('Concatenated datasets %s (%i samples and %i features) and %s (%i samples and %i features), to a dataset of %i samples and %i features.' % (self.name, self.noSamples, self.noFeatures, other.name, other.noSamples, other.noFeatures, targetedData.noSamples, targetedData.noFeatures))
 
         ## Remind to mergeLimitsOfQuantification
         warnings.warn('Update the limits of quantification using `mergedDataset.mergeLimitsOfQuantification()` (keeps the lowest common denominator across all batch: highest LLOQ, lowest ULOQ)')
@@ -1076,7 +1073,7 @@ class NMRTargetedDataset(Dataset):
         Does not check columns inside :py:attr:`~calibration['calibFeatureMetadata']`
         Does not currently check for :py:attr:`~Attributes['Feature Name']`
 
-        :param verbose: if True the result of each check is printed (default True)
+        :param verbose: if True the result of each check is self.loggered (default True)
         :type verbose: bool
         :param raiseError: if True an error is raised when a check fails and the validation is interrupted (default False)
         :type raiseError: bool
@@ -1161,7 +1158,7 @@ class NMRTargetedDataset(Dataset):
             else:
                 msg = successMsg
             if verb:
-                print(msg)
+                self.logger.info(msg)
             return (allFailures)
 
         ## init
@@ -1181,7 +1178,7 @@ class NMRTargetedDataset(Dataset):
         # First check it conforms to Dataset
         if super().validateObject(verbose=verbose, raiseError=raiseError, raiseWarning=raiseWarning):
             ## Check object class
-            condition = isinstance(self, TargetedDataset)
+            condition = isinstance(self, NMRTargetedDataset)
             success = 'Check Object class:\tOK'
             failure = 'Check Object class:\tFailure, not TargetedDataset, but ' + str(type(self))
             failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=TypeError(failure))
@@ -1270,8 +1267,8 @@ class NMRTargetedDataset(Dataset):
                 refNumSamples = self._intensityData.shape[0]
                 refNumFeatures = self._intensityData.shape[1]
                 if verbose:
-                    print('---- self._intensityData used as size reference ----')
-                    print('\t' + str(refNumSamples) + ' samples, ' + str(refNumFeatures) + ' features')
+                    self.logger.info('---- self._intensityData used as size reference ----')
+                    self.logger.info('\t' + str(refNumSamples) + ' samples, ' + str(refNumFeatures) + ' features')
             # end self._intensityData
 
             ## self.sampleMetadata
@@ -1374,7 +1371,7 @@ class NMRTargetedDataset(Dataset):
                     # Use featureMetadata['Feature Name'] as reference for future tables
                     refFeatureName = self.featureMetadata['Feature Name'].values.tolist()
                     if verbose:
-                        print('---- self.featureMetadata[\'Feature Name\'] used as Feature Name reference ----')
+                        self.logger.info('---- self.featureMetadata[\'Feature Name\'] used as Feature Name reference ----')
                 # end self.featureMetadata['Feature Name']
                 # ['calibrationMethod']
                 condition = ('calibrationMethod' in self.featureMetadata.columns)
@@ -1555,8 +1552,8 @@ class NMRTargetedDataset(Dataset):
                                             refCalibNumSamples[i] = self.calibration[i]['calibIntensityData'].shape[0]
                                             refCalibNumFeatures[i] = self.calibration[i]['calibIntensityData'].shape[1]
                                             if verbose:
-                                                print('---- self.calibration[' + str(i) + '][\'calibIntensityData\'] used as number of calibration samples/features reference ----')
-                                                print('\t' + str(refCalibNumSamples[i]) + ' samples, ' + str(refCalibNumFeatures[i]) + ' features')
+                                                self.logger.info('---- self.calibration[' + str(i) + '][\'calibIntensityData\'] used as number of calibration samples/features reference ----')
+                                                self.logger.info('\t' + str(refCalibNumSamples[i]) + ' samples, ' + str(refCalibNumFeatures[i]) + ' features')
                                         # end calibIntensityData is a numpy.ndarray
                                 # end calibIntensityData
                                 ## calibSampleMetadata
@@ -1667,8 +1664,8 @@ class NMRTargetedDataset(Dataset):
                                     # Use calibIntensityData as number of calib sample reference
                                     refNumCalibSamples = self.calibration['calibIntensityData'].shape[0]
                                     if verbose:
-                                        print('---- self.calibration[\'calibIntensityData\'] used as number of calibration samples reference ----')
-                                        print('\t' + str(refNumCalibSamples) + ' samples')
+                                        self.logger.info('---- self.calibration[\'calibIntensityData\'] used as number of calibration samples reference ----')
+                                        self.logger.info('\t' + str(refNumCalibSamples) + ' samples')
                             # end calibIntensityData is a numpy.ndarray
                         # end calibIntensityData
                         ## calibSampleMetadata
@@ -1755,7 +1752,7 @@ class NMRTargetedDataset(Dataset):
             # end self.calibration
 
 
-            ## List additional attributes (print + log)
+            ## List additional attributes (self.logger + log)
             expectedSet = set({'Attributes', 'VariableType', '_Normalisation', '_name', 'fileName', 'filePath',
                                '_intensityData', 'sampleMetadata', 'featureMetadata', 'expectedConcentration', 'sampleMask',
                                'featureMask', 'calibration', 'sampleMetadataExcluded', 'intensityDataExcluded',
@@ -1764,13 +1761,13 @@ class NMRTargetedDataset(Dataset):
             additionalAttributes = objectSet - expectedSet
             if len(additionalAttributes) > 0:
                 if verbose:
-                    print('--------')
-                    print(str(len(additionalAttributes)) + ' additional attributes in the object:')
-                    print('\t' + str(list(additionalAttributes)))
+                    self.logger.info('--------')
+                    self.logger.info(str(len(additionalAttributes)) + ' additional attributes in the object:')
+                    self.logger.info('\t' + str(list(additionalAttributes)))
             else:
                 if verbose:
-                    print('--------')
-                    print('No additional attributes in the object')
+                    self.logger.info('--------')
+                    self.logger.info('No additional attributes in the object')
 
             ## Log and final Output
             # Basic failure might compromise logging, failure of QC compromises sample meta
@@ -1792,19 +1789,19 @@ class NMRTargetedDataset(Dataset):
                         MetaBool = True
                 # Log
                 self.Attributes['Log'].append([datetime.now(), 'Dataset conforms to basic TargetedDataset (0 errors), %s (%d errors), %s (%d errors), (%i samples and %i features), with %d additional attributes in the object: %s. QC errors: %s, Meta errors: %s' % (QCText, len(failureListQC), MetaText, len(failureListMeta), self.noSamples, self.noFeatures, len(additionalAttributes), list(additionalAttributes), list(failureListQC), list(failureListMeta))])
-                # print results
+                # self.logger results
                 if verbose:
-                    print('--------')
-                    print('Conforms to Dataset:\t 0 errors found')
-                    print('Conforms to basic TargetedDataset:\t 0 errors found')
+                    self.logger.info('--------')
+                    self.logger.info('Conforms to Dataset:\t 0 errors found')
+                    self.logger.info('Conforms to basic TargetedDataset:\t 0 errors found')
                     if QCBool:
-                        print('Has required parameters for QC:\t %d errors found' % ((len(failureListQC))))
+                        self.logger.info('Has required parameters for QC:\t %d errors found' % ((len(failureListQC))))
                     else:
-                        print('Does not have QC parameters:\t %d errors found' % ((len(failureListQC))))
+                        self.logger.info('Does not have QC parameters:\t %d errors found' % ((len(failureListQC))))
                     if MetaBool:
-                        print('Has sample metadata information:\t %d errors found' % ((len(failureListMeta))))
+                        self.logger.info('Has sample metadata information:\t %d errors found' % ((len(failureListMeta))))
                     else:
-                        print('Does not have sample metadata information:\t %d errors found' % ((len(failureListMeta))))
+                        self.logger.info('Does not have sample metadata information:\t %d errors found' % ((len(failureListMeta))))
                 # output
                 if (not QCBool) & raiseWarning:
                     warnings.warn('Does not have QC parameters:\t %d errors found' % ((len(failureListQC))))
@@ -1819,15 +1816,15 @@ class NMRTargetedDataset(Dataset):
                     self.Attributes['Log'].append([datetime.now(), 'Failed basic TargetedDataset validation, with the following %d issues: %s' % (len(failureListBasic), failureListBasic)])
                 except (AttributeError, KeyError, TypeError):
                     if verbose:
-                        print('--------')
-                        print('Logging failed')
-                # print results
+                        self.logger.info('--------')
+                        self.logger.info('Logging failed')
+                # self.logger results
                 if verbose:
-                    print('--------')
-                    print('Conforms to Dataset:\t 0 errors found')
-                    print('Does not conform to basic TargetedDataset:\t %i errors found' % (len(failureListBasic)))
-                    print('Does not have QC parameters')
-                    print('Does not have sample metadata information')
+                    self.logger.info('--------')
+                    self.logger.info('Conforms to Dataset:\t 0 errors found')
+                    self.logger.info('Does not conform to basic TargetedDataset:\t %i errors found' % (len(failureListBasic)))
+                    self.logger.info('Does not have QC parameters')
+                    self.logger.info('Does not have sample metadata information')
                 # output
                 if raiseWarning:
                     warnings.warn('Does not conform to basic TargetedDataset:\t %i errors found' % (len(failureListBasic)))
@@ -1842,15 +1839,15 @@ class NMRTargetedDataset(Dataset):
                 self.Attributes['Log'].append([datetime.now(), 'Failed basic TargetedDataset validation, Failed Dataset validation'])
             except (AttributeError, KeyError, TypeError):
                 if verbose:
-                    print('--------')
-                    print('Logging failed')
-            # print results
+                    self.logger.info('--------')
+                    self.logger.info('Logging failed')
+            # self.logger results
             if verbose:
-                print('--------')
-                print('Does not conform to Dataset')
-                print('Does not conform to basic TargetedDataset')
-                print('Does not have QC parameters')
-                print('Does not have sample metadata information')
+                self.logger.info('--------')
+                self.logger.info('Does not conform to Dataset')
+                self.logger.info('Does not conform to basic TargetedDataset')
+                self.logger.info('Does not have QC parameters')
+                self.logger.info('Does not have sample metadata information')
             # output
             if raiseWarning:
                 warnings.warn('Does not conform to basic TargetedDataset')
