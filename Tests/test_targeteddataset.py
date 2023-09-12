@@ -4317,7 +4317,6 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 					self.assertEqual(expected['Attributes'][i], result.Attributes[i])
 
 
-class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 	"""
 	Test all steps of loadBrukerXMLDataset and parameters input: find and read Bruker XML files, filter features by units, format sample and feature metadata, initialise expectedConcentration and calibration, apply limits of quantification.
 	Underlying functions tested independently

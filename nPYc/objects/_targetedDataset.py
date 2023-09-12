@@ -157,28 +157,7 @@ class TargetedDataset(Dataset):
             If keepIS=True (default `False`), features marked as Internal Standards (IS) are retained.
 
 
-    * ``fileType = 'Bruker Quantification'`` to import Bruker quantification results
-
-        * ``nmrRawDataPath``
-            Path to the parent folder where all result files are stored. All subfolders will be parsed and the ``.xml`` results files matching the ``fileNamePattern`` imported.
-
-        * ``fileNamePattern``
-            Regex to recognise the result data xml files
-
-        * ``pdata``
-            To select the right pdata folders (default 1)
-
-        Two form of Bruker quantification results are supported and selected using the ``sop`` option: *BrukerQuant-UR* and *Bruker BI-LISA*
-
-        * ``sop = 'BrukerQuant-UR'``
-
-            Example: ``TargetedDataset(nmrRawDataPath, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea')``
-
-            * ``unit``
-                If features are duplicated with different units, ``unit`` limits the import to features matching said unit. (In case of duplication and no ``unit``, all available units will be listed)
-
-        * ``sop = ''BrukerBI-LISA'``
-            Example: ``TargetedDataset(nmrRawDataPath, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')``
+    
 
     """
 
@@ -201,13 +180,7 @@ class TargetedDataset(Dataset):
             self.VariableType = VariableType.Discrete
             self.AnalyticalPlatform = AnalyticalPlatform.MS
             self.initialiseMasks()
-        elif fileType == 'Bruker Quantification':
-            # Read files, clean object
-            self._loadBrukerXMLDataset(datapath, **kwargs)
-            # Finalise object
-            self.VariableType = VariableType.Discrete
-            self.AnalyticalPlatform = AnalyticalPlatform.NMR
-            self.initialiseMasks()
+        
         elif fileType == 'empty':
             # Build empty object for testing
             pass

@@ -408,7 +408,7 @@ class test_plotting(unittest.TestCase):
 				# Cause all warnings to always be triggered.
 				warnings.simplefilter("ignore")
 				datapath = os.path.join("..", "..", "npc-standard-project", "Raw_Data", "nmr", "UnitTest3")
-				testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
+				testData = nPYc.NMRTargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
 
 			testData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest3_NMR_serum_PCSOP.012.csv'))
 
@@ -439,7 +439,7 @@ class test_plotting(unittest.TestCase):
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			datapath = os.path.join("..", "..", "npc-standard-project", "Raw_Data", "nmr", "UnitTest1")
-			testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/L')
+			testData = nPYc.NMRTargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/L')
 			testData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_NMR_urine_PCSOP.011.csv'))
 
 			outputPath = os.path.join(tmpdirname, 'basic')
