@@ -8,10 +8,12 @@ import random
 import string
 import json
 import datetime
-
 sys.path.append("..")
 import nPYc
 from generateTestDataset import generateTestDataset
+
+
+sys.path.append("..")
 
 class test_multivariate_multivariateutilities(unittest.TestCase):
 

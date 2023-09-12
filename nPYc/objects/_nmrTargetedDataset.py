@@ -10,11 +10,10 @@ import numpy
 import pandas
 import collections
 import warnings
-from .._toolboxPath import toolboxPath
+from nPYc._toolboxPath import toolboxPath
 from ._dataset import Dataset
-from ..utilities import normalisation, rsd, setupLogger
-from ..enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod, AnalyticalPlatform
-
+from nPYc.utilities import normalisation, rsd, setupLogger
+from nPYc.enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod, AnalyticalPlatform
 
 class NMRTargetedDataset(Dataset):
     """
@@ -181,7 +180,6 @@ class NMRTargetedDataset(Dataset):
             Example: ``TargetedDataset(nmrRawDataPath, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')``
 
     """
-
     def __init__(self, datapath, fileType='Bruker Quantification', sop='Generic', **kwargs):
         """
         Initialisation and pre-processing of input data (load files and match data and calibration and SOP, apply limits of quantification).
@@ -394,7 +392,6 @@ class NMRTargetedDataset(Dataset):
             except:
                 pass
 
-
     def _applyLimitsOfQuantification(self, onlyLLOQ=False, **kwargs):
         """
         For each feature, replace intensity values inferior to the lowest limit of quantification or superior to the upper limit of quantification, by a fixed value.
@@ -549,7 +546,6 @@ class NMRTargetedDataset(Dataset):
         else:
             logUntouchedFeatures = ''
         self.Attributes['Log'].append([datetime.now(), '%s (%i samples, %i features). LLOQ are replaced by -inf.%s' % (logLimits, self.noSamples, self.noFeatures, logUntouchedFeatures)])
-
 
     def __add__(self,other):
         """
@@ -918,7 +914,6 @@ class NMRTargetedDataset(Dataset):
 
         return targetedData
 
-
     def __radd__(self, other):
         """
         Implements the summation of multiple :py:class:`TargetedDataset`
@@ -932,7 +927,6 @@ class NMRTargetedDataset(Dataset):
         else:
             return self.__add__(other)
 
-
     def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False, filterMetadata=True):
         """
         Calls :py:meth:`~Dataset.exportDataset` and raises a warning if normalisation is employed as :py:class:`TargetedDataset` :py:attr:`intensityData` can be left-censored.
@@ -943,7 +937,6 @@ class NMRTargetedDataset(Dataset):
         tmpData = copy.deepcopy(self)
         tmpData._intensityData = tmpData._intensityData * (100/tmpData.sampleMetadata['Dilution']).values[:, numpy.newaxis]
         super(TargetedDataset, tmpData).exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
-
 
     def _exportCSV(self, destinationPath, escapeDelimiters=False):
         """
@@ -992,7 +985,6 @@ class NMRTargetedDataset(Dataset):
 
         # Export intensity data
         intensityData.to_csv(os.path.join(destinationPath + '_intensityData.csv'), encoding='utf-8', date_format=self._timestampFormat, header=False, index=False)
-
 
     def _exportUnifiedCSV(self, destinationPath, escapeDelimiters=False):
         """
@@ -1044,7 +1036,6 @@ class NMRTargetedDataset(Dataset):
 
         # Save
         tmpCombined.to_csv(os.path.join(destinationPath + '_combinedData.csv'), encoding='utf-8', date_format=self._timestampFormat)
-
 
     def validateObject(self, verbose=True, raiseError=False, raiseWarning=True):
         """
@@ -1855,7 +1846,6 @@ class NMRTargetedDataset(Dataset):
                 warnings.warn('Does not have sample metadata information')
             return ({'Dataset': False, 'BasicTargetedDataset': False, 'QC': False, 'sampleMetadata': False})
 
-
     def applyMasks(self):
         """
         Permanently delete elements masked (those set to ``False``) in :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask`, from :py:attr:`~Dataset.featureMetadata`, :py:attr:`~Dataset.sampleMetadata`, :py:attr:`~Dataset.intensityData` and py:attr:`TargetedDataset.expectedConcentration`.
@@ -1945,7 +1935,6 @@ class NMRTargetedDataset(Dataset):
         # applyMasks to the rest of TargetedDataset
         super().applyMasks()
 
-
     def updateMasks(self, filterSamples=True, filterFeatures=True, sampleTypes=[SampleType.StudySample, SampleType.StudyPool],
                     assayRoles=[AssayRole.Assay, AssayRole.PrecisionReference],
                     quantificationTypes=[QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantOther, QuantificationType.Monitored],
@@ -2029,7 +2018,6 @@ class NMRTargetedDataset(Dataset):
 
         self.Attributes['Log'].append([datetime.now(), 'Dataset filtered with: filterSamples=%s, filterFeatures=%s, sampleTypes=%s, assayRoles=%s, quantificationTypes=%s, calibrationMethods=%s' % (filterSamples, filterFeatures, sampleTypes, assayRoles, quantificationTypes, calibrationMethods)])
 
-
     def addSampleInfo(self, descriptionFormat=None, filePath=None, **kwargs):
         """
         Load additional metadata and map it in to the :py:attr:`~Dataset.sampleMetadata` table.
@@ -2060,7 +2048,6 @@ class NMRTargetedDataset(Dataset):
         else:
             super().addSampleInfo(descriptionFormat=descriptionFormat, filePath=filePath, **kwargs)
 
-
     def _matchDatasetToLIMS(self, pathToLIMSfile):
         """
         Establish the `Sampling ID` by matching the `Sample Base Name` with the LIMS file information.
@@ -2074,7 +2061,6 @@ class NMRTargetedDataset(Dataset):
             NMRDataset._matchDatasetToLIMS(self,pathToLIMSfile)
         else:
             super()._matchDatasetToLIMS(pathToLIMSfile)
-
 
     def _getSampleMetadataFromFilename(self, filenameSpec):
         """
@@ -2173,7 +2159,6 @@ class NMRTargetedDataset(Dataset):
 
         self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
-
     def _fillBatches(self):
         """
         Use sample names and acquisition times to infer batch info
@@ -2211,7 +2196,6 @@ class NMRTargetedDataset(Dataset):
         else:
             warnings.warn('Unable to infer batches without run order, skipping.')
             return
-
 
     def accuracyPrecision(self, onlyPrecisionReferences=False):
         """
