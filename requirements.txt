@@ -3,7 +3,7 @@ iPython>=6.3.1
 MarkupSafe==2.0.1
 Jinja2>=3.0.1
 lmfit>=0.9.7
-matplotlib==3.5.2
+matplotlib>=3.5.2
 networkx>=2.5.1
 numpy~=1.23.3
 openpyxl

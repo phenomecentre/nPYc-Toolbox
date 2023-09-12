@@ -189,7 +189,7 @@ def _featureLOQViolinPlotHelper(ax, tData, featID, splitByBatch=True, plotBatchL
             pt_LOQ_subgroup.extend(tData.sampleMetadata.loc[(old_ULOQMask), 'SampleType'].values)
 
         # Plot all batch LOQ points
-        if len(pt_LOQ_x) != 0:
+        if (len(pt_LOQ_x) != 0) and (not numpy.isnan(old_LLOQ)):
             if splitByBatch:
                 p_LOQ_point = sns.swarmplot(x=pt_LOQ_x, y=pt_LOQ_y, hue=pt_LOQ_subgroup, marker='X', palette=point_palette, hue_order=hue_order, ax=ax, dodge=True, size=10, linewidth=1, edgecolor='black')
             else:
