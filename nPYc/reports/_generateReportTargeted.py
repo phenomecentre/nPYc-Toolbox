@@ -601,9 +601,6 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 	# Tidy table for final report format
 	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
 
-	if hasattr(sampleSummary['Acquired'], 'Already Excluded'):
-		sampleSummary['Acquired'].rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
-
 	sampleSummary['isFinalReport'] = True
 	if 'StudySamples Exclusion Details' in sampleSummary:
 		sampleSummary['studySamplesExcluded'] = True
@@ -866,9 +863,6 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 	# Tidy table for final report format
 	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
-
-	if hasattr(sampleSummary['Acquired'], 'Already Excluded'):
-		sampleSummary['Acquired'].rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
 
 	sampleSummary['isFinalReport'] = True
 	if 'StudySamples Exclusion Details' in sampleSummary:

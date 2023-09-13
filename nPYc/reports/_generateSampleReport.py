@@ -145,7 +145,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 	# Finally - add column of samples already excluded to sampleSummary
 	if excluded != 0:
-		sampleSummary['Acquired']['Already Excluded'] = [excluded, sum(SSmaskEx), sum(SPmaskEx), sum(ERmaskEx),
+		sampleSummary['Acquired']['Missing/Excluded'] = [excluded, sum(SSmaskEx), sum(SPmaskEx), sum(ERmaskEx),
 														 sum(SRDmaskEx), sum(BlankmaskEx), sum(UnclearRolemaskEx)]
 		# Save field with Study Samples exclusions
 		if (sum(SSmaskEx) != 0):
@@ -159,9 +159,9 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	# Drop rows where no samples present for that datatype
 	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
 
-	# Update 'All', 'Already Excluded' to only reflect sample types present in data
+	# Update 'All', 'Missing/Excluded' to only reflect sample types present in data
 	if excluded != 0:
-		sampleSummary['Acquired'].loc['All','Already Excluded'] = sum(sampleSummary['Acquired']['Already Excluded'][1:])
+		sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sum(sampleSummary['Acquired']['Missing/Excluded'][1:])
 
 
 	# Generate html report
@@ -215,6 +215,6 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 			print('\n')
 			
 		if 'Excluded Details' in sampleSummary:
-			print('Details of Samples Already Excluded')
+			print('Details of Samples Missing/Excluded')
 			display(sampleSummary['Excluded Details'])
 			print('\n')
