@@ -1323,6 +1323,8 @@ class MSDataset(Dataset):
 		fileNameParts.loc[fileNameParts['injectionKind'] == 'SRD', 'AssayRole'] = AssayRole.LinearityReference
 		fileNameParts.loc[fileNameParts['groupingKind'].str.match('Blank', na=False).astype(
 			bool), 'AssayRole'] = AssayRole.Blank
+		fileNameParts.loc[fileNameParts['baseName'].str.match('.+?SRDB.+?', na=False).astype(
+			bool), 'AssayRole'] = AssayRole.Blank
 		fileNameParts.loc[
 			fileNameParts['groupingKind'].str.match('E?IC', na=False).astype(bool), 'AssayRole'] = AssayRole.Assay
 
@@ -1334,6 +1336,8 @@ class MSDataset(Dataset):
 		fileNameParts.loc[fileNameParts['reference'] == 'MR', 'SampleType'] = SampleType.MethodReference
 		fileNameParts.loc[fileNameParts['injectionKind'] == 'SRD', 'SampleType'] = SampleType.StudyPool
 		fileNameParts.loc[fileNameParts['groupingKind'].str.match('Blank', na=False).astype(
+			bool), 'SampleType'] = SampleType.ProceduralBlank
+		fileNameParts.loc[fileNameParts['baseName'].str.match('.+?SRDB.+?', na=False).astype(
 			bool), 'SampleType'] = SampleType.ProceduralBlank
 		fileNameParts.loc[
 			fileNameParts['groupingKind'].str.match('E?IC', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
