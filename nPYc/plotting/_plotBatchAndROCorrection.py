@@ -34,6 +34,10 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 	# Check inputs
 	# Check dimensions of msData the same as msDatacorrected
 
+	# TODO: implement plotting features by Run Order rather than by Acquired Time
+	if ('Acquired Time' not in msData.sampleMetadata.columns):
+		raise NotImplementedError
+
 	try:
 		iterator = iter(featureList)
 	except TypeError:

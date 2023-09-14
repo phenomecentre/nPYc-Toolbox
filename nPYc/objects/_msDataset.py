@@ -1416,17 +1416,17 @@ class MSDataset(Dataset):
 		"""
 		sampleMetadata = self.sampleMetadata.copy()
 		# Loop over samples in run order
-		if 'Run Order' not in sampleMetadata.columns or 'Acquired Time' not in sampleMetadata.columns:
-			warnings.warn('Unable to infer batches without run order and acquired time info, skipping.')
-		elif sampleMetadata['Run Order'].isnull().all() or sampleMetadata['Acquired Time'].isnull().all():
-			warnings.warn('Unable to infer batches without run order and acquired time info, skipping.')
-		else:
+
+		# If 'Acquired Time' data present
+		if ('Acquired Time' in sampleMetadata.columns) and (not sampleMetadata['Acquired Time'].isnull().all()):
+
 			sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
 			sampleMetadata['Correction Batch'] = 1
 			sampleMetadata['Batch'] = 1
 			timeDelta = sortedSampleMetadata['Acquired Time'].diff()
 
-			batchTimeSplits = [sortedSampleMetadata.loc[idx, 'Acquired Time'] for idx, x in sortedSampleMetadata.iterrows() if timeDelta.loc[idx] > timedelta(hours=gapLength)]
+			batchTimeSplits = [sortedSampleMetadata.loc[idx, 'Acquired Time'] for idx, x in
+							   sortedSampleMetadata.iterrows() if timeDelta.loc[idx] > timedelta(hours=gapLength)]
 			batchTimeSplits.extend([sortedSampleMetadata['Acquired Time'].max()])
 			batchNumber = 1
 
@@ -1441,23 +1441,62 @@ class MSDataset(Dataset):
 			# Handle the 'Dilution Series' field
 			if sum(sampleMetadata['AssayRole'] == AssayRole.LinearityReference) > 0:
 				SRD_series = 1
-				previousDilutionRunOrder = sortedSampleMetadata.loc[sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, 'Run Order'].min()
+				previousDilutionRunOrder = sortedSampleMetadata.loc[
+					sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, 'Run Order'].min()
 				previousBatch = 1
-				for idx, row in sortedSampleMetadata.loc[sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, :].iterrows():
+				for idx, row in sortedSampleMetadata.loc[
+								sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, :].iterrows():
 					if (row['Run Order'] - previousDilutionRunOrder > 1) or (row['Batch'] > previousBatch):
 						SRD_series += 1
 					sampleMetadata.loc[idx, 'Dilution Series'] = SRD_series
 					previousDilutionRunOrder = row['Run Order']
 					previousBatch = row['Batch']
+
 			# Method Reference, Dilution Series, and Blanks should have "Correction Batch" = nan
 			SamplesNoBatchCorrection = sampleMetadata['AssayRole'].isin([AssayRole.Blank, AssayRole.LinearityReference])
 			sampleMetadata.loc[SamplesNoBatchCorrection, 'Correction Batch'] = numpy.nan
+
 			# Handle cases where a first batch contains only blanks or pre-injection blanks.
 			if numpy.nanmin(sampleMetadata['Correction Batch']) > 1:
 				batchDiff = numpy.nanmin(sampleMetadata['Correction Batch']) - 1
 				sampleMetadata['Correction Batch'] -= batchDiff
 
-		self.sampleMetadata = sampleMetadata
+			self.sampleMetadata = sampleMetadata
+
+		elif ('Run Order' in sampleMetadata.columns) and (not sampleMetadata['Run Order'].isnull().all()):
+
+			sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
+			sampleMetadata['Correction Batch'] = 1
+			sampleMetadata['Batch'] = 1
+
+			# Handle the 'Dilution Series' field
+			if sum(sampleMetadata['AssayRole'] == AssayRole.LinearityReference) > 0:
+				SRD_series = 1
+				previousDilutionRunOrder = sortedSampleMetadata.loc[
+					sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, 'Run Order'].min()
+				previousBatch = 1
+				for idx, row in sortedSampleMetadata.loc[
+								sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, :].iterrows():
+					if (row['Run Order'] - previousDilutionRunOrder > 1) or (row['Batch'] > previousBatch):
+						SRD_series += 1
+					sampleMetadata.loc[idx, 'Dilution Series'] = SRD_series
+					previousDilutionRunOrder = row['Run Order']
+					previousBatch = row['Batch']
+
+			# Method Reference, Dilution Series, and Blanks should have "Correction Batch" = nan
+			SamplesNoBatchCorrection = sampleMetadata['AssayRole'].isin(
+				[AssayRole.Blank, AssayRole.LinearityReference])
+			sampleMetadata.loc[SamplesNoBatchCorrection, 'Correction Batch'] = numpy.nan
+
+			# Handle cases where a first batch contains only blanks or pre-injection blanks.
+			if numpy.nanmin(sampleMetadata['Correction Batch']) > 1:
+				batchDiff = numpy.nanmin(sampleMetadata['Correction Batch']) - 1
+				sampleMetadata['Correction Batch'] -= batchDiff
+
+			self.sampleMetadata = sampleMetadata
+
+		else:
+			warnings.warn('Unable to infer batches without run order or acquired time info, skipping.')
 
 	def amendBatches(self, sampleRunOrder):
 		"""

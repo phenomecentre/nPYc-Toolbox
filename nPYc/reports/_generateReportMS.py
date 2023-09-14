@@ -1187,7 +1187,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     _plotAbundanceBySampleType(correctedDataset.intensityData, SSmask, SPmask, ERmask, saveAs, correctedDataset)
 
     # Figure 2: TIC for all samples and features.
-    if ('Acquired Time' in dataset.sampleMetadata.columns) and ('Run Order' in dataset.sampleMetadata.columns):
+    if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
         # Pre-correction
         if destinationPath:
             item['TicPRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS2_TicPRE.' + dataset.Attributes['figureFormat'])
