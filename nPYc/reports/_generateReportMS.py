@@ -274,7 +274,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     # ONLY 'final report': plot TIC by batch and TIC
     if (reportType.lower() == 'final report'):
 
-        if ('Acquired Time' in dataset.sampleMetadata.columns) and ('Run Order' in dataset.sampleMetadata.columns):
+        if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
 
             # Figure 1: Acquisition Structure, TIC by sample and batch
             if destinationPath:
@@ -557,7 +557,7 @@ def _featureReport(dataset, destinationPath=None):
 
     _plotAbundanceBySampleType(dataset.intensityData, SSmask, SPmask, ERmask, saveAs, dataset)
 
-    if ('Acquired Time' in dataset.sampleMetadata.columns) and ('Run Order' in dataset.sampleMetadata.columns):
+    if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
 
         # Figure 2: Sample intensity TIC and distribution by sample type
         if destinationPath:
@@ -577,28 +577,32 @@ def _featureReport(dataset, destinationPath=None):
                 figureSize=dataset.Attributes['figureSize'])
 
         # Figure 3: Acquisition structure and detector voltage
-        if destinationPath:
-            item['AcquisitionStructureFigure'] = os.path.join(graphicsPath,
-                                                              item['Name'] + '_acquisitionStructure.' + dataset.Attributes[
-                                                                  'figureFormat'])
-            saveAs = item['AcquisitionStructureFigure']
-        else:
-            print('Figure 3: Acquisition structure (coloured by detector voltage).')
-
         if 'Detector' in dataset.sampleMetadata.columns:
-                # TIC all samples
-                plotTIC(dataset,
-                        addViolin=False,
-                        addBatchShading=True,
-                        addLineAtGaps=True,
-                        colourByDetectorVoltage=True,
-                        savePath=saveAs,
-                        title='',
-                        figureFormat=dataset.Attributes['figureFormat'],
-                        dpi=dataset.Attributes['dpi'],
-                        figureSize=dataset.Attributes['figureSize'])
+
+            if destinationPath:
+                item['AcquisitionStructureFigure'] = os.path.join(graphicsPath,
+                                                                  item['Name'] + '_acquisitionStructure.' +
+                                                                  dataset.Attributes[
+                                                                      'figureFormat'])
+                saveAs = item['AcquisitionStructureFigure']
+            else:
+                print('Figure 3: Acquisition structure (coloured by detector voltage).')
+
+            # TIC all samples
+            plotTIC(dataset,
+                    addViolin=False,
+                    addBatchShading=True,
+                    addLineAtGaps=True,
+                    colourByDetectorVoltage=True,
+                    savePath=saveAs,
+                    title='',
+                    figureFormat=dataset.Attributes['figureFormat'],
+                    dpi=dataset.Attributes['dpi'],
+                    figureSize=dataset.Attributes['figureSize'])
         else:
-            print('Detector voltage information not available')
+            if not destinationPath:
+                print('Figure 3: Acquisition structure (coloured by detector voltage).')
+                print('\x1b[31;1m Detector voltage data not available to plot\n\033[0;0m')
     else:
         if not destinationPath:
             print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')

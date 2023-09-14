@@ -80,19 +80,32 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	ERmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSamplesMask
 	LRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)) & tempSamplesMask
 
-	# X axis limits for formatting
-	minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
-	maxX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
-	delta = maxX - minX
-	days = delta.astype('timedelta64[D]')
-	days = days / numpy.timedelta64(1, 'D')
-	if days < 7:
-		loc = WeekdayLocator(byweekday=(MO, TU, WE, TH, FR, SA, SU))
-	else:
-		loc = WeekdayLocator(byweekday=(MO, SA))
-	formatter = DateFormatter('%d/%m/%y')
+	# Use 'Acquired Time' if it exists:
+	if ('Acquired Time' in msData.sampleMetadata.columns):
 
-	tic = numpy.sum(msData.intensityData[:, tempFeatureMask==True], axis=1)
+		# X axis limits for formatting
+		minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
+		maxX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
+		delta = maxX - minX
+		days = delta.astype('timedelta64[D]')
+		days = days / numpy.timedelta64(1, 'D')
+		if days < 7:
+			loc = WeekdayLocator(byweekday=(MO, TU, WE, TH, FR, SA, SU))
+		else:
+			loc = WeekdayLocator(byweekday=(MO, SA))
+		formatter = DateFormatter('%d/%m/%y')
+
+		# Ensure 'Acquired Time' is datetime.datetime, if it's already a datetime it will trigger an AttributeError
+		try:
+			acqTime = numpy.array([xtime.to_pydatetime() for xtime in msData.sampleMetadata['Acquired Time'].tolist()])
+		except AttributeError:
+			acqTime = numpy.array(msData.sampleMetadata['Acquired Time'].tolist())
+
+	# Otherwise use 'Run Order'
+	else:
+		acqTime = msData.sampleMetadata['Run Order']
+
+	tic = numpy.sum(msData.intensityData[:, tempFeatureMask == True], axis=1)
 
 	# If colouring by detector voltage
 	if colourByDetectorVoltage:
@@ -102,12 +115,6 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		detectorDiff[0] = 0  			# no detector diff for first sample
 		cMax = max(abs(detectorDiff))  	# colorbar symmetrical around 0
 		cMin = -cMax
-
-		# Ensure 'Acquired Time' is datetime.datetime, if it's already a datetime it will trigger an AttributeError
-		try:
-			acqTime = numpy.array([xtime.to_pydatetime() for xtime in msData.sampleMetadata['Acquired Time'].tolist()])
-		except AttributeError:
-			acqTime = numpy.array(msData.sampleMetadata['Acquired Time'].tolist())
 
 		# Plot TIC for different sample types, colored by change in detector voltage
 		if cMax != 0:
@@ -119,6 +126,7 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 				sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, linewidth=0.9, c=detectorDiff[ERmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Long-Term Reference', edgecolors='grey')
 			if sum(LRmask != 0):
 				sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', c=detectorDiff[LRmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Serial Dilution', edgecolors='grey')
+
 		# For the specific case where there is no detector voltage and colorscale collapses
 		else:
 			if sum(SSmask != 0):
@@ -129,18 +137,20 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 				sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, linewidth=0.9, c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Long-Term Reference', edgecolors='grey')
 			if sum(LRmask != 0):
 				sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Serial Dilution', edgecolors='grey')
+
 	# Colour by sample type
 	else:
 
 		# Plot TIC for different sample types
 		if sum(SSmask != 0):
-			ax.plot_date(msData.sampleMetadata.loc[SSmask, 'Acquired Time'].values, tic[SSmask], c=sTypeColourDict[SampleType.StudySample], fmt='o', ms=6, label='Study Sample') # c='y',
+			sc = ax.scatter(acqTime[SSmask], tic[SSmask], marker='o', s=30, c=sTypeColourDict[SampleType.StudySample], label='Study Sample')
 		if sum(SPmask != 0):
-			ax.plot_date(msData.sampleMetadata.loc[SPmask, 'Acquired Time'].values, tic[SPmask], c=sTypeColourDict[SampleType.StudyPool], fmt='v', ms=8, label='Study Reference') # c='m',
+			sc = ax.scatter(acqTime[SPmask], tic[SPmask], marker='v', s=30, c=sTypeColourDict[SampleType.StudyPool], label='Study Reference')
 		if sum(ERmask != 0):
-			ax.plot_date(msData.sampleMetadata.loc[ERmask, 'Acquired Time'].values, tic[ERmask], c=sTypeColourDict[SampleType.ExternalReference], fmt='^', ms=8, label='Long-Term Reference')
+			sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, c=sTypeColourDict[SampleType.ExternalReference], label='Long-Term Reference')
 		if sum(LRmask != 0):
-			ax.plot_date(msData.sampleMetadata.loc[LRmask, 'Acquired Time'].values, tic[LRmask], c=sTypeColourDict[SampleType.MethodReference], fmt='s', ms=6, label='Serial Dilution')
+			sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', s=30, c=sTypeColourDict[SampleType.MethodReference], label='Serial Dilution')
+
 
 	# Shade by automatically defined batches (if required)
 	if addBatchShading:
@@ -163,12 +173,16 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		for i in batches:
 
 			# Create rectangle x coordinates
-			start = msData.sampleMetadata[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata[msData.sampleMetadata['Correction Batch'].values==i]['Run Order'])]['Acquired Time']
-			end = msData.sampleMetadata[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata[msData.sampleMetadata['Correction Batch'].values==i]['Run Order'])]['Acquired Time']
+			start = acqTime[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata[msData.sampleMetadata['Correction Batch'].values==i]['Run Order'])]
+			end = acqTime[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata[msData.sampleMetadata['Correction Batch'].values==i]['Run Order'])]
 
 			# Convert to matplotlib date representation
-			start = mdates.date2num(start)
-			end = mdates.date2num(end)
+			if ('Acquired Time' in msData.sampleMetadata.columns):
+				start = mdates.date2num(start)
+				end = mdates.date2num(end)
+			else:
+				start = start.values[0]
+				end = end.values[0]
 
 			# Plot rectangle
 			rect = Rectangle((start, ymin), end-start, abs(ymin)+abs(ymax), color=colors[colIX], alpha=0.4, label='Batch %d' % (i), zorder=0)
@@ -207,12 +221,15 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		#sns.despine(trim=True, ax=ax2)
 
 	# Annotate figure
-	ax.set_xlabel('Acquisition Date')
-	ax.set_ylabel('TIC')
-	ax.set_xlim(minX, maxX)
+	ax.set_ylabel('Sum of all Feature Intensities')
 	ax.set_xticklabels(ax.xaxis.get_majorticklabels(), rotation=45)
-	ax.xaxis.set_major_locator(loc)
-	ax.xaxis.set_major_formatter(formatter)
+	if ('Acquired Time' in msData.sampleMetadata.columns):
+		ax.set_xlabel('Acquisition Date')
+		ax.set_xlim(minX, maxX)
+		ax.xaxis.set_major_locator(loc)
+		ax.xaxis.set_major_formatter(formatter)
+	else:
+		ax.set_xlabel('Run Order')
 	try:
 		ax.set_ylim(ymin, ymax)
 	except:
