@@ -1917,19 +1917,12 @@ class TargetedDataset(Dataset):
         tmpData._intensityData = tmpData._intensityData * (100/tmpData.sampleMetadata['Dilution']).values[:, numpy.newaxis]
         super(TargetedDataset, tmpData).exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
 
-
-    def _exportCSV(self, destinationPath, escapeDelimiters=False):
+    def _prepareDataForExportCSV(self, escapeDelimiters=False):
         """
         Replace `-numpy.inf` by `<LLOQ` and `numpy.inf` by `>ULOQ`
 
-        Export the dataset to the directory *destinationPath* as a set of three CSV files:
-            *destinationPath*_intensityData.csv
-            *destinationPath*_sampleMetadata.csv
-            *destinationPath*_featureMetadata.csv
-
-        :param str destinationPath: Path to a directory in which the output will be saved
         :param bool escapeDelimiters: Remove characters commonly used as delimiters in csv files from metadata
-        :raises IOError: If writing one of the files fails
+
         """
 
         sampleMetadata = self.sampleMetadata.copy(deep=True)
@@ -1956,13 +1949,28 @@ class TargetedDataset(Dataset):
                         featureMetadata[column] = featureMetadata[column].str.replace(',', ';')
                 except:
                     pass
+        
+        return sampleMetadata, featureMetadata, intensityData
+    
+            
+    def _exportCSV(self, destinationPath, escapeDelimiters=False):
+        """
+        Export the dataset to the directory *destinationPath* as a set of three CSV files:
+            *destinationPath*_intensityData.csv
+            *destinationPath*_sampleMetadata.csv
+            *destinationPath*_featureMetadata.csv
 
+        :param str destinationPath: Path to a directory in which the output will be saved
+        :param bool escapeDelimiters: Remove characters commonly used as delimiters in csv files from metadata
+        :raises IOError: If writing one of the files fails
+        """
+
+        sampleMetadata, featureMetadata, intensityData = self._prepareDataForExportCSV(escapeDelimiters)
+        
         # Export sample metadata
         sampleMetadata.to_csv(destinationPath + '_sampleMetadata.csv', encoding='utf-8', date_format=self._timestampFormat)
-
         # Export feature metadata
         featureMetadata.to_csv(destinationPath + '_featureMetadata.csv', encoding='utf-8')
-
         # Export intensity data
         intensityData.to_csv(os.path.join(destinationPath + '_intensityData.csv'), encoding='utf-8', date_format=self._timestampFormat, header=False, index=False)
 
@@ -1979,31 +1987,7 @@ class TargetedDataset(Dataset):
         :raises IOError: If writing one of the files fails
         """
 
-        sampleMetadata = self.sampleMetadata.copy(deep=True)
-        featureMetadata = self.featureMetadata.copy(deep=True)
-
-        intensityData = copy.deepcopy(self._intensityData)
-        intensityData = pandas.DataFrame(intensityData)
-        intensityData.replace(to_replace=-numpy.inf, value='<LLOQ', inplace=True)
-        intensityData.replace(to_replace=numpy.inf, value='>ULOQ', inplace=True)
-
-        if escapeDelimiters:
-            # Remove any commas from metadata/feature tables - for subsequent import of resulting csv files to other software packages
-
-            for column in sampleMetadata.columns:
-                try:
-                    if type(sampleMetadata[column][0]) is not datetime:
-                        sampleMetadata[column] = sampleMetadata[column].str.replace(',', ';')
-                except:
-                    pass
-
-            for column in featureMetadata.columns:
-                try:
-                    if type(featureMetadata[column][0]) is not datetime:
-                        featureMetadata[column] = featureMetadata[column].str.replace(',', ';')
-                except:
-                    pass
-
+        sampleMetadata, featureMetadata, intensityData = self._prepareDataForExportCSV(escapeDelimiters)
         # Export combined data in single file
         tmpXCombined = pandas.concat([featureMetadata.transpose(), intensityData], axis=0, sort=False)
 
