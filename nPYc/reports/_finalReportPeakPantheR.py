@@ -162,8 +162,8 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
             pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied']))
     FeatureSelectionTable = FeatureSelectionTable.append(
         pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
-                         index=['Relative Standard Devation (RSD)', 'RSD of SP Samples: Threshold',
-                                'RSD of SS Samples > RSD of SP Samples'], columns=['Value Applied']))
+                         index=['Relative Standard Devation (RSD)', 'RSD of SR Samples: Threshold',
+                                'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied']))
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
     
@@ -177,9 +177,9 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     if hasattr(dataset, 'fit'):
         nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
         if nBatchCorrect == 1:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SP samples in 1 batch)'
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in 1 batch)'
         else:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SP samples in ' + str(nBatchCorrect) + ' batches)'
+            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in ' + str(nBatchCorrect) + ' batches)'
     else:
         item['batchesCorrect'] =  'Run-order and batch correction not required' 
  
@@ -235,7 +235,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     
     if not destinationPath:
           if item['NfeaturesFailing'] != 0:
-            print('\n*Features sorted by RSD in SP samples; with features passing selection (i.e., able to be accurately measured) above the line and those failing (i.e., not able to be accurately measured) below the line')
+            print('\n*Features sorted by RSD in SR samples; with features passing selection (i.e., able to be accurately measured) above the line and those failing (i.e., not able to be accurately measured) below the line')
       
 
     # Figure: Histogram of log mean abundance by sample type

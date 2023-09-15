@@ -974,8 +974,9 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
     """
 
+    # TODO: implement plotting features by Run Order rather than by Acquired Time
     # Check that we can plot data
-    if ('Acquired Time' not in dataset.sampleMetadata.columns) and ('Run Order' not in dataset.sampleMetadata.columns):
+    if ('Acquired Time' not in dataset.sampleMetadata.columns) or ('Run Order' not in dataset.sampleMetadata.columns):
         print('\x1b[31;1m Acquired Time/Run Order data (columns in dataset.sampleMetadata) not available to plot\n\033[0;0m')
         return
 
