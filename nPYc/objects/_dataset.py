@@ -1268,19 +1268,15 @@ class Dataset:
 
 		if csv_butnotacq.shape[0] != 0:
 			sampleAbsentMetadata = csv_butnotacq.copy(deep=True)
-			# Removed normalised index columns
-			# Enum masks describing the data in each row
-			sampleAbsentMetadata.loc[:, 'SampleType'] = SampleType.StudySample
-			sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'].str.match('StudyPool', na=False).astype(
-				bool), 'SampleType'] = SampleType.StudyPool
-			sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'].str.match('ExternalReference', na=False).astype(
-				bool), 'SampleType'] = SampleType.ExternalReference
 
-			sampleAbsentMetadata.loc[:, 'AssayRole'] = AssayRole.Assay
-			sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'].str.match('PrecisionReference', na=False).astype(
-				bool), 'AssayRole'] = AssayRole.PrecisionReference
-			sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'].str.match('LinearityReference', na=False).astype(
-				bool), 'AssayRole'] = AssayRole.LinearityReference
+			# Convert SampleType and AssayRole to standard enums format
+			for st in SampleType:
+				sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'].str.match(st.value, na=False).astype(
+					bool), 'SampleType'] = st
+
+			for ar in AssayRole:
+				sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'].str.match(ar.value, na=False).astype(
+					bool), 'AssayRole'] = ar
 
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in sampleAbsentMetadata.columns if c[-2:] != '_y']

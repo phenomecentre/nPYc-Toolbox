@@ -4,6 +4,7 @@ Utility functions.
 import numpy
 import warnings
 import pandas
+from ..enumerations import AssayRole, SampleType
 
 def rsd(data):
 	"""
@@ -149,3 +150,46 @@ def rsdsBySampleType(dataset, onlyPrecisionReferences=True, useColumn='SampleTyp
 		rsds[str(sampleType)] = rsd(dataset.intensityData[mask, :])
 
 	return rsds
+
+def generateTypeRoleMasks(sampleMetadata):
+	"""
+	Generate masks of standard NPC samples based on pre-defined combinations of 'SampleType' and 'AssayRole'
+	"""
+
+	# Number of samples
+	ns = sampleMetadata.shape[0]
+
+	try:
+		ALLmask = numpy.ones(ns).astype(bool)
+		SSmask = (sampleMetadata['SampleType'] == SampleType.StudySample) & (
+					sampleMetadata['AssayRole'] == AssayRole.Assay)
+		SPmask = (sampleMetadata['SampleType'] == SampleType.StudyPool) & (
+					sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
+		ERmask = (sampleMetadata['SampleType'] == SampleType.ExternalReference) & (
+					sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
+		SRDmask = (sampleMetadata['AssayRole'] == AssayRole.LinearityReference) & (
+					sampleMetadata['SampleType'] == SampleType.StudyPool)
+		Blankmask = sampleMetadata['SampleType'] == SampleType.ProceduralBlank
+
+	except:
+		ALLmask = numpy.zeros(ns).astype(bool)
+		SSmask = numpy.zeros(ns).astype(bool)
+		SPmask = numpy.zeros(ns).astype(bool)
+		ERmask = numpy.zeros(ns).astype(bool)
+		SRDmask = numpy.zeros(ns).astype(bool)
+		Blankmask = numpy.zeros(ns).astype(bool)
+
+	Unknownmask = (SSmask == False) & (SPmask == False) & (ERmask == False) & (SRDmask == False) & (Blankmask == False)
+
+	TypeRoleMasks = {
+		'ALLmask': ALLmask,
+		'SSmask': SSmask,
+		'SPmask': SPmask,
+		'ERmask': ERmask,
+		'SRDmask': SRDmask,
+		'Blankmask': Blankmask,
+		'Unknownmask': Unknownmask
+	}
+
+	return TypeRoleMasks
+
