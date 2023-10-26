@@ -1,22 +1,17 @@
-import matplotlib as mpl
+import plotly
+import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy
 import pandas
 from ..objects._msDataset import MSDataset
 from ..utilities import generateLRmask
-from ..utilities._internal import _vcorrcoef 
-from ._violinPlot import _violinPlotHelper
+from ..utilities._internal import _vcorrcoef
+from ..utilities.generic import createDestinationPath
 from ..enumerations import AssayRole, SampleType
-import matplotlib.dates as mdates
-from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
-from matplotlib.dates import WeekdayLocator
-from matplotlib.dates import DateFormatter
 from matplotlib import gridspec
-from matplotlib.patches import Rectangle
 from cycler import cycler
 import os
-import re
 import copy
 
 
@@ -202,7 +197,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 		plt.show()
 
 
-def plotTICinteractive(dataset, plottype='Sample Type', labelby='Run Order', withExclusions=True):
+def plotTICinteractive(dataset, plottype='Sample Type', labelby='Run Order', withExclusions=True, destinationPath=None, autoOpen=True):
 	"""
 	Interactively visualise TIC (coloured by batch and sample type) with plotly, provides tooltips to allow identification of samples.
 
@@ -214,11 +209,17 @@ def plotTICinteractive(dataset, plottype='Sample Type', labelby='Run Order', wit
 	:param str plottype: Select plot type, may be either ``Sample Type`` or ``Linearity Reference``
 	:return: Data object to use with plotly
 	"""
-	import plotly.graph_objs as go
-	from ..utilities import generateLRmask
 
 	if not isinstance(plottype, str) & (plottype in {'Sample Type', 'Serial Dilution'}):
 		raise ValueError('plottype must be == \'Sample Type\', \'Serial Dilution\'')
+
+	# TODO: Check labelby is present in sampleMetadata
+
+	# TODO: Check colourby is present in sampleMetadata
+
+	# Create destinationPath for saving outputs
+	if destinationPath:
+		createDestinationPath(destinationPath)
 
 	# Apply sample/feature masks if exclusions to be applied
 	msData = copy.deepcopy(dataset)
@@ -232,61 +233,61 @@ def plotTICinteractive(dataset, plottype='Sample Type', labelby='Run Order', wit
 
 	# Plot by 'Run Order' if 'Acquired Time' not available
 	if ('Acquired Time' in msData.sampleMetadata.columns):
-		plotby='Acquired Time'
+		plotby = 'Acquired Time'
 	elif ('Run Order' in msData.sampleMetadata.columns):
 		plotby = 'Run Order'
 	else:
 		print('Acquired Time/Run Order data (columns in dataset.sampleMetadata) not available to plot')
 		return
 		
-	if plottype=='Sample Type': # Plot TIC for SR samples coloured by batch
+	if plottype == 'Sample Type': # Plot TIC for SR samples coloured by batch
 	
 		SSmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay))
 		SPmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference))
 		ERmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference))
 	
 		SSplot = go.Scatter(
-			x = msData.sampleMetadata[plotby][SSmask],
-			y = tic[SSmask],
-			mode = 'markers',
-			marker = dict(
-				colorscale = 'Portland',
-				color = msData.sampleMetadata['Correction Batch'][SSmask],
-				symbol = 'circle'
+			x=msData.sampleMetadata[plotby][SSmask],
+			y=tic[SSmask],
+			mode='markers',
+			marker=dict(
+				colorscale='Portland',
+				color=msData.sampleMetadata['Correction Batch'][SSmask],
+				symbol='circle'
 				),
-				name = 'Study Sample',
-				text = msData.sampleMetadata[labelby][SSmask]
+				name='Study Sample',
+				text=msData.sampleMetadata[labelby][SSmask]
 				)
 
 		SRplot = go.Scatter(
-			x = msData.sampleMetadata[plotby][SPmask],
-			y = tic[SPmask],
-			mode = 'markers',
-			marker = dict(
-				color = 'rgb(63, 158, 108)',
-				symbol = 'cross'
+			x=msData.sampleMetadata[plotby][SPmask],
+			y=tic[SPmask],
+			mode='markers',
+			marker=dict(
+				color='rgb(63, 158, 108)',
+				symbol='cross'
 				),
-			name = 'Study Reference',
-			text = msData.sampleMetadata[labelby][SPmask]
+			name='Study Reference',
+			text=msData.sampleMetadata[labelby][SPmask]
 			)
 			
 		LTRplot = go.Scatter(
-			x = msData.sampleMetadata[plotby][ERmask],
-			y = tic[ERmask],
-			mode = 'markers',
-			marker = dict(
-				color = 'rgb(198, 83, 83)',
-				symbol = 'cross'
+			x=msData.sampleMetadata[plotby][ERmask],
+			y=tic[ERmask],
+			mode='markers',
+			marker=dict(
+				color='rgb(198, 83, 83)',
+				symbol='cross'
 				),
-			name = 'Long-Term Reference',
-			text = msData.sampleMetadata[labelby][ERmask]
+			name='Long-Term Reference',
+			text=msData.sampleMetadata[labelby][ERmask]
 			)
 		
 		data = [SSplot, SRplot, LTRplot]
 		Xlabel = plotby
 		title = 'TIC by Sample Type Coloured by Batch'
 	
-	if plottype=='Serial Dilution': # Plot TIC for LR samples coloured by dilution
+	if plottype == 'Serial Dilution': # Plot TIC for LR samples coloured by dilution
 
 		LRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference))
 		
@@ -305,15 +306,15 @@ def plotTICinteractive(dataset, plottype='Sample Type', labelby='Run Order', wit
 		labels = msData.sampleMetadata['Sample File Name'][LRmask].values
 		
 		LRplot = go.Scatter(
-			x = runIX,
-			y = tic,
-			mode = 'markers',
-			marker = dict(
-				colorscale = 'Portland',
-				color = msData.sampleMetadata['Dilution'][LRmask],
-				symbol = 'circle'
+			x=runIX,
+			y=tic,
+			mode='markers',
+			marker=dict(
+				colorscale='Portland',
+				color=msData.sampleMetadata['Dilution'][LRmask],
+				symbol='circle'
 				),
-			text = labels
+			text=labels
 			)
 		
 		data = [LRplot]
@@ -322,24 +323,23 @@ def plotTICinteractive(dataset, plottype='Sample Type', labelby='Run Order', wit
 		
 		# Add annotation
 	layout = {
-		'xaxis' : dict(
-			title = Xlabel,
+		'xaxis': dict(
+			title=Xlabel,
 			),
-		'yaxis' : dict(
-			title = 'TIC'
+		'yaxis': dict(
+			title='TIC'
 			),
-		'title' : title,	
-		'hovermode' : 'closest',
+		'title': title,
+		'hovermode': 'closest',
 	}
 
+	figure = go.Figure(data=data, layout=layout)
 
-	fig = {
-		'data': data,
-		'layout': layout,
-	}
+	if destinationPath:
+		saveTemp = msData.name + '_TIC_' + plottype + '_labelBy_' + labelby + '.html'
+		plotly.offline.plot(figure, filename=os.path.join(destinationPath, saveTemp), auto_open=autoOpen)
 
-
-	return fig
+	return figure
 
 
 def plotLRTIC(msData, sampleMask=None, colourByDetectorVoltage=False, title='', label=False, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):

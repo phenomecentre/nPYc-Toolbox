@@ -4,6 +4,7 @@ from ..reports._generateReportMS import _generateReportMS # , _generateReportNMR
 from ..reports._generateSampleReport import _generateSampleReport
 from ..reports._generateReportNMR import _generateReportNMR
 from ..reports._generateReportTargeted import _generateReportTargeted
+from ..utilities.generic import createDestinationPath
 
 def generateReport(data, reportType, destinationPath=None, **kwargs):
 	"""
@@ -56,17 +57,9 @@ def generateReport(data, reportType, destinationPath=None, **kwargs):
 	if not isinstance(reportType, str) & (reportType.lower() in acceptAllOptions):
 		raise ValueError('reportType must be == ' + str(acceptAllOptions))
 
-	if destinationPath is not None:
-		if not isinstance(destinationPath, str):
-			raise TypeError('destinationPath must be a string')
-
-	# Create directory to save destinationPath
+	# Create destinationPath for saving outputs
 	if destinationPath:
-		if not os.path.exists(destinationPath):
-			os.makedirs(destinationPath)
-		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
-			os.makedirs(os.path.join(destinationPath, 'graphics'))
-
+		createDestinationPath(destinationPath)
 
 	# Generate sample summary report
 	if reportType.lower() == 'sample summary':

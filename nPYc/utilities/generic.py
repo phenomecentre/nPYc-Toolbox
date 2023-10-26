@@ -2,6 +2,7 @@
 Generic Utility functions
 """
 import json
+import os
 
 def removeDuplicateColumns(df):
 	"""
@@ -31,3 +32,18 @@ def removeTrailingColumnNumbering(column_list):
 			tmp.append(s)
 
 	return tmp
+
+def createDestinationPath(destinationPath):
+	"""
+	Create folder at destinationPath for saving outputs
+	"""
+
+	if not isinstance(destinationPath, str):
+		raise TypeError('destinationPath must be a string')
+
+	# Create directory to save destinationPath
+	if not os.path.exists(destinationPath):
+		os.makedirs(destinationPath)
+
+	if not os.path.exists(os.path.join(destinationPath, 'graphics')):
+		os.makedirs(os.path.join(destinationPath, 'graphics'))
