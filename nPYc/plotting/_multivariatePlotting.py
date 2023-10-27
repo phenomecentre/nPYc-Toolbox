@@ -23,6 +23,7 @@ from ..objects import Dataset
 from ..enumerations import SampleType
 from ..utilities.generic import createDestinationPath
 import copy
+import datetime
 
 def plotScree(R2, Q2=None, title = '', xlabel='', ylabel='', savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
@@ -562,8 +563,6 @@ def plotScoresInteractive(dataset, pcaModel, colourBy, components=[1, 2], alpha=
 	:param bool autoOpen: If ``True``, opens html version of plot
 	"""
 
-	import datetime
-
 	# Check inputs
 	if not isinstance(dataset, Dataset):
 		raise TypeError('dataset must be an instance of nPYc.Dataset')
@@ -606,6 +605,7 @@ def plotScoresInteractive(dataset, pcaModel, colourBy, components=[1, 2], alpha=
 	else:
 		raise ValueError('Fit a PCA model beforehand using exploratoryAnalysisPCA.')
 
+	# Data preparation
 	classes = dataMasked.sampleMetadata[colourBy]
 	hovertext = dataMasked.sampleMetadata['Sample File Name'].str.cat(classes.astype(str), sep='; ' + colourBy + ': ')
 	plotnans = classes.isnull().values

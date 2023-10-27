@@ -1,4 +1,5 @@
-import matplotlib as mpl
+import plotly
+import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy
@@ -7,6 +8,7 @@ import copy
 from ..objects._msDataset import MSDataset
 from ._violinPlot import _violinPlotHelper
 from ..enumerations import AssayRole, SampleType
+from ..utilities.generic import createDestinationPath
 import matplotlib.dates as mdates
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 from matplotlib.dates import WeekdayLocator
@@ -14,7 +16,7 @@ from matplotlib.dates import DateFormatter
 from matplotlib import gridspec
 from matplotlib.patches import Rectangle
 import os
-import re
+import datetime
 
 def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, colourByDetectorVoltage=False, logy=False, title='', withExclusions=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
@@ -260,3 +262,188 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	else:
 
 		plt.show()
+
+
+def plotTICinteractive(dataset, x='TIC', y='Run Order', labelBy='Run Order', colourBy='Correction Batch', withExclusions=True, destinationPath=None, autoOpen=True):
+	"""
+	Interactively visualise TIC or intensity for a given feature with plotly, provides tooltips to allow identification of samples.
+
+	:param MSDataset dataset: Dataset object
+	:param str x: X-axis of plot, either ``Run Order`` or ``Acquired Time``
+	:param str y: Y-axis of plot, either ``TIC`` for sum of all features, or a specific feature name
+	:param str labelBy: dataset.sampleMetadata column entry to display in tooltips
+	:param str colourBy: dataset.sampleMetadata column entry to colour data points by
+	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
+	:param str destinationPath: file path to save html version of plot
+	:param bool autoOpen: If ``True``, opens html version of plot
+	:return: Data object to use with plotly
+	"""
+
+	# Apply sample/feature masks if exclusions to be applied
+	msData = copy.deepcopy(dataset)
+	if withExclusions:
+		msData.applyMasks()
+
+	# Checks
+	if not (y in msData.featureMetadata['Feature Name'].values) | (y == 'TIC'):
+		raise ValueError("y must be either a value in dataset.featureMetadata['Feature Name'] or 'TIC'")
+
+	if not ((x in msData.sampleMetadata.columns) & (x in {'Run Order', 'Acquired Time'})):
+		raise ValueError("x must be \'Run Order\' or \'Acquired Time\', and must be present as a column in dataset.sampleMetadata")
+
+	if labelBy not in dataset.sampleMetadata.columns:
+		raise ValueError('labelBy must be a column in dataset.sampleMetadata')
+
+	if labelBy not in dataset.sampleMetadata.columns:
+		raise ValueError('labelBy must be a column in dataset.sampleMetadata')
+
+	if colourBy not in dataset.sampleMetadata.columns:
+		raise ValueError('colourBy must be a column in dataset.sampleMetadata')
+
+	# Create destinationPath for saving outputs
+	if destinationPath:
+		createDestinationPath(destinationPath)
+
+	# Data preparation
+	ns = len(msData.sampleMask)
+	classes = msData.sampleMetadata[colourBy]
+	hovertext = msData.sampleMetadata['Sample File Name'].str.cat(classes.astype(str), sep='; ' + colourBy + ': ')
+	plotnans = classes.isnull().values
+	data = []
+
+	# Extract y values
+	if y == 'TIC':
+		tempFeatureMask = numpy.sum(numpy.isfinite(msData.intensityData), axis=0)
+		tempFeatureMask = tempFeatureMask < msData.intensityData.shape[0]
+		values = numpy.sum(msData.intensityData[:, tempFeatureMask == False], axis=1)
+
+	else:
+		feature = msData.featureMetadata.loc[msData.featureMetadata['Feature Name'] == y].index[0]
+		values = msData.intensityData[:, feature]
+
+	# Ensure all values in colourBy column have the same type
+
+	# list of all types in column; and set of unique types
+	mylist = list(type(classes[i]) for i in range(ns))
+	myset = set(mylist)
+
+	# if time pass
+	if any(my == pandas.Timestamp for my in myset) or any(my == datetime.datetime for my in myset):
+		pass
+
+	# else if mixed type convert to string
+	elif len(myset) > 1:
+		classes = classes.astype(str)
+
+	# Plot NaN values in gray
+	if sum(plotnans != 0):
+		NaNplot = go.Scatter(
+			x=msData.sampleMetadata.loc[plotnans == True, x],
+			y=values[plotnans == True],
+			mode='markers',
+			marker=dict(
+				color='rgb(180, 180, 180)',
+				symbol='circle',
+				),
+			text=hovertext[plotnans == True],
+			name='NA',
+			hoverinfo='text',
+			showlegend=True
+			)
+		data.append(NaNplot)
+
+	# Plot numeric values with a colorbar
+	if classes.dtype in (int, float):
+		CLASSplot = go.Scatter(
+			x=msData.sampleMetadata.loc[plotnans == False, x],
+			y=values[plotnans == False],
+			mode='markers',
+			marker=dict(
+				colorscale='Portland',
+				color=classes[plotnans == False],
+				symbol='circle',
+				showscale=True
+				),
+			text=hovertext[plotnans == False],
+			hoverinfo='text',
+			showlegend=False
+			)
+		data.append(CLASSplot)
+
+	# Plot categorical values by unique groups
+	else:
+		uniq = numpy.unique(classes[plotnans == False])
+		for i in uniq:
+			CLASSplot = go.Scatter(
+				x=msData.sampleMetadata.loc[classes == i, x],
+				y=values[classes == i],
+				mode='markers',
+				marker=dict(
+					colorscale='Portland',
+					symbol='circle',
+					),
+				text=hovertext[classes == i],
+				name=i,
+				hoverinfo='text',
+				showlegend=True
+				)
+			data.append(CLASSplot)
+
+	# Overlay SR and LTR if columns present
+	if ('SampleType' in msData.sampleMetadata.columns) & ('AssayRole' in msData.sampleMetadata.columns):
+		SRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference))
+		LTRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference))
+
+		SRplot = go.Scatter(
+			x=msData.sampleMetadata.loc[SRmask, x],
+			y=values[SRmask],
+			mode='markers',
+			marker=dict(
+				color='rgb(63, 158, 108)',
+				symbol='x',
+			),
+			text=hovertext[SRmask],
+			name='Study Reference',
+			hoverinfo='text',
+			showlegend=True
+		)
+		data.append(SRplot)
+
+		LTRplot = go.Scatter(
+			x=msData.sampleMetadata.loc[LTRmask, x],
+			y=values[LTRmask],
+			mode='markers',
+			marker=dict(
+				color='rgb(198, 83, 83)',
+				symbol='x'
+			),
+			text=hovertext[LTRmask],
+			name='Long-Term Reference',
+			hoverinfo='text',
+			showlegend=True
+		)
+		data.append(LTRplot)
+
+	# Add annotation
+	layout = {
+		'xaxis': dict(
+			title=x,
+		),
+		'yaxis': dict(
+			title=y
+		),
+		'title': y + ' coloured by ' + colourBy,
+		'legend': dict(
+			yanchor='middle',
+			xanchor='right'
+			),
+		'hovermode': 'closest'
+	}
+
+	figure = go.Figure(data=data, layout=layout)
+
+	if destinationPath:
+		saveTemp = msData.name + '_' + y.replace('/', '') + '_colourBy_' + colourBy + '.html'
+		plotly.offline.plot(figure, filename=os.path.join(destinationPath, saveTemp), auto_open=autoOpen)
+
+	return figure

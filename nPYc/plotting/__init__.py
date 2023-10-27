@@ -16,14 +16,14 @@ Most plots support a set of common configuration parameters to allow customisati
 Interactive plots utilise the plotly framework to provide controls, when using plotly you should ensure that the environment is configured according to the instructions at `Offline Plots in Plotly in Python <https://plot.ly/python/offline/>`_ 
 """
 
-from ._plotting import histogram, plotTICinteractive, plotLRTIC, plotCorrelationToLRbyFeature
+from ._plotting import histogram, plotLRTIC, plotCorrelationToLRbyFeature
 from ._nmrPlotting import plotPW, plotLineWidthInteractive, plotLineWidth, plotSpectraInteractive
 from ._plotNMRcalibration import plotCalibration, plotCalibrationInteractive
 from ._plotNMRbaseline import plotBaseline, plotBaselineInteractive
 from ._plotNMRsolvent import plotSolventResonance, plotSolventResonanceInteractive
 from ._jointplotRSDvCorrelation import jointplotRSDvCorrelation
 from ._plotRSDs import plotRSDs, plotRSDsInteractive
-from ._plotTIC import plotTIC
+from ._plotTIC import plotTIC, plotTICinteractive
 from ._plotIonMap import plotIonMap
 from ._plotBatchAndROCorrection import plotBatchAndROCorrection
 from ._multivariatePlotting import plotScree, plotScores, plotOutliers, plotLoadings, plotScoresInteractive, plotLoadingsInteractive, plotMetadataDistribution
