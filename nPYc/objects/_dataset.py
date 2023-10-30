@@ -1200,7 +1200,9 @@ class Dataset:
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
 
-		csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str})
+		dateparse = lambda x: datetime.strptime(x, '%d/%m/%Y %H:%M')
+
+		csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str}, parse_dates=['Acquired Time'], date_parser=dateparse)
 		currentMetadata = self.sampleMetadata.copy()
 
 		if 'Sample File Name' not in csvData.columns:
