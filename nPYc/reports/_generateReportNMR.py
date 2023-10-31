@@ -87,6 +87,10 @@ def _featureReport(dataset, destinationPath=None):
 	"""
 	Report on feature quality
 	"""
+
+	# Do NMR QC checks based on dataset
+	dataset._nmrQCChecks()
+
 	item = dict()
 	item['Name'] = dataset.name
 	item['Nsamples'] = dataset.noSamples
@@ -203,7 +207,6 @@ def _featureReport(dataset, destinationPath=None):
 	##
 	# exclusion summary
 	##
-	dataset._nmrQCChecks()
 
 	fail_summary = dataset.sampleMetadata.loc[:, ['Sample File Name', 'LineWidthFail',
 												  'CalibrationFail', 'BaselineFail', 'SolventPeakFail']]
