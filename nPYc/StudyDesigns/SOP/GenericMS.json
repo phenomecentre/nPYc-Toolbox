@@ -25,6 +25,7 @@
 		"Detector", "End Mass", "HM Resolution", "Instrument", "Interscan Time (sec)",
 		"LM Resolution", "Resolution", "Sampling Cone", "Scan Time (sec)", "Source Offset",
 		"Source Temperature (°C)", "Start Mass", "TOF"],
-	"featureMetadataNotExported":["blankFilter", "blankValue", "artifactualFilter", "rsdFilter", "rsdSP",
+	"featureMetadataNotExported":["mzmin", "mzmax", "rtmin", "rtmax", "npeaks", "ms_level", "Exclusion Details",
+		"User Excluded","blankFilter", "blankValue", "artifactualFilter", "rsdFilter", "rsdSP",
 		"correlationToDilution", "correlationToDilutionFilter", "varianceRatioFilter", "rsdSS/rsdSP"]
 }

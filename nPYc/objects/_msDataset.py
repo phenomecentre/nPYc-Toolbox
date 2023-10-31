@@ -827,8 +827,6 @@ class MSDataset(Dataset):
 		startIndex = noFeatureParams
 		endIndex = len(dataT.columns)
 
-		dataSize = endIndex - startIndex
-
 		# Now read for real
 		values = dataT.iloc[:, startIndex:]
 		self._intensityData = values.values.transpose()
@@ -838,11 +836,9 @@ class MSDataset(Dataset):
 		sampleMetadata['Sample File Name'] = [name for name in list(values.columns.values)]
 
 		# Peak info
-		featureMetadata = dict()
+		featureMetadata = dataT.iloc[:, :startIndex]
 
-		# for when peakTable methods is used directly instead of diffreport
-		# If no feature name is present, assume peakTable was used to derive the dataset and adjust accordingly
-		# If the try fails,
+		# Set up featureMetadata - only if peakTable or diffreports methods used
 		if 'name' not in dataT.columns:
 			try:
 				# build feature name by combination of rt and m/z
@@ -859,37 +855,26 @@ class MSDataset(Dataset):
 							feature_names[duplicatedfeatureIdx] = feature_names[duplicatedfeatureIdx] + '_' + str(suffixCount)
 							suffixCount += 1
 
-				# insert feature name
-				dataT.insert(0, 'name', feature_names)
-				# rename mz to mzmed like in diffreport
-				dataT.rename(columns={'mz': 'mzmed', 'rt': 'rtmed'}, inplace=True)
+				# Insert feature name
+				featureMetadata.insert(0, 'Feature Name', feature_names)
+
+				# Tidy formatting
+				featureMetadata.drop(list(featureMetadata.filter(regex='Unnamed')), axis=1, inplace=True)
+				featureMetadata.rename(columns={"mz": "m/z", "rt": "Retention Time"}, inplace=True)
+				featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float) / 60.0
+				featureMetadata['m/z'] = featureMetadata['m/z'].astype(float)
+
 			except:
 				raise ValueError('XCMS data frame should be obtained with either peakTable or diffreport methods')
 
-		featureMetadata['Feature Name'] = dataT['name'].values
-		featureMetadata['m/z'] = dataT['mzmed'].values
-		featureMetadata['Retention Time'] = dataT['rtmed'].values
-		featureMetadata['m/z - Minimum'] = dataT['mzmin'].values
-		featureMetadata['m/z - Maximum'] = dataT['mzmax'].values
-		featureMetadata['Retention Time - Minimum'] = dataT['rtmin'].values
-		featureMetadata['Retention Time - Maximum'] = dataT['rtmax'].values
+		self.featureMetadata = featureMetadata
 
-		self.featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T,
-												columns=featureMetadata.keys())
 		self.sampleMetadata = pandas.DataFrame(
 			numpy.concatenate([sampleMetadata[c] for c in sampleMetadata.keys()], axis=0),
 			columns=sampleMetadata.keys())
 
-		# Put Feature Names first
-		name = self.featureMetadata['Feature Name']
-		self.featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
-		self.featureMetadata.insert(0, 'Feature Name', name)
-
-		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float) / 60.0
-		self.featureMetadata['m/z'] = self.featureMetadata['m/z'].astype(float)
-
-		self.sampleMetadata['AssayRole'] = None  # AssayRole.Assay
-		self.sampleMetadata['SampleType'] = None  # SampleType.StudySample
+		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
+		self.sampleMetadata['SampleType'] = SampleType.UnknownType
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
 		self.sampleMetadata['Exclusion Details'] = None

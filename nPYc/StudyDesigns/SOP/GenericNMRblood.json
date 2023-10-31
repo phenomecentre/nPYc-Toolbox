@@ -33,5 +33,5 @@
 		"TD", "XDIM", "Delta PPM", "ERETIC Integral","ERETIC Concentration (mM)",
       "Line Width (Hz)", "Exclusion Details", "CalibrationFail", "LineWidthFail",
       "WaterPeakFail", "SolventPeakFail", "BaselineFail", "Sample Base Name", "expno"],
-    "featureMetadataNotExported" : []
+    "featureMetadataNotExported" : ["Exclusion Details"]
 }
