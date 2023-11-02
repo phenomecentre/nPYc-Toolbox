@@ -950,7 +950,6 @@ class Dataset:
 		:type sopPath: string
 		"""
 		import json
-		from collections import ChainMap
 		from ..utilities.extractParams import buildFileList
 		import re
 

@@ -95,7 +95,7 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Total'] == 1
 		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Total'] == 92
 		assert sampleSummary['Acquired'].loc['Blank', 'Total'] == 2
-		assert sampleSummary['Acquired'].loc['Unspecified SampleType or AssayRole', 'Total'] == 1
+		assert sampleSummary['Acquired'].loc['Unknown', 'Total'] == 1
 
 		# Acquired - Marked for exclusion
 		assert sampleSummary['Acquired'].loc['All', 'Marked for Exclusion'] == 1
@@ -104,7 +104,7 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Blank', 'Marked for Exclusion'] == 0
-		assert sampleSummary['Acquired'].loc['Unspecified SampleType or AssayRole', 'Marked for Exclusion'] == 0
+		assert sampleSummary['Acquired'].loc['Unknown', 'Marked for Exclusion'] == 0
 
 		# Check details tables
 		assert sampleSummary['MarkedToExclude Details'].shape == (1, 2)
@@ -139,13 +139,14 @@ class test_reports_generateSamplereport(unittest.TestCase):
 		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Marked for Exclusion'] == 0
 		assert sampleSummary['Acquired'].loc['Blank', 'Marked for Exclusion'] == 0
+
 		# Acquired - Already Excluded
-		assert sampleSummary['Acquired'].loc['All', 'Already Excluded'] == 1
-		assert sampleSummary['Acquired'].loc['Study Sample', 'Already Excluded'] == 1
-		assert sampleSummary['Acquired'].loc['Study Reference', 'Already Excluded'] == 0
-		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Already Excluded'] == 0
-		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Already Excluded'] == 0
-		assert sampleSummary['Acquired'].loc['Blank', 'Already Excluded'] == 0
+		assert sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] == 3
+		assert sampleSummary['Acquired'].loc['Study Sample', 'Missing/Excluded'] == 3
+		assert sampleSummary['Acquired'].loc['Study Reference', 'Missing/Excluded'] == 0
+		assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Missing/Excluded'] == 0
+		assert sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] == 0
+		assert sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] == 0
 
 class test_reports_nmr_generatereport(unittest.TestCase):
 

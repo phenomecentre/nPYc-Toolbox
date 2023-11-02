@@ -8,7 +8,6 @@ import re
 from datetime import datetime
 import numpy
 import pandas
-import collections
 import warnings
 from .._toolboxPath import toolboxPath
 from ._dataset import Dataset
@@ -1647,7 +1646,7 @@ class TargetedDataset(Dataset):
         :raises Warning: to update LOQ using :py:meth:`~TargetedDataset.mergeLimitsOfQuantification`
         """
 
-        import collections
+        import collections.abc as collections
         import warnings
         def flatten(x):
             """ Always provide a single level list, from a list of lists and or str """

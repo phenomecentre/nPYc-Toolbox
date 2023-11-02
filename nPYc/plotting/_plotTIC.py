@@ -264,7 +264,7 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		plt.show()
 
 
-def plotTICinteractive(dataset, x='TIC', y='Run Order', labelBy='Run Order', colourBy='Correction Batch', withExclusions=True, destinationPath=None, autoOpen=True):
+def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order', colourBy='Correction Batch', withExclusions=True, destinationPath=None, autoOpen=True):
 	"""
 	Interactively visualise TIC or intensity for a given feature with plotly, provides tooltips to allow identification of samples.
 
@@ -290,9 +290,6 @@ def plotTICinteractive(dataset, x='TIC', y='Run Order', labelBy='Run Order', col
 
 	if not ((x in msData.sampleMetadata.columns) & (x in {'Run Order', 'Acquired Time'})):
 		raise ValueError("x must be \'Run Order\' or \'Acquired Time\', and must be present as a column in dataset.sampleMetadata")
-
-	if labelBy not in dataset.sampleMetadata.columns:
-		raise ValueError('labelBy must be a column in dataset.sampleMetadata')
 
 	if labelBy not in dataset.sampleMetadata.columns:
 		raise ValueError('labelBy must be a column in dataset.sampleMetadata')

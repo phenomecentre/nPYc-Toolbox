@@ -886,20 +886,24 @@ class test_plotting_interactive(unittest.TestCase):
 			data = nPYc.plotting.plotTICinteractive(self.dataset)
 			self.assertIsNotNone(data)
 
-		with self.subTest(msg='Linearity Reference Plot'):
-			data = nPYc.plotting.plotTICinteractive(self.dataset, plottype='Serial Dilution')
-			self.assertIsNotNone(data)
-
 
 	def test_plotTICinteractive_raises(self):
 
+		# Test y is valid
+		with self.subTest(msg="y must be either a value in dataset.featureMetadata['Feature Name'] or 'TIC'"):
+			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, y='failstest')
 
-		with self.subTest(msg='Not a string'):
-			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, plottype=1)
+		# Test x is valid
+		with self.subTest(msg="x must be \'Run Order\' or \'Acquired Time\', and must be present as a column in dataset.sampleMetadata"):
+			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, x='failstest')
 
-		with self.subTest(msg='Not a valid string'):
-			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, plottype='1')
+		# Test labelBy is valid
+		with self.subTest(msg='labelBy must be a column in dataset.sampleMetadata'):
+			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, labelBy='failstest')
 
+		# Test colourBy is valid
+		with self.subTest(msg='labelBy must be a column in dataset.sampleMetadata'):
+			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, colourBy='failstest')
 
 	def test_plotSolventResonaceInteractive(self):
 		dataset = generateTestDataset(10, 1000, dtype='NMRDataset',
@@ -1021,8 +1025,11 @@ class test_plotting_interactive(unittest.TestCase):
 
 			for i in range(pcaModel.ncomps):
 
-				figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel, component=i)
-				self.assertIsInstance(figure, plotly.graph_objs.Figure)
+				if i == 0:
+					self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=i)
+				else:
+					figure = nPYc.plotting.plotLoadingsInteractive(dataset, pcaModel, component=i)
+					self.assertIsInstance(figure, plotly.graph_objs.Figure)
 
 
 	def test_plotLoadingsInteractive_raises(self):

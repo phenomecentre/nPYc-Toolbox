@@ -1351,7 +1351,8 @@ class test_msdataset_batch_inference(unittest.TestCase):
 	def test_inferbatches_warns(self):
 		msData = copy.deepcopy(self.msData)
 		msData.sampleMetadata.drop('Run Order', axis=1, inplace=True)
-		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without run order and acquired time info, skipping.',
+		msData.sampleMetadata.drop('Acquired Time', axis=1, inplace=True)
+		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without run order or acquired time info, skipping.',
 							msData._inferBatches)
 
 	def test_amendbatches(self):

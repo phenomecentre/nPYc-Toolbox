@@ -838,6 +838,9 @@ class MSDataset(Dataset):
 		# Peak info
 		featureMetadata = dataT.iloc[:, :startIndex]
 
+		# Unify column names from peakTable/diffreports
+		featureMetadata.rename(columns={"mzmed": "mz", "rtmed": "rt"}, inplace=True)
+
 		# Set up featureMetadata - only if peakTable or diffreports methods used
 		if 'name' not in dataT.columns:
 			try:
@@ -856,16 +859,16 @@ class MSDataset(Dataset):
 							suffixCount += 1
 
 				# Insert feature name
-				featureMetadata.insert(0, 'Feature Name', feature_names)
-
-				# Tidy formatting
-				featureMetadata.drop(list(featureMetadata.filter(regex='Unnamed')), axis=1, inplace=True)
-				featureMetadata.rename(columns={"mz": "m/z", "rt": "Retention Time"}, inplace=True)
-				featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float) / 60.0
-				featureMetadata['m/z'] = featureMetadata['m/z'].astype(float)
+				featureMetadata.insert(0, 'name', feature_names)
 
 			except:
 				raise ValueError('XCMS data frame should be obtained with either peakTable or diffreport methods')
+
+		# Tidy formatting
+		featureMetadata.drop(list(featureMetadata.filter(regex='Unnamed')), axis=1, inplace=True)
+		featureMetadata.rename(columns={"name": "Feature Name", "mz": "m/z", "rt": "Retention Time"}, inplace=True)
+		featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float) / 60.0
+		featureMetadata['m/z'] = featureMetadata['m/z'].astype(float)
 
 		self.featureMetadata = featureMetadata
 
@@ -1404,6 +1407,11 @@ class MSDataset(Dataset):
 
 		# If 'Acquired Time' data present
 		if ('Acquired Time' in sampleMetadata.columns) and (not sampleMetadata['Acquired Time'].isnull().all()):
+
+			if ('Run Order' not in sampleMetadata.columns):
+				sampleMetadata['Order'] = sampleMetadata.sort_values(by='Acquired Time').index
+				sampleMetadata['Run Order'] = sampleMetadata.sort_values(by='Order').index
+				sampleMetadata.drop('Order', axis=1, inplace=True)
 
 			sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
 			sampleMetadata['Correction Batch'] = 1
