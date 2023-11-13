@@ -160,10 +160,10 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 	ERmask = (data.sampleMetadata['SampleType'] == SampleType.ExternalReference) & (data.sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
 	item['ERcount'] = str(sum(ERmask))
 	item['OTHERcount'] = str(ns - sum(SSmask) - sum(SPmask) - sum(ERmask))
-	data.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-	data.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-	data.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
-	data.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
+	#data.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+	#data.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+	#data.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
+	#data.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
 
 	item['Normalisation'] = str(dataTrue.Normalisation)
 
@@ -189,7 +189,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
 			# Create dictionary with key and type (categorical/continuous etc) for each biological parameter field
 			for plotdata in temp:
-				out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Plot Sample Type'])
+				#out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Plot Sample Type'])
+				out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Status'])
 				includeForPlotting[plotdata] = out
 
 	# Fields not to plot
@@ -225,7 +226,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 			continue
 
 		# Change type if uniform, uniformBySampleType or unique (and categorical) - do not plot these
-		out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Plot Sample Type'])
+		#out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Plot Sample Type'])
+		out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Status'])
 		if out in {'uniform', 'uniformBySampleType', 'unique'}:
 			includeForPlotting[plotdata] = out
 
@@ -309,9 +311,10 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 		print('\n\nFigure 2: PCA scores plots coloured by sample type.')
 
 	figuresQCscores = plotScores(pcaModel,
-		classes=data.sampleMetadata['Plot Sample Type'],
-		classType='Plot Sample Type',
-		title='Sample Type',
+		classes=data.sampleMetadata['SampleClass'],
+		colourType='categorical',
+		colourDict=data.Attributes['sampleTypeColours'],
+		title='SampleClass',
 		figures=figuresQCscores,
 		alpha=hotellings_alpha,
 		savePath=saveAs,
@@ -353,7 +356,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
 	plotOutliers(sumT,
 		data.sampleMetadata['Run Order'],
-		sampleType=data.sampleMetadata['Plot Sample Type'],
+		#sampleType=data.sampleMetadata['Plot Sample Type'],
+		sampleType=data.sampleMetadata['Status'],
 		addViolin=True,
 		ylabel='Summed distance from origin (all PCs)',
 		PcritPercentile=PcritPercentile,
@@ -400,7 +404,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 	
 	plotOutliers(sample_dmodx_values,
 		data.sampleMetadata['Run Order'],
-		sampleType=data.sampleMetadata['Plot Sample Type'],
+		#sampleType=data.sampleMetadata['Plot Sample Type'],
+		sampleType=data.sampleMetadata['Status'],
 		addViolin=True,
 		Fcrit=Fcrit,
 		FcritAlpha=FcritAlpha,

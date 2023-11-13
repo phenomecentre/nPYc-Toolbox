@@ -745,20 +745,20 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 	## Figure 5 and 6: (if available) PCA scores and loadings plots by sample type
 	if pcaModel is not None:
 		# Get sample types
-		SSmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
-					tData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-		SPmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-					tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		ERmask = (tData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-					tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+		#SSmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
+		#			tData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
+		#SPmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
+		#			tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+		#ERmask = (tData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
+		#			tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
 		# Linearity references not commonly used, but left here throughout.
-		LRmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-					tData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+		#LRmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
+		#			tData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
 
-		tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-		tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-		tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
-		tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
+		#tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+		#tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+		#tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
+		#tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
 
 		if pcaModel:
 			if destinationPath:
@@ -1047,10 +1047,10 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	## Figure 5 and 6: (if available) PCA scores and loadings plots by sample type
 	if pcaModel is not None:
 
-		tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-		tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-		tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
-		tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
+		#tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
+		#tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
+		#tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
+		#tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
 
 
 		if destinationPath:

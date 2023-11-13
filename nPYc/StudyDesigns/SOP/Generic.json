@@ -10,5 +10,31 @@
 	"featureMetadataNotExported":[],
 	"analyticalMeasurements":{},
 	"excludeFromPlotting":[],
-	"sampleTypeColours":{"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey", "Study Sample": "b", "Study Reference": "g", "Long-Term Reference": "r", "Method Reference": "m", "Blank": "c", "Unspecified SampleType or AssayRole": "grey"}
+	"sampleTypeColours":{
+		"StudySample": "blue", "Assay": "blue", "Study Sample": "blue", "Sample": "blue",
+		"StudyPool": "darkgreen", "Study Reference": "darkgreen",
+		"ExternalReference": "darkorange", "Long-Term Reference": "darkorange", "Long Term Reference": "darkorange",
+		"LinearityReference": "red", "Linearity Reference": "red",
+		"MethodReference": "blue", "Method Reference": "blue",
+		"ProceduralBlank": "aquamarine", "Blank": "aquamarine",
+		"UnknownType": "grey", "UnknownRole": "grey", "Unknown": "grey", "nan": "grey", "NaN":  "grey", "NA":  "grey"
+	},
+	"sampleTypeMarkers":{
+		"StudySample": "o", "Assay": "o", "Study Sample": "o", "Sample": "o",
+		"StudyPool": "v", "Study Reference": "v",
+		"ExternalReference": "^", "Long-Term Reference": "^", "Long Term Reference": "^",
+		"LinearityReference": "s", "Linearity Reference": "s",
+		"MethodReference": "P", "Method Reference": "P",
+		"ProceduralBlank": "X", "Blank": "X",
+		"UnknownType": "d", "UnknownRole": "d", "Unknown": "d", "nan": "d", "NaN":  "d", "NA":  "d"
+	},
+	"sampleTypeAbbr":{
+		"StudySample": "SS", "Assay": "SS", "Study Sample": "SS", "Sample": "SS",
+		"StudyPool": "SR", "Study Reference": "SR",
+		"ExternalReference": "LTR", "Long-Term Reference": "LTR", "Long Term Reference": "LTR",
+		"LinearityReference": "SRD", "Linearity Reference": "SRD",
+		"MethodReference": "MR", "Method Reference": "MR",
+		"ProceduralBlank": "Blank", "Blank": "Blank",
+		"UnknownType": "NA", "UnknownRole": "NA", "Unknown": "NA", "nan": "NA", "NaN":  "NA", "NA":  "NA"
+	}
 }

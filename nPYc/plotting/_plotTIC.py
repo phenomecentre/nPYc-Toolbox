@@ -9,6 +9,10 @@ from ..objects._msDataset import MSDataset
 from ._violinPlot import _violinPlotHelper
 from ..enumerations import AssayRole, SampleType
 from ..utilities.generic import createDestinationPath
+from ..objects import Dataset
+from ..plotting._multivariatePlotting import _shiftedColorMap
+from matplotlib.colors import Normalize
+import matplotlib.cm as cm
 import matplotlib.dates as mdates
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 from matplotlib.dates import WeekdayLocator
@@ -18,16 +22,15 @@ from matplotlib.patches import Rectangle
 import os
 import datetime
 
-def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, colourByDetectorVoltage=False, logy=False, title='', withExclusions=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClass', colourType='categorical', colourDict=None, markerDict=None, abbrDict=None, logy=False, title='', withExclusions=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	Visualise TIC for all or a subset of features coloured by either dilution value or detector voltage. With the option to shade by batch.
 
 	.. note:: addViolin and colourByDetectorVoltage are mutually exclusive.
 
-	:param MSDataset msData: Dataset object
+	:param MSDataset dataset: Dataset object
 	:param bool addViolin: If ``True`` adds violin plots of TIC distribution pre and post correction split by sample type
 	:param bool addBatchShading: If ``True`` shades plot according to sample batch
-	:param bool addLineAtGaps: If ``True`` adds line where acquisition time is greater than double the norm
 	:param bool colourByDetectorVoltage: If ``True`` colours points by detector voltage, else colours by dilution
 	:param bool logy: If ``True`` plot y on a log scale
 	:param str title: Title for the plot
@@ -41,10 +44,54 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	"""
 
 	# Check inputs
-	if (addViolin) & (colourByDetectorVoltage):
-		raise ValueError('addViolin and colourByDetectorVoltage cannot both be True')
+	if not isinstance(dataset, Dataset):
+		raise TypeError('dataset must be an instance of nPYc.Dataset')
 
-	sns.set_color_codes(palette='deep')
+	if colourBy not in dataset.sampleMetadata.columns:
+		raise ValueError('colourBy must be a column in dataset.sampleMetadata')
+
+	if not (('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns)):
+		raise ValueError("'Acquired Time' or 'Run Order' must be columns in dataset.sampleMetadata")
+
+	if not isinstance(colourType, str) & (colourType in {'categorical', 'continuous', 'continuousCentered'}):
+		raise ValueError('colourType must be == ' + str({'categorical', 'continuous', 'continuousCentered'}))
+
+	# Apply sample/feature masks if exclusions to be applied
+	msData = copy.deepcopy(dataset)
+	if withExclusions:
+		msData.applyMasks()
+
+	# List unique classes in msData.sampleMetadata[colourBy]
+	uniq = msData.sampleMetadata[colourBy].unique()
+
+	if colourType == 'categorical':
+
+		# If colourDict check colour defined for every unique entry in class
+		if colourDict is not None:
+			if not all(k in colourDict.keys() for k in uniq):
+				raise ValueError('If colourDict is specified every unique entry in dataset.sampleMetadata[colourBy] must be a key in colourDict')
+		# Otherwise create colour dict
+		else:
+			for u in uniq:
+				colourDict[u] = 'blue' # TODO CAZ iterate through colours
+
+		# If markerDict check colour defined for every unique entry in class
+		if markerDict is not None:
+			if not all(k in markerDict.keys() for k in uniq):
+				raise ValueError('If markerDict is specified every unique entry in dataset.sampleMetadata[colourBy] must be a key in markerDict')
+		else:
+			for u in uniq:
+				markerDict[u] = 'o'
+
+		# If abbrDict check abbr defined for every unique entry in class
+		if abbrDict is not None:
+			if not all(k in abbrDict.keys() for k in uniq):
+				raise ValueError('If abbrDict is specified every unique entry in dataset.sampleMetadata[colourBy] must be a key in abbrDict')
+		else:
+			for u in uniq:
+				abbrDict[u] = u
+
+	#sns.set_color_codes(palette='deep')
 	fig = plt.figure(figsize=figureSize, dpi=dpi)
 	gs = gridspec.GridSpec(1, 5)
 
@@ -54,40 +101,17 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	else:
 		ax = plt.subplot(gs[0,:-1])
 
-	# Load toolbox wide color scheme
-	if 'sampleTypeColours' in msData.Attributes.keys():
-		sTypeColourDict = copy.deepcopy(msData.Attributes['sampleTypeColours'])
-		for stype in SampleType:
-			if stype.name in sTypeColourDict.keys():
-				sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-	else:
-		sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-							SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-
 	# Mask features with inf values
 	tempFeatureMask = numpy.sum(numpy.isfinite(msData.intensityData), axis=0)
 	tempFeatureMask = tempFeatureMask < msData.intensityData.shape[0]
 	tempFeatureMask = (tempFeatureMask==False)
 
-	if withExclusions:
-		tempFeatureMask = numpy.logical_and(tempFeatureMask, msData.featureMask)
-		tempSamplesMask = msData.sampleMask
-
-	else:
-		tempSamplesMask = numpy.ones(shape=msData.sampleMask.shape, dtype=bool)
-
-	# Define sample types
-	SSmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)) & tempSamplesMask
-	SPmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSamplesMask
-	ERmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) & tempSamplesMask
-	LRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)) & tempSamplesMask
-
 	# Use 'Acquired Time' if it exists:
 	if ('Acquired Time' in msData.sampleMetadata.columns):
 
 		# X axis limits for formatting
-		minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
-		maxX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
+		minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'])].values
+		maxX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'])].values
 		delta = maxX - minX
 		days = delta.astype('timedelta64[D]')
 		days = days / numpy.timedelta64(1, 'D')
@@ -108,62 +132,60 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 		acqTime = msData.sampleMetadata['Run Order']
 
 	tic = numpy.sum(msData.intensityData[:, tempFeatureMask == True], axis=1)
+	#tic = numpy.sum(msData.intensityData, axis=1)
 
-	# If colouring by detector voltage
-	if colourByDetectorVoltage:
+	# Colour by categorical class
+	if colourType == 'categorical':
+		uniq = msData.sampleMetadata[colourBy].unique()
+		palette = {}
+		sampleMasks = [] # sampleMasks = list()
+		for u in uniq:
+			sc = ax.scatter(acqTime[msData.sampleMetadata[colourBy] == u],
+							tic[msData.sampleMetadata[colourBy] == u],
+							marker=markerDict[u],
+							s=30,
+							c=colourDict[u],
+							label=u)
 
-		# Generate sample change in detector voltage
-		detectorDiff = msData.sampleMetadata[['Detector', 'Run Order']].sort_values(by='Run Order')['Detector'].diff().sort_index()
-		detectorDiff[0] = 0  			# no detector diff for first sample
-		cMax = max(abs(detectorDiff))  	# colorbar symmetrical around 0
-		cMin = -cMax
+			if addViolin:
+				sampleMasks.append((abbrDict[u], msData.sampleMetadata[colourBy] == u))
+				palette[abbrDict[u]] = colourDict[u]
 
-		# Plot TIC for different sample types, colored by change in detector voltage
-		if cMax != 0:
-			if sum(SSmask != 0):
-				sc = ax.scatter(acqTime[SSmask], tic[SSmask], marker='o', c=detectorDiff[SSmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Sample', edgecolors='grey')
-			if sum(SPmask != 0):
-				sc = ax.scatter(acqTime[SPmask], tic[SPmask], marker='v', s=30, linewidth=0.9, c=detectorDiff[SPmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Reference', edgecolors='grey')
-			if sum(ERmask != 0):
-				sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, linewidth=0.9, c=detectorDiff[ERmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Long-Term Reference', edgecolors='grey')
-			if sum(LRmask != 0):
-				sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', c=detectorDiff[LRmask], cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Serial Dilution', edgecolors='grey')
+		if addViolin:
+			limits = ax.get_ylim()
+			_violinPlotHelper(ax2, tic, sampleMasks, None, 'Sample Type', palette=palette, ylimits=limits, logy=logy)
 
-		# For the specific case where there is no detector voltage and colorscale collapses
-		else:
-			if sum(SSmask != 0):
-				sc = ax.scatter(acqTime[SSmask], tic[SSmask], marker='o', c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Sample', edgecolors='grey')
-			if sum(SPmask != 0):
-				sc = ax.scatter(acqTime[SPmask], tic[SPmask], marker='v', s=30, linewidth=0.9, c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Study Reference', edgecolors='grey')
-			if sum(ERmask != 0):
-				sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, linewidth=0.9, c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Long-Term Reference', edgecolors='grey')
-			if sum(LRmask != 0):
-				sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', c='w', cmap=plt.cm.get_cmap('bwr'), vmin=cMin, vmax=cMax, label='Serial Dilution', edgecolors='grey')
-
-	# Colour by sample type
+	# Colour by continuous class
 	else:
 
-		# Plot TIC for different sample types
-		if sum(SSmask != 0):
-			sc = ax.scatter(acqTime[SSmask], tic[SSmask], marker='o', s=30, c=sTypeColourDict[SampleType.StudySample], label='Study Sample')
-		if sum(SPmask != 0):
-			sc = ax.scatter(acqTime[SPmask], tic[SPmask], marker='v', s=30, c=sTypeColourDict[SampleType.StudyPool], label='Study Reference')
-		if sum(ERmask != 0):
-			sc = ax.scatter(acqTime[ERmask], tic[ERmask], marker='^', s=30, c=sTypeColourDict[SampleType.ExternalReference], label='Long-Term Reference')
-		if sum(LRmask != 0):
-			sc = ax.scatter(acqTime[LRmask], tic[LRmask], marker='s', s=30, c=sTypeColourDict[SampleType.MethodReference], label='Serial Dilution')
+		cmap = plt.cm.RdYlBu_r
 
+		if colourType == 'continuous':
+			mincol = numpy.nanmin(msData.sampleMetadata[colourBy])
+			maxcol = numpy.nanmax(msData.sampleMetadata[colourBy])
+
+		else:
+			maxcol = numpy.max([numpy.abs(numpy.max(msData.sampleMetadata[colourBy])), numpy.abs(numpy.min(msData.sampleMetadata[colourBy]))])
+			mincol = -maxcol
+
+		sc = ax.scatter(acqTime,
+						tic,
+						c=msData.sampleMetadata[colourBy],
+						cmap=cmap,
+						vmin=mincol,
+						vmax=maxcol)
 
 	# Shade by automatically defined batches (if required)
 	if addBatchShading:
 
-		sampleMask = SSmask | SPmask | ERmask
-
 		# Unique batches
 		if 'Correction Batch' in msData.sampleMetadata.columns:
-			batches = (numpy.unique(msData.sampleMetadata.loc[sampleMask, 'Correction Batch'].values[~numpy.isnan(msData.sampleMetadata.loc[sampleMask, 'Correction Batch'].values)])).astype(int)
+			batches = (numpy.unique(msData.sampleMetadata['Correction Batch'].values[
+										~numpy.isnan(msData.sampleMetadata['Correction Batch'].values)])).astype(int)
 		else:
-			batches = (numpy.unique(msData.sampleMetadata.loc[sampleMask, 'Batch'].values[~numpy.isnan(msData.sampleMetadata.loc[sampleMask, 'Batch'].values)])).astype(int)
+			batches = (numpy.unique(
+				msData.sampleMetadata['Batch'].values[
+					~numpy.isnan(msData.sampleMetadata['Batch'].values)])).astype(int)
 
 		# Define the colours (different for each batch) and get axis y-limits
 		cmap = plt.get_cmap('gnuplot')
@@ -187,40 +209,9 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 				end = end.values[0]
 
 			# Plot rectangle
-			rect = Rectangle((start, ymin), end-start, abs(ymin)+abs(ymax), color=colors[colIX], alpha=0.4, label='Batch %d' % (i), zorder=0)
+			rect = Rectangle((start, ymin), end-start, abs(ymin)+abs(ymax), color=colors[colIX], alpha=0.4, zorder=0)#,label='Batch %d' % (i))
 			ax.add_patch(rect)
 			colIX = colIX + 1
-	else:
-		# Still might need the batch information even if not using it for batch shading
-		sampleMask = SSmask | SPmask | ERmask
-		if 'Correction Batch' in msData.sampleMetadata.columns:
-			batches = (numpy.unique(msData.sampleMetadata.loc[sampleMask, 'Correction Batch'].values[~numpy.isnan(msData.sampleMetadata.loc[sampleMask, 'Correction Batch'].values)])).astype(int)
-		else:
-			batches = (numpy.unique(msData.sampleMetadata.loc[sampleMask, 'Batch'].values[~numpy.isnan(msData.sampleMetadata.loc[sampleMask, 'Batch'].values)])).astype(int)
-
-	# Add violin plot of data distribution (if required)
-	if addViolin:
-
-		sampleMasks = list()
-		palette = {}
-		if sum(SSmask)>0:
-			sampleMasks.append(('SS', SSmask))
-			palette['SS'] = sTypeColourDict[SampleType.StudySample]
-		if sum(SPmask)>0:
-			sampleMasks.append(('SR', SPmask))
-			palette['SR'] = sTypeColourDict[SampleType.StudyPool]
-		if sum(ERmask)>0:
-			sampleMasks.append(('LTR', ERmask))
-			palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
-		if sum(LRmask)>0:
-			sampleMasks.append(('SRD', LRmask))
-			palette['SRD'] = sTypeColourDict[SampleType.MethodReference]
-
-		limits = ax.get_ylim()
-
-		_violinPlotHelper(ax2, tic, sampleMasks, None, 'Sample Type', palette=palette, ylimits=limits, logy=logy)
-
-		#sns.despine(trim=True, ax=ax2)
 
 	# Annotate figure
 	ax.set_ylabel('Sum of all Feature Intensities')
@@ -242,12 +233,11 @@ def plotTIC(msData, addViolin=True, addBatchShading=False, addLineAtGaps=False, 
 	else:
 		ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
-	if colourByDetectorVoltage and cMax != 0:
-		cbaxes = fig.add_axes([0.81, 0.15, 0.03, 0.64 - (len(batches) * 0.04)]) # shorter color bar as more batches are present
-		cbar = plt.colorbar(sc, cax=cbaxes)
-		cbar.set_label('Change in Detector Voltage')
+	if colourType in {'continuous', 'continuousCentered'}:
+		cbar = plt.colorbar(sc)
+		cbar.set_label(colourBy)
 		leg = ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
-	elif addViolin==False:
+	elif addViolin is False:
 		ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 
 	fig.suptitle(title)

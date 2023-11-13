@@ -59,13 +59,13 @@ def plotScree(R2, Q2=None, title = '', xlabel='', ylabel='', savePath=None, figu
 	else:
 		plt.show()
 
-def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 0.05, plotAssociation=None, title ='', xlabel='', figures=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11, 7)):
+def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, components=None, alpha = 0.05, plotAssociation=None, title ='', xlabel='', figures=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11, 7)):
 	"""
 	Plot PCA scores for each pair of components in PCAmodel, coloured by values defined in classes, and with Hotelling's T2 ellipse (95%)
 
 	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param pandas.Series classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
-	:param str classType: Type of data in ``classes``, either 'Plot Sample Type', 'categorical' or 'continuous', must be specified if classes is not ``None``. If ``classType`` is 'Plot Sample Type', ``classes`` expects 'Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution' or 'Sample'.
+	:param str classType: Type of data in ``classes``, either 'categorical' or 'continuous', must be specified if classes is not ``None``. If ``classType`` is 'Plot Sample Type', ``classes`` expects 'Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution' or 'Sample'.
 	:param components: If ``None`` plots all components in model, else plots those specified in components
 	:type components: tuple (int, int)
 	:param float alpha: Significance value for plotting Hotellings ellipse
@@ -80,8 +80,18 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 	if not isinstance(pcaModel, ChemometricsPCA):
 		raise TypeError('PCAmodel must be an instance of ChemometricsPCA')
 
-	if classes is not None and classType is None:
-		raise ValueError('If classes is specified, classType must be')
+	if classes is not None and colourType is None:
+		raise ValueError('If classes is specified, colourType must be')
+
+	if colourType:
+		if colourType not in {'categorical', 'continuous', 'continuousCentered'}:
+			raise ValueError('colourType must be == ' + str({'categorical', 'continuous'}))
+
+	# If colourDict check colour defined for every unique entry in class
+	if classes is not None and colourDict is not None:
+		uniq = classes.unique()
+		if not all(k in colourDict.keys() for k in uniq):
+			raise ValueError('If classes and colourDict are specified every unique entry in class must be a key in colourDict')
 
 	from matplotlib.patches import Ellipse
 
@@ -108,9 +118,9 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 
 	if classes is None:
 		classes = pandas.Series('Sample' for i in range(ns))
-		classType = 'categorical'
+		colourType = 'categorical'
 
-	if classType == 'categorical':
+	if colourType == 'categorical':
 		classes = classes.astype(str)
 
 	uniq = classes.unique()
@@ -155,73 +165,43 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 		ax.set_xlim([(xmin + (0.2 * xmin)), xmax + (0.2 * xmax)])
 		ax.set_ylim([(ymin + (0.2 * ymin)), ymax + (0.2 * ymax)])
 
-		# If colouring by Sample Type - use standard reporting colours
-		if classType == 'Plot Sample Type':
+		if colourType == 'categorical':
 
-			## Try loading toolbox wide color scheme
-			# value just in case
-			sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-							   SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-			# load from the SOP as we do not have access to object
-			try:
-				from .._toolboxPath import toolboxPath
-				import json
-				import os
-				import copy
-
-				with open(os.path.join(toolboxPath(), 'StudyDesigns', 'SOP', 'Generic.json')) as data_file:
-					attributes = json.load(data_file)
-				# convert key names to SampleType enum
-				if 'sampleTypeColours' in attributes.keys():
-					sTypeColourDict = copy.deepcopy(attributes['sampleTypeColours'])
-					for stype in SampleType:
-						if stype.name in sTypeColourDict.keys():
-							sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-			except:
-				pass
-
-			sns.set_color_codes(palette='deep')
-			if any(classes == 'Study Sample'):
-				ax.scatter(values[classes.values == 'Study Sample', components[i]], values[classes.values == 'Study Sample', components[j]], c=sTypeColourDict[SampleType.StudySample], label='Study Sample')
-			if any(classes == 'Study Reference'):
-				ax.scatter(values[classes.values == 'Study Reference', components[i]], values[classes.values == 'Study Reference', components[j]], c=sTypeColourDict[SampleType.StudyPool], label='Study Reference')
-			if any(classes == 'Long-Term Reference'):
-				ax.scatter(values[classes.values == 'Long-Term Reference', components[i]], values[classes.values == 'Long-Term Reference', components[j]], c=sTypeColourDict[SampleType.ExternalReference], label='Long-Term Reference')
-			if any(classes == 'Linearity Reference'):
-				ax.scatter(values[classes.values == 'Serial Dilution', components[i]], values[classes.values == 'Serial Dilution', components[j]], c=sTypeColourDict[SampleType.MethodReference], label='Serial Dilution')
-			if any(classes == 'Sample'):
-				ax.scatter(values[classes.values == 'Sample', components[i]], values[classes.values == 'Sample', components[j]], c=sTypeColourDict['Other'], label='Sample')
-			ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
-
-		elif classType == 'categorical':
-
-			colors_sns = {}
-			# First plot any nans
-			if any(u in {'nan', 'NaN', 'NaT', '', 'NA'} for u in uniq):
-				nans = [i for i, x in enumerate(classes) if x in {'nan', 'NaN', 'NaT', '', 'NA'}]
-				ax.scatter(values[nans, components[i]], values[nans, components[j]], c='#D3D3D3', label='NA')
-				nans = [u in {'nan', 'NaN', 'NaT', '', 'NA'} for u in uniq]
-				nans = [i for i, x in enumerate(uniq) if x not in {'nan', 'NaN', 'NaT', '', 'NA'}]
-				uniqnonan = uniq[nans]
-				colors_sns['NA'] = '#D3D3D3'
+			# Plot according to user defined colours if available
+			if colourDict is not None:
+				for u in uniq:
+					ax.scatter(values[classes.values == u, components[i]],
+							   values[classes.values == u, components[j]],
+							   c=colourDict[u], label=u)
 
 			else:
-				uniqnonan = uniq
+				colors_sns = {}
 
-			# Plot remaining categories
-			classIX=0
-			colors = iter(plt.cm.rainbow(numpy.linspace(0,1,len(uniqnonan))))
-			for u in uniqnonan:
-				c = rgb2hex(next(colors))
-				if classIX<20:
-					ax.scatter(values[classes.values == u, components[i]], values[classes.values == u, components[j]], c=c, label=u)#olors[classIX], label=u)
-				elif classIX==len(uniqnonan)-1:
-					ax.scatter(values[classes.values == u, components[i]], values[classes.values == u, components[j]], c='0', alpha=0, label='...')
-					ax.scatter(values[classes.values == u, components[i]], values[classes.values == u, components[j]], c=c, label=u)#colors[classIX], label=u)
+				# First plot any nans
+				if any(u in {'nan', 'NaN', 'NaT', '', 'NA'} for u in uniq):
+					nans = [i for i, x in enumerate(classes) if x in {'nan', 'NaN', 'NaT', '', 'NA'}]
+					ax.scatter(values[nans, components[i]], values[nans, components[j]], c='#D3D3D3', label='NA')
+					nans = [i for i, x in enumerate(uniq) if x not in {'nan', 'NaN', 'NaT', '', 'NA'}]
+					uniqnonan = uniq[nans]
+					colors_sns['NA'] = '#D3D3D3'
+
 				else:
-					ax.scatter(values[classes.values == u, components[i]], values[classes.values == u, components[j]], c=c, label='_nolegend_')#colors[classIX], label='_nolegend_')
-				classIX = classIX+1
-				colors_sns[u] = c
+					uniqnonan = uniq
+
+				# Then plot remaining classes using rainbow colourmap
+				classIX=0
+				colors = iter(plt.cm.rainbow(numpy.linspace(0,1,len(uniqnonan))))
+				for u in uniqnonan:
+					c = rgb2hex(next(colors))
+					if classIX<20:
+						ax.scatter(values[classes.values == u, components[i]], values[classes.values == u, components[j]], c=c, label=u)#olors[classIX], label=u)
+					elif classIX==len(uniqnonan)-1:
+						ax.scatter(values[classes.values == u, components[i]], values[classes.values == u, components[j]], c='0', alpha=0, label='...')
+						ax.scatter(values[classes.values == u, components[i]], values[classes.values == u, components[j]], c=c, label=u)#colors[classIX], label=u)
+					else:
+						ax.scatter(values[classes.values == u, components[i]], values[classes.values == u, components[j]], c=c, label='_nolegend_')#colors[classIX], label='_nolegend_')
+					classIX = classIX+1
+					colors_sns[u] = c
 
 			if plotAssociation is not None:
 
@@ -244,7 +224,7 @@ def plotScores(pcaModel, classes=None, classType=None, components=None, alpha = 
 
 			ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 
-		elif classType == 'continuous':
+		elif colourType == 'continuous':
 
 			plotnans = classes.isnull().values
 			if sum(plotnans != 0):

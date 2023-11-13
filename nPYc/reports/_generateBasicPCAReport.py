@@ -42,13 +42,13 @@ def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, destinationPath=N
 	if destinationPath:
 		saveAs = os.path.join(graphicsPath, dataset.name + '_PCAscoresPlot_')
 	else:
-		print('Figure %i: PCA scores plots coloured by sample type.' % (figureCounter))
+		print('Figure %i: PCA scores plots coloured by sample class.' % (figureCounter))
 		saveAs = None
 
 	figuresQCscores = plotScores(pcaModel,
-								 classes=dataset.sampleMetadata['Plot Sample Type'],
-								 classType='Plot Sample Type',
-								 title='Sample Type',
+								 classes=dataset.sampleMetadata['SampleClass'],
+								 classType='Categorical',
+								 title='SampleClass',
 								 savePath=saveAs,
 								 figures=figuresQCscores,
 								 figureFormat=dataset.Attributes['figureFormat'],

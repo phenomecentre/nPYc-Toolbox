@@ -156,6 +156,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         figureSize=dataset.Attributes['figureSize']
 
 	# Define sample masks
+    # TODO - CAZ this should use the function
     SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
              (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
     SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
@@ -287,11 +288,16 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
                 figNo = figNo + 1
 
             plotTIC(dataset,
-                    savePath=saveAs,
+                    addViolin=True,
                     addBatchShading=True,
+                    colourBy='SampleClass',
+                    colourType='categorical',
+                    colourDict=dataset.Attributes['sampleTypeColours'],
+                    markerDict=dataset.Attributes['sampleTypeMarkers'],
                     figureFormat=dataset.Attributes['figureFormat'],
                     dpi=dataset.Attributes['dpi'],
-                    figureSize=dataset.Attributes['figureSize'])
+                    figureSize=dataset.Attributes['figureSize'],
+                    savePath=saveAs)
 
             # Figure 2: Final TIC
             if destinationPath:
@@ -305,10 +311,14 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
             plotTIC(dataset,
                     addViolin=True,
                     title='',
-                    savePath=saveAs,
+                    colourBy='SampleClass',
+                    colourType='categorical',
+                    colourDict=dataset.Attributes['sampleTypeColours'],
+                    markerDict=dataset.Attributes['sampleTypeMarkers'],
                     figureFormat=dataset.Attributes['figureFormat'],
                     dpi=dataset.Attributes['dpi'],
-                    figureSize=dataset.Attributes['figureSize'])
+                    figureSize=dataset.Attributes['figureSize'],
+                    savePath=saveAs)
 
         else:
 
@@ -424,12 +434,6 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     # ONLY 'final report' and ONLY if pcaModel available
 
     if ((reportType.lower() == 'final report') and (pcaModel)):
-
-        if not 'Plot Sample Type' in dataset.sampleMetadata.columns:
-            dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-            dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-            dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
-            dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
 
         if destinationPath:
             pcaPath = destinationPath
@@ -570,11 +574,16 @@ def _featureReport(dataset, destinationPath=None):
         # TIC all samples
         plotTIC(dataset,
                 addViolin=True,
-                savePath=saveAs,
                 title='',
+                colourBy='SampleClass',
+                colourType='categorical',
+                colourDict=dataset.Attributes['sampleTypeColours'],
+                markerDict=dataset.Attributes['sampleTypeMarkers'],
+                abbrDict=dataset.Attributes['sampleTypeAbbr'],
                 figureFormat=dataset.Attributes['figureFormat'],
                 dpi=dataset.Attributes['dpi'],
-                figureSize=dataset.Attributes['figureSize'])
+                figureSize=dataset.Attributes['figureSize'],
+                savePath=saveAs)
 
         # Figure 3: Acquisition structure and detector voltage
         if 'Detector' in dataset.sampleMetadata.columns:
@@ -588,17 +597,22 @@ def _featureReport(dataset, destinationPath=None):
             else:
                 print('Figure 3: Acquisition structure (coloured by detector voltage).')
 
+            # Generate sample change in detector voltage
+            detectorDiff = dataset.sampleMetadata[['Detector', 'Run Order']].sort_values(by='Run Order')[
+                'Detector'].diff().sort_index()
+            detectorDiff[0] = 0  # no detector diff for first sample
+            dataset.sampleMetadata['Change in Detector Voltage'] = detectorDiff
+
             # TIC all samples
             plotTIC(dataset,
                     addViolin=False,
                     addBatchShading=True,
-                    addLineAtGaps=True,
-                    colourByDetectorVoltage=True,
-                    savePath=saveAs,
-                    title='',
+                    colourBy='Change in Detector Voltage',
+                    colourType='continuousCentered',
                     figureFormat=dataset.Attributes['figureFormat'],
                     dpi=dataset.Attributes['dpi'],
-                    figureSize=dataset.Attributes['figureSize'])
+                    figureSize=dataset.Attributes['figureSize'],
+                    savePath=saveAs)
         else:
             if not destinationPath:
                 print('Figure 3: Acquisition structure (coloured by detector voltage).')
@@ -1035,11 +1049,16 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     plotTIC(dataset,
             addViolin=True,
             addBatchShading=True,
-            savePath=saveAs,
             logy=logy,
+            colourBy='SampleClass',
+            colourType='categorical',
+            colourDict=dataset.Attributes['sampleTypeColours'],
+            markerDict=dataset.Attributes['sampleTypeMarkers'],
+            abbrDict=dataset.Attributes['sampleTypeAbbr'],
             figureFormat=dataset.Attributes['figureFormat'],
             dpi=dataset.Attributes['dpi'],
-            figureSize=dataset.Attributes['figureSize'])
+            figureSize=dataset.Attributes['figureSize'],
+            savePath=saveAs)
 
     # Remaining figures: Sample of fits for selection of features
     (preData, postData, maskNum) = batchCorrectionTest(dataset, nFeatures=10, window=batch_correction_window)
@@ -1200,10 +1219,16 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
         plotTIC(dataset,
                 addViolin=True,
                 title='TIC Pre Batch-Correction',
-                savePath=saveAs,
+                addBatchShading=False,
+                colourBy='SampleClass',
+                colourType='categorical',
+                colourDict=dataset.Attributes['sampleTypeColours'],
+                markerDict=dataset.Attributes['sampleTypeMarkers'],
+                abbrDict=dataset.Attributes['sampleTypeAbbr'],
                 figureFormat=dataset.Attributes['figureFormat'],
                 dpi=dataset.Attributes['dpi'],
-                figureSize=dataset.Attributes['figureSize'])
+                figureSize=dataset.Attributes['figureSize'],
+                savePath=saveAs)
 
         # Post-correction
         if destinationPath:
@@ -1215,10 +1240,16 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
         plotTIC(correctedDataset,
                 addViolin=True,
                 title='TIC Post Batch-Correction',
-                savePath=saveAs,
+                addBatchShading=False,
+                colourBy='SampleClass',
+                colourType='categorical',
+                colourDict=dataset.Attributes['sampleTypeColours'],
+                markerDict=dataset.Attributes['sampleTypeMarkers'],
+                abbrDict=dataset.Attributes['sampleTypeAbbr'],
                 figureFormat=dataset.Attributes['figureFormat'],
                 dpi=dataset.Attributes['dpi'],
-                figureSize=dataset.Attributes['figureSize'])
+                figureSize=dataset.Attributes['figureSize'],
+                savePath=saveAs)
 
     else:
         if not destinationPath:
