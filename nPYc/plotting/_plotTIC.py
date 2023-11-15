@@ -72,6 +72,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClas
 				raise ValueError('If colourDict is specified every unique entry in dataset.sampleMetadata[colourBy] must be a key in colourDict')
 		# Otherwise create colour dict
 		else:
+			colourDict = {}
 			for u in uniq:
 				colourDict[u] = 'blue' # TODO CAZ iterate through colours
 
@@ -80,6 +81,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClas
 			if not all(k in markerDict.keys() for k in uniq):
 				raise ValueError('If markerDict is specified every unique entry in dataset.sampleMetadata[colourBy] must be a key in markerDict')
 		else:
+			markerDict = {}
 			for u in uniq:
 				markerDict[u] = 'o'
 
