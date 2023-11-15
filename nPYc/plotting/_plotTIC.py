@@ -88,6 +88,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClas
 			if not all(k in abbrDict.keys() for k in uniq):
 				raise ValueError('If abbrDict is specified every unique entry in dataset.sampleMetadata[colourBy] must be a key in abbrDict')
 		else:
+			abbrDict = {}
 			for u in uniq:
 				abbrDict[u] = u
 

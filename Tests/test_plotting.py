@@ -819,28 +819,28 @@ class test_plotting(unittest.TestCase):
 			with self.subTest(msg='Continuous varaible'):
 				outputPath = os.path.join(tmpdirname, 'continuous')
 
-				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], classType='continuous', figureFormat='png', savePath=outputPath)
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], colourType='continuous', figureFormat='png', savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
 
 			with self.subTest(msg='Discrete variables'):
 				outputPath = os.path.join(tmpdirname, 'categorical')
 
-				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], classType='categorical', figureFormat='png', savePath=outputPath)
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], colourType='categorical', figureFormat='png', savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
 
 			with self.subTest(msg='Association plot'):
 				outputPath = os.path.join(tmpdirname, 'categoricalAssociation')
 
-				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], classType='categorical', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], colourType='categorical', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
 
 			with self.subTest(msg='Continuous Association'):
 				outputPath = os.path.join(tmpdirname, 'continuousAssociation')
 
-				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], classType='continuous', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], colourType='continuous', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
 
@@ -854,7 +854,7 @@ class test_plotting(unittest.TestCase):
 		dataset = generateTestDataset(noSamp, noFeat, dtype='MSDataset')
 		pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 
-		self.assertRaises(ValueError, nPYc.plotting.plotScores, pcaModel, classes=dataset.sampleMetadata['Detector'], classType=None)
+		self.assertRaises(ValueError, nPYc.plotting.plotScores, pcaModel, classes=dataset.sampleMetadata['Detector'])
 
 
 	def test_plotPW(self):
