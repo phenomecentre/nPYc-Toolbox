@@ -315,12 +315,15 @@ class test_plotting(unittest.TestCase):
 
 
 	def test_plottic_raises(self):
-
+	# this test used to be a check on addViolin and colourByDetectorVoltage not both == true: now obsolete so changing:
 		noSamp = numpy.random.randint(50, high=100, size=None)
 		noFeat = numpy.random.randint(200, high=400, size=None)
 		msData = generateTestDataset(noSamp, noFeat)
-		print("colourBy %s" % msData.sampleMetadata["SampleClass"])
-		self.assertRaises(ValueError, nPYc.plotting.plotTIC, msData, addViolin=True)
+
+		#print("all columns %s" % msData.sampleMetadata.columns.values)
+
+		#'Assay Role' is not a column and should trigger a ValueError
+		self.assertRaises(ValueError, nPYc.plotting.plotTIC, msData, colourBy='Assay Role')
 
 
 	def test_jointplotRSDvCorrelation(self):
