@@ -17,6 +17,7 @@
 		"LinearityReference": "red", "Linearity Reference": "red",
 		"MethodReference": "blue", "Method Reference": "blue",
 		"ProceduralBlank": "aquamarine", "Blank": "aquamarine",
+		"Other": "grey", "UnknownRole": "grey", "Unknown": "grey", "nan": "grey", "NaN":  "grey", "NA":  "grey",
 		"UnknownType": "grey", "UnknownRole": "grey", "Unknown": "grey", "nan": "grey", "NaN":  "grey", "NA":  "grey"
 	},
 	"sampleTypeMarkers":{

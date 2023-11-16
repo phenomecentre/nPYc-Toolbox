@@ -22,16 +22,26 @@ from matplotlib.patches import Rectangle
 import os
 import datetime
 
-def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClass', colourType='categorical', colourDict=None, markerDict=None, abbrDict=None, logy=False, title='', withExclusions=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotTIC(dataset, addViolin=True, addBatchShading=False,
+			colourBy='SampleClass', colourType='categorical',
+			colourDict=None, markerDict=None, abbrDict=None,
+			logy=False, title='',
+			withExclusions=True, savePath=None,
+			figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
-	Visualise TIC for all or a subset of features coloured by either dilution value or detector voltage. With the option to shade by batch.
+	Visualise TIC for all or a subset of features coloured by either dilution value or detector voltage.
+	With the option to shade by batch.
 
 	.. note:: addViolin and colourByDetectorVoltage are mutually exclusive.
 
 	:param MSDataset dataset: Dataset object
 	:param bool addViolin: If ``True`` adds violin plots of TIC distribution pre and post correction split by sample type
 	:param bool addBatchShading: If ``True`` shades plot according to sample batch
-	:param bool colourByDetectorVoltage: If ``True`` colours points by detector voltage, else colours by dilution
+	:param str colourBy:
+	:param str colourType:
+	:param dict colourDict:
+	:param dict markerDict:
+	:param dict abbrDict:
 	:param bool logy: If ``True`` plot y on a log scale
 	:param str title: Title for the plot
 	:param bool withExclusions: If ``False``, discard masked features from the sum
@@ -48,6 +58,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClas
 		raise TypeError('dataset must be an instance of nPYc.Dataset')
 
 	if colourBy not in dataset.sampleMetadata.columns:
+		#print(dataset.sampleMetadata.columns.values)
 		raise ValueError('colourBy must be a column in dataset.sampleMetadata')
 
 	if not (('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns)):
@@ -148,6 +159,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClas
 							marker=markerDict[u],
 							s=30,
 							c=colourDict[u],
+							alpha=.4,
 							label=u)
 
 			if addViolin:
@@ -156,7 +168,8 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClas
 
 		if addViolin:
 			limits = ax.get_ylim()
-			_violinPlotHelper(ax2, tic, sampleMasks, None, 'Sample Type', palette=palette, ylimits=limits, logy=logy)
+			_violinPlotHelper(ax2, tic, sampleMasks, None, 'Sample Type',
+							  palette=palette, ylimits=limits, logy=logy)
 
 	# Colour by continuous class
 	else:
@@ -174,6 +187,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClas
 		sc = ax.scatter(acqTime,
 						tic,
 						c=msData.sampleMetadata[colourBy],
+						alpha=.4,
 						cmap=cmap,
 						vmin=mincol,
 						vmax=maxcol)
@@ -257,7 +271,9 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False, colourBy='SampleClas
 		plt.show()
 
 
-def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order', colourBy='Correction Batch', withExclusions=True, destinationPath=None, autoOpen=True):
+def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
+					   colourBy='Correction Batch', withExclusions=True,
+					   destinationPath=None, autoOpen=True):
 	"""
 	Interactively visualise TIC or intensity for a given feature with plotly, provides tooltips to allow identification of samples.
 

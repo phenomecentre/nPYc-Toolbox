@@ -302,7 +302,7 @@ class test_plotting(unittest.TestCase):
 			self.assertTrue(os.path.exists(outputPath))
 
 			outputPath = os.path.join(tmpdirname, 'noViolinByDetector')
-			nPYc.plotting.plotTIC(msData, addViolin=False, addBatchShading=True, colourByDetectorVoltage=True, savePath=outputPath)
+			nPYc.plotting.plotTIC(msData, addViolin=False, addBatchShading=True, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
 			outputPath = os.path.join(tmpdirname, 'withBatches')
@@ -319,8 +319,8 @@ class test_plotting(unittest.TestCase):
 		noSamp = numpy.random.randint(50, high=100, size=None)
 		noFeat = numpy.random.randint(200, high=400, size=None)
 		msData = generateTestDataset(noSamp, noFeat)
-
-		self.assertRaises(ValueError, nPYc.plotting.plotTIC, msData, addViolin=True, colourByDetectorVoltage=True)
+		print("colourBy %s" % msData.sampleMetadata["SampleClass"])
+		self.assertRaises(ValueError, nPYc.plotting.plotTIC, msData, addViolin=True)
 
 
 	def test_jointplotRSDvCorrelation(self):
