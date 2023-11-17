@@ -724,7 +724,7 @@ def plotScoresInteractive(dataset, pcaModel, colourBy, components=[1, 2], alpha=
 
     # Save to destinationPath
     if destinationPath:
-        saveTemp = dataTrue.name + '_PCAscoresPlot_' + colourBy + 'PC' + str(components[0] + 1) + 'vsPC' + str(
+        saveTemp = dataset.name + '_PCAscoresPlot_' + colourBy + 'PC' + str(components[0] + 1) + 'vsPC' + str(
             components[1] + 1) + '.html'
         plotly.offline.plot(figure, filename=os.path.join(destinationPath, saveTemp), auto_open=autoOpen)
 
@@ -751,7 +751,7 @@ def plotLoadingsInteractive(dataset, pcaModel, component=1, withExclusions=False
 
     # Check inputs
     if not isinstance(dataset, Dataset):
-        raise TypeError('dataTrue must be an instance of nPYc.Dataset')
+        raise TypeError('dataset must be an instance of nPYc.Dataset')
 
     if not isinstance(pcaModel, ChemometricsPCA):
         raise TypeError('PCAmodel must be a ChemometricsPCA object')
