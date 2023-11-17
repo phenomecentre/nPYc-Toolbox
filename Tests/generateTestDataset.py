@@ -50,6 +50,7 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata.loc[0:int(noSamp / 2), 'Correction Batch'] = 1
 	data.sampleMetadata['Exclusion Details'] = ''
 	data.sampleMetadata['SampleClass'] = 'Study Sample'
+	data.sampleMetadata['Status'] = 'Study Sample'
 	data.sampleMetadata['Sample File Name'] = [randomword(10) for x in range(0, noSamp)]
 	data.sampleMetadata['Sample ID'] = [randomword(10) for x in range(0, noSamp)]
 	data.sampleMetadata['Dilution'] = numpy.random.rand(noSamp)

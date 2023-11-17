@@ -881,16 +881,17 @@ class test_reports_multivariate(unittest.TestCase):
 			with self.subTest(msg='Report generation'):
 				nPYc.reports.multivariateReport(self.dataset, pcaModel=pcaModel, reportType='all', destinationPath=tmpdirname)
 
-				expectedPath = os.path.join(tmpdirname, 'Dataset_report_multivariateAll.html')
+				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAll')
 				self.assertTrue(os.path.exists(expectedPath))
-
-				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleTypePC1vsPC2.png',
+				print("Path is at %s" % expectedPath)
+				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleClassPC1vsPC2.png',
 							 'Dataset_PCAscreePlot.png', 'Dataset_metadataPlot_metadataDistribution_categorical0.png', 'Dataset_metadataPlot_metadataDistribution_continuous0.png',
 							 'Dataset_metadataPlot_metadataDistribution_date0.png', 'Dataset_modOutliersPlot.png', 'Dataset_sigCorHeatmap.png', 'Dataset_sigKruHeatmap.png',
 							 'Dataset_strongOutliersPlot.png']
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAll', testFile)
+					print("Exists? %s" % expectedPath)
 					self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -917,13 +918,14 @@ class test_reports_multivariate(unittest.TestCase):
 				expectedPath = os.path.join(tmpdirname, 'Dataset_report_multivariateAnalytical.html')
 				self.assertTrue(os.path.exists(expectedPath))
 
-				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleTypePC1vsPC2.png',
+				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleClassPC1vsPC2.png',
 							 'Dataset_PCAscreePlot.png', 'Dataset_metadataPlot_metadataDistribution_categorical0.png', 'Dataset_metadataPlot_metadataDistribution_continuous0.png',
 							 'Dataset_metadataPlot_metadataDistribution_date0.png', 'Dataset_modOutliersPlot.png', 'Dataset_sigCorHeatmap.png', 'Dataset_sigKruHeatmap.png',
 							 'Dataset_strongOutliersPlot.png']
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAnalytical', testFile)
+					print(expectedPath)
 					self.assertTrue(os.path.exists(expectedPath))
 
 
