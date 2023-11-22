@@ -52,7 +52,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 	:param figureSize: Dimensions of the figure
 	:type figureSize: tuple(float, float)
 	"""
-
+	#print("plotTIC colourBy = %s" % colourBy)
 	# Check inputs
 	if not isinstance(dataset, Dataset):
 		raise TypeError('dataset must be an instance of nPYc.Dataset')
@@ -80,7 +80,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 		# If colourDict check colour defined for every unique entry in class
 		if colourDict is not None:
 			if not all(k in colourDict.keys() for k in uniq):
-				raise ValueError('If colourDict is specified every unique entry in dataset.sampleMetadata[colourBy] must be a key in colourDict')
+				raise ValueError('If colourDict is specified every unique entry in ' + colourBy + ' must be a key in colourDict')
 		# Otherwise create colour dict
 		else:
 			colourDict = {}
@@ -90,7 +90,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 		# If markerDict check colour defined for every unique entry in class
 		if markerDict is not None:
 			if not all(k in markerDict.keys() for k in uniq):
-				raise ValueError('If markerDict is specified every unique entry in dataset.sampleMetadata[colourBy] must be a key in markerDict')
+				raise ValueError('If markerDict is specified every unique entry in ' + colourBy + ' must be a key in markerDict')
 		else:
 			markerDict = {}
 			for u in uniq:
@@ -99,7 +99,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 		# If abbrDict check abbr defined for every unique entry in class
 		if abbrDict is not None:
 			if not all(k in abbrDict.keys() for k in uniq):
-				raise ValueError('If abbrDict is specified every unique entry in dataset.sampleMetadata[colourBy] must be a key in abbrDict')
+				raise ValueError('If abbrDict is specified every unique entry in ' + colourBy + ' must be a key in abbrDict')
 		else:
 			abbrDict = {}
 			for u in uniq:
@@ -187,7 +187,6 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 		sc = ax.scatter(acqTime,
 						tic,
 						c=msData.sampleMetadata[colourBy],
-						alpha=.4,
 						cmap=cmap,
 						vmin=mincol,
 						vmax=maxcol)

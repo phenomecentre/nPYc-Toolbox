@@ -19,6 +19,7 @@ import numpy
 from ._violinPlot import _violinPlotHelper
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 from ._plotDiscreteLoadings import plotDiscreteLoadings
+from ._plotting import checkAndSetPlotAttributes
 from ..objects import Dataset
 from ..enumerations import SampleType
 from ..utilities.generic import createDestinationPath
@@ -62,7 +63,8 @@ def plotScree(R2, Q2=None, title='', xlabel='', ylabel='', savePath=None, figure
         plt.show()
 
 
-def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, components=None, alpha=0.05,
+def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerDict=None, components=None,
+               hotelling_alpha=0.05,
                plotAssociation=None, title='', xlabel='', figures=None, savePath=None, figureFormat='png', dpi=72,
                figureSize=(11, 7)):
     """
@@ -70,10 +72,12 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, compone
 
 	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
 	:param pandas.Series classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
-	:param str classType: Type of data in ``classes``, either 'categorical' or 'continuous', must be specified if classes is not ``None``. If ``classType`` is 'Plot Sample Type', ``classes`` expects 'Study Sample', 'Study Reference', 'Long-Term Reference', 'Serial Dilution' or 'Sample'.
+	:param str colourType: either 'categorical' or 'continuous'
+	:param dict colourDict:
+	:param dict markerDict:
 	:param components: If ``None`` plots all components in model, else plots those specified in components
 	:type components: tuple (int, int)
-	:param float alpha: Significance value for plotting Hotellings ellipse
+	:param float hotelling_alpha: Significance value for plotting Hotellings ellipse
 	:param bool plotAssociation: If ``True``, plots the association between each set of PCA scores and the metadata values
 	:param numpy.array significance: Significance of association of scores from each component with values in classes from correlation or Kruskal-Wallis test for example (see multivariateReport.py)
 	:param str title: Title for the plot
@@ -85,25 +89,35 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, compone
     if not isinstance(pcaModel, ChemometricsPCA):
         raise TypeError('PCAmodel must be an instance of ChemometricsPCA')
 
-    if classes is not None and colourType is None:
-        raise ValueError('If classes is specified, colourType must be')
-
-    if colourType:
-        if colourType not in {'categorical', 'continuous', 'continuousCentered'}:
-            raise ValueError('colourType must be == ' + str({'categorical', 'continuous'}))
-
-    # If colourDict check colour defined for every unique entry in class
-    if classes is not None and colourDict is not None:
-        uniq = classes.unique()
-        if not all(k in colourDict.keys() for k in uniq):
-            raise ValueError(
-                'If classes and colourDict are specified every unique entry in class must be a key in colourDict')
-
-    from matplotlib.patches import Ellipse
-
     # Preparation
     values = pcaModel.scores
     ns, nc = values.shape
+
+    if colourType is not None and colourType not in {'categorical', 'continuous', 'continuousCentered'}:
+        raise ValueError('colourType must be == ' + str({'categorical', 'continuous', 'continuousCentered'}))
+
+    if classes is not None and colourType is None:
+        raise ValueError('If classes is specified, colourType must be')
+
+    if classes is None:
+        classes = pandas.Series('Study Sample' for i in range(ns))
+        colourType = 'categorical'
+
+    uniq = classes.unique()
+    try:
+        uniq.sort()
+    except:
+        pass
+    if colourType == 'categorical':
+        classes = classes.astype(str)
+
+    # If colourDict check colour defined for every unique entry in class
+    colourDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=colourDict, dictName="colourDict")
+
+    markerDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=markerDict,
+                                           dictName="markerDict", defaultVal="o")
+
+    from matplotlib.patches import Ellipse
 
     if components is None:
         components = numpy.ones([nc]).astype(bool)
@@ -122,18 +136,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, compone
     else:
         plotTitle = ''
 
-    if classes is None:
-        classes = pandas.Series('Sample' for i in range(ns))
-        colourType = 'categorical'
 
-    if colourType == 'categorical':
-        classes = classes.astype(str)
-
-    uniq = classes.unique()
-    try:
-        uniq.sort()
-    except:
-        pass
 
     # Calculate critical value for Hotelling's T2
     # Fval = f.ppf(0.95, 2, ns-2)
@@ -155,7 +158,8 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, compone
             fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
 
         # Add Hotelling's T2
-        hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[i], components[j]]), alpha=alpha)
+        hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[i], components[j]]),
+                                                  alpha=hotelling_alpha)
 
         # a = numpy.sqrt(numpy.var(values[:,components[i]])*Fval*2*((ns-1)/(ns-2)));
         # b = numpy.sqrt(numpy.var(values[:,components[j]])*Fval*2*((ns-1)/(ns-2)));
@@ -178,7 +182,8 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, compone
                 for u in uniq:
                     ax.scatter(values[classes.values == u, components[i]],
                                values[classes.values == u, components[j]],
-                               c=colourDict[u], label=u)
+                               c=colourDict[u], marker=markerDict[u],
+                               label=u, alpha=.4)
 
             else:
                 colors_sns = {}
@@ -201,7 +206,8 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, compone
                     c = rgb2hex(next(colors))
                     if classIX < 20:
                         ax.scatter(values[classes.values == u, components[i]],
-                                   values[classes.values == u, components[j]], c=c, label=u)  # olors[classIX], label=u)
+                                   values[classes.values == u, components[j]], c=c, label=u,
+                                   alpha=.4)  # olors[classIX], label=u)
                     elif classIX == len(uniqnonan) - 1:
                         ax.scatter(values[classes.values == u, components[i]],
                                    values[classes.values == u, components[j]], c='0', alpha=0, label='...')
@@ -211,7 +217,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, compone
                     else:
                         ax.scatter(values[classes.values == u, components[i]],
                                    values[classes.values == u, components[j]], c=c,
-                                   label='_nolegend_')  # colors[classIX], label='_nolegend_')
+                                   label='_nolegend_', alpha=.4)  # colors[classIX], label='_nolegend_')
                     classIX = classIX + 1
                     colors_sns[u] = c
 
@@ -247,7 +253,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, compone
                 ax.legend()
 
             cb = ax.scatter(values[plotnans == False, components[i]], values[plotnans == False, components[j]],
-                            c=classes[plotnans == False], cmap=plt.cm.rainbow)
+                            c=classes[plotnans == False], cmap=plt.cm.rainbow, alpha=.4)
             cbar = plt.colorbar(cb, ax=ax)
             cbar.set_label(title)
 
@@ -257,14 +263,14 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, compone
 
                 # Association for component[i]
                 ax1.scatter(classes[plotnans == False], values[plotnans == False, components[i]],
-                            c=classes[plotnans == False], cmap=plt.cm.rainbow)
+                            c=classes[plotnans == False], cmap=plt.cm.rainbow, alpha=.4)
                 ax1.scatter(numpy.ones([sum(plotnans), 1]) * xvalnan, values[plotnans, components[i]], c='#D3D3D3')
                 ax1.set_ylabel('PC' + str(components[i] + 1))
                 ax1.set(xticklabels=[])
 
                 # Association for component[j]
                 ax2.scatter(classes[plotnans == False], values[plotnans == False, components[j]],
-                            c=classes[plotnans == False], cmap=plt.cm.rainbow)
+                            c=classes[plotnans == False], cmap=plt.cm.rainbow, alpha=.4)
                 ax2.scatter(numpy.ones([sum(plotnans), 1]) * xvalnan, values[plotnans, components[j]], c='#D3D3D3')
                 ax2.set_xlabel(plotTitle)
                 ax2.set_ylabel('PC' + str(components[j] + 1))
@@ -509,7 +515,7 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
 
             # Set the alpha (min 0.2, max 1)
             cVectAlphas[:, 3] = (((abs(cVect) - numpy.min(abs(cVect))) * (1 - 0.2)) / (
-                        numpy.max(abs(cVect)) - numpy.min(abs(cVect)))) + 0.2
+                    numpy.max(abs(cVect)) - numpy.min(abs(cVect)))) + 0.2
             if any(cVectAlphas[:, 3] > 1):
                 cVectAlphas[cVectAlphas[:, 3] > 1, 3] = 1
 

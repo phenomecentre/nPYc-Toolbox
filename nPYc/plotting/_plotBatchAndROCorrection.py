@@ -169,7 +169,9 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 		# Plot fit coloured by batch
 		colIX = 1
 		for i in batches:
-			ax.plot([pandas.to_datetime(d) for d in sortedRO2[localBatch==i]], fitSorted[localBatch==i,feature], c=colors[colIX], alpha=0.9, label='Fit for batch ' + str(colIX))
+			ax.plot([pandas.to_datetime(d) for d in sortedRO2[localBatch==i]],
+					fitSorted[localBatch==i,feature], c=colors[colIX],
+					alpha=0.6, label='Fit for batch ' + str(colIX))
 			colIX = colIX + 1
 						
 		# Add sample annotation if required

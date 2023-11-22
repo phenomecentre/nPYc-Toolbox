@@ -11,8 +11,8 @@
 	"analyticalMeasurements":{},
 	"excludeFromPlotting":[],
 	"sampleTypeColours":{
-		"StudySample": "blue", "Assay": "blue", "Study Sample": "blue", "Sample": "blue",
-		"StudyPool": "darkgreen", "Study Reference": "darkgreen",
+		"StudySample": "blue", "Assay": "blue", "Study Sample": "blue", "Sample": "magenta",
+		"StudyPool": "darkgreen", "Study Pool": "darkgreen","Study Reference": "darkgreen",
 		"ExternalReference": "darkorange", "Long-Term Reference": "darkorange", "Long Term Reference": "darkorange",
 		"LinearityReference": "red", "Linearity Reference": "red",
 		"MethodReference": "blue", "Method Reference": "blue",
@@ -21,8 +21,8 @@
 		"UnknownType": "grey", "UnknownRole": "grey", "Unknown": "grey", "nan": "grey", "NaN":  "grey", "NA":  "grey"
 	},
 	"sampleTypeMarkers":{
-		"StudySample": "o", "Assay": "o", "Study Sample": "o", "Sample": "o",
-		"StudyPool": "v", "Study Reference": "v",
+		"StudySample": "o", "Assay": "o", "Study Sample": "o", "Sample": "X",
+		"StudyPool": "v", "Study Reference": "v", "Study Pool": "v",
 		"ExternalReference": "^", "Long-Term Reference": "^", "Long Term Reference": "^",
 		"LinearityReference": "s", "Linearity Reference": "s",
 		"MethodReference": "P", "Method Reference": "P",
@@ -31,7 +31,7 @@
 	},
 	"sampleTypeAbbr":{
 		"StudySample": "SS", "Assay": "SS", "Study Sample": "SS", "Sample": "SS",
-		"StudyPool": "SR", "Study Reference": "SR",
+		"StudyPool": "SR", "Study Reference": "SR", "Study Pool": "SR",
 		"ExternalReference": "LTR", "Long-Term Reference": "LTR", "Long Term Reference": "LTR",
 		"LinearityReference": "SRD", "Linearity Reference": "SRD",
 		"MethodReference": "MR", "Method Reference": "MR",

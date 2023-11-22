@@ -296,6 +296,7 @@ class test_plotting(unittest.TestCase):
 		noFeat = numpy.random.randint(200, high=400, size=None)
 		msData = generateTestDataset(noSamp, noFeat)
 
+
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			outputPath = os.path.join(tmpdirname, 'basic')
 			nPYc.plotting.plotTIC(msData, savePath=outputPath)
