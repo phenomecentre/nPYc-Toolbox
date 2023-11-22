@@ -12,7 +12,7 @@ import os
 
 
 def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='', histBins=100, color=None, logy=False,
-              logx=False, xlim=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11, 7)):
+              logx=False, xlim=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11, 7), opacity=.5):
     """
 	histogram(values, inclusionVector=None, quantiles=None, histBins=100, color=None, logy=False, logx=False, **kwargs)
 
@@ -123,7 +123,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
                 localValues[localValues == 0] = numpy.finfo(numpy.float64).epsneg
 
             ax.hist(localValues,
-                    alpha=.4,
+                    alpha=opacity,
                     range=(minVal, maxVal),
                     label=key,
                     bins=nbins)
@@ -141,7 +141,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
                      label=label)
         else:
             ax.hist(values[mask],
-                    alpha=.4,
+                    alpha=opacity,
                     label=label,
                     bins=nbins)
 
@@ -153,7 +153,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
                          label=label)
             else:
                 ax.hist(values[mask],
-                        alpha=.4,
+                        alpha=opacity,
                         label=label,
                         bins=nbins)
 
@@ -164,7 +164,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
                      label=label)
         else:
             ax.hist(values[mask],
-                    alpha=.4,
+                    alpha=opacity,
                     label=label,
                     bins=nbins)
     else:
@@ -194,7 +194,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 
 
 def plotLRTIC(msData, sampleMask=None, colourByDetectorVoltage=False, title='', label=False, savePath=None,
-              figureFormat='png', dpi=72, figureSize=(11, 7)):
+              figureFormat='png', dpi=72, figureSize=(11, 7), opacity=.4):
     """
 	Visualise TIC for linearity reference (LR) samples (either all or a subset) coloured by either dilution value or detector voltage.
 
@@ -237,12 +237,12 @@ def plotLRTIC(msData, sampleMask=None, colourByDetectorVoltage=False, title='', 
                         cmap=plt.cm.get_cmap('bwr'),
                         vmin=cMin,
                         vmax=cMax,
-                        edgecolors='grey')
+                        edgecolors='grey', alpha=opacity)
     else:
         ax.scatter(runIX, tic,
                    c=msData.sampleMetadata['Dilution'][LRmask],
                    cmap=plt.cm.jet,
-                   edgecolors='grey')
+                   edgecolors='grey',alpha=opacity)
 
     # Add sample labels
     if label == True:
@@ -276,7 +276,7 @@ def plotLRTIC(msData, sampleMask=None, colourByDetectorVoltage=False, title='', 
 
 
 def plotCorrelationToLRbyFeature(msData, featureMask=None, title='', maxNo=5, savePath=None, figureFormat='png', dpi=72,
-                                 figureSize=(11, 7)):
+                                 figureSize=(11, 7), opacity=.4):
     """
 	Summary plots of correlation to dilution for a subset of features, separated by sample batch. Each figure includes a scatter plot of feature intensity vs dilution, TIC of LR and surrounding SP samples, and a heatmap of correlation to dilution for each LR batch subset, overall, and mean.
 
@@ -344,7 +344,7 @@ def plotCorrelationToLRbyFeature(msData, featureMask=None, title='', maxNo=5, sa
         # Plot scatter of LR intensity coloured by dilution
         ax1.scatter(runIX, msData.intensityData[LRmask, feature],
                     c=msData.sampleMetadata['Dilution'][LRmask],
-                    cmap=plt.cm.jet)
+                    cmap=plt.cm.jet, alpha=opacity)
 
         # Add a line where samples are not adjacent
         sampletime = [x - runIX[i - 1] for i, x in enumerate(runIX)]
@@ -387,12 +387,15 @@ def plotCorrelationToLRbyFeature(msData, featureMask=None, title='', maxNo=5, sa
 
 def checkAndSetPlotAttributes(uniqKeys, attribDict, dictName, defaultVal=None):
     # check all the keys of attribDict are in uniqKeys
+    # putting this here to see if it's a useful refactor. It may not be.
     if attribDict:
         if not all(k in attribDict.keys() for k in uniqKeys):
+            print(dictName + " keys are " + attribDict.keys())
+            print("Category keys are " + uniqKeys)
             raise ValueError(
                 'Check keys in ' + dictName + "; some aren't present in the categories list.")
     else:
-        # only do this if a default has been specified
+        # only set all the vals if a default has been specified
         if defaultVal:
             attribDict = {}
             for u in uniqKeys:

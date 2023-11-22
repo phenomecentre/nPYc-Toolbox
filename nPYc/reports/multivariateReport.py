@@ -326,6 +326,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                  classes=data.sampleMetadata['SampleClass'],
                                  colourType='categorical',
                                  colourDict=data.Attributes['sampleTypeColours'],
+                                 markerDict=data.Attributes['sampleTypeMarkers'],
                                  title='SampleClass',
                                  figures=figuresQCscores,
                                  hotelling_alpha=hotellings_alpha,

@@ -66,7 +66,7 @@ def plotScree(R2, Q2=None, title='', xlabel='', ylabel='', savePath=None, figure
 def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerDict=None, components=None,
                hotelling_alpha=0.05,
                plotAssociation=None, title='', xlabel='', figures=None, savePath=None, figureFormat='png', dpi=72,
-               figureSize=(11, 7)):
+               figureSize=(11, 7), opacity=.4):
     """
 	Plot PCA scores for each pair of components in PCAmodel, coloured by values defined in classes, and with Hotelling's T2 ellipse (95%)
 
@@ -85,6 +85,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
 	:param dict figures: If not ``None``, saves location of each figure for output in html report (see multivariateReport.py)
 	"""
 
+    print("Plotting scores %s" % colourType)
     # Check inputs
     if not isinstance(pcaModel, ChemometricsPCA):
         raise TypeError('PCAmodel must be an instance of ChemometricsPCA')
@@ -114,8 +115,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
     # If colourDict check colour defined for every unique entry in class
     colourDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=colourDict, dictName="colourDict")
 
-    markerDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=markerDict,
-                                           dictName="markerDict", defaultVal="o")
+    markerDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=markerDict,dictName="markerDict", defaultVal="o")
 
     from matplotlib.patches import Ellipse
 
@@ -183,7 +183,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
                     ax.scatter(values[classes.values == u, components[i]],
                                values[classes.values == u, components[j]],
                                c=colourDict[u], marker=markerDict[u],
-                               label=u, alpha=.4)
+                               label=u, alpha=opacity)
 
             else:
                 colors_sns = {}
@@ -207,7 +207,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
                     if classIX < 20:
                         ax.scatter(values[classes.values == u, components[i]],
                                    values[classes.values == u, components[j]], c=c, label=u,
-                                   alpha=.4)  # olors[classIX], label=u)
+                                   alpha=opacity)  # olors[classIX], label=u)
                     elif classIX == len(uniqnonan) - 1:
                         ax.scatter(values[classes.values == u, components[i]],
                                    values[classes.values == u, components[j]], c='0', alpha=0, label='...')
@@ -217,11 +217,13 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
                     else:
                         ax.scatter(values[classes.values == u, components[i]],
                                    values[classes.values == u, components[j]], c=c,
-                                   label='_nolegend_', alpha=.4)  # colors[classIX], label='_nolegend_')
+                                   label='_nolegend_', alpha=opacity)  # colors[classIX], label='_nolegend_')
                     classIX = classIX + 1
-                    colors_sns[u] = c
+                    colors_sns[str(u)] = c
+
 
             if plotAssociation is not None:
+
                 nonans = [i for i, x in enumerate(classes) if x in {'nan', 'NaN', 'NaT', '', 'NA'}]
                 plotClasses = classes.copy()
                 plotClasses[nonans] = 'NA'
@@ -232,14 +234,15 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
                                                                'PC' + str(components[j] + 1)])
 
                 # Association for component[i]
-                ax1 = sns.stripplot(x=plotTitle, y='PC' + str(components[i] + 1), data=tempdata, ax=ax1,
-                                    palette=colors_sns)
+
+                ax1 = sns.stripplot(x=plotTitle, y='PC' + str(components[i] + 1),
+                                    data=tempdata, ax=ax1, palette=colors_sns)
                 ax1.set(xticklabels=[])
                 ax1.set(xlabel='')
 
                 # Association for component[j]
-                ax2 = sns.stripplot(x=plotTitle, y='PC' + str(components[j] + 1), data=tempdata, ax=ax2,
-                                    palette=colors_sns)
+                ax2 = sns.stripplot(x=plotTitle, y='PC' + str(components[j] + 1),
+                                    data=tempdata, ax=ax2, palette=colors_sns)
                 ax2.set(xticklabels=[])
 
             ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
@@ -253,7 +256,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
                 ax.legend()
 
             cb = ax.scatter(values[plotnans == False, components[i]], values[plotnans == False, components[j]],
-                            c=classes[plotnans == False], cmap=plt.cm.rainbow, alpha=.4)
+                            c=classes[plotnans == False], cmap=plt.cm.rainbow, alpha=opacity)
             cbar = plt.colorbar(cb, ax=ax)
             cbar.set_label(title)
 
@@ -263,14 +266,14 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
 
                 # Association for component[i]
                 ax1.scatter(classes[plotnans == False], values[plotnans == False, components[i]],
-                            c=classes[plotnans == False], cmap=plt.cm.rainbow, alpha=.4)
+                            c=classes[plotnans == False], cmap=plt.cm.rainbow, alpha=opacity)
                 ax1.scatter(numpy.ones([sum(plotnans), 1]) * xvalnan, values[plotnans, components[i]], c='#D3D3D3')
                 ax1.set_ylabel('PC' + str(components[i] + 1))
                 ax1.set(xticklabels=[])
 
                 # Association for component[j]
                 ax2.scatter(classes[plotnans == False], values[plotnans == False, components[j]],
-                            c=classes[plotnans == False], cmap=plt.cm.rainbow, alpha=.4)
+                            c=classes[plotnans == False], cmap=plt.cm.rainbow, alpha=opacity)
                 ax2.scatter(numpy.ones([sum(plotnans), 1]) * xvalnan, values[plotnans, components[j]], c='#D3D3D3')
                 ax2.set_xlabel(plotTitle)
                 ax2.set_ylabel('PC' + str(components[j] + 1))
@@ -281,6 +284,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
         xlabel = 'PC' + str(components[i] + 1) + ' (' + '{0:.2f}'.format(
             pcaModel.modelParameters['VarExpRatio'][components[i]] * 100) + '%)'
         if plotAssociation is not None:
+
             ylabel = ylabel + ' significance: ' + '{0:.2f}'.format(plotAssociation[components[j]])
             xlabel = xlabel + ' significance: ' + '{0:.2f}'.format(plotAssociation[components[i]])
         ax.set_ylabel(ylabel)

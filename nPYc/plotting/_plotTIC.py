@@ -27,7 +27,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 			colourDict=None, markerDict=None, abbrDict=None,
 			logy=False, title='',
 			withExclusions=True, savePath=None,
-			figureFormat='png', dpi=72, figureSize=(11,7)):
+			figureFormat='png', dpi=72, figureSize=(11,7), opacity=.6):
 	"""
 	Visualise TIC for all or a subset of features coloured by either dilution value or detector voltage.
 	With the option to shade by batch.
@@ -159,7 +159,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 							marker=markerDict[u],
 							s=30,
 							c=colourDict[u],
-							alpha=.4,
+							alpha=opacity,
 							label=u)
 
 			if addViolin:
@@ -189,7 +189,8 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 						c=msData.sampleMetadata[colourBy],
 						cmap=cmap,
 						vmin=mincol,
-						vmax=maxcol)
+						vmax=maxcol,
+						alpha=opacity)
 
 	# Shade by automatically defined batches (if required)
 	if addBatchShading:
@@ -225,7 +226,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 				end = end.values[0]
 
 			# Plot rectangle
-			rect = Rectangle((start, ymin), end-start, abs(ymin)+abs(ymax), color=colors[colIX], alpha=0.4, zorder=0)#,label='Batch %d' % (i))
+			rect = Rectangle((start, ymin), end-start, abs(ymin)+abs(ymax), color=colors[colIX], alpha=opacity, zorder=0)#,label='Batch %d' % (i))
 			ax.add_patch(rect)
 			colIX = colIX + 1
 
@@ -272,7 +273,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 
 def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 					   colourBy='Correction Batch', withExclusions=True,
-					   destinationPath=None, autoOpen=True):
+					   destinationPath=None, autoOpen=True, opacity=.6):
 	"""
 	Interactively visualise TIC or intensity for a given feature with plotly, provides tooltips to allow identification of samples.
 
@@ -353,7 +354,7 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 			text=hovertext[plotnans == True],
 			name='NA',
 			hoverinfo='text',
-			showlegend=True
+			showlegend=True, opacity=opacity
 			)
 		data.append(NaNplot)
 
@@ -371,7 +372,8 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 				),
 			text=hovertext[plotnans == False],
 			hoverinfo='text',
-			showlegend=False
+			showlegend=False,
+			opacity=opacity
 			)
 		data.append(CLASSplot)
 
@@ -390,14 +392,16 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 				text=hovertext[classes == i],
 				name=i,
 				hoverinfo='text',
-				showlegend=True
+				showlegend=True, opacity=opacity
 				)
 			data.append(CLASSplot)
 
 	# Overlay SR and LTR if columns present
 	if ('SampleType' in msData.sampleMetadata.columns) & ('AssayRole' in msData.sampleMetadata.columns):
-		SRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference))
-		LTRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference))
+		SRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) &
+				  (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) #SPmask
+		LTRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) &
+				   (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) # ERmask
 
 		SRplot = go.Scatter(
 			x=msData.sampleMetadata.loc[SRmask, x],
@@ -410,7 +414,7 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 			text=hovertext[SRmask],
 			name='Study Reference',
 			hoverinfo='text',
-			showlegend=True
+			showlegend=True, opacity=opacity
 		)
 		data.append(SRplot)
 
@@ -425,7 +429,7 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 			text=hovertext[LTRmask],
 			name='Long-Term Reference',
 			hoverinfo='text',
-			showlegend=True
+			showlegend=True, opacity=opacity
 		)
 		data.append(LTRplot)
 

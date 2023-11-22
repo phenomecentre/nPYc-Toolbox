@@ -31,9 +31,9 @@ def _violinPlotHelper(ax, values, sampleMasks, xlabel, ylabel, palette=None, yli
 	sns.set_color_codes(palette='deep')
 
 	if palette is not None:
-		sns.violinplot(data=localDFpre, scale='width', bw=.2, cut=0, ax=ax, palette=palette, dropna=True)
+		sns.violinplot(data=localDFpre, scale='width', bw=.2, cut=0, ax=ax, palette=palette)
 	else:
-		sns.violinplot(data=localDFpre, scale='width', bw=.2, cut=0, ax=ax, dropna=True)
+		sns.violinplot(data=localDFpre, scale='width', bw=.2, cut=0, ax=ax)
 
 	# ax formatting
 	if ylimits:
