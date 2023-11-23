@@ -388,7 +388,7 @@ def plotCorrelationToLRbyFeature(msData, featureMask=None, title='', maxNo=5, sa
 def checkAndSetPlotAttributes(uniqKeys, attribDict, dictName, defaultVal=None):
     # check all the keys of attribDict are in uniqKeys
     # putting this here to see if it's a useful refactor. It may not be.
-    if attribDict:
+    if attribDict is not None:
         if not all(k in attribDict.keys() for k in uniqKeys):
             print(dictName + " keys are " + attribDict.keys())
             print("Category keys are " + uniqKeys)
@@ -396,7 +396,7 @@ def checkAndSetPlotAttributes(uniqKeys, attribDict, dictName, defaultVal=None):
                 'Check keys in ' + dictName + "; some aren't present in the categories list.")
     else:
         # only set all the vals if a default has been specified
-        if defaultVal:
+        if defaultVal is not None:
             attribDict = {}
             for u in uniqKeys:
                 attribDict[u] = defaultVal

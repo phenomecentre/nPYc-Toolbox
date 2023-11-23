@@ -63,9 +63,11 @@ def plotScree(R2, Q2=None, title='', xlabel='', ylabel='', savePath=None, figure
         plt.show()
 
 
-def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerDict=None, components=None,
+def plotScores(pcaModel, classes=None, colourType=None,
+               colourDict=None, markerDict=None, components=None,
                hotelling_alpha=0.05,
-               plotAssociation=None, title='', xlabel='', figures=None, savePath=None, figureFormat='png', dpi=72,
+               plotAssociation=None, title='', xlabel='', figures=None,
+               savePath=None, figureFormat='png', dpi=72,
                figureSize=(11, 7), opacity=.4):
     """
 	Plot PCA scores for each pair of components in PCAmodel, coloured by values defined in classes, and with Hotelling's T2 ellipse (95%)
@@ -114,8 +116,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
 
     # If colourDict check colour defined for every unique entry in class
     colourDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=colourDict, dictName="colourDict")
-
-    markerDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=markerDict,dictName="markerDict", defaultVal="o")
+    markerDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=markerDict, dictName="markerDict", defaultVal="o")
 
     from matplotlib.patches import Ellipse
 
@@ -135,8 +136,6 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
         title = ''.join(title.split())
     else:
         plotTitle = ''
-
-
 
     # Calculate critical value for Hotelling's T2
     # Fval = f.ppf(0.95, 2, ns-2)
@@ -221,9 +220,7 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
                     classIX = classIX + 1
                     colors_sns[str(u)] = c
 
-
             if plotAssociation is not None:
-
                 nonans = [i for i, x in enumerate(classes) if x in {'nan', 'NaN', 'NaT', '', 'NA'}]
                 plotClasses = classes.copy()
                 plotClasses[nonans] = 'NA'
@@ -284,7 +281,6 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
         xlabel = 'PC' + str(components[i] + 1) + ' (' + '{0:.2f}'.format(
             pcaModel.modelParameters['VarExpRatio'][components[i]] * 100) + '%)'
         if plotAssociation is not None:
-
             ylabel = ylabel + ' significance: ' + '{0:.2f}'.format(plotAssociation[components[j]])
             xlabel = xlabel + ' significance: ' + '{0:.2f}'.format(plotAssociation[components[i]])
         ax.set_ylabel(ylabel)
@@ -310,19 +306,25 @@ def plotScores(pcaModel, classes=None, colourType=None, colourDict=None, markerD
         return figures
 
 
-def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None, FcritAlpha=None, PcritPercentile=None,
-                 title='', xlabel='Run Order', ylabel='', savePath=None, figureFormat='png', dpi=72,
-                 figureSize=(11, 7)):
+def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
+                 colourDict=None, markerDict=None, abbrDict=None,
+                 fCrit=None, fCritAlpha=None, pCritPercentile=None,
+                 title='', xlabel='Run Order', ylabel='', savePath=None,
+                 figureFormat='png', dpi=72, figureSize=(11, 7), opacity=.6):
     """
 	Plot scatter plot of PCA outlier stats sumT (strong) or DmodX (moderate), with a line at [25, 50, 75, 95, 99] quantiles and at a critical value if specified
 
 	:param numpy.array values: dModX or sum of scores, measure of 'fit' for each sample
 	:param numpy.array runOrder: Order of sample acquisition (samples are plotted in this order)
-	:param pandas.Series sampleType: Sample type of each sample, must be from 'Study Sample', 'Study Reference', 'Long-Term Reference', or 'Sample' (see multivariateReport.py)
 	:param bool addViolin: If True adds a violin plot of distribution of values
-	:param float Fcrit: If not none, plots a line at Fcrit
-	:param float FcritAlpha: Alpha value for Fcrit (for legend)
-	:param float PcritPercentile: If not none, plots a line at this quantile
+	:param pandas.Series sampleType: Sample type of each sample, must be from 'Study Sample', 'Study Reference', 'Long-Term Reference', or 'Sample' (see multivariateReport.py)
+	:param dict colourDict:
+	:param dict markerDict:
+	:param dict abbrDict:
+
+	:param float fCrit: If not none, plots a line at Fcrit
+	:param float fCritAlpha: Alpha value for Fcrit (for legend)
+	:param float pCritPercentile: If not none, plots a line at this quantile
 	:param str title: Title for the plot
 	:param str xlabel: Label for the x-axis
 	"""
@@ -334,33 +336,26 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
     quantiles = [25, 50, 75, 95, 99]
 
     # Plot line at PcritPercentile in red if present
-    if PcritPercentile is not None:
-        if PcritPercentile in quantiles:
-            quantiles.remove(PcritPercentile)
+    if pCritPercentile is not None:
+        if pCritPercentile in quantiles:
+            quantiles.remove(pCritPercentile)
 
     quantilesVals = numpy.percentile(values, quantiles)
 
-    ## Try loading toolbox wide color scheme
-    # value just in case
-    sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-                       SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-    # load from the SOP as we do not have access to object
-    try:
-        from .._toolboxPath import toolboxPath
-        import json
-        import os
-        import copy
+    uniq = sampleType.unique()
 
-        with open(os.path.join(toolboxPath(), 'StudyDesigns', 'SOP', 'Generic.json')) as data_file:
-            attributes = json.load(data_file)
-        # convert key names to SampleType enum
-        if 'sampleTypeColours' in attributes.keys():
-            sTypeColourDict = copy.deepcopy(attributes['sampleTypeColours'])
-            for stype in SampleType:
-                if stype.name in sTypeColourDict.keys():
-                    sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-    except:
-        pass
+    colourDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=colourDict, dictName="colourDict",
+                                           defaultVal="blue")
+    markerDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=markerDict, dictName="markerDict", defaultVal="o")
+
+    if abbrDict is not None:
+        if not all(k in abbrDict.keys() for k in uniq):
+            raise ValueError(
+                'If abbrDict is specified every key should appear in the SampleClass column')
+    else:
+        abbrDict = {}
+        for u in uniq:
+            abbrDict[u] = u
 
     sns.set_color_codes(palette='deep')
     plt.figure(figsize=figureSize, dpi=dpi)
@@ -374,30 +369,47 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
     sampleMasks = []
     palette = {}
 
+    print("colourDict %s" % colourDict)
+    print("markerDict %s" % markerDict)
     # Plot data coloured by sample type
+    # TODO: refactor this
     if any(sampleType == 'Study Sample'):
-        ax.scatter(runOrder[sampleType.values == 'Study Sample'], values[sampleType.values == 'Study Sample'],
-                   c=sTypeColourDict[SampleType.StudySample], label='Study Sample')
-        sampleMasks.append(('SS', sampleType.values == 'Study Sample'))
-        palette['SS'] = sTypeColourDict[SampleType.StudySample]
+        x = 'Study Sample'
+        ax.scatter(runOrder[sampleType.values == x],
+                   values[sampleType.values == x],
+                   c=colourDict[x],
+                   marker=markerDict[x],
+                   label=x, alpha=opacity)
+        sampleMasks.append((abbrDict[x], sampleType.values == x))
+        palette[abbrDict[x]] = colourDict[x]
+
     if any(sampleType == 'Study Reference'):
-        ax.scatter(runOrder[sampleType.values == 'Study Reference'], values[sampleType.values == 'Study Reference'],
-                   c=sTypeColourDict[SampleType.StudyPool], label='Study Reference')
-        sampleMasks.append(('SR', sampleType.values == 'Study Reference'))
-        palette['SR'] = sTypeColourDict[SampleType.StudyPool]
+        x = 'Study Reference'
+        ax.scatter(runOrder[sampleType.values == x],
+                   values[sampleType.values == x],
+                   c=colourDict[x],
+                   marker=markerDict[x],
+                   label=x, alpha=opacity)
+        sampleMasks.append((abbrDict[x], sampleType.values == x))
+        palette[abbrDict[x]] = colourDict[x]
+
     if any(sampleType == 'Long-Term Reference'):
-        ax.scatter(runOrder[sampleType.values == 'Long-Term Reference'],
-                   values[sampleType.values == 'Long-Term Reference'], c=sTypeColourDict[SampleType.ExternalReference],
-                   label='Long-Term Reference')
-        sampleMasks.append(('LTR', sampleType.values == 'Long-Term Reference'))
-        palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
+        x = 'Long-Term Reference'
+        ax.scatter(runOrder[sampleType.values == x],
+                   values[sampleType.values == x],
+                   c=colourDict[x],
+                   marker=markerDict[x],
+                   label=x, alpha=opacity)
+        sampleMasks.append((abbrDict[x], sampleType.values == x))
+        palette[abbrDict[x]] = colourDict[x]
+
     if any(sampleType == 'Sample'):
-        ax.scatter(runOrder[sampleType.values == 'Sample'],
-                   values[sampleType.values == 'Sample'],
-                   c=sTypeColourDict['Other'],
-                   label='Sample')
-        sampleMasks.append(('Sample', sampleType.values == 'Sample'))
-        palette['Sample'] = sTypeColourDict['Other']
+        x = 'Sample'
+        ax.scatter(runOrder[sampleType.values == x],
+                   values[sampleType.values == x],
+                   label=x, alpha=opacity)
+        sampleMasks.append((abbrDict[x], sampleType.values == x))
+        palette[abbrDict[x]] = colourDict[x]
 
     xmin, xmax = ax.get_xlim()
 
@@ -408,13 +420,13 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
         ax.plot([xmin, xmax], [quantilesVals[q], quantilesVals[q]], 'k--', label='Q' + str(quantiles[q]))
 
     # Add line at Fcrit critical value
-    if Fcrit:
-        ax.plot([xmin, xmax], [Fcrit, Fcrit], 'c--', label='Fcrit (' + str(FcritAlpha) + ')')
+    if fCrit:
+        ax.plot([xmin, xmax], [fCrit, fCrit], 'c--', label='Fcrit (' + str(fCritAlpha) + ')')
 
     # Add line at PcritPercentage critical value
-    if PcritPercentile:
-        Pcrit = numpy.percentile(values, PcritPercentile)
-        ax.plot([xmin, xmax], [Pcrit, Pcrit], 'r--', label='Q' + str(PcritPercentile))
+    if pCritPercentile:
+        Pcrit = numpy.percentile(values, pCritPercentile)
+        ax.plot([xmin, xmax], [Pcrit, Pcrit], 'r--', label='Q' + str(pCritPercentile))
 
     # Annotate
     ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
@@ -426,7 +438,8 @@ def plotOutliers(values, runOrder, sampleType=None, addViolin=False, Fcrit=None,
     if addViolin == True:
         limits = ax.get_ylim()
 
-        _violinPlotHelper(ax2, values, sampleMasks, None, 'Sample Type', palette=palette, ylimits=limits, logy=False)
+        _violinPlotHelper(ax2, values, sampleMasks, None, 'Sample Type',
+                          palette=palette, ylimits=limits, logy=False)
 
         ax2.yaxis.set_ticklabels([])
 

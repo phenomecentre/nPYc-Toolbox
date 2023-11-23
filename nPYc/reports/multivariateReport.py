@@ -367,16 +367,19 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         which_scores_outlier = numpy.zeros(sumT.shape, dtype=bool)
 
     plotOutliers(sumT,
-				 data.sampleMetadata['Run Order'],
-				 # sampleType=data.sampleMetadata['Plot Sample Type'],
-				 sampleType=data.sampleMetadata['Status'],
-				 addViolin=True,
-				 ylabel='Summed distance from origin (all PCs)',
-				 PcritPercentile=PcritPercentile,
-				 savePath=saveAs,
-				 figureFormat=data.Attributes['figureFormat'],
-				 dpi=data.Attributes['dpi'],
-				 figureSize=data.Attributes['figureSize'])
+                 data.sampleMetadata['Run Order'],
+                 # sampleType=data.sampleMetadata['Plot Sample Type'],
+                 sampleType=data.sampleMetadata['SampleClass'],
+                 colourDict=data.Attributes['sampleTypeColours'],
+                 markerDict=data.Attributes['sampleTypeMarkers'],
+                 abbrDict=data.Attributes['sampleTypeAbbr'],
+                 addViolin=True,
+                 ylabel='Summed distance from origin (all PCs)',
+                 pCritPercentile=PcritPercentile,
+                 savePath=saveAs,
+                 figureFormat=data.Attributes['figureFormat'],
+                 dpi=data.Attributes['dpi'],
+                 figureSize=data.Attributes['figureSize'])
 
     if (scores_criticalVal is not None) & (destinationPath is None):
         print('\nExcluding samples with total distance from origin exceeding the ' + item[
@@ -414,18 +417,21 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         item['Noutliers_moderate'] = str(sum(which_dmodx_outlier))
 
     plotOutliers(sample_dmodx_values,
-				 data.sampleMetadata['Run Order'],
-				 # sampleType=data.sampleMetadata['Plot Sample Type'],
-				 sampleType=data.sampleMetadata['Status'],
-				 addViolin=True,
-				 Fcrit=Fcrit,
-				 FcritAlpha=FcritAlpha,
-				 PcritPercentile=PcritPercentile,
-				 ylabel='DmodX',
-				 savePath=saveAs,
-				 figureFormat=data.Attributes['figureFormat'],
-				 dpi=data.Attributes['dpi'],
-				 figureSize=data.Attributes['figureSize'])
+                 data.sampleMetadata['Run Order'],
+                 # sampleType=data.sampleMetadata['Plot Sample Type'],
+                 sampleType=data.sampleMetadata['SampleClass'],
+                 addViolin=True,
+                 colourDict=data.Attributes['sampleTypeColours'],
+                 markerDict=data.Attributes['sampleTypeMarkers'],
+                 abbrDict=data.Attributes['sampleTypeAbbr'],
+                 fCrit=Fcrit,
+                 fCritAlpha=FcritAlpha,
+                 pCritPercentile=PcritPercentile,
+                 ylabel='DmodX',
+                 savePath=saveAs,
+                 figureFormat=data.Attributes['figureFormat'],
+                 dpi=data.Attributes['dpi'],
+                 figureSize=data.Attributes['figureSize'])
 
     if (dModX_criticalVal is not None) & (destinationPath is None):
         print('\nExcluding samples with DmodX exceeding the ' + item['dModX_criticalVal'] + ' limit would result in ' +

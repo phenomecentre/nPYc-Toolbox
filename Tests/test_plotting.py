@@ -782,7 +782,7 @@ class test_plotting(unittest.TestCase):
 			with tempfile.TemporaryDirectory() as tmpdirname:
 				outputPath = os.path.join(tmpdirname, 'plot')
 
-				nPYc.plotting.plotOutliers(sumT, dataset.sampleMetadata['Run Order'], sampleType=dataset.sampleMetadata['Plot Sample Type'], addViolin=True, PcritPercentile=95, savePath=outputPath)
+				nPYc.plotting.plotOutliers(sumT, dataset.sampleMetadata['Run Order'], sampleType=dataset.sampleMetadata['Plot Sample Type'], addViolin=True, pCritPercentile=95, savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath))
 
@@ -798,7 +798,7 @@ class test_plotting(unittest.TestCase):
 			with tempfile.TemporaryDirectory() as tmpdirname:
 				outputPath = os.path.join(tmpdirname, 'plot')
 
-				nPYc.plotting.plotOutliers(sample_dmodx_values, dataset.sampleMetadata['Run Order'], Fcrit=Fcrit, FcritAlpha=0.05, savePath=outputPath)
+				nPYc.plotting.plotOutliers(sample_dmodx_values, dataset.sampleMetadata['Run Order'], fCrit=Fcrit, fCritAlpha=0.05, savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath))
 
