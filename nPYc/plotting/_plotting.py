@@ -389,9 +389,10 @@ def checkAndSetPlotAttributes(uniqKeys, attribDict, dictName, defaultVal=None):
     # check all the keys of attribDict are in uniqKeys
     # putting this here to see if it's a useful refactor. It may not be.
     if attribDict is not None:
+        #print("dict keys are %s" % attribDict.keys())
+        #print("Category keys are %s" % uniqKeys)
         if not all(k in attribDict.keys() for k in uniqKeys):
-            print(dictName + " keys are " + attribDict.keys())
-            print("Category keys are " + uniqKeys)
+
             raise ValueError(
                 'Check keys in ' + dictName + "; some aren't present in the categories list.")
     else:

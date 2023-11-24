@@ -705,8 +705,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
             figuresKWscores = _plotScoresLocal(dataForPlotting,
                                                fields,
                                                pcaModel,
-                                               'categorical',
-                                               data.name,
+                                               'categorical', data.name,
                                                alpha=hotellings_alpha,
                                                plotAssociation=sigKru,
                                                kw_threshold=kw_threshold,
@@ -716,11 +715,25 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                                dpi=data.Attributes['dpi'],
                                                figureSize=data.Attributes['figureSize'])
 
+            figuresQCscores = plotScores(pcaModel,
+                                         classes=data.sampleMetadata['SampleClass'],
+                                         colourType='categorical',
+                                         colourDict=data.Attributes['sampleTypeColours'],
+                                         markerDict=data.Attributes['sampleTypeMarkers'],
+                                         title='SampleClass',
+                                         figures=figuresQCscores,
+                                         hotelling_alpha=hotellings_alpha,
+                                         savePath=saveAs,
+                                         figureFormat=data.Attributes['figureFormat'],
+                                         dpi=data.Attributes['dpi'],
+                                         figureSize=data.Attributes['figureSize'])
+
             if destinationPath is not None:
                 for key in figuresKWscores:
                     if os.path.join(destinationPath, 'graphics') in str(figuresKWscores[key]):
                         figuresKWscores[key] = re.sub('.*graphics', 'graphics', figuresKWscores[key])
             item['KWscores'] = figuresKWscores
+
     else:
         if destinationPath is None:
             print('\n' + item[
@@ -752,6 +765,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                               pcaModel,
                                               'categorical',
                                               data.name,
+
                                               alpha=hotellings_alpha,
                                               plotAssociation=sigNone,
                                               saveDir=saveAs,
@@ -791,8 +805,10 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     return None
 
 
-def _plotScoresLocal(data, metadata, pcaModel, classType, name, alpha=0.05, plotAssociation=None, r_threshold=None,
-                     kw_threshold=None, saveDir=None, figures=None, figureFormat='png', dpi=72, figureSize=(11, 7)):
+def _plotScoresLocal(data, metadata, pcaModel, classType, name,
+                     alpha=0.05, plotAssociation=None, r_threshold=None,
+                     kw_threshold=None, saveDir=None, figures=None,
+                     figureFormat='png', dpi=72, figureSize=(11, 7)):
     """
 	Local function to plot scores for each metadata field
 	"""

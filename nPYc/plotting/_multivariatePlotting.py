@@ -87,38 +87,33 @@ def plotScores(pcaModel, classes=None, colourType=None,
 	:param dict figures: If not ``None``, saves location of each figure for output in html report (see multivariateReport.py)
 	"""
 
-    print("Plotting scores %s" % colourType)
+    #print("----->> Plotting scores %s" % colourType)
     # Check inputs
+
     if not isinstance(pcaModel, ChemometricsPCA):
         raise TypeError('PCAmodel must be an instance of ChemometricsPCA')
-
-    # Preparation
-    values = pcaModel.scores
-    ns, nc = values.shape
-
-    if colourType is not None and colourType not in {'categorical', 'continuous', 'continuousCentered'}:
-        raise ValueError('colourType must be == ' + str({'categorical', 'continuous', 'continuousCentered'}))
 
     if classes is not None and colourType is None:
         raise ValueError('If classes is specified, colourType must be')
 
-    if classes is None:
-        classes = pandas.Series('Study Sample' for i in range(ns))
-        colourType = 'categorical'
+    if colourType:
+        if colourType not in {'categorical', 'continuous', 'continuousCentered'}:
+            raise ValueError('colourType must be == ' + str({'categorical', 'continuous','continuousCentered'}))
 
-    uniq = classes.unique()
-    try:
-        uniq.sort()
-    except:
-        pass
-    if colourType == 'categorical':
-        classes = classes.astype(str)
-
-    # If colourDict check colour defined for every unique entry in class
-    colourDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=colourDict, dictName="colourDict")
-    markerDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=markerDict, dictName="markerDict", defaultVal="o")
+        # If colourDict check colour defined for every unique entry in class
+    if classes is not None and colourDict is not None:
+        uniq = classes.unique()
+        if not all(k in colourDict.keys() for k in uniq):
+            print("dict keys are %s" % colourDict.keys())
+            print("Category keys are %s" % uniq)
+            raise ValueError(
+                'If classes and colourDict are specified every unique entry in class must be a key in colourDict')
 
     from matplotlib.patches import Ellipse
+
+    # Preparation
+    values = pcaModel.scores
+    ns, nc = values.shape
 
     if components is None:
         components = numpy.ones([nc]).astype(bool)
@@ -136,6 +131,19 @@ def plotScores(pcaModel, classes=None, colourType=None,
         title = ''.join(title.split())
     else:
         plotTitle = ''
+
+    if classes is None:
+        classes = pandas.Series('Sample' for i in range(ns))
+        colourType = 'categorical'
+
+    if colourType == 'categorical':
+        classes = classes.astype(str)
+
+    uniq = classes.unique()
+    try:
+        uniq.sort()
+    except:
+        pass
 
     # Calculate critical value for Hotelling's T2
     # Fval = f.ppf(0.95, 2, ns-2)
@@ -175,15 +183,15 @@ def plotScores(pcaModel, classes=None, colourType=None,
         ax.set_ylim([(ymin + (0.2 * ymin)), ymax + (0.2 * ymax)])
 
         if colourType == 'categorical':
-
             # Plot according to user defined colours if available
+
             if colourDict is not None:
+
                 for u in uniq:
                     ax.scatter(values[classes.values == u, components[i]],
                                values[classes.values == u, components[j]],
                                c=colourDict[u], marker=markerDict[u],
                                label=u, alpha=opacity)
-
             else:
                 colors_sns = {}
 
@@ -329,6 +337,7 @@ def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
 	:param str xlabel: Label for the x-axis
 	"""
 
+    print("Plotting outliers")
     # Preparation
     if isinstance(sampleType, (str, type(None))):
         sampleType = pandas.Series(['Sample' for i in range(0, len(values))], name='sampleType')
@@ -369,47 +378,16 @@ def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
     sampleMasks = []
     palette = {}
 
-    print("colourDict %s" % colourDict)
-    print("markerDict %s" % markerDict)
     # Plot data coloured by sample type
-    # TODO: refactor this
-    if any(sampleType == 'Study Sample'):
-        x = 'Study Sample'
-        ax.scatter(runOrder[sampleType.values == x],
-                   values[sampleType.values == x],
-                   c=colourDict[x],
-                   marker=markerDict[x],
-                   label=x, alpha=opacity)
-        sampleMasks.append((abbrDict[x], sampleType.values == x))
-        palette[abbrDict[x]] = colourDict[x]
-
-    if any(sampleType == 'Study Reference'):
-        x = 'Study Reference'
-        ax.scatter(runOrder[sampleType.values == x],
-                   values[sampleType.values == x],
-                   c=colourDict[x],
-                   marker=markerDict[x],
-                   label=x, alpha=opacity)
-        sampleMasks.append((abbrDict[x], sampleType.values == x))
-        palette[abbrDict[x]] = colourDict[x]
-
-    if any(sampleType == 'Long-Term Reference'):
-        x = 'Long-Term Reference'
-        ax.scatter(runOrder[sampleType.values == x],
-                   values[sampleType.values == x],
-                   c=colourDict[x],
-                   marker=markerDict[x],
-                   label=x, alpha=opacity)
-        sampleMasks.append((abbrDict[x], sampleType.values == x))
-        palette[abbrDict[x]] = colourDict[x]
-
-    if any(sampleType == 'Sample'):
-        x = 'Sample'
-        ax.scatter(runOrder[sampleType.values == x],
-                   values[sampleType.values == x],
-                   label=x, alpha=opacity)
-        sampleMasks.append((abbrDict[x], sampleType.values == x))
-        palette[abbrDict[x]] = colourDict[x]
+    for u in uniq:
+        sc = ax.scatter(runOrder[sampleType.values == u],
+                        values[sampleType.values == u],
+                        marker=markerDict[u],
+                        c=colourDict[u],
+                        alpha=opacity,
+                        label=u)
+        sampleMasks.append((abbrDict[u], sampleType.values == u))
+        palette[abbrDict[u]] = colourDict[u]
 
     xmin, xmax = ax.get_xlim()
 
