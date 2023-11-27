@@ -21,6 +21,7 @@ notebooks/
 /build/
 /*.egg-info
 /Tests/htmlcov/
+/Tests/.coverage*
 *.xml
 nPYc.iml
 .cache/
