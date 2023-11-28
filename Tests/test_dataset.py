@@ -1201,27 +1201,6 @@ class test_dataset_loadsop(unittest.TestCase):
 	def test_loadparameters(self):
 
 		with self.subTest(msg='Checking null return for \'Generic\' SOP.'):
-			# attributes = {'Log': self.data.Attributes['Log'],
-			# 			  "methodName": "Unknown",
-			# 			  'dpi': 300,
-			# 			  'figureFormat': 'png',
-			# 			  'figureSize': [11, 7],
-			# 			  'histBins': 100,
-			# 			  'noFiles': 10,
-			# 			  'quantiles': [25, 75],
-			# 			  'sampleMetadataNotExported': ["Exclusion Details"],
-			# 			  'featureMetadataNotExported': [],
-			# 			  "analyticalMeasurements":{},
-			# 			  "excludeFromPlotting":[],
-			# 			  "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r",
-			# 									"MethodReference": "m",
-			# 									"ProceduralBlank": "c", "Other": "grey", "Study Sample": "b",
-			# 									"Study Reference": "g", "Long-Term Reference": "r",
-			# 									"Method Reference": "m", "Blank": "c",
-			# 									"Unspecified SampleType or AssayRole": "grey"}
-			#
-			# 		  }
-
 			attributes = {}
 			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'SOP', 'Generic.json')) as data_file:
 				attributes = json.load(data_file)
@@ -1240,7 +1219,7 @@ class test_dataset_loadsop(unittest.TestCase):
 		attributes['Log'] = data.Attributes['Log']
 		attributes['figureFormat'] = 'svg'
 		attributes['squids'] = True
-		
+
 		self.assertEqual(data.Attributes, attributes)
 
 

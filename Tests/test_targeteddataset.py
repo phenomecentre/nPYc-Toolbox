@@ -14,6 +14,7 @@ sys.path.append("..")
 import nPYc
 import warnings
 from nPYc.enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod
+from nPYc._toolboxPath import toolboxPath
 from pandas.testing import assert_frame_equal
 from numpy.testing import assert_array_almost_equal
 
@@ -307,7 +308,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 		filenameSpec = "\n\t\t^(?P<fileName>\n\t\t\t(?P<baseName>\n\t\t\t\t(?P<study>\\w+?)\t\t\t\t\t\t\t\t\t\t# Study\n\t\t\t\t_\n\t\t\t\t(?P<chromatography>[HRL])(?P<ionisation>POS|NEG)\t# Chromatography and mode\n\t\t\t\t_\n\t\t\t\t(?P<instrument>\\w+?\\d\\d)\t\t\t\t\t\t\t# Instrument\n\t\t\t\t_\n\t\t\t\t(?P<groupingKind>Blank|E?IC|[A-Z]{1,2})(?P<groupingNo>\\d+?) # Sample grouping\n\t\t\t\t(?:\n\t\t\t\t(?P<injectionKind>[WSE]|SRD)(?P<injectionNo>\\d\\d?) # Subject ID\n\t\t\t\t)?\n\t\t\t\t(?:_(?P<reference>SR|LTR|MR))?\t\t\t\t\t  # Reference\n\t\t\t)\n\t\t\t(?:_(?P<exclusion>[xX]))?\t\t\t\t\t\t\t  # Exclusions\n\t\t\t(?:_(?P<reruns>[a-wyzA-WYZ]|[Rr]e[Rr]un\\d*?))?\t\t  # Reruns\n\t\t\t(?:_(?P<extraInjections>\\d+?))?\t\t\t\t\t\t  # Repeats\n\t\t\t(?:_(?P<exclusion2>[xX]))?\t\t\t\t\t\t\t  # badly ordered exclusions\n\t\t)$\n\t\t"
 		self.targetedData6.addSampleInfo(descriptionFormat='Filenames', filenameSpec=filenameSpec)
 		self.targetedData6.sampleMetadata['Run Order'] = self.targetedData6.sampleMetadata.index + 1
-		
+
 
 	def test_targeteddataset_deepcopy(self):
 		copiedTargetedData = copy.deepcopy(self.targetedData1)
@@ -3967,16 +3968,45 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 
 		# Expected TargetedDataset
 		self.expected = dict()
-		self.expected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_002'],'TargetLynx Sample ID': [2], 'MassLynx Row ID': [2],'Sample Name': ['Study Sample 1'], 'Sample Type': ['Analyte'],'Acqu Date': ['11-Sep-16'], 'Acqu Time': ['09:23:02'], 'Vial': ['1:A,2'],'Instrument': ['XEVO-TQS#UnitTest'], 'Acquired Time': [pandas.Timestamp(datetime(2016, 9, 11, 9, 23, 2))], 'Run Order': [1],'Batch': [1],'AssayRole': [numpy.nan],'SampleType': [numpy.nan],'Dilution': [numpy.nan],'Correction Batch': [numpy.nan],'Sample ID': [numpy.nan],'Exclusion Details': [numpy.nan]})
+		self.expected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_002'],'TargetLynx Sample ID': [2],
+															'MassLynx Row ID': [2],'Sample Name': ['Study Sample 1'],
+															'Sample Type': ['Analyte'],'Acqu Date': ['11-Sep-16'],
+															'Acqu Time': ['09:23:02'], 'Vial': ['1:A,2'],
+															'Instrument': ['XEVO-TQS#UnitTest'],
+															'Acquired Time': [pandas.Timestamp(datetime(2016, 9, 11, 9, 23, 2))],
+															'Run Order': [1],'Batch': [1],'AssayRole': [numpy.nan],
+															'SampleType': [numpy.nan],'Dilution': [numpy.nan],
+															'Correction Batch': [numpy.nan],'Sample ID': [numpy.nan],
+															'Exclusion Details': [numpy.nan]})
 		self.expected['sampleMetadata']['Metadata Available'] = False
 		self.expected['sampleMetadata']['Sample Base Name'] = self.expected['sampleMetadata']['Sample File Name']
 		self.expected['sampleMetadata']['Acquired Time'] = pandas.to_datetime(self.expected['sampleMetadata'].loc[:, 'Acquired Time'])
-		self.expected['featureMetadata'] = pandas.DataFrame({'Feature Name': ['Feature2','Feature3'], 'TargetLynx Feature ID':[2, 3], 'calibrationEquation':['((area * responseFactor)-b)/a', '((area * responseFactor)-b)/a'],'calibrationMethod': [CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantOwnLabeledAnalogue], 'unitCorrectionFactor': [1.,1.], 'Unit': ['pg/uL','pg/uL'], 'Cpd Info': ['fg/uL','fg/uL'], 'LLOQ': [300., 25.], 'Noise (area)': [14.7, 25.6], 'ULOQ': [2500., 350.], 'a': [1.04095, 1.19658], 'another column': ['something', 'something else'],'b': [-1.78935, -1.5875], 'r': [0.999556, 0.999], 'r2': [0.999113, 0.98995], 'extID1': ['F2','F3'],'extID2': ['ID2','ID3']})
+		self.expected['featureMetadata'] = pandas.DataFrame({'Feature Name': ['Feature2','Feature3'],
+															 'TargetLynx Feature ID':[2, 3],
+															 'calibrationEquation':['((area * responseFactor)-b)/a',
+																					'((area * responseFactor)-b)/a'],
+															 'calibrationMethod': [CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS],
+															 'quantificationType': [QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantOwnLabeledAnalogue],
+															 'unitCorrectionFactor': [1.,1.],
+															 'Unit': ['pg/uL','pg/uL'], 'Cpd Info': ['fg/uL','fg/uL'], 'LLOQ': [300., 25.],
+															 'Noise (area)': [14.7, 25.6], 'ULOQ': [2500., 350.], 'a': [1.04095, 1.19658],
+															 'another column': ['something', 'something else'],
+															 'b': [-1.78935, -1.5875], 'r': [0.999556, 0.999], 'r2': [0.999113, 0.98995],
+															 'extID1': ['F2','F3'],'extID2': ['ID2','ID3']})
 		#self.expected['intensityData'] = numpy.array([[-numpy.inf,  359.219531]]) # value for onlyLLOQ=True
 		self.expected['intensityData'] = numpy.array([[-numpy.inf, numpy.inf]])
-		self.expected['expectedConcentration'] = pandas.DataFrame(numpy.array([[numpy.nan, numpy.nan]]), columns=self.expected['featureMetadata']['Feature Name'].values)
+		self.expected['expectedConcentration'] = pandas.DataFrame(numpy.array([[numpy.nan, numpy.nan]]),
+																  columns=self.expected['featureMetadata']['Feature Name'].values)
 		# Calibration
-		self.expected['calibSampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001'], 'TargetLynx Sample ID': [1], 'MassLynx Row ID': [1], 'Sample Name': ['Calibration 1'], 'Sample Type': ['Standard'], 'Acqu Date': ['11-Sep-16'], 'Acqu Time': ['02:14:32'], 'Vial': ['1:A,1'], 'Instrument': ['XEVO-TQS#UnitTest'], 'Calibrant': [True], 'Study Sample': [False], 'Blank': [False], 'QC': [False], 'Other': [False], 'Acquired Time': [datetime(2016, 9, 11, 2, 14, 32)], 'Run Order': [0], 'Batch': [1], 'AssayRole': [numpy.nan], 'SampleType': [numpy.nan], 'Dilution': [numpy.nan], 'Correction Batch': [numpy.nan], 'Sample ID': [numpy.nan], 'Exclusion Details': [numpy.nan]})
+		self.expected['calibSampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001'],
+																 'TargetLynx Sample ID': [1], 'MassLynx Row ID': [1],
+																 'Sample Name': ['Calibration 1'], 'Sample Type': ['Standard'],
+																 'Acqu Date': ['11-Sep-16'], 'Acqu Time': ['02:14:32'], 'Vial': ['1:A,1'],
+																 'Instrument': ['XEVO-TQS#UnitTest'], 'Calibrant': [True],
+																 'Study Sample': [False], 'Blank': [False], 'QC': [False], 'Other': [False],
+																 'Acquired Time': [datetime(2016, 9, 11, 2, 14, 32)], 'Run Order': [0], 'Batch': [1],
+																 'AssayRole': [numpy.nan], 'SampleType': [numpy.nan], 'Dilution': [numpy.nan],
+																 'Correction Batch': [numpy.nan], 'Sample ID': [numpy.nan], 'Exclusion Details': [numpy.nan]})
 		self.expected['calibSampleMetadata']['Sample Base Name'] = self.expected['calibSampleMetadata']['Sample File Name']
 		self.expected['calibSampleMetadata']['Acquired Time'] = self.expected['calibSampleMetadata']['Acquired Time']
 		self.expected['calibSampleMetadata']['Metadata Available'] = False
@@ -3984,25 +4014,51 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 		self.expected['calibFeatureMetadata']['IS'] = numpy.array([False, False])
 		self.expected['calibFeatureMetadata']['TargetLynx IS ID'] = ['1','1']
 		self.expected['calibIntensityData'] = numpy.array([[48.7244571,  48.76854933]])
-		self.expected['calibExpectedConcentration'] = pandas.DataFrame(numpy.array([[50., 50.]]), columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
-		self.expected['calibPeakResponse'] = pandas.DataFrame(numpy.array([[5.4055825074, 0.2940372929]]), columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
-		self.expected['calibPeakArea'] = pandas.DataFrame(numpy.array([[14423.905, 784.59]]), columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
-		self.expected['calibPeakConcentrationDeviation'] = pandas.DataFrame(numpy.array([[-2.5510858032, -2.4629013366]]), columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
+		self.expected['calibExpectedConcentration'] = pandas.DataFrame(numpy.array([[50., 50.]]),
+																	   columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
+		self.expected['calibPeakResponse'] = pandas.DataFrame(numpy.array([[5.4055825074, 0.2940372929]]),
+															  columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
+		self.expected['calibPeakArea'] = pandas.DataFrame(numpy.array([[14423.905, 784.59]]),
+														  columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
+		self.expected['calibPeakConcentrationDeviation'] = pandas.DataFrame(numpy.array([[-2.5510858032, -2.4629013366]]),
+																			columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
 		self.expected['calibPeakIntegrationFlag'] = pandas.DataFrame({'Feature2': ['bb'], 'Feature3': ['MM']})
-		self.expected['calibPeakRT'] = pandas.DataFrame(numpy.array([[11.4921998978, 11.63409996]]), columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
+		self.expected['calibPeakRT'] = pandas.DataFrame(numpy.array([[11.4921998978, 11.63409996]]),
+														columns=self.expected['calibFeatureMetadata']['Feature Name'].values)
 		# Excluded
-		self.expected['sampleMetadataExcluded'] = [copy.deepcopy(self.expected['sampleMetadata'])]#[['Sample File Name', 'Sample Base Name', 'TargetLynx Sample ID', 'MassLynx Row ID', 'Sample Name', 'Sample Type', 'Acqu Date', 'Acqu Time', 'Vial', 'Instrument', ]]]
+		self.expected['sampleMetadataExcluded'] = [copy.deepcopy(self.expected['sampleMetadata'])]
+		#[['Sample File Name', 'Sample Base Name', 'TargetLynx Sample ID', 'MassLynx Row ID', 'Sample Name', 'Sample Type', 'Acqu Date', 'Acqu Time', 'Vial', 'Instrument', ]]]
 		#self.expected['sampleMetadataExcluded'][0]['Metadata Available'] = False
-		self.expected['featureMetadataExcluded'] = [pandas.DataFrame({'Feature Name': ['Feature1IS'], 'TargetLynx Feature ID':[1], 'TargetLynx IS ID':[''], 'IS': True, 'calibrationEquation':[''],'calibrationMethod': [CalibrationMethod.noIS], 'quantificationType': [QuantificationType.IS], 'unitCorrectionFactor': [1.], 'Unit': ['noUnit'], 'Cpd Info': ['uM'], 'LLOQ': [numpy.nan], 'Noise (area)': [numpy.nan], 'ULOQ': [numpy.nan], 'a': [numpy.nan], 'b': [numpy.nan], 'r': [0.997931], 'r2': [0.995866], 'extID1': ['F1'], 'extID2': ['ID1']})]
+		self.expected['featureMetadataExcluded'] = [pandas.DataFrame({'Feature Name': ['Feature1IS'], 'TargetLynx Feature ID':[1],
+																	  'TargetLynx IS ID':[''], 'IS': True, 'calibrationEquation':[''],
+																	  'calibrationMethod': [CalibrationMethod.noIS],
+																	  'quantificationType': [QuantificationType.IS],
+																	  'unitCorrectionFactor': [1.], 'Unit': ['noUnit'],
+																	  'Cpd Info': ['uM'], 'LLOQ': [numpy.nan], 'Noise (area)': [numpy.nan],
+																	  'ULOQ': [numpy.nan], 'a': [numpy.nan], 'b': [numpy.nan],
+																	  'r': [0.997931], 'r2': [0.995866], 'extID1': ['F1'], 'extID2': ['ID1']})]
 		self.expected['featureMetadataExcluded'][0]['another column'] =  numpy.array([numpy.nan], dtype=object)
 		self.expected['intensityDataExcluded'] = [numpy.array([[20.60696312]])]
 		self.expected['expectedConcentrationExcluded'] = [pandas.DataFrame(numpy.array([[60.]]), columns=['Feature1IS'])]
 		self.expected['excludedFlag'] = ['Features']
 		# Attributes
 		tmpDataset = nPYc.TargetedDataset('', fileType='empty')
-		self.expected['Attributes'] = {'calibrationReportPath': '', 'chromatography': 'R', 'ionisation': 'NEG', 'methodName': 'UnitTest', 'dpi': tmpDataset.Attributes['dpi'], 'figureFormat': tmpDataset.Attributes['figureFormat'], 'figureSize': tmpDataset.Attributes['figureSize'], 'histBins': tmpDataset.Attributes['histBins'], 'noFiles': tmpDataset.Attributes['noFiles'], 'quantiles': tmpDataset.Attributes['quantiles'], 'externalID': ['extID1','extID2'], 'sampleMetadataNotExported': ['test not exported sampleMetadata'], 'featureMetadataNotExported': ['test not exported featureMetadata'], "analyticalMeasurements": {}, "excludeFromPlotting": [], "sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey", "Study Sample": "b",
-																																																																																																																																																																								"Study Reference": "g", "Long-Term Reference": "r", "Method Reference": "m", "Blank": "c", "Unspecified SampleType or AssayRole": "grey"}}
 
+		with open(os.path.join(toolboxPath(), 'StudyDesigns', 'SOP', 'Generic.json')) as data_file:
+			generic_attributes = json.load(data_file)
+
+		self.expected['Attributes'] = {'calibrationReportPath': '', 'chromatography': 'R', 'ionisation': 'NEG', 'methodName': 'UnitTest',
+									   'dpi': tmpDataset.Attributes['dpi'], 'figureFormat': tmpDataset.Attributes['figureFormat'],
+									   'figureSize': tmpDataset.Attributes['figureSize'], 'histBins': tmpDataset.Attributes['histBins'],
+									   'noFiles': tmpDataset.Attributes['noFiles'], 'quantiles': tmpDataset.Attributes['quantiles'],
+									   'externalID': ['extID1','extID2'], 'sampleMetadataNotExported': ['test not exported sampleMetadata'],
+									   'featureMetadataNotExported': ['test not exported featureMetadata'], "analyticalMeasurements": {},
+									   "excludeFromPlotting": [],
+									   "sampleTypeColours": generic_attributes["sampleTypeColours"],
+									   "sampleTypeMarkers" : generic_attributes["sampleTypeMarkers"],
+										"sampleTypeAbbr": generic_attributes["sampleTypeAbbr"],
+
+									   }
 
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
 	def test_targeteddataset_loadtargetlynxdataset(self, mock_stdout):
@@ -4017,29 +4073,42 @@ class test_targeteddataset_full_targetlynx_load(unittest.TestCase):
 				reportPath = os.path.join(tmpdirname, 'calibrationReport.csv')
 				self.calibrationReport.to_csv(reportPath, index=False)
 				XMLpath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Data','UnitTest4_targeted.xml')
+
 				expected = copy.deepcopy(self.expected)
 				expected['Attributes']['calibrationReportPath'] = reportPath
+
 				# Generate
 				with warnings.catch_warnings():
 					warnings.simplefilter("ignore", UserWarning)
-					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP', sopPath=tmpdirname, calibrationReportPath=reportPath, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False)
+					result = nPYc.TargetedDataset(XMLpath, fileType='TargetLynx', sop='targetedSOP',
+												  sopPath=tmpdirname, calibrationReportPath=reportPath,
+												  keepIS=False, noiseFilled=False, keepPeakInfo=False,
+												  keepExcluded=False)
 
 				# Test
-				assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
-				assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
+				assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1),
+								   result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+				assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1),
+								   result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['intensityData'], result._intensityData)
-				assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
+				assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']), axis=1),
+								   result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 				# Calibration
-				assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1), result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
-				assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1), result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
+				assert_frame_equal(expected['calibSampleMetadata'].reindex(sorted(expected['calibSampleMetadata']), axis=1),
+								   result.calibration['calibSampleMetadata'].reindex(sorted(result.calibration['calibSampleMetadata']), axis=1))
+				assert_frame_equal(expected['calibFeatureMetadata'].reindex(sorted(expected['calibFeatureMetadata']), axis=1),
+								   result.calibration['calibFeatureMetadata'].reindex(sorted(result.calibration['calibFeatureMetadata']), axis=1))
 				numpy.testing.assert_array_almost_equal(expected['calibIntensityData'], result.calibration['calibIntensityData'])
-				assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1), result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
+				assert_frame_equal(expected['calibExpectedConcentration'].reindex(sorted(expected['calibExpectedConcentration']), axis=1),
+								   result.calibration['calibExpectedConcentration'].reindex(sorted(result.calibration['calibExpectedConcentration']), axis=1))
 				# No peakInfo
 				# No exclusions
 				# Attributes
-				self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
-				for i in expected['Attributes']:
-					self.assertEqual(expected['Attributes'][i], result.Attributes[i])
+				result.Attributes.pop("Log")
+				self.assertEqual(expected['Attributes'], result.Attributes)
+				# self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
+				# for i in expected['Attributes']:
+				# 	self.assertEqual(expected['Attributes'][i], result.Attributes[i])
 
 		with self.subTest(msg='Modify sampleTypeToProcess, trigger an error, keepIS=False, noiseFilled=False, keepPeakInfo=False, keepExcluded=False'):
 			with tempfile.TemporaryDirectory() as tmpdirname:
@@ -4329,9 +4398,9 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		self.datapathQuantUR = os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'nmr', 'UnitTest1')
 		# Expected TargetedDataset
 		# Do not check sampleMetadata['Path']
-		
+
 		self.expectedQuantPS = dict()
-					
+
 		plasma_sm = {
 			    "Sample File Name": {
 			        "0": "UnitTest2_Plasma_Rack1_SLL_051218/10",
@@ -4386,7 +4455,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 			        "1": False
 			    }
 			}
-		
+
 		plasma_fm =	{
 		    "Feature Name": {
 		        "0": "Ethanol",
@@ -4527,7 +4596,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 															'Batch': [1, 1, 1, 1, 1, 1, 1, 1, 1]})
 		self.expectedQuantUR['sampleMetadata']['Metadata Available'] = False
 
-		self.expectedQuantUR['featureMetadata'] = pandas.DataFrame({'Feature Name': 
+		self.expectedQuantUR['featureMetadata'] = pandas.DataFrame({'Feature Name':
 																		['Dimethylamine',
 																		 'Trimethylamine',
 																		 '1-Methylhistidine',
@@ -4666,6 +4735,10 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		self.expectedQuantUR['excludedFlag'] = []
 		# Attributes
 		tmpDataset = nPYc.TargetedDataset('', fileType='empty')
+
+		with open(os.path.join(toolboxPath(), 'StudyDesigns', 'SOP', 'Generic.json')) as data_file:
+			generic_attributes = json.load(data_file)
+
 		self.expectedQuantUR['Attributes'] = {'methodName':"Bruker Quant-UR Data",
 										'dpi': tmpDataset.Attributes['dpi'],
 										'rsdThreshold':30,
@@ -4698,9 +4771,10 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 																	   'Lower Reference Value',
 																	   'Upper Reference Percentile',
 																	   'Upper Reference Value'],
-										"sampleTypeColours": {"StudySample": "b", "StudyPool": "g", "ExternalReference": "r", "MethodReference": "m", "ProceduralBlank": "c", "Other": "grey",
-															  "Study Sample": "b", "Study Reference": "g", "Long-Term Reference": "r",
-															  "Method Reference": "m", "Blank": "c", "Unspecified SampleType or AssayRole": "grey"}}
+										"sampleTypeColours": generic_attributes["sampleTypeColours"],
+									   	"sampleTypeMarkers" : generic_attributes["sampleTypeMarkers"],
+										"sampleTypeAbbr": generic_attributes["sampleTypeAbbr"]
+											  }
 
 		# 112 features, 10 samples, BrukerBI-LISA
 		self.datapathBILISA = os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'nmr', 'UnitTest3')
@@ -4747,162 +4821,160 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 															'Exclusion Details': [None, None, None, None, None, None, None, None, None, None],
 															'Batch': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]})
 		self.expectedBILISA['sampleMetadata']['Metadata Available'] = False
-
-
-		self.expectedBILISA['featureMetadata'] = pandas.DataFrame({'Feature Name': {0: 'TPTG', 1: 'TPCH', 2: 'LDCH', 3: 'HDCH', 4: 'TPA1', 5: 'TPA2', 
+		self.expectedBILISA['featureMetadata'] = pandas.DataFrame({'Feature Name': {0: 'TPTG', 1: 'TPCH', 2: 'LDCH', 3: 'HDCH', 4: 'TPA1', 5: 'TPA2',
 																					6: 'TPAB', 7: 'LDHD', 8: 'ABA1', 9: 'TBPN', 10: 'VLPN', 11: 'IDPN', 12: 'LDPN',
-																					13: 'L1PN', 14: 'L2PN', 15: 'L3PN', 16: 'L4PN', 17: 'L5PN', 18: 'L6PN', 19: 'VLTG', 
+																					13: 'L1PN', 14: 'L2PN', 15: 'L3PN', 16: 'L4PN', 17: 'L5PN', 18: 'L6PN', 19: 'VLTG',
 																					20: 'IDTG', 21: 'LDTG', 22: 'HDTG', 23: 'VLCH', 24: 'IDCH', 25: 'VLFC', 26: 'IDFC',
 																					27: 'LDFC', 28: 'HDFC', 29: 'VLPL', 30: 'IDPL', 31: 'LDPL', 32: 'HDPL', 33: 'HDA1',
-																					34: 'HDA2', 35: 'VLAB', 36: 'IDAB', 37: 'LDAB', 38: 'V1TG', 39: 'V2TG', 40: 'V3TG', 
+																					34: 'HDA2', 35: 'VLAB', 36: 'IDAB', 37: 'LDAB', 38: 'V1TG', 39: 'V2TG', 40: 'V3TG',
 																					41: 'V4TG', 42: 'V5TG', 43: 'V1CH', 44: 'V2CH', 45: 'V3CH', 46: 'V4CH', 47: 'V5CH',
 																					48: 'V1FC', 49: 'V2FC', 50: 'V3FC', 51: 'V4FC', 52: 'V5FC', 53: 'V1PL', 54: 'V2PL',
-																					55: 'V3PL', 56: 'V4PL', 57: 'V5PL', 58: 'L1TG', 59: 'L2TG', 60: 'L3TG', 61: 'L4TG', 
+																					55: 'V3PL', 56: 'V4PL', 57: 'V5PL', 58: 'L1TG', 59: 'L2TG', 60: 'L3TG', 61: 'L4TG',
 																					62: 'L5TG', 63: 'L6TG', 64: 'L1CH', 65: 'L2CH', 66: 'L3CH', 67: 'L4CH', 68: 'L5CH',
 																					69: 'L6CH', 70: 'L1FC', 71: 'L2FC', 72: 'L3FC', 73: 'L4FC', 74: 'L5FC', 75: 'L6FC',
-																					76: 'L1PL', 77: 'L2PL', 78: 'L3PL', 79: 'L4PL', 80: 'L5PL', 81: 'L6PL', 82: 'L1AB', 
-																					83: 'L2AB', 84: 'L3AB', 85: 'L4AB', 86: 'L5AB', 87: 'L6AB', 88: 'H1TG', 89: 'H2TG', 
-																					90: 'H3TG', 91: 'H4TG', 92: 'H1CH', 93: 'H2CH', 94: 'H3CH', 95: 'H4CH', 96: 'H1FC', 
-																					97: 'H2FC', 98: 'H3FC', 99: 'H4FC', 100: 'H1PL', 101: 'H2PL', 102: 'H3PL', 103: 'H4PL', 104: 'H1A1', 
-																					105: 'H2A1', 106: 'H3A1', 107: 'H4A1', 108: 'H1A2', 109: 'H2A2', 110: 'H3A2', 111: 'H4A2'}, 
-																   'comment': {0: 'Main Parameters, Triglycerides, TG', 1: 'Main Parameters, Cholesterol, Chol', 2: 'Main Parameters, LDL Cholesterol, LDL-Chol', 
-																			   3: 'Main Parameters, HDL Cholesterol, HDL-Chol', 4: 'Main Parameters, Apo-A1, Apo-A1', 5: 'Main Parameters, Apo-A2, Apo-A2', 
-																			   6: 'Main Parameters, Apo-B100, Apo-B100', 7: 'Calculated Figures, LDL Cholesterol / HDL Cholesterol, LDL-Chol/HDL-Chol', 
-																			   8: 'Calculated Figures, Apo-A1 / Apo-B100, Apo-B100/Apo-A1', 9: 'Calculated Figures, Total ApoB Particle Number, Total Particle Number', 
-																			   10: 'Calculated Figures, VLDL Particle Number, VLDL Particle Number', 11: 'Calculated Figures, IDL Particle Number, IDL Particle Number', 
-																			   12: 'Calculated Figures, LDL Particle Number, LDL Particle Number', 13: 'Calculated Figures, LDL-1 Particle Number, LDL-1 Particle Number', 
-																			   14: 'Calculated Figures, LDL-2 Particle Number, LDL-2 Particle Number', 15: 'Calculated Figures, LDL-3 Particle Number, LDL-3 Particle Number', 
-																			   16: 'Calculated Figures, LDL-4 Particle Number, LDL-4 Particle Number', 17: 'Calculated Figures, LDL-5 Particle Number, LDL-5 Particle Number', 
-																			   18: 'Calculated Figures, LDL-6 Particle Number, LDL-6 Particle Number', 19: 'Lipoprotein Main Fractions, Triglycerides, VLDL', 
-																			   20: 'Lipoprotein Main Fractions, Triglycerides, IDL', 21: 'Lipoprotein Main Fractions, Triglycerides, LDL', 22: 'Lipoprotein Main Fractions, Triglycerides, HDL', 23: 'Lipoprotein Main Fractions, Cholesterol, VLDL', 24: 'Lipoprotein Main Fractions, Cholesterol, IDL', 
-																			   25: 'Lipoprotein Main Fractions, Free Cholesterol, VLDL', 26: 'Lipoprotein Main Fractions, Free Cholesterol, IDL', 27: 'Lipoprotein Main Fractions, Free Cholesterol, LDL', 
-																			   28: 'Lipoprotein Main Fractions, Free Cholesterol, HDL', 29: 'Lipoprotein Main Fractions, Phospholipids, VLDL', 30: 'Lipoprotein Main Fractions, Phospholipids, IDL', 
-																			   31: 'Lipoprotein Main Fractions, Phospholipids, LDL', 32: 'Lipoprotein Main Fractions, Phospholipids, HDL', 33: 'Lipoprotein Main Fractions, Apo-A1, HDL', 
-																			   34: 'Lipoprotein Main Fractions, Apo-A2, HDL', 35: 'Lipoprotein Main Fractions, Apo-B, VLDL', 36: 'Lipoprotein Main Fractions, Apo-B, IDL', 37: 'Lipoprotein Main Fractions, Apo-B, LDL', 
-																			   38: 'VLDL Subfractions, Triglycerides, VLDL-1', 39: 'VLDL Subfractions, Triglycerides, VLDL-2', 40: 'VLDL Subfractions, Triglycerides, VLDL-3', 
-																			   41: 'VLDL Subfractions, Triglycerides, VLDL-4', 42: 'VLDL Subfractions, Triglycerides, VLDL-5', 43: 'VLDL Subfractions, Cholesterol, VLDL-1', 44: 'VLDL Subfractions, Cholesterol, VLDL-2', 
-																			   45: 'VLDL Subfractions, Cholesterol, VLDL-3', 46: 'VLDL Subfractions, Cholesterol, VLDL-4', 47: 'VLDL Subfractions, Cholesterol, VLDL-5', 
-																			   48: 'VLDL Subfractions, Free Cholesterol, VLDL-1', 49: 'VLDL Subfractions, Free Cholesterol, VLDL-2', 50: 'VLDL Subfractions, Free Cholesterol, VLDL-3', 51: 'VLDL Subfractions, Free Cholesterol, VLDL-4', 
-																			   52: 'VLDL Subfractions, Free Cholesterol, VLDL-5', 53: 'VLDL Subfractions, Phospholipids, VLDL-1', 54: 'VLDL Subfractions, Phospholipids, VLDL-2', 55: 'VLDL Subfractions, Phospholipids, VLDL-3', 
+																					76: 'L1PL', 77: 'L2PL', 78: 'L3PL', 79: 'L4PL', 80: 'L5PL', 81: 'L6PL', 82: 'L1AB',
+																					83: 'L2AB', 84: 'L3AB', 85: 'L4AB', 86: 'L5AB', 87: 'L6AB', 88: 'H1TG', 89: 'H2TG',
+																					90: 'H3TG', 91: 'H4TG', 92: 'H1CH', 93: 'H2CH', 94: 'H3CH', 95: 'H4CH', 96: 'H1FC',
+																					97: 'H2FC', 98: 'H3FC', 99: 'H4FC', 100: 'H1PL', 101: 'H2PL', 102: 'H3PL', 103: 'H4PL', 104: 'H1A1',
+																					105: 'H2A1', 106: 'H3A1', 107: 'H4A1', 108: 'H1A2', 109: 'H2A2', 110: 'H3A2', 111: 'H4A2'},
+																   'comment': {0: 'Main Parameters, Triglycerides, TG', 1: 'Main Parameters, Cholesterol, Chol', 2: 'Main Parameters, LDL Cholesterol, LDL-Chol',
+																			   3: 'Main Parameters, HDL Cholesterol, HDL-Chol', 4: 'Main Parameters, Apo-A1, Apo-A1', 5: 'Main Parameters, Apo-A2, Apo-A2',
+																			   6: 'Main Parameters, Apo-B100, Apo-B100', 7: 'Calculated Figures, LDL Cholesterol / HDL Cholesterol, LDL-Chol/HDL-Chol',
+																			   8: 'Calculated Figures, Apo-A1 / Apo-B100, Apo-B100/Apo-A1', 9: 'Calculated Figures, Total ApoB Particle Number, Total Particle Number',
+																			   10: 'Calculated Figures, VLDL Particle Number, VLDL Particle Number', 11: 'Calculated Figures, IDL Particle Number, IDL Particle Number',
+																			   12: 'Calculated Figures, LDL Particle Number, LDL Particle Number', 13: 'Calculated Figures, LDL-1 Particle Number, LDL-1 Particle Number',
+																			   14: 'Calculated Figures, LDL-2 Particle Number, LDL-2 Particle Number', 15: 'Calculated Figures, LDL-3 Particle Number, LDL-3 Particle Number',
+																			   16: 'Calculated Figures, LDL-4 Particle Number, LDL-4 Particle Number', 17: 'Calculated Figures, LDL-5 Particle Number, LDL-5 Particle Number',
+																			   18: 'Calculated Figures, LDL-6 Particle Number, LDL-6 Particle Number', 19: 'Lipoprotein Main Fractions, Triglycerides, VLDL',
+																			   20: 'Lipoprotein Main Fractions, Triglycerides, IDL', 21: 'Lipoprotein Main Fractions, Triglycerides, LDL', 22: 'Lipoprotein Main Fractions, Triglycerides, HDL', 23: 'Lipoprotein Main Fractions, Cholesterol, VLDL', 24: 'Lipoprotein Main Fractions, Cholesterol, IDL',
+																			   25: 'Lipoprotein Main Fractions, Free Cholesterol, VLDL', 26: 'Lipoprotein Main Fractions, Free Cholesterol, IDL', 27: 'Lipoprotein Main Fractions, Free Cholesterol, LDL',
+																			   28: 'Lipoprotein Main Fractions, Free Cholesterol, HDL', 29: 'Lipoprotein Main Fractions, Phospholipids, VLDL', 30: 'Lipoprotein Main Fractions, Phospholipids, IDL',
+																			   31: 'Lipoprotein Main Fractions, Phospholipids, LDL', 32: 'Lipoprotein Main Fractions, Phospholipids, HDL', 33: 'Lipoprotein Main Fractions, Apo-A1, HDL',
+																			   34: 'Lipoprotein Main Fractions, Apo-A2, HDL', 35: 'Lipoprotein Main Fractions, Apo-B, VLDL', 36: 'Lipoprotein Main Fractions, Apo-B, IDL', 37: 'Lipoprotein Main Fractions, Apo-B, LDL',
+																			   38: 'VLDL Subfractions, Triglycerides, VLDL-1', 39: 'VLDL Subfractions, Triglycerides, VLDL-2', 40: 'VLDL Subfractions, Triglycerides, VLDL-3',
+																			   41: 'VLDL Subfractions, Triglycerides, VLDL-4', 42: 'VLDL Subfractions, Triglycerides, VLDL-5', 43: 'VLDL Subfractions, Cholesterol, VLDL-1', 44: 'VLDL Subfractions, Cholesterol, VLDL-2',
+																			   45: 'VLDL Subfractions, Cholesterol, VLDL-3', 46: 'VLDL Subfractions, Cholesterol, VLDL-4', 47: 'VLDL Subfractions, Cholesterol, VLDL-5',
+																			   48: 'VLDL Subfractions, Free Cholesterol, VLDL-1', 49: 'VLDL Subfractions, Free Cholesterol, VLDL-2', 50: 'VLDL Subfractions, Free Cholesterol, VLDL-3', 51: 'VLDL Subfractions, Free Cholesterol, VLDL-4',
+																			   52: 'VLDL Subfractions, Free Cholesterol, VLDL-5', 53: 'VLDL Subfractions, Phospholipids, VLDL-1', 54: 'VLDL Subfractions, Phospholipids, VLDL-2', 55: 'VLDL Subfractions, Phospholipids, VLDL-3',
 																			   56: 'VLDL Subfractions, Phospholipids, VLDL-4', 57: 'VLDL Subfractions, Phospholipids, VLDL-5', 58: 'LDL Subfractions, Triglycerides, LDL-1', 59: 'LDL Subfractions, Triglycerides, LDL-2',
 																			   60: 'LDL Subfractions, Triglycerides, LDL-3', 61: 'LDL Subfractions, Triglycerides, LDL-4', 62: 'LDL Subfractions, Triglycerides, LDL-5', 63: 'LDL Subfractions, Triglycerides, LDL-6',
-																			   64: 'LDL Subfractions, Cholesterol, LDL-1', 65: 'LDL Subfractions, Cholesterol, LDL-2', 66: 'LDL Subfractions, Cholesterol, LDL-3', 67: 'LDL Subfractions, Cholesterol, LDL-4', 
-																			   68: 'LDL Subfractions, Cholesterol, LDL-5', 69: 'LDL Subfractions, Cholesterol, LDL-6', 70: 'LDL Subfractions, Free Cholesterol, LDL-1', 71: 'LDL Subfractions, Free Cholesterol, LDL-2', 
-																			   72: 'LDL Subfractions, Free Cholesterol, LDL-3', 73: 'LDL Subfractions, Free Cholesterol, LDL-4', 74: 'LDL Subfractions, Free Cholesterol, LDL-5', 75: 'LDL Subfractions, Free Cholesterol, LDL-6', 
-																			   76: 'LDL Subfractions, Phospholipids, LDL-1', 77: 'LDL Subfractions, Phospholipids, LDL-2', 78: 'LDL Subfractions, Phospholipids, LDL-3', 79: 'LDL Subfractions, Phospholipids, LDL-4', 
-																			   80: 'LDL Subfractions, Phospholipids, LDL-5', 81: 'LDL Subfractions, Phospholipids, LDL-6', 82: 'LDL Subfractions, Apo-B, LDL-1', 83: 'LDL Subfractions, Apo-B, LDL-2', 
-																			   84: 'LDL Subfractions, Apo-B, LDL-3', 85: 'LDL Subfractions, Apo-B, LDL-4', 86: 'LDL Subfractions, Apo-B, LDL-5', 87: 'LDL Subfractions, Apo-B, LDL-6', 88: 'HDL Subfractions, Triglycerides, HDL-1', 
-																			   89: 'HDL Subfractions, Triglycerides, HDL-2', 90: 'HDL Subfractions, Triglycerides, HDL-3', 91: 'HDL Subfractions, Triglycerides, HDL-4', 92: 'HDL Subfractions, Cholesterol, HDL-1', 
-																			   93: 'HDL Subfractions, Cholesterol, HDL-2', 94: 'HDL Subfractions, Cholesterol, HDL-3', 95: 'HDL Subfractions, Cholesterol, HDL-4', 96: 'HDL Subfractions, Free Cholesterol, HDL-1', 
-																			   97: 'HDL Subfractions, Free Cholesterol, HDL-2', 98: 'HDL Subfractions, Free Cholesterol, HDL-3', 99: 'HDL Subfractions, Free Cholesterol, HDL-4', 100: 'HDL Subfractions, Phospholipids, HDL-1', 
-																			   101: 'HDL Subfractions, Phospholipids, HDL-2', 102: 'HDL Subfractions, Phospholipids, HDL-3', 103: 'HDL Subfractions, Phospholipids, HDL-4', 104: 'HDL Subfractions, Apo-A1, HDL-1', 
-																			   105: 'HDL Subfractions, Apo-A1, HDL-2', 106: 'HDL Subfractions, Apo-A1, HDL-3', 107: 'HDL Subfractions, Apo-A1, HDL-4', 108: 'HDL Subfractions, Apo-A2, HDL-1', 109: 'HDL Subfractions, Apo-A2, HDL-2', 
-																			   110: 'HDL Subfractions, Apo-A2, HDL-3', 111: 'HDL Subfractions, Apo-A2, HDL-4'}, 
-																   'LOD': {0: numpy.nan, 1: numpy.nan, 2: numpy.nan, 3: numpy.nan, 4: numpy.nan, 5: numpy.nan, 6: numpy.nan, 7: numpy.nan, 8: numpy.nan, 9: numpy.nan, 10: numpy.nan, 11: numpy.nan, 12: numpy.nan, 13: numpy.nan, 14: numpy.nan, 15: numpy.nan, 16: numpy.nan, 17: numpy.nan, 18: numpy.nan, 19: numpy.nan, 
-																		   20: numpy.nan, 21: numpy.nan, 22: numpy.nan, 23: numpy.nan, 24: numpy.nan, 25: numpy.nan, 26: numpy.nan, 27: numpy.nan, 28: numpy.nan, 29: numpy.nan, 30: numpy.nan, 31: numpy.nan, 32: numpy.nan, 33: numpy.nan, 34: numpy.nan, 35: numpy.nan, 36: numpy.nan, 37: numpy.nan, 38: numpy.nan, 
-																		   39: numpy.nan, 40: numpy.nan, 41: numpy.nan, 42: numpy.nan, 43: numpy.nan, 44: numpy.nan, 45: numpy.nan, 46: numpy.nan, 47: numpy.nan, 48: numpy.nan, 49: numpy.nan, 50: numpy.nan, 51: numpy.nan, 52: numpy.nan, 53: numpy.nan, 54: numpy.nan, 55: numpy.nan, 56: numpy.nan, 57: numpy.nan, 
-																		   58: numpy.nan, 59: numpy.nan, 60: numpy.nan, 61: numpy.nan, 62: numpy.nan, 63: numpy.nan, 64: numpy.nan, 65: numpy.nan, 66: numpy.nan, 67: numpy.nan, 68: numpy.nan, 69: numpy.nan, 70: numpy.nan, 71: numpy.nan, 72: numpy.nan, 73: numpy.nan, 74: numpy.nan, 75: numpy.nan, 76: numpy.nan, 77: numpy.nan, 
-																		   78: numpy.nan, 79: numpy.nan, 80: numpy.nan, 81: numpy.nan, 82: numpy.nan, 83: numpy.nan, 84: numpy.nan, 85: numpy.nan, 86: numpy.nan, 87: numpy.nan, 88: numpy.nan, 89: numpy.nan, 90: numpy.nan, 91: numpy.nan, 92: numpy.nan, 93: numpy.nan, 94: numpy.nan, 95: numpy.nan, 96: numpy.nan, 
-																		   97: numpy.nan, 98: numpy.nan, 99: numpy.nan, 100: numpy.nan, 101: numpy.nan, 102: numpy.nan, 103: numpy.nan, 104: numpy.nan, 105: numpy.nan, 106: numpy.nan, 107: numpy.nan, 108: numpy.nan, 109: numpy.nan, 110: numpy.nan, 111: numpy.nan}, 
-																   'LLOQ': {0: numpy.nan, 1: numpy.nan, 2: numpy.nan, 3: numpy.nan, 4: numpy.nan, 5: numpy.nan, 6: numpy.nan, 7: numpy.nan, 8: numpy.nan, 9: numpy.nan, 10: numpy.nan, 11: numpy.nan, 12: numpy.nan, 13: numpy.nan, 14: numpy.nan, 15: numpy.nan, 16: numpy.nan, 17: numpy.nan, 18: numpy.nan, 19: numpy.nan, 
+																			   64: 'LDL Subfractions, Cholesterol, LDL-1', 65: 'LDL Subfractions, Cholesterol, LDL-2', 66: 'LDL Subfractions, Cholesterol, LDL-3', 67: 'LDL Subfractions, Cholesterol, LDL-4',
+																			   68: 'LDL Subfractions, Cholesterol, LDL-5', 69: 'LDL Subfractions, Cholesterol, LDL-6', 70: 'LDL Subfractions, Free Cholesterol, LDL-1', 71: 'LDL Subfractions, Free Cholesterol, LDL-2',
+																			   72: 'LDL Subfractions, Free Cholesterol, LDL-3', 73: 'LDL Subfractions, Free Cholesterol, LDL-4', 74: 'LDL Subfractions, Free Cholesterol, LDL-5', 75: 'LDL Subfractions, Free Cholesterol, LDL-6',
+																			   76: 'LDL Subfractions, Phospholipids, LDL-1', 77: 'LDL Subfractions, Phospholipids, LDL-2', 78: 'LDL Subfractions, Phospholipids, LDL-3', 79: 'LDL Subfractions, Phospholipids, LDL-4',
+																			   80: 'LDL Subfractions, Phospholipids, LDL-5', 81: 'LDL Subfractions, Phospholipids, LDL-6', 82: 'LDL Subfractions, Apo-B, LDL-1', 83: 'LDL Subfractions, Apo-B, LDL-2',
+																			   84: 'LDL Subfractions, Apo-B, LDL-3', 85: 'LDL Subfractions, Apo-B, LDL-4', 86: 'LDL Subfractions, Apo-B, LDL-5', 87: 'LDL Subfractions, Apo-B, LDL-6', 88: 'HDL Subfractions, Triglycerides, HDL-1',
+																			   89: 'HDL Subfractions, Triglycerides, HDL-2', 90: 'HDL Subfractions, Triglycerides, HDL-3', 91: 'HDL Subfractions, Triglycerides, HDL-4', 92: 'HDL Subfractions, Cholesterol, HDL-1',
+																			   93: 'HDL Subfractions, Cholesterol, HDL-2', 94: 'HDL Subfractions, Cholesterol, HDL-3', 95: 'HDL Subfractions, Cholesterol, HDL-4', 96: 'HDL Subfractions, Free Cholesterol, HDL-1',
+																			   97: 'HDL Subfractions, Free Cholesterol, HDL-2', 98: 'HDL Subfractions, Free Cholesterol, HDL-3', 99: 'HDL Subfractions, Free Cholesterol, HDL-4', 100: 'HDL Subfractions, Phospholipids, HDL-1',
+																			   101: 'HDL Subfractions, Phospholipids, HDL-2', 102: 'HDL Subfractions, Phospholipids, HDL-3', 103: 'HDL Subfractions, Phospholipids, HDL-4', 104: 'HDL Subfractions, Apo-A1, HDL-1',
+																			   105: 'HDL Subfractions, Apo-A1, HDL-2', 106: 'HDL Subfractions, Apo-A1, HDL-3', 107: 'HDL Subfractions, Apo-A1, HDL-4', 108: 'HDL Subfractions, Apo-A2, HDL-1', 109: 'HDL Subfractions, Apo-A2, HDL-2',
+																			   110: 'HDL Subfractions, Apo-A2, HDL-3', 111: 'HDL Subfractions, Apo-A2, HDL-4'},
+																   'LOD': {0: numpy.nan, 1: numpy.nan, 2: numpy.nan, 3: numpy.nan, 4: numpy.nan, 5: numpy.nan, 6: numpy.nan, 7: numpy.nan, 8: numpy.nan, 9: numpy.nan, 10: numpy.nan, 11: numpy.nan, 12: numpy.nan, 13: numpy.nan, 14: numpy.nan, 15: numpy.nan, 16: numpy.nan, 17: numpy.nan, 18: numpy.nan, 19: numpy.nan,
+																		   20: numpy.nan, 21: numpy.nan, 22: numpy.nan, 23: numpy.nan, 24: numpy.nan, 25: numpy.nan, 26: numpy.nan, 27: numpy.nan, 28: numpy.nan, 29: numpy.nan, 30: numpy.nan, 31: numpy.nan, 32: numpy.nan, 33: numpy.nan, 34: numpy.nan, 35: numpy.nan, 36: numpy.nan, 37: numpy.nan, 38: numpy.nan,
+																		   39: numpy.nan, 40: numpy.nan, 41: numpy.nan, 42: numpy.nan, 43: numpy.nan, 44: numpy.nan, 45: numpy.nan, 46: numpy.nan, 47: numpy.nan, 48: numpy.nan, 49: numpy.nan, 50: numpy.nan, 51: numpy.nan, 52: numpy.nan, 53: numpy.nan, 54: numpy.nan, 55: numpy.nan, 56: numpy.nan, 57: numpy.nan,
+																		   58: numpy.nan, 59: numpy.nan, 60: numpy.nan, 61: numpy.nan, 62: numpy.nan, 63: numpy.nan, 64: numpy.nan, 65: numpy.nan, 66: numpy.nan, 67: numpy.nan, 68: numpy.nan, 69: numpy.nan, 70: numpy.nan, 71: numpy.nan, 72: numpy.nan, 73: numpy.nan, 74: numpy.nan, 75: numpy.nan, 76: numpy.nan, 77: numpy.nan,
+																		   78: numpy.nan, 79: numpy.nan, 80: numpy.nan, 81: numpy.nan, 82: numpy.nan, 83: numpy.nan, 84: numpy.nan, 85: numpy.nan, 86: numpy.nan, 87: numpy.nan, 88: numpy.nan, 89: numpy.nan, 90: numpy.nan, 91: numpy.nan, 92: numpy.nan, 93: numpy.nan, 94: numpy.nan, 95: numpy.nan, 96: numpy.nan,
+																		   97: numpy.nan, 98: numpy.nan, 99: numpy.nan, 100: numpy.nan, 101: numpy.nan, 102: numpy.nan, 103: numpy.nan, 104: numpy.nan, 105: numpy.nan, 106: numpy.nan, 107: numpy.nan, 108: numpy.nan, 109: numpy.nan, 110: numpy.nan, 111: numpy.nan},
+																   'LLOQ': {0: numpy.nan, 1: numpy.nan, 2: numpy.nan, 3: numpy.nan, 4: numpy.nan, 5: numpy.nan, 6: numpy.nan, 7: numpy.nan, 8: numpy.nan, 9: numpy.nan, 10: numpy.nan, 11: numpy.nan, 12: numpy.nan, 13: numpy.nan, 14: numpy.nan, 15: numpy.nan, 16: numpy.nan, 17: numpy.nan, 18: numpy.nan, 19: numpy.nan,
 																			20: numpy.nan, 21: numpy.nan, 22: numpy.nan, 23: numpy.nan, 24: numpy.nan, 25: numpy.nan, 26: numpy.nan, 27: numpy.nan, 28: numpy.nan, 29: numpy.nan, 30: numpy.nan, 31: numpy.nan, 32: numpy.nan, 33: numpy.nan, 34: numpy.nan, 35: numpy.nan, 36: numpy.nan, 37: numpy.nan, 38: numpy.nan,
-																			39: numpy.nan, 40: numpy.nan, 41: numpy.nan, 42: numpy.nan, 43: numpy.nan, 44: numpy.nan, 45: numpy.nan, 46: numpy.nan, 47: numpy.nan, 48: numpy.nan, 49: numpy.nan, 50: numpy.nan, 51: numpy.nan, 52: numpy.nan, 53: numpy.nan, 54: numpy.nan, 55: numpy.nan, 56: numpy.nan, 57: numpy.nan, 
-																			58: numpy.nan, 59: numpy.nan, 60: numpy.nan, 61: numpy.nan, 62: numpy.nan, 63: numpy.nan, 64: numpy.nan, 65: numpy.nan, 66: numpy.nan, 67: numpy.nan, 68: numpy.nan, 69: numpy.nan, 70: numpy.nan, 71: numpy.nan, 72: numpy.nan, 73: numpy.nan, 74: numpy.nan, 75: numpy.nan, 76: numpy.nan, 
-																			77: numpy.nan, 78: numpy.nan, 79: numpy.nan, 80: numpy.nan, 81: numpy.nan, 82: numpy.nan, 83: numpy.nan, 84: numpy.nan, 85: numpy.nan, 86: numpy.nan, 87: numpy.nan, 88: numpy.nan, 89: numpy.nan, 90: numpy.nan, 91: numpy.nan, 92: numpy.nan, 93: numpy.nan, 94: numpy.nan, 95: numpy.nan, 
-																			96: numpy.nan, 97: numpy.nan, 98: numpy.nan, 99: numpy.nan, 100: numpy.nan, 101: numpy.nan, 102: numpy.nan, 103: numpy.nan, 104: numpy.nan, 105: numpy.nan, 106: numpy.nan, 107: numpy.nan, 108: numpy.nan, 109: numpy.nan, 110: numpy.nan, 111: numpy.nan}, 
-																   'Unit': {0: 'mg/dL', 1: 'mg/dL', 2: 'mg/dL', 3: 'mg/dL', 4: 'mg/dL', 5: 'mg/dL', 6: 'mg/dL', 7: '-/-', 8: '-/-', 9: 'nmol/L', 10: 'nmol/L', 11: 'nmol/L', 12: 'nmol/L', 13: 'nmol/L', 
-																			14: 'nmol/L', 15: 'nmol/L', 16: 'nmol/L', 17: 'nmol/L', 18: 'nmol/L', 19: 'mg/dL', 20: 'mg/dL', 21: 'mg/dL', 22: 'mg/dL', 23: 'mg/dL', 24: 'mg/dL', 25: 'mg/dL', 26: 'mg/dL', 
+																			39: numpy.nan, 40: numpy.nan, 41: numpy.nan, 42: numpy.nan, 43: numpy.nan, 44: numpy.nan, 45: numpy.nan, 46: numpy.nan, 47: numpy.nan, 48: numpy.nan, 49: numpy.nan, 50: numpy.nan, 51: numpy.nan, 52: numpy.nan, 53: numpy.nan, 54: numpy.nan, 55: numpy.nan, 56: numpy.nan, 57: numpy.nan,
+																			58: numpy.nan, 59: numpy.nan, 60: numpy.nan, 61: numpy.nan, 62: numpy.nan, 63: numpy.nan, 64: numpy.nan, 65: numpy.nan, 66: numpy.nan, 67: numpy.nan, 68: numpy.nan, 69: numpy.nan, 70: numpy.nan, 71: numpy.nan, 72: numpy.nan, 73: numpy.nan, 74: numpy.nan, 75: numpy.nan, 76: numpy.nan,
+																			77: numpy.nan, 78: numpy.nan, 79: numpy.nan, 80: numpy.nan, 81: numpy.nan, 82: numpy.nan, 83: numpy.nan, 84: numpy.nan, 85: numpy.nan, 86: numpy.nan, 87: numpy.nan, 88: numpy.nan, 89: numpy.nan, 90: numpy.nan, 91: numpy.nan, 92: numpy.nan, 93: numpy.nan, 94: numpy.nan, 95: numpy.nan,
+																			96: numpy.nan, 97: numpy.nan, 98: numpy.nan, 99: numpy.nan, 100: numpy.nan, 101: numpy.nan, 102: numpy.nan, 103: numpy.nan, 104: numpy.nan, 105: numpy.nan, 106: numpy.nan, 107: numpy.nan, 108: numpy.nan, 109: numpy.nan, 110: numpy.nan, 111: numpy.nan},
+																   'Unit': {0: 'mg/dL', 1: 'mg/dL', 2: 'mg/dL', 3: 'mg/dL', 4: 'mg/dL', 5: 'mg/dL', 6: 'mg/dL', 7: '-/-', 8: '-/-', 9: 'nmol/L', 10: 'nmol/L', 11: 'nmol/L', 12: 'nmol/L', 13: 'nmol/L',
+																			14: 'nmol/L', 15: 'nmol/L', 16: 'nmol/L', 17: 'nmol/L', 18: 'nmol/L', 19: 'mg/dL', 20: 'mg/dL', 21: 'mg/dL', 22: 'mg/dL', 23: 'mg/dL', 24: 'mg/dL', 25: 'mg/dL', 26: 'mg/dL',
 																			27: 'mg/dL', 28: 'mg/dL', 29: 'mg/dL', 30: 'mg/dL', 31: 'mg/dL', 32: 'mg/dL', 33: 'mg/dL', 34: 'mg/dL', 35: 'mg/dL', 36: 'mg/dL', 37: 'mg/dL', 38: 'mg/dL', 39: 'mg/dL',
 																			40: 'mg/dL', 41: 'mg/dL', 42: 'mg/dL', 43: 'mg/dL', 44: 'mg/dL', 45: 'mg/dL', 46: 'mg/dL', 47: 'mg/dL', 48: 'mg/dL', 49: 'mg/dL', 50: 'mg/dL', 51: 'mg/dL', 52: 'mg/dL',
-																			53: 'mg/dL', 54: 'mg/dL', 55: 'mg/dL', 56: 'mg/dL', 57: 'mg/dL', 58: 'mg/dL', 59: 'mg/dL', 60: 'mg/dL', 61: 'mg/dL', 62: 'mg/dL', 63: 'mg/dL', 64: 'mg/dL', 65: 'mg/dL', 
-																			66: 'mg/dL', 67: 'mg/dL', 68: 'mg/dL', 69: 'mg/dL', 70: 'mg/dL', 71: 'mg/dL', 72: 'mg/dL', 73: 'mg/dL', 74: 'mg/dL', 75: 'mg/dL', 76: 'mg/dL', 77: 'mg/dL', 78: 'mg/dL', 
-																			79: 'mg/dL', 80: 'mg/dL', 81: 'mg/dL', 82: 'mg/dL', 83: 'mg/dL', 84: 'mg/dL', 85: 'mg/dL', 86: 'mg/dL', 87: 'mg/dL', 88: 'mg/dL', 89: 'mg/dL', 90: 'mg/dL', 91: 'mg/dL', 
+																			53: 'mg/dL', 54: 'mg/dL', 55: 'mg/dL', 56: 'mg/dL', 57: 'mg/dL', 58: 'mg/dL', 59: 'mg/dL', 60: 'mg/dL', 61: 'mg/dL', 62: 'mg/dL', 63: 'mg/dL', 64: 'mg/dL', 65: 'mg/dL',
+																			66: 'mg/dL', 67: 'mg/dL', 68: 'mg/dL', 69: 'mg/dL', 70: 'mg/dL', 71: 'mg/dL', 72: 'mg/dL', 73: 'mg/dL', 74: 'mg/dL', 75: 'mg/dL', 76: 'mg/dL', 77: 'mg/dL', 78: 'mg/dL',
+																			79: 'mg/dL', 80: 'mg/dL', 81: 'mg/dL', 82: 'mg/dL', 83: 'mg/dL', 84: 'mg/dL', 85: 'mg/dL', 86: 'mg/dL', 87: 'mg/dL', 88: 'mg/dL', 89: 'mg/dL', 90: 'mg/dL', 91: 'mg/dL',
 																			92: 'mg/dL', 93: 'mg/dL', 94: 'mg/dL', 95: 'mg/dL', 96: 'mg/dL', 97: 'mg/dL', 98: 'mg/dL', 99: 'mg/dL', 100: 'mg/dL', 101: 'mg/dL', 102: 'mg/dL', 103: 'mg/dL', 104: 'mg/dL',
-																			105: 'mg/dL', 106: 'mg/dL', 107: 'mg/dL', 108: 'mg/dL', 109: 'mg/dL', 110: 'mg/dL', 111: 'mg/dL'}, 
-																   'lodMask': {0: True, 1: True, 2: True, 3: True, 4: True, 5: True, 6: True, 7: True, 8: True, 9: True, 10: True, 11: True, 12: True, 13: True, 14: True, 15: True, 16: True, 17: True, 
-																			   18: True, 19: True, 20: True, 21: True, 22: True, 23: True, 24: True, 25: True, 26: True, 27: True, 28: True, 29: True, 30: True, 31: True, 32: True, 33: True, 34: True, 
-																			   35: True, 36: True, 37: True, 38: True, 39: True, 40: True, 41: True, 42: True, 43: True, 44: True, 45: True, 46: True, 47: True, 48: True, 49: True, 50: True, 51: True, 
-																			   52: True, 53: True, 54: True, 55: True, 56: True, 57: True, 58: True, 59: True, 60: True, 61: True, 62: True, 63: True, 64: True, 65: True, 66: True, 67: True, 68: True, 
-																			   69: True, 70: True, 71: True, 72: True, 73: True, 74: True, 75: True, 76: True, 77: True, 78: True, 79: True, 80: True, 81: True, 82: True, 83: True, 84: True, 85: True, 
-																			   86: True, 87: True, 88: True, 89: True, 90: True, 91: True, 92: True, 93: True, 94: True, 95: True, 96: True, 97: True, 98: True, 99: True, 100: True, 101: True, 102: True, 
+																			105: 'mg/dL', 106: 'mg/dL', 107: 'mg/dL', 108: 'mg/dL', 109: 'mg/dL', 110: 'mg/dL', 111: 'mg/dL'},
+																   'lodMask': {0: True, 1: True, 2: True, 3: True, 4: True, 5: True, 6: True, 7: True, 8: True, 9: True, 10: True, 11: True, 12: True, 13: True, 14: True, 15: True, 16: True, 17: True,
+																			   18: True, 19: True, 20: True, 21: True, 22: True, 23: True, 24: True, 25: True, 26: True, 27: True, 28: True, 29: True, 30: True, 31: True, 32: True, 33: True, 34: True,
+																			   35: True, 36: True, 37: True, 38: True, 39: True, 40: True, 41: True, 42: True, 43: True, 44: True, 45: True, 46: True, 47: True, 48: True, 49: True, 50: True, 51: True,
+																			   52: True, 53: True, 54: True, 55: True, 56: True, 57: True, 58: True, 59: True, 60: True, 61: True, 62: True, 63: True, 64: True, 65: True, 66: True, 67: True, 68: True,
+																			   69: True, 70: True, 71: True, 72: True, 73: True, 74: True, 75: True, 76: True, 77: True, 78: True, 79: True, 80: True, 81: True, 82: True, 83: True, 84: True, 85: True,
+																			   86: True, 87: True, 88: True, 89: True, 90: True, 91: True, 92: True, 93: True, 94: True, 95: True, 96: True, 97: True, 98: True, 99: True, 100: True, 101: True, 102: True,
 																			   103: True, 104: True, 105: True, 106: True, 107: True, 108: True, 109: True, 110: True, 111: True},
 																   'Lower Reference Percentile': {0: 2.5, 1: 2.5, 2: 2.5, 3: 2.5, 4: 2.5, 5: 2.5, 6: 2.5, 7: 2.5, 8: 2.5, 9: 2.5, 10: 2.5, 11: 2.5, 12: 2.5, 13: 2.5, 14: 2.5, 15: 2.5, 16: 2.5, 17: 2.5,
-																								  18: 2.5, 19: 2.5, 20: 2.5, 21: 2.5, 22: 2.5, 23: 2.5, 24: 2.5, 25: 2.5, 26: 2.5, 27: 2.5, 28: 2.5, 29: 2.5, 30: 2.5, 31: 2.5, 32: 2.5, 33: 2.5, 34: 2.5, 
+																								  18: 2.5, 19: 2.5, 20: 2.5, 21: 2.5, 22: 2.5, 23: 2.5, 24: 2.5, 25: 2.5, 26: 2.5, 27: 2.5, 28: 2.5, 29: 2.5, 30: 2.5, 31: 2.5, 32: 2.5, 33: 2.5, 34: 2.5,
 																								  35: 2.5, 36: 2.5, 37: 2.5, 38: 2.5, 39: 2.5, 40: 2.5, 41: 2.5, 42: 2.5, 43: 2.5, 44: 2.5, 45: 2.5, 46: 2.5, 47: 2.5, 48: 2.5, 49: 2.5, 50: 2.5, 51: 2.5,
-																								  52: 2.5, 53: 2.5, 54: 2.5, 55: 2.5, 56: 2.5, 57: 2.5, 58: 2.5, 59: 2.5, 60: 2.5, 61: 2.5, 62: 2.5, 63: 2.5, 64: 2.5, 65: 2.5, 66: 2.5, 67: 2.5, 68: 2.5, 
+																								  52: 2.5, 53: 2.5, 54: 2.5, 55: 2.5, 56: 2.5, 57: 2.5, 58: 2.5, 59: 2.5, 60: 2.5, 61: 2.5, 62: 2.5, 63: 2.5, 64: 2.5, 65: 2.5, 66: 2.5, 67: 2.5, 68: 2.5,
 																								  69: 2.5, 70: 2.5, 71: 2.5, 72: 2.5, 73: 2.5, 74: 2.5, 75: 2.5, 76: 2.5, 77: 2.5, 78: 2.5, 79: 2.5, 80: 2.5, 81: 2.5, 82: 2.5, 83: 2.5, 84: 2.5, 85: 2.5,
-																								  86: 2.5, 87: 2.5, 88: 2.5, 89: 2.5, 90: 2.5, 91: 2.5, 92: 2.5, 93: 2.5, 94: 2.5, 95: 2.5, 96: 2.5, 97: 2.5, 98: 2.5, 99: 2.5, 100: 2.5, 101: 2.5, 
-																								  102: 2.5, 103: 2.5, 104: 2.5, 105: 2.5, 106: 2.5, 107: 2.5, 108: 2.5, 109: 2.5, 110: 2.5, 111: 2.5}, 
-																   'Upper Reference Percentile': {0: 97.5, 1: 97.5, 2: 97.5, 3: 97.5, 4: 97.5, 5: 97.5, 6: 97.5, 7: 97.5, 8: 97.5, 9: 97.5, 10: 97.5, 11: 97.5, 12: 97.5, 13: 97.5, 14: 97.5, 15: 97.5, 16: 97.5, 17: 97.5, 
-																								  18: 97.5, 19: 97.5, 20: 97.5, 21: 97.5, 22: 97.5, 23: 97.5, 24: 97.5, 25: 97.5, 26: 97.5, 27: 97.5, 28: 97.5, 29: 97.5, 30: 97.5, 31: 97.5, 32: 97.5, 
-																								  33: 97.5, 34: 97.5, 35: 97.5, 36: 97.5, 37: 97.5, 38: 97.5, 39: 97.5, 40: 97.5, 41: 97.5, 42: 97.5, 43: 97.5, 44: 97.5, 45: 97.5, 46: 97.5, 47: 97.5, 
-																								  48: 97.5, 49: 97.5, 50: 97.5, 51: 97.5, 52: 97.5, 53: 97.5, 54: 97.5, 55: 97.5, 56: 97.5, 57: 97.5, 58: 97.5, 59: 97.5, 60: 97.5, 61: 97.5, 62: 97.5, 
-																								  63: 97.5, 64: 97.5, 65: 97.5, 66: 97.5, 67: 97.5, 68: 97.5, 69: 97.5, 70: 97.5, 71: 97.5, 72: 97.5, 73: 97.5, 74: 97.5, 75: 97.5, 76: 97.5, 77: 97.5, 
-																								  78: 97.5, 79: 97.5, 80: 97.5, 81: 97.5, 82: 97.5, 83: 97.5, 84: 97.5, 85: 97.5, 86: 97.5, 87: 97.5, 88: 97.5, 89: 97.5, 90: 97.5, 91: 97.5, 92: 97.5, 
-																								  93: 97.5, 94: 97.5, 95: 97.5, 96: 97.5, 97: 97.5, 98: 97.5, 99: 97.5, 100: 97.5, 101: 97.5, 102: 97.5, 103: 97.5, 104: 97.5, 105: 97.5, 106: 97.5, 
-																								  107: 97.5, 108: 97.5, 109: 97.5, 110: 97.5, 111: 97.5}, 
-																   'Lower Reference Value': {0: 53.45, 1: 140.31, 2: 54.52, 3: 34.6, 4: 112.0, 5: 24.07, 6: 48.18, 7: 0.98, 8: 0.3, 9: 876.01, 10: 50.11, 11: 35.95, 12: 760.42, 13: 98.1, 14: 46.65, 
-																							 15: 51.24, 16: 77.07, 17: 85.6, 18: 90.64, 19: 21.38, 20: 4.62, 21: 11.77, 22: 7.29, 23: 4.88, 24: 3.91, 25: 2.66, 26: 0.94, 27: 17.19, 28: 6.98, 29: 6.44, 
-																							 30: 2.97, 31: 36.69, 32: 56.5, 33: 110.04, 34: 24.86, 35: 2.76, 36: 1.98, 37: 41.82, 38: 6.23, 39: 2.75, 40: 2.16, 41: 2.93, 42: 1.08, 43: 0.8, 44: 0.39, 
-																							 45: 0.48, 46: 1.41, 47: 0.1, 48: 0.11, 49: 0.04, 50: 0.05, 51: 0.15, 52: 0.02, 53: 1.31, 54: 0.81, 55: 0.82, 56: 1.62, 57: 0.4, 58: 2.51, 59: 1.19, 60: 1.15, 
-																							 61: 1.21, 62: 1.12, 63: 1.35, 64: 8.07, 65: 2.48, 66: 3.19, 67: 4.32, 68: 5.41, 69: 6.26, 70: 2.49, 71: 0.99, 72: 1.27, 73: 1.07, 74: 1.56, 75: 1.78, 76: 5.87, 
-																							 77: 2.2, 78: 2.39, 79: 3.05, 80: 3.72, 81: 4.44, 82: 5.4, 83: 2.57, 84: 2.82, 85: 4.24, 86: 4.71, 87: 4.98, 88: 1.4, 89: 0.98, 90: 1.3, 91: 1.94, 92: 6.1, 
-																							 93: 3.98, 94: 6.82, 95: 10.64, 96: 1.45, 97: 0.74, 98: 1.25, 99: 2.13, 100: 7.67, 101: 7.4, 102: 12.03, 103: 19.75, 104: 5.95, 105: 9.94, 106: 18.26, 
-																							 107: 56.03, 108: 0.77, 109: 1.88, 110: 4.85, 111: 12.02}, 
-																   'Upper Reference Value': {0: 489.81, 1: 341.43, 2: 226.6, 3: 96.25, 4: 216.85, 5: 47.7, 6: 159.94, 7: 4.08, 8: 1.07, 9: 2908.2, 10: 473.04, 11: 316.39, 12: 2559.51, 13: 567.23, 
-																							 14: 426.74, 15: 499.0, 16: 577.04, 17: 614.86, 18: 815.44, 19: 335.6, 20: 100.01, 21: 45.22, 22: 28.58, 23: 76.99, 24: 49.96, 25: 33.09, 26: 13.89, 27: 63.35, 
-																							 28: 27.05, 29: 67.58, 30: 32.53, 31: 120.76, 32: 135.93, 33: 222.02, 34: 47.99, 35: 26.02, 36: 17.4, 37: 140.77, 38: 212.19, 39: 66.92, 40: 48.88, 41: 28.43, 
-																							 42: 7.26, 43: 35.13, 44: 15.36, 45: 16.23, 46: 15.11, 47: 3.93, 48: 12.89, 49: 6.6, 50: 8.09, 51: 7.21, 52: 2.2, 53: 32.41, 54: 15.43, 55: 13.53, 56: 12.87, 
-																							 57: 5.06, 58: 14.03, 59: 6.4, 60: 5.72, 61: 8.43, 62: 8.98, 63: 13.16, 64: 58.72, 65: 48.09, 66: 45.64, 67: 48.86, 68: 48.69, 69: 54.19, 70: 16.94, 71: 14.35, 
-																							 72: 13.29, 73: 12.49, 74: 12.71, 75: 12.18, 76: 29.8, 77: 24.82, 78: 24.21, 79: 25.06, 80: 25.29, 81: 27.91, 82: 31.2, 83: 23.47, 84: 27.44, 85: 31.74, 
-																							 86: 33.82, 87: 44.85, 88: 11.96, 89: 5.47, 90: 5.49, 91: 8.49, 92: 46.07, 93: 15.58, 94: 18.79, 95: 30.26, 96: 11.96, 97: 4.59, 98: 5.27, 99: 8.54, 100: 57.17, 
+																								  86: 2.5, 87: 2.5, 88: 2.5, 89: 2.5, 90: 2.5, 91: 2.5, 92: 2.5, 93: 2.5, 94: 2.5, 95: 2.5, 96: 2.5, 97: 2.5, 98: 2.5, 99: 2.5, 100: 2.5, 101: 2.5,
+																								  102: 2.5, 103: 2.5, 104: 2.5, 105: 2.5, 106: 2.5, 107: 2.5, 108: 2.5, 109: 2.5, 110: 2.5, 111: 2.5},
+																   'Upper Reference Percentile': {0: 97.5, 1: 97.5, 2: 97.5, 3: 97.5, 4: 97.5, 5: 97.5, 6: 97.5, 7: 97.5, 8: 97.5, 9: 97.5, 10: 97.5, 11: 97.5, 12: 97.5, 13: 97.5, 14: 97.5, 15: 97.5, 16: 97.5, 17: 97.5,
+																								  18: 97.5, 19: 97.5, 20: 97.5, 21: 97.5, 22: 97.5, 23: 97.5, 24: 97.5, 25: 97.5, 26: 97.5, 27: 97.5, 28: 97.5, 29: 97.5, 30: 97.5, 31: 97.5, 32: 97.5,
+																								  33: 97.5, 34: 97.5, 35: 97.5, 36: 97.5, 37: 97.5, 38: 97.5, 39: 97.5, 40: 97.5, 41: 97.5, 42: 97.5, 43: 97.5, 44: 97.5, 45: 97.5, 46: 97.5, 47: 97.5,
+																								  48: 97.5, 49: 97.5, 50: 97.5, 51: 97.5, 52: 97.5, 53: 97.5, 54: 97.5, 55: 97.5, 56: 97.5, 57: 97.5, 58: 97.5, 59: 97.5, 60: 97.5, 61: 97.5, 62: 97.5,
+																								  63: 97.5, 64: 97.5, 65: 97.5, 66: 97.5, 67: 97.5, 68: 97.5, 69: 97.5, 70: 97.5, 71: 97.5, 72: 97.5, 73: 97.5, 74: 97.5, 75: 97.5, 76: 97.5, 77: 97.5,
+																								  78: 97.5, 79: 97.5, 80: 97.5, 81: 97.5, 82: 97.5, 83: 97.5, 84: 97.5, 85: 97.5, 86: 97.5, 87: 97.5, 88: 97.5, 89: 97.5, 90: 97.5, 91: 97.5, 92: 97.5,
+																								  93: 97.5, 94: 97.5, 95: 97.5, 96: 97.5, 97: 97.5, 98: 97.5, 99: 97.5, 100: 97.5, 101: 97.5, 102: 97.5, 103: 97.5, 104: 97.5, 105: 97.5, 106: 97.5,
+																								  107: 97.5, 108: 97.5, 109: 97.5, 110: 97.5, 111: 97.5},
+																   'Lower Reference Value': {0: 53.45, 1: 140.31, 2: 54.52, 3: 34.6, 4: 112.0, 5: 24.07, 6: 48.18, 7: 0.98, 8: 0.3, 9: 876.01, 10: 50.11, 11: 35.95, 12: 760.42, 13: 98.1, 14: 46.65,
+																							 15: 51.24, 16: 77.07, 17: 85.6, 18: 90.64, 19: 21.38, 20: 4.62, 21: 11.77, 22: 7.29, 23: 4.88, 24: 3.91, 25: 2.66, 26: 0.94, 27: 17.19, 28: 6.98, 29: 6.44,
+																							 30: 2.97, 31: 36.69, 32: 56.5, 33: 110.04, 34: 24.86, 35: 2.76, 36: 1.98, 37: 41.82, 38: 6.23, 39: 2.75, 40: 2.16, 41: 2.93, 42: 1.08, 43: 0.8, 44: 0.39,
+																							 45: 0.48, 46: 1.41, 47: 0.1, 48: 0.11, 49: 0.04, 50: 0.05, 51: 0.15, 52: 0.02, 53: 1.31, 54: 0.81, 55: 0.82, 56: 1.62, 57: 0.4, 58: 2.51, 59: 1.19, 60: 1.15,
+																							 61: 1.21, 62: 1.12, 63: 1.35, 64: 8.07, 65: 2.48, 66: 3.19, 67: 4.32, 68: 5.41, 69: 6.26, 70: 2.49, 71: 0.99, 72: 1.27, 73: 1.07, 74: 1.56, 75: 1.78, 76: 5.87,
+																							 77: 2.2, 78: 2.39, 79: 3.05, 80: 3.72, 81: 4.44, 82: 5.4, 83: 2.57, 84: 2.82, 85: 4.24, 86: 4.71, 87: 4.98, 88: 1.4, 89: 0.98, 90: 1.3, 91: 1.94, 92: 6.1,
+																							 93: 3.98, 94: 6.82, 95: 10.64, 96: 1.45, 97: 0.74, 98: 1.25, 99: 2.13, 100: 7.67, 101: 7.4, 102: 12.03, 103: 19.75, 104: 5.95, 105: 9.94, 106: 18.26,
+																							 107: 56.03, 108: 0.77, 109: 1.88, 110: 4.85, 111: 12.02},
+																   'Upper Reference Value': {0: 489.81, 1: 341.43, 2: 226.6, 3: 96.25, 4: 216.85, 5: 47.7, 6: 159.94, 7: 4.08, 8: 1.07, 9: 2908.2, 10: 473.04, 11: 316.39, 12: 2559.51, 13: 567.23,
+																							 14: 426.74, 15: 499.0, 16: 577.04, 17: 614.86, 18: 815.44, 19: 335.6, 20: 100.01, 21: 45.22, 22: 28.58, 23: 76.99, 24: 49.96, 25: 33.09, 26: 13.89, 27: 63.35,
+																							 28: 27.05, 29: 67.58, 30: 32.53, 31: 120.76, 32: 135.93, 33: 222.02, 34: 47.99, 35: 26.02, 36: 17.4, 37: 140.77, 38: 212.19, 39: 66.92, 40: 48.88, 41: 28.43,
+																							 42: 7.26, 43: 35.13, 44: 15.36, 45: 16.23, 46: 15.11, 47: 3.93, 48: 12.89, 49: 6.6, 50: 8.09, 51: 7.21, 52: 2.2, 53: 32.41, 54: 15.43, 55: 13.53, 56: 12.87,
+																							 57: 5.06, 58: 14.03, 59: 6.4, 60: 5.72, 61: 8.43, 62: 8.98, 63: 13.16, 64: 58.72, 65: 48.09, 66: 45.64, 67: 48.86, 68: 48.69, 69: 54.19, 70: 16.94, 71: 14.35,
+																							 72: 13.29, 73: 12.49, 74: 12.71, 75: 12.18, 76: 29.8, 77: 24.82, 78: 24.21, 79: 25.06, 80: 25.29, 81: 27.91, 82: 31.2, 83: 23.47, 84: 27.44, 85: 31.74,
+																							 86: 33.82, 87: 44.85, 88: 11.96, 89: 5.47, 90: 5.49, 91: 8.49, 92: 46.07, 93: 15.58, 94: 18.79, 95: 30.26, 96: 11.96, 97: 4.59, 98: 5.27, 99: 8.54, 100: 57.17,
 																							 101: 26.82, 102: 31.53, 103: 43.53, 104: 75.4, 105: 36.22, 106: 47.09, 107: 110.49, 108: 8.31, 109: 7.78, 110: 11.84, 111: 29.58},
-																   'quantificationType': {0: QuantificationType.Monitored, 1: QuantificationType.Monitored, 2: QuantificationType.Monitored, 3: QuantificationType.Monitored, 4: QuantificationType.Monitored, 5: QuantificationType.Monitored, 
-																						  6: QuantificationType.Monitored, 7: QuantificationType.Monitored, 8: QuantificationType.Monitored, 9: QuantificationType.Monitored, 10: QuantificationType.Monitored, 
-																						  11: QuantificationType.Monitored, 12: QuantificationType.Monitored, 13: QuantificationType.Monitored, 14: QuantificationType.Monitored, 15: QuantificationType.Monitored, 
-																						  16: QuantificationType.Monitored, 17: QuantificationType.Monitored, 18: QuantificationType.Monitored, 19: QuantificationType.Monitored, 20: QuantificationType.Monitored, 
-																						  21: QuantificationType.Monitored, 22: QuantificationType.Monitored, 23: QuantificationType.Monitored, 24: QuantificationType.Monitored, 25: QuantificationType.Monitored, 
-																						  26: QuantificationType.Monitored, 27: QuantificationType.Monitored, 28: QuantificationType.Monitored, 29: QuantificationType.Monitored, 30: QuantificationType.Monitored, 
-																						  31: QuantificationType.Monitored, 32: QuantificationType.Monitored, 33: QuantificationType.Monitored, 34: QuantificationType.Monitored, 35: QuantificationType.Monitored, 
-																						  36: QuantificationType.Monitored, 37: QuantificationType.Monitored, 38: QuantificationType.Monitored, 39: QuantificationType.Monitored, 40: QuantificationType.Monitored, 
-																						  41: QuantificationType.Monitored, 42: QuantificationType.Monitored, 43: QuantificationType.Monitored, 44: QuantificationType.Monitored, 45: QuantificationType.Monitored, 
-																						  46: QuantificationType.Monitored, 47: QuantificationType.Monitored, 48: QuantificationType.Monitored, 49: QuantificationType.Monitored, 50: QuantificationType.Monitored, 
-																						  51: QuantificationType.Monitored, 52: QuantificationType.Monitored, 53: QuantificationType.Monitored, 54: QuantificationType.Monitored, 55: QuantificationType.Monitored, 
-																						  56: QuantificationType.Monitored, 57: QuantificationType.Monitored, 58: QuantificationType.Monitored, 59: QuantificationType.Monitored, 60: QuantificationType.Monitored, 
-																						  61: QuantificationType.Monitored, 62: QuantificationType.Monitored, 63: QuantificationType.Monitored, 64: QuantificationType.Monitored, 65: QuantificationType.Monitored, 
-																						  66: QuantificationType.Monitored, 67: QuantificationType.Monitored, 68: QuantificationType.Monitored, 69: QuantificationType.Monitored, 70: QuantificationType.Monitored, 
-																						  71: QuantificationType.Monitored, 72: QuantificationType.Monitored, 73: QuantificationType.Monitored, 74: QuantificationType.Monitored, 75: QuantificationType.Monitored, 
-																						  76: QuantificationType.Monitored, 77: QuantificationType.Monitored, 78: QuantificationType.Monitored, 79: QuantificationType.Monitored, 80: QuantificationType.Monitored, 
-																						  81: QuantificationType.Monitored, 82: QuantificationType.Monitored, 83: QuantificationType.Monitored, 84: QuantificationType.Monitored, 85: QuantificationType.Monitored, 
-																						  86: QuantificationType.Monitored, 87: QuantificationType.Monitored, 88: QuantificationType.Monitored, 89: QuantificationType.Monitored, 90: QuantificationType.Monitored, 
-																						  91: QuantificationType.Monitored, 92: QuantificationType.Monitored, 93: QuantificationType.Monitored, 94: QuantificationType.Monitored, 95: QuantificationType.Monitored, 
-																						  96: QuantificationType.Monitored, 97: QuantificationType.Monitored, 98: QuantificationType.Monitored, 99: QuantificationType.Monitored, 100: QuantificationType.Monitored, 
-																						  101: QuantificationType.Monitored, 102: QuantificationType.Monitored, 103: QuantificationType.Monitored, 104: QuantificationType.Monitored, 105: QuantificationType.Monitored, 
-																						  106: QuantificationType.Monitored, 107: QuantificationType.Monitored, 108: QuantificationType.Monitored, 109: QuantificationType.Monitored, 110: QuantificationType.Monitored, 
-																						  111: QuantificationType.Monitored}, 
-																   'calibrationMethod': {0: CalibrationMethod.noCalibration, 1: CalibrationMethod.noCalibration, 2: CalibrationMethod.noCalibration, 3: CalibrationMethod.noCalibration, 4: CalibrationMethod.noCalibration, 
-																						 5: CalibrationMethod.noCalibration, 6: CalibrationMethod.noCalibration, 7: CalibrationMethod.noCalibration, 8: CalibrationMethod.noCalibration, 
-																						 9: CalibrationMethod.noCalibration, 10: CalibrationMethod.noCalibration, 11: CalibrationMethod.noCalibration, 12: CalibrationMethod.noCalibration, 
-																						 13: CalibrationMethod.noCalibration, 14: CalibrationMethod.noCalibration, 15: CalibrationMethod.noCalibration, 16: CalibrationMethod.noCalibration, 
-																						 17: CalibrationMethod.noCalibration, 18: CalibrationMethod.noCalibration, 19: CalibrationMethod.noCalibration, 20: CalibrationMethod.noCalibration, 21: CalibrationMethod.noCalibration, 
-																						 22: CalibrationMethod.noCalibration, 23: CalibrationMethod.noCalibration, 24: CalibrationMethod.noCalibration, 25: CalibrationMethod.noCalibration, 26: CalibrationMethod.noCalibration, 
-																						 27: CalibrationMethod.noCalibration, 28: CalibrationMethod.noCalibration, 29: CalibrationMethod.noCalibration, 30: CalibrationMethod.noCalibration, 31: CalibrationMethod.noCalibration, 
-																						 32: CalibrationMethod.noCalibration, 33: CalibrationMethod.noCalibration, 34: CalibrationMethod.noCalibration, 35: CalibrationMethod.noCalibration, 36: CalibrationMethod.noCalibration, 
-																						 37: CalibrationMethod.noCalibration, 38: CalibrationMethod.noCalibration, 39: CalibrationMethod.noCalibration, 40: CalibrationMethod.noCalibration, 41: CalibrationMethod.noCalibration, 
-																						 42: CalibrationMethod.noCalibration, 43: CalibrationMethod.noCalibration, 44: CalibrationMethod.noCalibration, 45: CalibrationMethod.noCalibration, 46: CalibrationMethod.noCalibration, 
-																						 47: CalibrationMethod.noCalibration, 48: CalibrationMethod.noCalibration, 49: CalibrationMethod.noCalibration, 50: CalibrationMethod.noCalibration, 51: CalibrationMethod.noCalibration, 
-																						 52: CalibrationMethod.noCalibration, 53: CalibrationMethod.noCalibration, 54: CalibrationMethod.noCalibration, 55: CalibrationMethod.noCalibration, 56: CalibrationMethod.noCalibration, 
+																   'quantificationType': {0: QuantificationType.Monitored, 1: QuantificationType.Monitored, 2: QuantificationType.Monitored, 3: QuantificationType.Monitored, 4: QuantificationType.Monitored, 5: QuantificationType.Monitored,
+																						  6: QuantificationType.Monitored, 7: QuantificationType.Monitored, 8: QuantificationType.Monitored, 9: QuantificationType.Monitored, 10: QuantificationType.Monitored,
+																						  11: QuantificationType.Monitored, 12: QuantificationType.Monitored, 13: QuantificationType.Monitored, 14: QuantificationType.Monitored, 15: QuantificationType.Monitored,
+																						  16: QuantificationType.Monitored, 17: QuantificationType.Monitored, 18: QuantificationType.Monitored, 19: QuantificationType.Monitored, 20: QuantificationType.Monitored,
+																						  21: QuantificationType.Monitored, 22: QuantificationType.Monitored, 23: QuantificationType.Monitored, 24: QuantificationType.Monitored, 25: QuantificationType.Monitored,
+																						  26: QuantificationType.Monitored, 27: QuantificationType.Monitored, 28: QuantificationType.Monitored, 29: QuantificationType.Monitored, 30: QuantificationType.Monitored,
+																						  31: QuantificationType.Monitored, 32: QuantificationType.Monitored, 33: QuantificationType.Monitored, 34: QuantificationType.Monitored, 35: QuantificationType.Monitored,
+																						  36: QuantificationType.Monitored, 37: QuantificationType.Monitored, 38: QuantificationType.Monitored, 39: QuantificationType.Monitored, 40: QuantificationType.Monitored,
+																						  41: QuantificationType.Monitored, 42: QuantificationType.Monitored, 43: QuantificationType.Monitored, 44: QuantificationType.Monitored, 45: QuantificationType.Monitored,
+																						  46: QuantificationType.Monitored, 47: QuantificationType.Monitored, 48: QuantificationType.Monitored, 49: QuantificationType.Monitored, 50: QuantificationType.Monitored,
+																						  51: QuantificationType.Monitored, 52: QuantificationType.Monitored, 53: QuantificationType.Monitored, 54: QuantificationType.Monitored, 55: QuantificationType.Monitored,
+																						  56: QuantificationType.Monitored, 57: QuantificationType.Monitored, 58: QuantificationType.Monitored, 59: QuantificationType.Monitored, 60: QuantificationType.Monitored,
+																						  61: QuantificationType.Monitored, 62: QuantificationType.Monitored, 63: QuantificationType.Monitored, 64: QuantificationType.Monitored, 65: QuantificationType.Monitored,
+																						  66: QuantificationType.Monitored, 67: QuantificationType.Monitored, 68: QuantificationType.Monitored, 69: QuantificationType.Monitored, 70: QuantificationType.Monitored,
+																						  71: QuantificationType.Monitored, 72: QuantificationType.Monitored, 73: QuantificationType.Monitored, 74: QuantificationType.Monitored, 75: QuantificationType.Monitored,
+																						  76: QuantificationType.Monitored, 77: QuantificationType.Monitored, 78: QuantificationType.Monitored, 79: QuantificationType.Monitored, 80: QuantificationType.Monitored,
+																						  81: QuantificationType.Monitored, 82: QuantificationType.Monitored, 83: QuantificationType.Monitored, 84: QuantificationType.Monitored, 85: QuantificationType.Monitored,
+																						  86: QuantificationType.Monitored, 87: QuantificationType.Monitored, 88: QuantificationType.Monitored, 89: QuantificationType.Monitored, 90: QuantificationType.Monitored,
+																						  91: QuantificationType.Monitored, 92: QuantificationType.Monitored, 93: QuantificationType.Monitored, 94: QuantificationType.Monitored, 95: QuantificationType.Monitored,
+																						  96: QuantificationType.Monitored, 97: QuantificationType.Monitored, 98: QuantificationType.Monitored, 99: QuantificationType.Monitored, 100: QuantificationType.Monitored,
+																						  101: QuantificationType.Monitored, 102: QuantificationType.Monitored, 103: QuantificationType.Monitored, 104: QuantificationType.Monitored, 105: QuantificationType.Monitored,
+																						  106: QuantificationType.Monitored, 107: QuantificationType.Monitored, 108: QuantificationType.Monitored, 109: QuantificationType.Monitored, 110: QuantificationType.Monitored,
+																						  111: QuantificationType.Monitored},
+																   'calibrationMethod': {0: CalibrationMethod.noCalibration, 1: CalibrationMethod.noCalibration, 2: CalibrationMethod.noCalibration, 3: CalibrationMethod.noCalibration, 4: CalibrationMethod.noCalibration,
+																						 5: CalibrationMethod.noCalibration, 6: CalibrationMethod.noCalibration, 7: CalibrationMethod.noCalibration, 8: CalibrationMethod.noCalibration,
+																						 9: CalibrationMethod.noCalibration, 10: CalibrationMethod.noCalibration, 11: CalibrationMethod.noCalibration, 12: CalibrationMethod.noCalibration,
+																						 13: CalibrationMethod.noCalibration, 14: CalibrationMethod.noCalibration, 15: CalibrationMethod.noCalibration, 16: CalibrationMethod.noCalibration,
+																						 17: CalibrationMethod.noCalibration, 18: CalibrationMethod.noCalibration, 19: CalibrationMethod.noCalibration, 20: CalibrationMethod.noCalibration, 21: CalibrationMethod.noCalibration,
+																						 22: CalibrationMethod.noCalibration, 23: CalibrationMethod.noCalibration, 24: CalibrationMethod.noCalibration, 25: CalibrationMethod.noCalibration, 26: CalibrationMethod.noCalibration,
+																						 27: CalibrationMethod.noCalibration, 28: CalibrationMethod.noCalibration, 29: CalibrationMethod.noCalibration, 30: CalibrationMethod.noCalibration, 31: CalibrationMethod.noCalibration,
+																						 32: CalibrationMethod.noCalibration, 33: CalibrationMethod.noCalibration, 34: CalibrationMethod.noCalibration, 35: CalibrationMethod.noCalibration, 36: CalibrationMethod.noCalibration,
+																						 37: CalibrationMethod.noCalibration, 38: CalibrationMethod.noCalibration, 39: CalibrationMethod.noCalibration, 40: CalibrationMethod.noCalibration, 41: CalibrationMethod.noCalibration,
+																						 42: CalibrationMethod.noCalibration, 43: CalibrationMethod.noCalibration, 44: CalibrationMethod.noCalibration, 45: CalibrationMethod.noCalibration, 46: CalibrationMethod.noCalibration,
+																						 47: CalibrationMethod.noCalibration, 48: CalibrationMethod.noCalibration, 49: CalibrationMethod.noCalibration, 50: CalibrationMethod.noCalibration, 51: CalibrationMethod.noCalibration,
+																						 52: CalibrationMethod.noCalibration, 53: CalibrationMethod.noCalibration, 54: CalibrationMethod.noCalibration, 55: CalibrationMethod.noCalibration, 56: CalibrationMethod.noCalibration,
 																						 57: CalibrationMethod.noCalibration, 58: CalibrationMethod.noCalibration, 59: CalibrationMethod.noCalibration, 60: CalibrationMethod.noCalibration, 61: CalibrationMethod.noCalibration,
-																						 62: CalibrationMethod.noCalibration, 63: CalibrationMethod.noCalibration, 64: CalibrationMethod.noCalibration, 65: CalibrationMethod.noCalibration, 66: CalibrationMethod.noCalibration, 
-																						 67: CalibrationMethod.noCalibration, 68: CalibrationMethod.noCalibration, 69: CalibrationMethod.noCalibration, 70: CalibrationMethod.noCalibration, 71: CalibrationMethod.noCalibration, 
-																						 72: CalibrationMethod.noCalibration, 73: CalibrationMethod.noCalibration, 74: CalibrationMethod.noCalibration, 75: CalibrationMethod.noCalibration, 76: CalibrationMethod.noCalibration, 
+																						 62: CalibrationMethod.noCalibration, 63: CalibrationMethod.noCalibration, 64: CalibrationMethod.noCalibration, 65: CalibrationMethod.noCalibration, 66: CalibrationMethod.noCalibration,
+																						 67: CalibrationMethod.noCalibration, 68: CalibrationMethod.noCalibration, 69: CalibrationMethod.noCalibration, 70: CalibrationMethod.noCalibration, 71: CalibrationMethod.noCalibration,
+																						 72: CalibrationMethod.noCalibration, 73: CalibrationMethod.noCalibration, 74: CalibrationMethod.noCalibration, 75: CalibrationMethod.noCalibration, 76: CalibrationMethod.noCalibration,
 																						 77: CalibrationMethod.noCalibration, 78: CalibrationMethod.noCalibration, 79: CalibrationMethod.noCalibration, 80: CalibrationMethod.noCalibration, 81: CalibrationMethod.noCalibration,
 																						 82: CalibrationMethod.noCalibration, 83: CalibrationMethod.noCalibration, 84: CalibrationMethod.noCalibration, 85: CalibrationMethod.noCalibration, 86: CalibrationMethod.noCalibration,
-																						 87: CalibrationMethod.noCalibration, 88: CalibrationMethod.noCalibration, 89: CalibrationMethod.noCalibration, 90: CalibrationMethod.noCalibration, 91: CalibrationMethod.noCalibration, 
+																						 87: CalibrationMethod.noCalibration, 88: CalibrationMethod.noCalibration, 89: CalibrationMethod.noCalibration, 90: CalibrationMethod.noCalibration, 91: CalibrationMethod.noCalibration,
 																						 92: CalibrationMethod.noCalibration, 93: CalibrationMethod.noCalibration, 94: CalibrationMethod.noCalibration, 95: CalibrationMethod.noCalibration, 96: CalibrationMethod.noCalibration,
-																						 97: CalibrationMethod.noCalibration, 98: CalibrationMethod.noCalibration, 99: CalibrationMethod.noCalibration, 100: CalibrationMethod.noCalibration, 
-																						 101: CalibrationMethod.noCalibration, 102: CalibrationMethod.noCalibration, 103: CalibrationMethod.noCalibration, 104: CalibrationMethod.noCalibration, 
-																						 105: CalibrationMethod.noCalibration, 106: CalibrationMethod.noCalibration, 107: CalibrationMethod.noCalibration, 108: CalibrationMethod.noCalibration, 
+																						 97: CalibrationMethod.noCalibration, 98: CalibrationMethod.noCalibration, 99: CalibrationMethod.noCalibration, 100: CalibrationMethod.noCalibration,
+																						 101: CalibrationMethod.noCalibration, 102: CalibrationMethod.noCalibration, 103: CalibrationMethod.noCalibration, 104: CalibrationMethod.noCalibration,
+																						 105: CalibrationMethod.noCalibration, 106: CalibrationMethod.noCalibration, 107: CalibrationMethod.noCalibration, 108: CalibrationMethod.noCalibration,
 																						 109: CalibrationMethod.noCalibration, 110: CalibrationMethod.noCalibration, 111: CalibrationMethod.noCalibration},
 																   'ULOQ': {0: numpy.nan, 1: numpy.nan, 2: numpy.nan, 3: numpy.nan, 4: numpy.nan, 5: numpy.nan, 6: numpy.nan, 7: numpy.nan, 8: numpy.nan, 9: numpy.nan, 10: numpy.nan, 11: numpy.nan, 12: numpy.nan, 13: numpy.nan, 14: numpy.nan, 15: numpy.nan, 16: numpy.nan, 17: numpy.nan, 18: numpy.nan, 19: numpy.nan, 20: numpy.nan,
 																			21: numpy.nan, 22: numpy.nan, 23: numpy.nan, 24: numpy.nan, 25: numpy.nan, 26: numpy.nan, 27: numpy.nan, 28: numpy.nan, 29: numpy.nan, 30: numpy.nan, 31: numpy.nan, 32: numpy.nan, 33: numpy.nan, 34: numpy.nan, 35: numpy.nan, 36: numpy.nan, 37: numpy.nan, 38: numpy.nan, 39: numpy.nan, 40: numpy.nan,
@@ -4910,7 +4982,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 																			61: numpy.nan, 62: numpy.nan, 63: numpy.nan, 64: numpy.nan, 65: numpy.nan, 66: numpy.nan, 67: numpy.nan, 68: numpy.nan, 69: numpy.nan, 70: numpy.nan, 71: numpy.nan, 72: numpy.nan, 73: numpy.nan, 74: numpy.nan, 75: numpy.nan, 76: numpy.nan, 77: numpy.nan, 78: numpy.nan, 79: numpy.nan, 80: numpy.nan,
 																			81: numpy.nan, 82: numpy.nan, 83: numpy.nan, 84: numpy.nan, 85: numpy.nan, 86: numpy.nan, 87: numpy.nan, 88: numpy.nan, 89: numpy.nan, 90: numpy.nan, 91: numpy.nan, 92: numpy.nan, 93: numpy.nan, 94: numpy.nan, 95: numpy.nan, 96: numpy.nan, 97: numpy.nan, 98: numpy.nan, 99: numpy.nan, 100: numpy.nan,
 																			101: numpy.nan, 102: numpy.nan, 103: numpy.nan, 104: numpy.nan, 105: numpy.nan, 106: numpy.nan, 107: numpy.nan, 108: numpy.nan, 109: numpy.nan, 110: numpy.nan, 111: numpy.nan}})
-		
+
 		self.expectedBILISA['intensityData'] = numpy.array([[303.99, 278.77, 134.23, 51.30, 130.78, 28.58, 168.37, 2.62, 1.29, 3061.47, 600.04, 385.28, 2198.55, 541.55, 219.90, 160.24, 219.88, 421.21, 527.26,
 															 188.71, 31.67, 70.47, 29.35, 69.77, 48.03, 28.61, 13.80, 37.52, 5.17, 58.43, 19.18, 86.89, 79.48, 134.42, 31.89, 33.00, 21.19, 120.91, 53.10, 36.78,
 															 43.43, 42.21, 8.07, 10.19, 9.73, 15.17, 26.37, 5.00, 3.31, 4.81, 6.42, 11.15, 2.14, 8.83, 9.29, 14.47, 21.27, 4.98, 26.39, 8.74, 7.90, 10.56, 9.31,
@@ -4968,7 +5040,8 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 															 22.81, 17.84, 20.18, 25.38, 24.90, 5.29, 6.70, 5.03, 5.71, 6.13, 5.27, 12.04, 12.49, 10.17, 11.32, 13.76, 14.35, 11.21, 13.05, 10.72, 12.07, 17.63,
 															 19.29, 9.48, 4.25, 3.74, 4.82, 31.83, 14.53, 11.85, 19.77, 6.16, 2.13, 2.37, 3.15, 41.12, 22.89, 19.96, 27.05, 58.15, 30.28, 34.20, 81.22, 6.13, 5.84,
 															 7.66, 17.18]])
-		self.expectedBILISA['expectedConcentration'] = pandas.DataFrame(None, index=list(self.expectedBILISA['sampleMetadata'].index), columns=self.expectedBILISA['featureMetadata']['Feature Name'].tolist())
+		self.expectedBILISA['expectedConcentration'] = pandas.DataFrame(None, index=list(self.expectedBILISA['sampleMetadata'].index),
+																		columns=self.expectedBILISA['featureMetadata']['Feature Name'].tolist())
 
 		# Calibration
 		self.expectedBILISA['calibIntensityData'] = numpy.ndarray((0, self.expectedBILISA['featureMetadata'].shape[0]))
@@ -4991,7 +5064,6 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 
 		with self.subTest(msg='Basic import BrukerQuant-UR with matching fileNamePattern'):
 			expected = copy.deepcopy(self.expectedQuantUR)
-			#result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerBI-QUANT-PS', fileNamePattern='.*?plasma_quant_report\.xml$', output='raw concentration')#, unit='mmol/mol Crea')
 
 			# Generate
 			result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea')
@@ -5025,7 +5097,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 		with self.subTest(msg='Basic import BrukerQuant-UR with implicit fileNamePattern from SOP'):
 			expected = copy.deepcopy(self.expectedQuantUR)
 			# Generate
-			
+
 			result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', unit='mmol/mol Crea')
 			# Remove path from sampleMetadata
 			result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
@@ -5053,7 +5125,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 			self.assertEqual(len(expected['Attributes'].keys()), len(result.Attributes.keys()) - 1)
 			for i in expected['Attributes']:
 				self.assertEqual(expected['Attributes'][i], result.Attributes[i])
-	
+
 	def test_loadBrukerBIQUANTXMLDataset(self):
 
 		expected = copy.deepcopy(self.expectedQuantPS)
