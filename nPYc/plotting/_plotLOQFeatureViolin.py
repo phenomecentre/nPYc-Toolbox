@@ -115,10 +115,15 @@ def _featureLOQViolinPlotHelper(ax, tData, featID, splitByBatch=True, plotBatchL
         # make sure we have values to plot
         if len(violin_y) > 0:
             if splitByBatch:
-                p_violin = sns.violinplot(x=violin_x, y=violin_y, hue=violin_subgroup, palette=sTypeColourDict, hue_order=hue_order, ax=ax, scale='width', bw=.2, cut=0)
+                p_violin = sns.violinplot(x=violin_x, y=violin_y,
+                                          #hue=violin_subgroup, palette=sTypeColourDict,
+                                          hue_order=hue_order,
+                                          ax=ax, density_norm='width', bw_method=.2, cut=0)
             else:
                 # if not splitting by batch, the x-axis is the SampleType which is already recorder in _subgroup. Order is the same as hue_order. No hue used here
-                p_violin = sns.violinplot(x=violin_subgroup, y=violin_y, palette=sTypeColourDict, order=hue_order, ax=ax, scale='width', bw=.2, cut=0)
+                p_violin = sns.violinplot(x=violin_subgroup, y=violin_y,
+                                          palette=sTypeColourDict, order=hue_order,
+                                          ax=ax, density_norm='width', bw_method=.2, cut=0)
 
         # merged LLOQ / ULOQ lines
         if not numpy.isnan(new_LLOQ):

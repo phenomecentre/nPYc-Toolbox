@@ -71,7 +71,9 @@ def _plotIonMap(ax, msData, xlim, ylim):
 	alphas[alphas==0] = numpy.min(alphas[alphas!=0])
 	alphas = numpy.log(alphas)
 
-	cb = ax.scatter(msData.featureMetadata.loc[featureMask, 'Retention Time'], msData.featureMetadata.loc[featureMask, 'm/z'], c = alphas, cmap = plt.cm.get_cmap('Blues'), alpha=0.3, edgecolors='k')
+	cb = ax.scatter(msData.featureMetadata.loc[featureMask, 'Retention Time'], msData.featureMetadata.loc[featureMask, 'm/z'],
+					c = alphas, cmap = plt.colormaps.get_cmap('Blues'),
+					alpha=0.3, edgecolors='k')
 
 	cbar = plt.colorbar(cb)
 	cbar.set_label('Log median intensity')

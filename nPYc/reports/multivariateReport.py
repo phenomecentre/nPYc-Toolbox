@@ -786,6 +786,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
             if os.path.join(destinationPath, 'graphics') in str(item[key]):
+                #print("item key %s" % item[key])
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
 
         # Generate report

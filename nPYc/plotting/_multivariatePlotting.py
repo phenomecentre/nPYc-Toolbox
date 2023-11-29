@@ -337,7 +337,7 @@ def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
 	:param str xlabel: Label for the x-axis
 	"""
 
-    print("Plotting outliers")
+
     # Preparation
     if isinstance(sampleType, (str, type(None))):
         sampleType = pandas.Series(['Sample' for i in range(0, len(values))], name='sampleType')
@@ -987,12 +987,14 @@ def plotLoadingsInteractive(dataset, pcaModel, component=1, withExclusions=False
     return figure
 
 
-def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=None, figureFormat='png', dpi=72,
-                             figureSize=(11, 7)):
+def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=None,
+                             figureFormat='png', dpi=72, figureSize=(11, 7)):
     """
-	Plot the distribution of a set of data, e.g., sampleMetadata fields. Plots a bar chart for categorical data, or a histogram for continuous data.
+	Plot the distribution of a set of data, e.g., sampleMetadata fields.
+	Plots a bar chart for categorical data, or a histogram for continuous data.
 
-	:param sampleMetadata: Set of measurements/groupings associated with each sample, note can contain multiple columns, but they must be of one **valueType**
+	:param sampleMetadata: Set of measurements/groupings associated with each sample,
+	note can contain multiple columns, but they must be of one **valueType**
 	:type sampleMetadata: dataset.sampleMetadata
 	:param str valueType: Type of data contained in **sampleMetadata**, one of ``continuous``, ``categorical`` or ``date``
 	:param dict figures: If not ``None``, saves location of each figure for output in html report (see multivariateReport.py)
@@ -1031,7 +1033,9 @@ def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=N
             elif valueType == 'categorical':
 
                 # Define colors (gray for NaNs, cycle through tab10 otherwise)
+                #print("this %s" % field[plotNo])
                 classes = sampleMetadata[field[plotNo]].copy()
+                #print("values %s" % classes)
                 nans = [i for i, x in enumerate(classes) if x in {'nan', 'NaN', 'NaT', '', 'NA'}]
                 nonans = [i for i, x in enumerate(classes) if x not in {'nan', 'NaN', 'NaT', '', 'NA'}]
                 colors = []
@@ -1043,10 +1047,12 @@ def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=N
                     labels.append('NA')
                     counts.append(len(nans))
                 temp = classes[nonans].value_counts()
-                temp.sort_index(inplace=True)
+                # jms3 next line is causing failure when the column is 'SampleType'
+                # commenting out because I'm not sure how useful it is anyway... :-)
+                #temp.sort_index(inplace=True)
 
                 ix = 0
-                cmap = plt.cm.get_cmap('tab10')
+                cmap = plt.colormaps.get_cmap('tab10')
 
                 for i in temp.index:
                     colors.append(rgb2hex(cmap(ix)[:3]))

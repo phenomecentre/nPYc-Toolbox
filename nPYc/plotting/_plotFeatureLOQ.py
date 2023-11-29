@@ -182,12 +182,18 @@ def _plotFeatureLOQHelper(tData, splitByBatch=True, plotBatchLOQ=False, zoomLOQ=
 
 				# Plot
 				if isFirstInRow:
-					_featureLOQViolinPlotHelper(ax=ax_single, tData=tData, featID=featID, splitByBatch=splitByBatch, plotBatchLOQ=plotBatchLOQ, title=featName, xLabel=xLab, xTick=True, yLabel='Concentration', yTick=True, subplot=None, flipYLabel=False, logY=logY, tightYLim=tightYLim, showLegend=False, onlyLegend=False)
+					_featureLOQViolinPlotHelper(ax=ax_single, tData=tData, featID=featID, splitByBatch=splitByBatch, plotBatchLOQ=plotBatchLOQ,
+												title=featName, xLabel=xLab, xTick=True, yLabel='Concentration', yTick=True, subplot=None,
+												flipYLabel=False, logY=logY, tightYLim=tightYLim, showLegend=False, onlyLegend=False)
 				else:
-					_featureLOQViolinPlotHelper(ax=ax_single, tData=tData, featID=featID, splitByBatch=splitByBatch, plotBatchLOQ=plotBatchLOQ, title=featName, xLabel=xLab, xTick=True, yLabel=None, yTick=True, subplot=None, flipYLabel=False, logY=logY, tightYLim=tightYLim, showLegend=False, onlyLegend=False)
+					_featureLOQViolinPlotHelper(ax=ax_single, tData=tData, featID=featID, splitByBatch=splitByBatch, plotBatchLOQ=plotBatchLOQ,
+												title=featName, xLabel=xLab, xTick=True, yLabel=None, yTick=True, subplot=None,
+												flipYLabel=False, logY=logY, tightYLim=tightYLim, showLegend=False, onlyLegend=False)
 			# Plot the Legend
 			else:
-				_featureLOQViolinPlotHelper(ax=ax_single, tData=tData, featID=None, splitByBatch=splitByBatch, plotBatchLOQ=plotBatchLOQ, title=None, xLabel=None, xTick=False, yLabel=None, yTick=False, subplot=None, flipYLabel=False, logY=logY, tightYLim=tightYLim, showLegend=False, onlyLegend=True)
+				_featureLOQViolinPlotHelper(ax=ax_single, tData=tData, featID=None, splitByBatch=splitByBatch, plotBatchLOQ=plotBatchLOQ,
+											title=None, xLabel=None, xTick=False, yLabel=None, yTick=False, subplot=None,
+											flipYLabel=False, logY=logY, tightYLim=tightYLim, showLegend=False, onlyLegend=True)
 		# Tight layout
 	fig.tight_layout()
 

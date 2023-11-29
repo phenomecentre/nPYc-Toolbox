@@ -492,14 +492,32 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		# getAccuracyPrecision input table
 		self.tDataAccPrec = nPYc.TargetedDataset('', fileType='empty')
 		self.tDataAccPrec.name = 'unittest'
-		self.tDataAccPrec.sampleMetadata = pandas.DataFrame({'AssayRole': [AssayRole.PrecisionReference, AssayRole.PrecisionReference, AssayRole.PrecisionReference, AssayRole.PrecisionReference, AssayRole.PrecisionReference, AssayRole.PrecisionReference, AssayRole.Assay, AssayRole.Assay],
-															 'SampleType': [SampleType.StudyPool, SampleType.StudyPool, SampleType.StudyPool, SampleType.ExternalReference, SampleType.ExternalReference, SampleType.ExternalReference, SampleType.StudySample, SampleType.StudySample]})
-		self.tDataAccPrec.sampleMetadata['Sample File Name'] = ['UnitTest_targeted_file_001', 'UnitTest_targeted_file_002', 'UnitTest_targeted_file_003', 'UnitTest_targeted_file_004', 'UnitTest_targeted_file_005', 'UnitTest_targeted_file_006', 'UnitTest_targeted_file_007', 'UnitTest_targeted_file_008']
+		self.tDataAccPrec.sampleMetadata = pandas.DataFrame({'AssayRole': [AssayRole.PrecisionReference, AssayRole.PrecisionReference,
+																		   AssayRole.PrecisionReference, AssayRole.PrecisionReference, AssayRole.PrecisionReference,
+																		   AssayRole.PrecisionReference, AssayRole.Assay, AssayRole.Assay],
+															 'SampleType': [SampleType.StudyPool, SampleType.StudyPool, SampleType.StudyPool,
+																			SampleType.ExternalReference, SampleType.ExternalReference, SampleType.ExternalReference,
+																			SampleType.StudySample, SampleType.StudySample],
+															 'SampleClass': ['Study Pool', 'Study Pool','Study Pool',
+																			'Long-Term Reference','Long-Term Reference','Long-Term Reference',
+																			'Study Sample','Study Sample']
+															 })
+		self.tDataAccPrec.sampleMetadata['Sample File Name'] = ['UnitTest_targeted_file_001', 'UnitTest_targeted_file_002', 'UnitTest_targeted_file_003',
+																'UnitTest_targeted_file_004', 'UnitTest_targeted_file_005', 'UnitTest_targeted_file_006',
+																'UnitTest_targeted_file_007', 'UnitTest_targeted_file_008']
 		self.tDataAccPrec.sampleMetadata['Sample Name'] = ['Sample1', 'Sample2', 'Sample3', 'Sample4', 'Sample5', 'Sample6', 'Sample7', 'Sample8']
 		self.tDataAccPrec.sampleMetadata['Acqu Date'] = ['10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16', '10-Sep-16']
 		self.tDataAccPrec.sampleMetadata['Acqu Time'] = ['03:23:02', '04:52:35', '05:46:40', '06:10:43', '07:30:06', '08:50:29', '09:05:42', '09:20:58']
-		self.tDataAccPrec.sampleMetadata['Instrument'] = ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest']
-		self.tDataAccPrec.sampleMetadata['Acquired Time'] = [datetime(2016, 9, 10, 3, 23, 2), datetime(2016, 9, 10, 4, 52, 35), datetime(2016, 9, 10, 5, 46, 40), datetime(2016, 9, 10, 6, 10, 43), datetime(2016, 9, 10, 7, 30, 6), datetime(2016, 9, 10, 8, 50, 29), datetime(2016, 9, 10, 9, 5, 42), datetime(2016, 9, 10, 9, 20, 58)]
+		self.tDataAccPrec.sampleMetadata['Instrument'] = ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest',
+														  'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest']
+		self.tDataAccPrec.sampleMetadata['Acquired Time'] = [datetime(2016, 9, 10, 3, 23, 2),
+															 datetime(2016, 9, 10, 4, 52, 35),
+															 datetime(2016, 9, 10, 5, 46, 40),
+															 datetime(2016, 9, 10, 6, 10, 43),
+															 datetime(2016, 9, 10, 7, 30, 6),
+															 datetime(2016, 9, 10, 8, 50, 29),
+															 datetime(2016, 9, 10, 9, 5, 42),
+															 datetime(2016, 9, 10, 9, 20, 58)]
 		self.tDataAccPrec.sampleMetadata['Run Order'] = [0, 1, 2, 3, 4, 5, 6, 7]
 		self.tDataAccPrec.sampleMetadata['Batch'] = [1, 1, 1, 1, 1, 1, 1, 1]
 		self.tDataAccPrec.sampleMetadata['Dilution'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan]
@@ -510,14 +528,18 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		self.tDataAccPrec.sampleMetadata['Metadata Available'] = True
 		self.tDataAccPrec.sampleMetadata['Exclusion Details'] = ['', '', '', '', '', '', '', '']
 		self.tDataAccPrec.featureMetadata = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2','Feature3']})
-		self.tDataAccPrec.featureMetadata['calibrationMethod'] = [CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS]
-		self.tDataAccPrec.featureMetadata['quantificationType'] = [QuantificationType.QuantOwnLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue]
+		self.tDataAccPrec.featureMetadata['calibrationMethod'] = [CalibrationMethod.backcalculatedIS,
+																  CalibrationMethod.backcalculatedIS, CalibrationMethod.backcalculatedIS]
+		self.tDataAccPrec.featureMetadata['quantificationType'] = [QuantificationType.QuantOwnLabeledAnalogue,
+																   QuantificationType.QuantAltLabeledAnalogue, QuantificationType.QuantAltLabeledAnalogue]
 		self.tDataAccPrec.featureMetadata['Unit'] = ['a Unit', 'pg/uL', 'a Unit']
 		self.tDataAccPrec.featureMetadata['LLOQ'] = [0., 0., 0.]
 		self.tDataAccPrec.featureMetadata['ULOQ'] = [1000., numpy.nan, 1000.]
 		self.tDataAccPrec.featureMetadata['extID1'] = ['ID1', 'ID2', 'ID3']
 		self.tDataAccPrec._intensityData = numpy.array([[10., 10., 10.], [5., 50., 5.], [15., 90., 15.], [95., 30., 95.], [100., 30., 100], [105., 50., 105.], [100., 101., 100], [95., 105., 95]])
-		self.tDataAccPrec.expectedConcentration = pandas.DataFrame(numpy.array([[10., 50., 10.], [10., 50., 10.], [10., 50., 10.], [100., 50., 100.], [100., 50., 100.], [100., 50., 100.], [numpy.nan, numpy.nan, numpy.nan], [numpy.nan, numpy.nan, numpy.nan]]), columns=self.tDataAccPrec.featureMetadata['Feature Name'].values.tolist())
+		self.tDataAccPrec.expectedConcentration = pandas.DataFrame(numpy.array([[10., 50., 10.], [10., 50., 10.], [10., 50., 10.],
+																				[100., 50., 100.], [100., 50., 100.], [100., 50., 100.],
+																				[numpy.nan, numpy.nan, numpy.nan], [numpy.nan, numpy.nan, numpy.nan]]), columns=self.tDataAccPrec.featureMetadata['Feature Name'].values.tolist())
 		self.tDataAccPrec.sampleMetadataExcluded = []
 		self.tDataAccPrec.featureMetadataExcluded = []
 		self.tDataAccPrec.intensityDataExcluded = []
@@ -534,23 +556,39 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 		self.tDataAccPrec.initialiseMasks()
 
 		# getAccuracyPrecision result
-		self.resAcc = pandas.DataFrame({10.0: [100.0, numpy.nan, 100.0, numpy.nan, numpy.nan, numpy.nan, 100.0, numpy.nan, 100.0], 50.0: [numpy.nan, numpy.nan, numpy.nan, 100.0, 73.3333, 86.6667, numpy.nan, numpy.nan, numpy.nan], 100.0: [numpy.nan, 100.0, 100.0, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 100.0, 100.0], 'Feature': ['Feature1', 'Feature1', 'Feature1', 'Feature2', 'Feature2', 'Feature2', 'Feature3', 'Feature3','Feature3'], 'Sample Type': ['Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference', 'All Samples']})
+		self.resAcc = pandas.DataFrame({10.0: [100.0, numpy.nan, 100.0, numpy.nan, numpy.nan, numpy.nan, 100.0, numpy.nan, 100.0],
+										50.0: [numpy.nan, numpy.nan, numpy.nan, 100.0, 73.3333, 86.6667, numpy.nan, numpy.nan, numpy.nan],
+										100.0: [numpy.nan, 100.0, 100.0, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 100.0, 100.0],
+										'Feature': ['Feature1', 'Feature1', 'Feature1', 'Feature2', 'Feature2', 'Feature2', 'Feature3', 'Feature3','Feature3'],
+										'Sample Type': ['Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference',
+														'All Samples', 'Study Pool', 'External Reference', 'All Samples']})
 		self.resAcc = self.resAcc.set_index(['Feature', 'Sample Type'])
 		self.resAcc.fillna(value='', inplace=True)
 		self.resAcc.columns.name = 'Accuracy'
 
-		self.resPre = pandas.DataFrame({10.0: [40.8248, numpy.nan, 40.8248, numpy.nan, numpy.nan, numpy.nan, 40.8248, numpy.nan, 40.8248], 50.0: [numpy.nan, numpy.nan, numpy.nan, 65.3197, 25.7129, 57.5639, numpy.nan, numpy.nan, numpy.nan], 100.0: ['', 4.08248, 4.08248, numpy.nan, numpy.nan, numpy.nan, '', 4.08248, 4.08248], 'Feature': ['Feature1', 'Feature1', 'Feature1', 'Feature2', 'Feature2', 'Feature2', 'Feature3', 'Feature3', 'Feature3'], 'Sample Type': ['Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference', 'All Samples']})
+		self.resPre = pandas.DataFrame({10.0: [40.8248, numpy.nan, 40.8248, numpy.nan, numpy.nan, numpy.nan, 40.8248, numpy.nan, 40.8248],
+										50.0: [numpy.nan, numpy.nan, numpy.nan, 65.3197, 25.7129, 57.5639, numpy.nan, numpy.nan, numpy.nan],
+										100.0: ['', 4.08248, 4.08248, numpy.nan, numpy.nan, numpy.nan, '', 4.08248, 4.08248],
+										'Feature': ['Feature1', 'Feature1', 'Feature1', 'Feature2', 'Feature2', 'Feature2', 'Feature3', 'Feature3', 'Feature3'],
+										'Sample Type': ['Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference', 'All Samples']})
 		self.resPre = self.resPre.set_index(['Feature', 'Sample Type'])
 		self.resPre.fillna(value='', inplace=True)
 		self.resPre.columns.name = 'Precision'
 
-		self.resAccPre = pandas.DataFrame({'1': [100.0, numpy.nan, 100.0, numpy.nan, numpy.nan, numpy.nan, 100.0, numpy.nan, 100.0], '2': [40.8248, numpy.nan, 40.8248, numpy.nan, numpy.nan, numpy.nan, 40.8248, numpy.nan, 40.8248], '3': [numpy.nan, numpy.nan, numpy.nan, 100, 73.3333, 86.6667, numpy.nan, numpy.nan, numpy.nan], '4': [numpy.nan, numpy.nan, numpy.nan, 65.3197, 25.7129, 57.5639, numpy.nan, numpy.nan, numpy.nan], '5': ['', 100.0, 100.0, numpy.nan, numpy.nan, numpy.nan, '', 100.0, 100.0], '6': [numpy.nan, 4.08248, 4.08248, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 4.08248, 4.08248]})
+		self.resAccPre = pandas.DataFrame({'1': [100.0, numpy.nan, 100.0, numpy.nan, numpy.nan, numpy.nan, 100.0, numpy.nan, 100.0],
+										   '2': [40.8248, numpy.nan, 40.8248, numpy.nan, numpy.nan, numpy.nan, 40.8248, numpy.nan, 40.8248],
+										   '3': [numpy.nan, numpy.nan, numpy.nan, 100, 73.3333, 86.6667, numpy.nan, numpy.nan, numpy.nan],
+										   '4': [numpy.nan, numpy.nan, numpy.nan, 65.3197, 25.7129, 57.5639, numpy.nan, numpy.nan, numpy.nan],
+										   '5': ['', 100.0, 100.0, numpy.nan, numpy.nan, numpy.nan, '', 100.0, 100.0],
+										   '6': [numpy.nan, 4.08248, 4.08248, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 4.08248, 4.08248]})
 		self.resAccPre = self.resAccPre.transpose()
 		tuplesCol = [(10.0, 'Acc.'), (10.0, 'Prec.'), (50.0, 'Acc.'), (50.0, 'Prec.'), (100.0, 'Acc.'), (100.0, 'Prec.')]
 		colIdx = pandas.MultiIndex.from_tuples(tuplesCol, names=['Concentration', 'Measure'])
 		self.resAccPre.index = colIdx
 		self.resAccPre = self.resAccPre.transpose()
-		tuplesRow = [('Feature1', 'Study Pool'), ('Feature1', 'External Reference'), ('Feature1', 'All Samples'), ('Feature2', 'Study Pool'), ('Feature2', 'External Reference'), ('Feature2', 'All Samples'), ('Feature3', 'Study Pool'), ('Feature3', 'External Reference'), ('Feature3', 'All Samples')]
+		tuplesRow = [('Feature1', 'Study Pool'), ('Feature1', 'External Reference'), ('Feature1', 'All Samples'), ('Feature2', 'Study Pool'),
+					 ('Feature2', 'External Reference'), ('Feature2', 'All Samples'), ('Feature3', 'Study Pool'), ('Feature3', 'External Reference'),
+					 ('Feature3', 'All Samples')]
 		rowIdx = pandas.MultiIndex.from_tuples(tuplesRow, names=['Feature', 'Sample Type'])
 		self.resAccPre.index = rowIdx
 		self.resAccPre.fillna(value='', inplace=True)
@@ -684,6 +722,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 			expectedPath = os.path.join(tmpdirname, 'unittest_report_finalSummary.html')
 			self.assertTrue(os.path.exists(expectedPath))
 
+
 			testFiles = ['unittest_FeatureAccuracy-A.png',
 						 'unittest_FeatureAccuracy-B.png',
 						 'unittest_FeatureConcentrationDistribution_Quantified and validated with own labeled analogue_featureDistribution_0.png',
@@ -691,15 +730,17 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 						 'unittest_FeaturePrecision-A.png',
 						 'unittest_FeaturePrecision-B.png']
 
-			multivariateTestFiles = ['unittest_PCAloadingsPlot_PCAloadings.png', 'unittest_PCAscoresPlot_SampleTypePC1vsPC2.png']
+			multivariateTestFiles = ['unittest_PCAloadingsPlot_PCAloadings.png', 'unittest_PCAscoresPlot_SampleClassPC1vsPC2.png']
 
 			for testFile in testFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
+				#print("expected path = %s" % expectedPath)
 				self.assertTrue(os.path.exists(expectedPath))
 			# Separete here in case a future refactor splits different folders for PCA as _basicPCAReport is only being used in
 			# final summary reports
 			for testFile in multivariateTestFiles:
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
+				#print("expected path = %s" % expectedPath)
 				self.assertTrue(os.path.exists(expectedPath))
 
 
@@ -883,7 +924,6 @@ class test_reports_multivariate(unittest.TestCase):
 
 				expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAll')
 				self.assertTrue(os.path.exists(expectedPath))
-				print("Path is at %s" % expectedPath)
 				testFiles = ['Dataset_PCAloadingsPlot_PCAloadingsPC1.png', 'Dataset_PCAloadingsPlot_PCAloadingsPC2.png', 'Dataset_PCAscoresPlot_SampleClassPC1vsPC2.png',
 							 'Dataset_PCAscreePlot.png', 'Dataset_metadataPlot_metadataDistribution_categorical0.png', 'Dataset_metadataPlot_metadataDistribution_continuous0.png',
 							 'Dataset_metadataPlot_metadataDistribution_date0.png', 'Dataset_modOutliersPlot.png', 'Dataset_sigCorHeatmap.png', 'Dataset_sigKruHeatmap.png',
@@ -891,7 +931,6 @@ class test_reports_multivariate(unittest.TestCase):
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAll', testFile)
-					print("Exists? %s" % expectedPath)
 					self.assertTrue(os.path.exists(expectedPath))
 
 

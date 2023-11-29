@@ -213,15 +213,15 @@ def _msIDreport(msData, feature, outputDir='', rawData=None, dbConnection=None, 
 			hue_order=hue_order,
 			split=split,
 			palette=palette,
-			scale='width',
-			ax=ax1, bw=.2, cut=0)#top plot
+			density_norm='width',
+			ax=ax1, bw_method=.2, cut=0)#top plot
 			
 	# Violin plot of study samples
 	sns.violinplot(x=item['FeatureID'], data=localDF[localDF['Sample Type'] == 'Study Sample'],
 			y='Sample Type',
 			split=True,
-			scale='width',
-			ax=ax2, bw=.1, cut=0)
+			density_norm='width',
+			ax=ax2, bw_method=.1, cut=0)
 	
 	# Add red dashes where highest abundance samples lie
 	for sample in item['AbundanceSamples']:
