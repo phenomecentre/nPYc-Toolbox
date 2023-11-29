@@ -964,7 +964,7 @@ class test_reports_multivariate(unittest.TestCase):
 
 				for testFile in testFiles:
 					expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariateAnalytical', testFile)
-					print(expectedPath)
+					#print(expectedPath)
 					self.assertTrue(os.path.exists(expectedPath))
 
 

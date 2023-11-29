@@ -73,7 +73,8 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 		msData.applyMasks()
 
 	# List unique classes in msData.sampleMetadata[colourBy]
-	uniq = msData.sampleMetadata[colourBy].unique()
+	uniq_classes = msData.sampleMetadata[colourBy].unique()
+	uniq = [str(i) for i in uniq_classes]
 
 	if colourType == 'categorical':
 
@@ -150,7 +151,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 
 	# Colour by categorical class
 	if colourType == 'categorical':
-		uniq = msData.sampleMetadata[colourBy].unique()
+		#uniq = msData.sampleMetadata[colourBy].unique() defined above
 		palette = {}
 		sampleMasks = [] # sampleMasks = list()
 		for u in uniq:
