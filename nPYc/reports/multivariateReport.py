@@ -785,9 +785,19 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
-            if os.path.join(destinationPath, 'graphics') in str(item[key]):
-                #print("item key %s" % item[key])
-                item[key] = re.sub('.*graphics', 'graphics', item[key])
+            fig = item[key]
+            if os.path.join(destinationPath, 'graphics') in str(fig):
+
+                if isinstance(fig, dict):
+                    #print('This is a dictionary')
+                    #print("PROBLEM---->>>>>>> item[key] = %s" % fig)
+                    #print("key = %s" % key)
+                    for k in fig:
+                        fig[k] = re.sub('.*graphics', 'graphics', fig[k])
+                else: # assume it is a string
+                    item[key] = re.sub('.*graphics', 'graphics', str(fig))
+
+                #print("Result is %s" % item[key])
 
         # Generate report
         from jinja2 import Environment, FileSystemLoader
