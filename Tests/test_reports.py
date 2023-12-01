@@ -767,6 +767,27 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 
 class test_reports_modules(unittest.TestCase):
 
+	def test_reports_final_peakpanther(self):
+
+		data = nPYc.MSDataset(
+			os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
+			fileType='QI')
+		data.addSampleInfo(descriptionFormat='Filenames')
+		data.addSampleInfo(descriptionFormat='Raw Data',
+						   filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
+												 'parameters_data'))
+		data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
+		data.sampleMetadata['Metadata Available'] = True
+
+
+		with tempfile.TemporaryDirectory() as tmpdirname:
+			nPYc.reports.generateReport(data, reportType='final report peakpanther', destinationPath=tmpdirname)
+
+			expectedPath = os.path.join(tmpdirname, 'graphics/report_finalSummary/UnitTest1_PCSOP.069_QI_finalFeatureIntensityHist.png')
+			self.assertTrue(os.path.exists(expectedPath))
+
+
+
 	def test_reports_generatefeaturereport(self):
 
 		from nPYc.reports._generateFeatureDistributionReport import generateFeatureDistributionReport

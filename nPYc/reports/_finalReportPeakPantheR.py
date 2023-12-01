@@ -260,6 +260,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         print('Figure ' + str(figNo) + ': Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).')
         figNo = figNo+1
 
+
     figuresFeatureDistributionPassing = plotTargetedFeatureDistribution(
                dataset,
                featureMask=dataset.featureMetadata['Passing Selection'],
@@ -321,6 +322,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         # Make paths for graphics local not absolute for use in the HTML.
         for key in item:
             if os.path.join(destinationPath, 'graphics') in str(item[key]):
+                #print(item[key])
                 item[key] = re.sub('.*graphics', 'graphics', item[key])
 
         # Generate report
