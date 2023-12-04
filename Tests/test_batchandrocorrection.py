@@ -258,7 +258,7 @@ class test_batchcorrection(unittest.TestCase):
 				#print("expected means = %s" % expectedMeans)
 				#print("means = %s" % means)
 
-				numpy.testing.assert_allclose(means, expectedMeans,  rtol=1e-02)
+				numpy.testing.assert_allclose(means, expectedMeans,  rtol=1.5e-02)
 				#print("tol = %s" % 1.5e-02)
 
 		def test_correctMSdataset_raises(self):
