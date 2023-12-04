@@ -391,7 +391,7 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 					symbol='circle',
 					),
 				text=hovertext[classes == i],
-				name=i,
+				name=str(i),
 				hoverinfo='text',
 				showlegend=True, opacity=opacity
 				)

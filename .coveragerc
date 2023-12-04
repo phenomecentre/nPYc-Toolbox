@@ -2,7 +2,9 @@
 # this file needs to be in top level dir (nPYc-Toolbox)
 # from the Tests/ folder run:
 # coverage run -m unittest discover
-# coverage report
+# coverage report --sort=Cover
+# coverage html
+# coverage xml
 ######################################################
 [run]
 branch = True
