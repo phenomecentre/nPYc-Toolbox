@@ -255,8 +255,11 @@ class test_batchcorrection(unittest.TestCase):
 					feature = output[featureNo][1]
 					means.append(numpy.mean(
 						feature[(self.batch == batch) & self.testSRmask]))
+				#print("expected means = %s" % expectedMeans)
+				#print("means = %s" % means)
 
 				numpy.testing.assert_allclose(means, expectedMeans,  rtol=1e-02)
+				#print("tol = %s" % 1.5e-02)
 
 		def test_correctMSdataset_raises(self):
 
