@@ -4,7 +4,7 @@
 
 coverage erase
 coverage run -m unittest discover
-coverage report
+coverage report --sort=Cover
 coverage html
-coverage xml
+#coverage xml
 open htmlcov/index.html

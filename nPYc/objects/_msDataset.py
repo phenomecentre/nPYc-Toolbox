@@ -867,7 +867,9 @@ class MSDataset(Dataset):
 		# Tidy formatting
 		featureMetadata.drop(list(featureMetadata.filter(regex='Unnamed')), axis=1, inplace=True)
 		featureMetadata.rename(columns={"name": "Feature Name", "mz": "m/z", "rt": "Retention Time"}, inplace=True)
-		featureMetadata['Retention Time'] = featureMetadata['Retention Time'].astype(float) / 60.0
+		# Jazz adding extra column to retain RT in seconds as well as minutes
+		featureMetadata['Retention Time (seconds)'] = featureMetadata['Retention Time'].astype(float)
+		featureMetadata['Retention Time'] = featureMetadata['Retention Time (seconds)'] / 60.0
 		featureMetadata['m/z'] = featureMetadata['m/z'].astype(float)
 
 		self.featureMetadata = featureMetadata
