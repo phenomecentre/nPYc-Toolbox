@@ -1560,8 +1560,11 @@ class test_msdataset_import_xcms(unittest.TestCase):
 
 	def setUp(self):
 
-		self.msData = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_xcms.csv'), fileType='XCMS', noFeatureParams=9)
-		self.msData_PeakTable = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_xcms_peakTable.csv'), fileType='XCMS', noFeatureParams=8)
+		f1 = os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_xcms.csv')
+		f2 = os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_xcms_peakTable.csv')
+
+		self.msData = nPYc.MSDataset(f1, fileType='XCMS', noFeatureParams=9)
+		self.msData_PeakTable = nPYc.MSDataset(f2, fileType='XCMS', noFeatureParams=8)
 
 		self.msData.addSampleInfo(descriptionFormat='Filenames')
 		self.msData_PeakTable.addSampleInfo(descriptionFormat='Filenames')
@@ -1658,10 +1661,14 @@ class test_msdataset_import_xcms(unittest.TestCase):
 							258.1033447],
 							name='m/z',
 							dtype='float')
-
 			assert_series_equal(self.msData.featureMetadata['m/z'], mz)
 			assert_series_equal(self.msData_PeakTable.featureMetadata['m/z'], mz)
 
+		with self.subTest(msg="Checking Retention Time units"):
+			mins_col = "Retention Time" # this one is in minutes
+			secs_col = "Retention Time (seconds)"
+			self.assertIn(mins_col, self.msData.featureMetadata.columns.values, mins_col + " not present")
+			self.assertIn(secs_col, self.msData.featureMetadata.columns.values, secs_col + " not present")
 
 		with self.subTest(msg='Checking Retention Time'):
 			rt = pandas.Series([3.17485 / 60.0,

@@ -1772,7 +1772,6 @@ class Dataset:
 
 		self.Attributes['Log'].append([datetime.now(), "%s format export made to %s\n" % (saveFormat, self.saveDir)])
 
-
 	def _exportCSV(self, destinationPath, escapeDelimiters=False):
 		"""
 		Export the dataset to the directory *destinationPath* as a set of three CSV files:
