@@ -17,10 +17,18 @@
 		"LinearityReference": "red", "Linearity Reference": "red",
 		"MethodReference": "blue", "Method Reference": "blue",
 		"ProceduralBlank": "aquamarine", "Blank": "aquamarine",
-		"Other": "grey", "UnknownRole": "grey", "Unknown": "grey", "nan": "grey", "NaN":  "grey", "NA":  "grey",
-		"UnknownType": "grey", "UnknownRole": "grey", "Unknown": "grey", "nan": "grey", "NaN":  "grey", "NA":  "grey"
+		"Other": "grey", "UnknownRole": "grey", "Unknown": "grey", "UnknownType": "grey", "nan": "grey", "NaN":  "grey", "NA":  "grey"
 	},
 	"sampleTypeMarkers":{
+		"StudySample": "8", "Assay": "8", "Study Sample": "8", "Sample": "x",
+		"StudyPool": "1", "Study Reference": "1", "Study Pool": "1",
+		"ExternalReference": "2", "Long-Term Reference": "2", "Long Term Reference": "2",
+		"LinearityReference": "4", "Linearity Reference": "4",
+		"MethodReference": "3", "Method Reference": "3",
+		"ProceduralBlank": "x", "Blank": "x",
+		"UnknownType": "d", "UnknownRole": "d", "Unknown": "d", "nan": "d", "NaN":  "d", "NA":  "d"
+	},
+	"matplotlibMarkers":{
 		"StudySample": "o", "Assay": "o", "Study Sample": "o", "Sample": "X",
 		"StudyPool": "v", "Study Reference": "v", "Study Pool": "v",
 		"ExternalReference": "^", "Long-Term Reference": "^", "Long Term Reference": "^",

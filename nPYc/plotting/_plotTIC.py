@@ -254,7 +254,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 	if colourType in {'continuous', 'continuousCentered'}:
 		cbar = plt.colorbar(sc)
 		cbar.set_label(colourBy)
-		leg = ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+		#leg = ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 	elif addViolin is False:
 		ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 
@@ -263,7 +263,9 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 	# Save or output
 	if savePath:
 		try:
-			plt.savefig(savePath, bbox_extra_artists=(leg, ), bbox_inches='tight', format=figureFormat, dpi=dpi)
+			#plt.savefig(savePath, bbox_extra_artists=(leg, ), bbox_inches='tight', format=figureFormat, dpi=dpi)
+			plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
+
 		except UnboundLocalError:
 			plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
 		plt.close()
@@ -273,7 +275,9 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 
 
 def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
-					   colourBy='Correction Batch', withExclusions=True,
+					   colourBy='Correction Batch',
+						colourDict=None, markerDict=None, abbrDict=None,
+					   withExclusions=True,
 					   destinationPath=None, autoOpen=True, opacity=.6):
 	"""
 	Interactively visualise TIC or intensity for a given feature with plotly, provides tooltips to allow identification of samples.
@@ -283,6 +287,9 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 	:param str y: Y-axis of plot, either ``TIC`` for sum of all features, or a specific feature name
 	:param str labelBy: dataset.sampleMetadata column entry to display in tooltips
 	:param str colourBy: dataset.sampleMetadata column entry to colour data points by
+	:param dict colourDict:
+	:param dict markerDict:
+	:param dict abbrDict:
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
 	:param str destinationPath: file path to save html version of plot
 	:param bool autoOpen: If ``True``, opens html version of plot
@@ -379,16 +386,27 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 		data.append(CLASSplot)
 
 	# Plot categorical values by unique groups
+	# add colour/marker dictionaries here?
 	else:
 		uniq = numpy.unique(classes[plotnans == False])
+		if colourDict is None:
+			colourDict = {}
+			for u in uniq:
+				colourDict[u] = 'magenta'
+			markerDict = {}
+			for u in uniq:
+				markerDict[u] = 'diamond-dot'
+
 		for i in uniq:
 			CLASSplot = go.Scatter(
 				x=msData.sampleMetadata.loc[classes == i, x],
 				y=values[classes == i],
 				mode='markers',
 				marker=dict(
-					colorscale='Portland',
-					symbol='circle',
+					#colorscale='Portland',
+					#symbol='circle',
+					color=colourDict[i],
+					symbol=markerDict[i]
 					),
 				text=hovertext[classes == i],
 				name=str(i),
@@ -425,7 +443,8 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 			mode='markers',
 			marker=dict(
 				color='rgb(198, 83, 83)',
-				symbol='x'
+				symbol='star',
+
 			),
 			text=hovertext[LTRmask],
 			name='Long-Term Reference',

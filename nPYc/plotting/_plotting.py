@@ -194,7 +194,7 @@ def histogram(values, inclusionVector=None, quantiles=None, title='', xlabel='',
 
 
 def plotLRTIC(msData, sampleMask=None, colourByDetectorVoltage=False, title='', label=False, savePath=None,
-              figureFormat='png', dpi=72, figureSize=(11, 7), opacity=.4):
+              figureFormat='png', dpi=72, figureSize=(11, 7), opacity=.6):
     """
 	Visualise TIC for linearity reference (LR) samples (either all or a subset) coloured by either dilution value or detector voltage.
 

@@ -46,6 +46,7 @@ class SampleType(enum.Enum):
 	* *External Reference* a sample of a comparable :term:`matrix` to the *Study Samples*, but not a sample (or mixture) derived from samples acquired as part of the study. Acquired, for example, for assessing analytical quality between studies.
 	* *Method Reference* consists of a synthetic mixture of known chemical standards
 	* *Procedural Blank* a blank sample not expected to contain any signals from the sample matrix
+	* *Linearity Reference - for dilution series? What do I know (jms3)
 	* *Unknown Type* a sample of unknown or undefined type
 	"""
 	def __repr__(self):
@@ -63,6 +64,7 @@ class SampleType(enum.Enum):
 	MethodReference = 'Method Reference'
 	ProceduralBlank = 'Procedural Blank'
 	UnknownType = 'Unknown Type'
+	LinearityReference = 'Linearity Reference'
 
 class AssayRole(enum.Enum):
 	"""

@@ -141,13 +141,19 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 						msDatacorrected.intensityData[sample, feature]),
 						xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
 						msData.intensityData[sample, feature]),
-						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.StudyPool], facecolor=sTypeColourDict[SampleType.StudyPool], alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
+						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.StudyPool],
+										facecolor=sTypeColourDict[SampleType.StudyPool],
+										alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
 						clip_on=True)
 
 		# LTR
 		if sum(ERmask) > 0:
 
-			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[ERmask, 'Acquired Time']], msData.intensityData[ERmask, feature], c=sTypeColourDict[SampleType.ExternalReference], fmt='o', ms=4, alpha=0.9, label='Long-Term Reference')
+			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[ERmask, 'Acquired Time']],
+						 msData.intensityData[ERmask, feature],
+						 c=sTypeColourDict[SampleType.ExternalReference],
+						 fmt='o', ms=4,
+						 alpha=0.9, label='Long-Term Reference')
 
 			ER = numpy.where(ERmask==True)
 			temp = ER[0]
@@ -156,14 +162,22 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 						msDatacorrected.intensityData[sample, feature]),
 						xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
 						msData.intensityData[sample, feature]),
-						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.ExternalReference], facecolor=sTypeColourDict[SampleType.ExternalReference], alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
+						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.ExternalReference],
+										facecolor=sTypeColourDict[SampleType.ExternalReference],
+										alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
 						clip_on=True)
 
 
 		# SRD
 		if sum(LRmask) > 0:
 
-			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[LRmask, 'Acquired Time']], msData.intensityData[LRmask, feature], c=sTypeColourDict[SampleType.MethodReference], fmt='s', ms=4, alpha=0.9, label='Serial Dilution')
+			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[LRmask, 'Acquired Time']],
+						 msData.intensityData[LRmask, feature],
+						 c=sTypeColourDict[SampleType.LinearityReference],
+						 fmt='s',
+						 ms=4,
+						 alpha=0.9,
+						 label='Serial Dilution')
 
 
 		# Plot fit coloured by batch
