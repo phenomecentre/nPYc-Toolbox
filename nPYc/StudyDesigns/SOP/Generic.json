@@ -28,15 +28,6 @@
 		"ProceduralBlank": "x", "Blank": "x",
 		"UnknownType": "d", "UnknownRole": "d", "Unknown": "d", "nan": "d", "NaN":  "d", "NA":  "d"
 	},
-	"matplotlibMarkers":{
-		"StudySample": "o", "Assay": "o", "Study Sample": "o", "Sample": "X",
-		"StudyPool": "v", "Study Reference": "v", "Study Pool": "v",
-		"ExternalReference": "^", "Long-Term Reference": "^", "Long Term Reference": "^",
-		"LinearityReference": "s", "Linearity Reference": "s",
-		"MethodReference": "P", "Method Reference": "P",
-		"ProceduralBlank": "X", "Blank": "X",
-		"UnknownType": "d", "UnknownRole": "d", "Unknown": "d", "nan": "d", "NaN":  "d", "NA":  "d"
-	},
 	"sampleTypeAbbr":{
 		"StudySample": "SS", "Assay": "SS", "Study Sample": "SS", "Sample": "SS",
 		"StudyPool": "SR", "Study Reference": "SR", "Study Pool": "SR",
