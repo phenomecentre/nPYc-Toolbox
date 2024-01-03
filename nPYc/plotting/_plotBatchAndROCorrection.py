@@ -1,10 +1,9 @@
-import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
 import seaborn as sns
 import numpy
 import pandas
 from ..objects._msDataset import MSDataset
-from ..utilities import generateLRmask
 from ..enumerations import AssayRole, SampleType
 from ._violinPlot import _violinPlotHelper
 import matplotlib.dates as mdates
@@ -12,16 +11,20 @@ from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 from matplotlib.dates import WeekdayLocator
 from matplotlib.dates import DateFormatter
 from matplotlib import gridspec
-from matplotlib.patches import Rectangle
 import os
 import copy
 
-def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=True, sampleAnnotation=None, logy=False, title='', savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotBatchAndROCorrection(dataset, datasetcorrected, featureList, addViolin=True,
+							 colourBy='SampleClass', colourDict=None, markerDict=None,
+							 abbrDict=None, opacity=.6,
+							 sampleAnnotation=None, logy=False, title='',
+							 withExclusions=True, savePath=None,
+							 figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	Visualise the run-order correction applied to features, by plotting the values before and after correction, along with the fit calculated.
 	
-	:param MSDataset msData: Dataset prior to correction
-	:param MSDataset msDatacorrected: Dataset post-correction
+	:param MSDataset dataset: Dataset prior to correction
+	:param MSDataset datasetcorrected: Dataset post-correction
 	:param featureList: List of ints specifying indices of features to plot
 	:type featureList: list[int,]
 	:param bool addViolin: If ``true``, plot distributions as violin plots in addition to the longitudinal trend
@@ -35,7 +38,7 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 	# Check dimensions of msData the same as msDatacorrected
 
 	# TODO: implement plotting features by Run Order rather than by Acquired Time
-	if ('Acquired Time' not in msData.sampleMetadata.columns):
+	if ('Acquired Time' not in dataset.sampleMetadata.columns):
 		raise NotImplementedError
 
 	try:
@@ -46,37 +49,98 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 	else:
 		pass
 
-	# Load toolbox wide color scheme
-	if 'sampleTypeColours' in msData.Attributes.keys():
-		sTypeColourDict = copy.deepcopy(msData.Attributes['sampleTypeColours'])
-		for stype in SampleType:
-			if stype.name in sTypeColourDict.keys():
-				sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-	else:
-		sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-							SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
+	# Apply sample/feature masks if exclusions to be applied
+	msData = copy.deepcopy(dataset)
+	msDatacorrected = copy.deepcopy(datasetcorrected)
+	if withExclusions:
+		msData.applyMasks()
+		msDatacorrected.applyMasks()
 
-	# Define sample types and exclude masked samples
-	SSmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (msData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-	SPmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	ERmask = (msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	LRmask = (msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (msData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+		# Check that dimensions are the same
+		try:
+			# Attempting to add arrays ar1 and ar2
+			msData.intensityData + msDatacorrected.intensityData
+		except ValueError:
+			# If ValueError occurs (arrays have different dimensions), return "Different dimensions"
+			return "msData and msDatacorrected must have the same dimensions"
+
+		# List unique classes in msData.sampleMetadata[colourBy]
+		uniq_classes = msData.sampleMetadata[colourBy].unique()
+		uniq = [str(i) for i in uniq_classes]
+
+		# If colourDict check colour defined for every unique entry in class
+		if colourDict is not None:
+			if not all(k in colourDict.keys() for k in uniq):
+				raise ValueError(
+					'If colourDict is specified every unique entry in ' + colourBy + ' must be a key in colourDict')
+		# Otherwise create colour dict
+		else:
+			colourDict = {}
+			color = iter(cm.rainbow(numpy.linspace(0, 1, len(uniq))))
+			for i in range(len(uniq)):
+				colourDict[uniq[i]] = next(color)
+
+		# If markerDict check colour defined for every unique entry in class
+		if markerDict is not None:
+			if not all(k in markerDict.keys() for k in uniq):
+				raise ValueError(
+					'If markerDict is specified every unique entry in ' + colourBy + ' must be a key in markerDict')
+		else:
+			markerDict = {}
+			for u in uniq:
+				markerDict[u] = 'o'
+
+		# If abbrDict check abbr defined for every unique entry in class
+		if abbrDict is not None:
+			if not all(k in abbrDict.keys() for k in uniq):
+				raise ValueError(
+					'If abbrDict is specified every unique entry in ' + colourBy + ' must be a key in abbrDict')
+		else:
+			abbrDict = {}
+			for u in uniq:
+				abbrDict[u] = u
+
+	# Use 'Acquired Time' of it exists
+	if ('Acquired Time' in msData.sampleMetadata.columns):
+
+		# X axis limits for formatting
+		minX = msData.sampleMetadata['Acquired Time'].loc[
+			msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'])].values
+		maxX = msData.sampleMetadata['Acquired Time'].loc[
+			msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'])].values
+		delta = maxX - minX
+		days = delta.astype('timedelta64[D]')
+		days = days / numpy.timedelta64(1, 'D')
+		if days < 7:
+			loc = WeekdayLocator(byweekday=(MO, TU, WE, TH, FR, SA, SU))
+		else:
+			loc = WeekdayLocator(byweekday=(MO, SA))
+		formatter = DateFormatter('%d/%m/%y')
+
+		# Ensure 'Acquired Time' is datetime.datetime, if it's already a datetime it will trigger an AttributeError
+		try:
+			acqTime = numpy.array([xtime.to_pydatetime() for xtime in msData.sampleMetadata['Acquired Time'].tolist()])
+		except AttributeError:
+			acqTime = numpy.array(msData.sampleMetadata['Acquired Time'].tolist())
+
+	# Otherwise use 'Run Order'
+	else:
+		acqTime = msData.sampleMetadata['Run Order']
 
 	# Get and sort the fit data
-	localRO = msData.sampleMetadata['Acquired Time'].values
 	localBatch = msDatacorrected.sampleMetadata['Correction Batch'].values
 	localFit = msDatacorrected.fit
 
-	sortedRO = numpy.argsort(localRO)
-	sortedRO2 = localRO[sortedRO]
-	fitSorted = localFit[sortedRO,:]
+	sortedRO = numpy.argsort(acqTime)
+	acqTimeSorted = acqTime[sortedRO]
+	fitSorted = localFit[sortedRO, :]
 	localBatch = localBatch[sortedRO]
-	
+
 	batches = (numpy.unique(localBatch[~numpy.isnan(localBatch)])).astype(int)
 
 	# define the colours (different for each batch) and get axis y-limits
 	cmap = plt.get_cmap('gnuplot')
-	colors = [cmap(i) for i in numpy.linspace(0, 1, len(batches)+1)]
+	colors = [cmap(i) for i in numpy.linspace(0, 1, len(batches) + 1)]
 
 	for feature in iterator:
 		
@@ -97,93 +161,43 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 			ax2 = plt.subplot(gs[0,-1])
 			ax3 = plt.subplot(gs[1,-1])
 
-		# X axis limits for formatting
-		minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
-		maxX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'][SSmask | SPmask | ERmask | LRmask])].values
-		delta = maxX - minX
-		days = delta.astype('timedelta64[D]')
-		days = days / numpy.timedelta64(1, 'D')
-		if days < 7:
-			loc = WeekdayLocator(byweekday=(MO, TU, WE, TH, FR, SA, SU))
-		else:
-			loc = WeekdayLocator(byweekday=(MO, SA))
-		formatter = DateFormatter('%d/%m/%y')
-
-
 		# Plot feature intensity for different sample types
+		palette = {}
+		sampleMasks = []
 
-		# SS
-		if sum(SSmask) > 0:
+		for u in uniq:
 
-			# Plot data
-			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[SSmask, 'Acquired Time']], msData.intensityData[SSmask, feature], c=sTypeColourDict[SampleType.StudySample], fmt='o', ms=4, alpha=0.5, label='Study Sample')
+			# Plot uncorrected data
+			ax.scatter(acqTime[msData.sampleMetadata[colourBy] == u],
+							msData.intensityData[msData.sampleMetadata[colourBy] == u, feature],
+							marker=markerDict[u],
+							s=30,
+							c=colourDict[u],
+							alpha=opacity, # opacity
+							label=u)
 
 			# Plot arrows (base to point = before to after correction)
-			SS = numpy.where(SSmask==True)
+			SS = numpy.where(msData.sampleMetadata[colourBy] == u)
 			temp = SS[0]
 			for sample in temp:
-				ax.annotate('', xy=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-						msDatacorrected.intensityData[sample, feature]),
-						xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-						msData.intensityData[sample, feature]),
-						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.StudySample], facecolor=sTypeColourDict[SampleType.StudySample], alpha=0.5, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
-						clip_on=True)
+				ax.annotate('', xy=(acqTime[sample],
+									msDatacorrected.intensityData[sample, feature]),
+							xytext=(acqTime[sample],
+									msData.intensityData[sample, feature]),
+							arrowprops=dict(edgecolor=colourDict[u],
+											facecolor=colourDict[u], alpha=0.5,
+											arrowstyle='-|>', shrinkA=0, shrinkB=0),
+							clip_on=True)
 
-		# SR
-		if sum(SPmask) > 0:
-
-			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[SPmask, 'Acquired Time']], msData.intensityData[SPmask, feature], c=sTypeColourDict[SampleType.StudyPool], fmt='o', ms=4, alpha=0.9, label='Study Reference')
-
-			SP = numpy.where(SPmask==True)
-			temp = SP[0]
-			for sample in temp:
-				ax.annotate('', xy=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-						msDatacorrected.intensityData[sample, feature]),
-						xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-						msData.intensityData[sample, feature]),
-						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.StudyPool],
-										facecolor=sTypeColourDict[SampleType.StudyPool],
-										alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
-						clip_on=True)
-
-		# LTR
-		if sum(ERmask) > 0:
-
-			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[ERmask, 'Acquired Time']],
-						 msData.intensityData[ERmask, feature],
-						 c=sTypeColourDict[SampleType.ExternalReference],
-						 fmt='o', ms=4,
-						 alpha=0.9, label='Long-Term Reference')
-
-			ER = numpy.where(ERmask==True)
-			temp = ER[0]
-			for sample in temp:
-				ax.annotate('', xy=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-						msDatacorrected.intensityData[sample, feature]),
-						xytext=(mdates.date2num(msData.sampleMetadata.loc[sample, 'Acquired Time']),
-						msData.intensityData[sample, feature]),
-						arrowprops=dict(edgecolor=sTypeColourDict[SampleType.ExternalReference],
-										facecolor=sTypeColourDict[SampleType.ExternalReference],
-										alpha=0.9, arrowstyle = '-|>', shrinkA=0, shrinkB=0),
-						clip_on=True)
-
-
-		# SRD
-		if sum(LRmask) > 0:
-
-			ax.plot_date([pandas.to_datetime(d) for d in msData.sampleMetadata.loc[LRmask, 'Acquired Time']],
-						 msData.intensityData[LRmask, feature],
-						 c=sTypeColourDict[SampleType.LinearityReference],
-						 fmt='s',
-						 ms=4,
-						 alpha=0.9,
-						 label='Serial Dilution')
-
+			# Save masks for violinplots
+			if addViolin:
+				sampleMasks.append((abbrDict[u], msData.sampleMetadata[colourBy] == u))
+				palette[abbrDict[u]] = colourDict[u]
 
 		# Plot fit coloured by batch
 		colIX = 1
 		for i in batches:
-			ax.plot([pandas.to_datetime(d) for d in sortedRO2[localBatch==i]],
+			ax.plot(acqTimeSorted[localBatch==i],
 					fitSorted[localBatch==i,feature], c=colors[colIX],
 					alpha=0.6, label='Fit for batch ' + str(colIX))
 			colIX = colIX + 1
@@ -193,18 +207,21 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 			for sample in sampleAnnotation:
 				sampleIX = msData.sampleMetadata[msData.sampleMetadata['Sample File Name']==sample['id']].index
 				sampleIX = int(sampleIX[0])
-				ax.text(mdates.date2num(msDatacorrected.sampleMetadata.loc[sampleIX, 'Acquired Time']), 
+				ax.text(acqTime[sampleIX],
 					msDatacorrected.intensityData[sampleIX, feature], 
 					str(sample['rank']), 
 					horizontalalignment='center', 
 					verticalalignment='bottom')			
 
 		# ax formatting
-		ax.set_xlim([[pandas.to_datetime(d) for d in minX][0], [pandas.to_datetime(d) for d in maxX][0]])
-		ax.set_xlabel('Acquisition Date')
 		ax.set_ylabel('Feature Intensity')
-		ax.xaxis.set_major_locator(loc)
-		ax.xaxis.set_major_formatter(formatter)
+		if ('Acquired Time' in msData.sampleMetadata.columns):
+			ax.set_xlabel('Acquisition Date')
+			ax.set_xlim(minX, maxX)
+			ax.xaxis.set_major_locator(loc)
+			ax.xaxis.set_major_formatter(formatter)
+		else:
+			ax.set_xlabel('Run Order')
 		labels = ax.get_xticklabels() 
 		for label in labels:
 			label.set_rotation(30) 
@@ -220,22 +237,7 @@ def plotBatchAndROCorrection(msData, msDatacorrected, featureList, addViolin=Tru
 			ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 		ax.set_title(title)
 
-		if addViolin == True: # If required, violin plot of data distribution
-
-			sampleMasks = list()
-			palette = {}
-			if sum(SSmask)>0:
-				sampleMasks.append(('SS', SSmask))
-				palette['SS'] = sTypeColourDict[SampleType.StudySample]
-			if sum(SPmask)>0:
-				sampleMasks.append(('SR', SPmask))
-				palette['SR'] = sTypeColourDict[SampleType.StudyPool]
-			if sum(ERmask)>0:
-				sampleMasks.append(('LTR', ERmask))
-				palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
-			if sum(LRmask)>0:
-				sampleMasks.append(('SRD', LRmask))
-				palette['SRD'] = sTypeColourDict[SampleType.MethodReference]
+		if addViolin: # If required, violin plot of data distribution
 
 			limits = ax.get_ylim()
 

@@ -1085,6 +1085,10 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
                                  postData,
                                  feature,
                                  logy=logy, # True
+                                 colourBy='SampleClass',
+                                 colourDict=dataset.Attributes['sampleTypeColours'],
+                                 markerDict=dataset.Attributes['sampleTypeMarkers'],
+                                 abbrDict=dataset.Attributes['sampleTypeAbbr'],
                                  savePath=saveAs,
                                  figureFormat=dataset.Attributes['figureFormat'],
                                  dpi=dataset.Attributes['dpi'],

@@ -30,12 +30,24 @@ def _violinPlotHelper(ax, values, sampleMasks, xlabel, ylabel, palette=None, yli
 	localDFpre.dropna(axis='columns', how='all', inplace=True) # remove empty columns
 	sns.set_color_codes(palette='deep')
 
+	#localDFpre = pandas.melt(localDFpre)
+
 	if palette is not None:
-		sns.violinplot(data=localDFpre, density_norm='width', bw_method=.2, cut=0, ax=ax, palette=palette)
+		sns.violinplot(data=localDFpre,
+					   density_norm='width',
+					   #bw_method=.2,
+					   cut=0,
+					   ax=ax,
+					   palette=palette)
 	else:
-		sns.violinplot(data=localDFpre, density_norm='width', bw_method=.2, cut=0, ax=ax)
+		sns.violinplot(data=localDFpre,
+					   density_norm='width',
+					   #bw_method=.2,
+					   cut=0,
+					   ax=ax)
 
 	# ax formatting
+	ax.tick_params(axis='x', rotation=45)
 	if ylimits:
 		ax.set_ylim(ylimits)
 	if ylabel:
