@@ -17,7 +17,7 @@
 		"LinearityReference": "red", "Linearity Reference": "red",
 		"MethodReference": "blue", "Method Reference": "blue",
 		"ProceduralBlank": "aquamarine", "Procedural Blank": "aquamarine", "Blank": "aquamarine",
-		"Other": "grey", "UnknownRole": "grey", "Unknown": "grey", "UnknownType": "grey", "nan": "grey", "NaN":  "grey", "NA":  "grey", "Unspecified SampleType or AssayRole": "grey"
+		"Other": "grey", "UnknownRole": "grey", "Unknown Role": "grey", "Unknown Type": "grey", "Unknown": "grey", "UnknownType": "grey", "nan": "grey", "NaN":  "grey", "NA":  "grey", "Unspecified SampleType or AssayRole": "grey"
 	},
 	"sampleTypeMarkers":{
 		"StudySample": "8", "Assay": "8", "Study Sample": "8", "Sample": "x",
@@ -26,7 +26,7 @@
 		"LinearityReference": "4", "Linearity Reference": "4",
 		"MethodReference": "3", "Method Reference": "3",
 		"ProceduralBlank": "x", "Procedural Blank": "x", "Blank": "x",
-		"UnknownType": "d", "UnknownRole": "d", "Unknown": "d", "nan": "d", "NaN":  "d", "NA":  "d", "Unspecified SampleType or AssayRole": "d"
+		"UnknownType": "d", "UnknownRole": "d", "Unknown Role": "d", "Unknown Type": "d", "Unknown": "d", "nan": "d", "NaN":  "d", "NA":  "d", "Unspecified SampleType or AssayRole": "d"
 	},
 	"sampleTypeAbbr":{
 		"StudySample": "SS", "Assay": "Assay", "Study Sample": "SS", "Sample": "Sample",
@@ -35,6 +35,6 @@
 		"LinearityReference": "SRD", "Linearity Reference": "SRD",
 		"MethodReference": "MR", "Method Reference": "MR",
 		"ProceduralBlank": "Blank", "Procedural Blank": "Blank", "Blank": "Blank",
-		"UnknownType": "NA", "UnknownRole": "NA", "Unknown": "NA", "nan": "NA", "NaN":  "NA", "NA":  "NA", "Unspecified SampleType or AssayRole": "NA"
+		"UnknownType": "NA", "UnknownRole": "NA", "Unknown Role": "NA", "Unknown Type": "NA", "Unknown": "NA", "nan": "NA", "NaN":  "NA", "NA":  "NA", "Unspecified SampleType or AssayRole": "NA"
 	}
 }

@@ -15,6 +15,7 @@ from ..utilities import removeDuplicateColumns
 from ..utilities import normalisation
 from ..utilities.normalisation._normaliserABC import Normaliser
 import warnings
+from IPython.display import display
 
 
 class Dataset:
@@ -1316,6 +1317,11 @@ class Dataset:
 #				self.sampleMask[metadataNotAvailable] = False
 #				joinedTable.loc[metadataNotAvailable, 'Exclusion Details'] = 'No Metadata in CSV'
 
+			# Print warning that samples should be added to basic CSV or excluded from dataset
+			print('The following samples should be added to "Basic CSV" file, or excluded from dataset or nPYc-Toolbox functionality may be compromised:')
+			#display(acquired_butnotcsv)
+			print(*acquired_butnotcsv['Sample File Name'].values, sep='\n')
+
 		# 1) ACQ and in "include Sample" - drop and set mask to false
 		#  Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
 
@@ -1342,6 +1348,9 @@ class Dataset:
 		# Ensure there is a batch column
 		if 'Batch' not in self.sampleMetadata:
 			self.sampleMetadata['Batch'] = 1
+
+		# Check all samples have metadata
+
 
 		self.Attributes['Log'].append([datetime.now(), 'Basic CSV matched from %s' % (filePath)])
 

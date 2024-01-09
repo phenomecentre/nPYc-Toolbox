@@ -1274,10 +1274,10 @@ class MSDataset(Dataset):
 		if 'Exclusion Details' not in self.sampleMetadata:
 			self.sampleMetadata['Exclusion Details'] = None
 
-		# Flag samples with missing instrument parameters
+		# Print warning that samples are missing info, raw files should be located or samples should be excluded from dataset
 		missingSampleInfo = ~self.sampleMetadata['Sample File Name'].isin(instrumentParams['Sample File Name'])
 		if sum(missingSampleInfo) > 0:
-			print("Missing information for {0} samples\n".format(sum(missingSampleInfo)))
+			print('Raw data for the following samples should be added to the raw data folder, or samples should be excluded from dataset else nPYc-Toolbox functionality may be compromised:\n')
 			print(*self.sampleMetadata.loc[missingSampleInfo, 'Sample File Name'].values, sep='\n')
 
 	def _getSampleMetadataFromFilename(self, filenameSpec):
@@ -1421,8 +1421,75 @@ class MSDataset(Dataset):
 		:rtype: pandas.Dataframe
 		"""
 		sampleMetadata = self.sampleMetadata.copy()
-		# Loop over samples in run order
 
+		# Try to infer batches from 'Acquired Time' (preference) or 'Run Order'
+		try:
+
+			# Generate sampleMetadata sorted by run order
+			if ('Run Order' not in sampleMetadata.columns):
+				sampleMetadata['Order'] = sampleMetadata.sort_values(by='Acquired Time').index
+				sampleMetadata['Run Order'] = sampleMetadata.sort_values(by='Order').index
+				sampleMetadata.drop('Order', axis=1, inplace=True)
+
+			sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
+
+			# Use 'Acquired Time'(preference) or 'Run Order'
+			if ('Acquired Time' in sampleMetadata.columns):
+				usefield = 'Acquired Time'
+			else:
+				usefield = 'Run Order'
+
+
+
+			# Set first batch
+			sampleMetadata['Correction Batch'] = 1
+			sampleMetadata['Batch'] = 1
+
+			# Calculate the consecutive time differences
+			timeDelta = sortedSampleMetadata[usefield].diff()
+
+			batchTimeSplits = [sortedSampleMetadata.loc[idx, usefield] for idx, x in
+							   sortedSampleMetadata.iterrows() if timeDelta.loc[idx] > timedelta(hours=gapLength)]
+			batchTimeSplits.extend([sortedSampleMetadata[usefield].max()])
+			batchNumber = 1
+
+			for idx, batchSplit in enumerate(batchTimeSplits):
+				currentBatchIndex = sampleMetadata[usefield] <= batchSplit
+				if idx > 0:
+					currentBatchIndex &= sampleMetadata[usefield] >= batchTimeSplits[idx - 1]
+				sampleMetadata.loc[currentBatchIndex, 'Correction Batch'] = batchNumber
+				sampleMetadata.loc[currentBatchIndex, 'Batch'] = batchNumber
+				batchNumber += 1
+
+			# Handle the 'Dilution Series' field
+			if sum(sampleMetadata['AssayRole'] == AssayRole.LinearityReference) > 0:
+				SRD_series = 1
+				previousDilutionRunOrder = sortedSampleMetadata.loc[
+					sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, 'Run Order'].min()
+				previousBatch = 1
+				for idx, row in sortedSampleMetadata.loc[
+								sortedSampleMetadata['AssayRole'] == AssayRole.LinearityReference, :].iterrows():
+					if (row['Run Order'] - previousDilutionRunOrder > 1) or (row['Batch'] > previousBatch):
+						SRD_series += 1
+					sampleMetadata.loc[idx, 'Dilution Series'] = SRD_series
+					previousDilutionRunOrder = row['Run Order']
+					previousBatch = row['Batch']
+
+			# Method Reference, Dilution Series, and Blanks should have "Correction Batch" = nan
+			SamplesNoBatchCorrection = sampleMetadata['AssayRole'].isin([AssayRole.Blank, AssayRole.LinearityReference])
+			sampleMetadata.loc[SamplesNoBatchCorrection, 'Correction Batch'] = numpy.nan
+
+			# Handle cases where a first batch contains only blanks or pre-injection blanks.
+			if numpy.nanmin(sampleMetadata['Correction Batch']) > 1:
+				batchDiff = numpy.nanmin(sampleMetadata['Correction Batch']) - 1
+				sampleMetadata['Correction Batch'] -= batchDiff
+
+			self.sampleMetadata = sampleMetadata
+
+		except (AttributeError, KeyError, TypeError):
+			warnings.warn('Unable to infer batches without complete run order or acquired time info, skipping.')
+
+		"""
 		# If 'Acquired Time' data present
 		if ('Acquired Time' in sampleMetadata.columns) and (not sampleMetadata['Acquired Time'].isnull().all()):
 
@@ -1434,6 +1501,7 @@ class MSDataset(Dataset):
 			sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
 			sampleMetadata['Correction Batch'] = 1
 			sampleMetadata['Batch'] = 1
+
 			timeDelta = sortedSampleMetadata['Acquired Time'].diff()
 
 			batchTimeSplits = [sortedSampleMetadata.loc[idx, 'Acquired Time'] for idx, x in
@@ -1505,9 +1573,7 @@ class MSDataset(Dataset):
 				sampleMetadata['Correction Batch'] -= batchDiff
 
 			self.sampleMetadata = sampleMetadata
-
-		else:
-			warnings.warn('Unable to infer batches without run order or acquired time info, skipping.')
+		"""
 
 	def amendBatches(self, sampleRunOrder):
 		"""
