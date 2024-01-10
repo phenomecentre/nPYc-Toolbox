@@ -59,8 +59,11 @@ def plotBatchAndROCorrection(dataset, datasetcorrected, featureList, addViolin=T
 		# Check that dimensions are the same
 		try:
 			# Attempting to add arrays ar1 and ar2
+			print(msData.intensityData.shape)
+			print(msDatacorrected.intensityData.shape)
 			msData.intensityData + msDatacorrected.intensityData
-		except ValueError:
+		except ValueError as ve:
+			print(ve)
 			# If ValueError occurs (arrays have different dimensions), return "Different dimensions"
 			return "msData and msDatacorrected must have the same dimensions"
 

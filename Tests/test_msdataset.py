@@ -1352,7 +1352,7 @@ class test_msdataset_batch_inference(unittest.TestCase):
 		msData = copy.deepcopy(self.msData)
 		msData.sampleMetadata.drop('Run Order', axis=1, inplace=True)
 		msData.sampleMetadata.drop('Acquired Time', axis=1, inplace=True)
-		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without run order or acquired time info, skipping.',
+		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without complete run order or acquired time info, skipping.',
 							msData._inferBatches)
 
 	def test_amendbatches(self):
@@ -1381,7 +1381,7 @@ class test_msdataset_import_undefined(unittest.TestCase):
 	Test we raise an error when passing an fileType we don't understand.
 	"""
 	def test_raise_notimplemented(self):
-		self.assertRaises(NotImplementedError, nPYc.MSDataset, os.path.join('nopath'), fileType='Unknown filetype')
+		self.assertRaises(NotImplementedError, nPYc.MSDataset, os.path.join(''), fileType='Unknown filetype')
 
 
 class test_msdataset_import_QI(unittest.TestCase):
@@ -2527,7 +2527,7 @@ class test_msdataset_initialiseFromCSV(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			# Change default SOP to allow exporting acquired time.
-			dataset.Attributes['sampleMetadataNotExported'].remove('Acquired Time')
+			#dataset.Attributes['sampleMetadataNotExported'].remove('Acquired Time')
 			dataset.exportDataset(destinationPath=tmpdirname, saveFormat='CSV', withExclusions=False)
 
 			pathName = os.path.join(tmpdirname, 'Testing_sampleMetadata.csv')

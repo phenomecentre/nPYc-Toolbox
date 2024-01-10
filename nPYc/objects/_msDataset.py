@@ -57,7 +57,8 @@ class MSDataset(Dataset):
 		Operates on spreadsheets exported from Biocrates MetIDQ. By default loads data from the sheet named 'Data Export', this may be overridden with the ``sheetName=`` argument, If the number of sample metadata columns differes from the default, this can be overridden with the ``noSampleParams=`` argument.
 
 	* nPYc
-		nPYc import operates on the csv file generated using nPYc exportDataset function ('combinedData' file). This reimport function is meant for further filtering or normalisation without having to run whole process again.
+		nPYc import operates on the csv file generated using nPYc exportDataset function ('combinedData' file).
+		This reimport function is meant for further filtering or normalisation without having to run whole process again.
 		Note that metadata does not need to be imported again.
 	"""
 
@@ -67,6 +68,19 @@ class MSDataset(Dataset):
 		"""
 
 		super().__init__(sop=sop, **kwargs)
+
+		allowed_file_types = ['qi', 'mzmine', 'msdial', 'csv', 'xcms', 'xcmsonline',
+							  'biocrates', 'metaboscape', 'npyc', 'csv export', 'empty']
+
+		fileType = fileType.lower()
+		if fileType in allowed_file_types:
+			if fileType != 'empty' and not os.path.exists(datapath):
+				# warn early if a datapath has been supplied with points to a non-existent file
+				# caveat: datapaths can be empty strings with the 'empty' fileType
+				raise ValueError("Supplied MS data file '%s' regrettably doesn't exist." % datapath)
+		else:
+			raise NotImplementedError("Unfortunately '%s' is not yet recognised as an input format to nPYc.MSDataset." % fileType)
+
 		self.corrExclusions = None
 		self._correlationToDilution = numpy.array(None)
 		try:
@@ -92,7 +106,8 @@ class MSDataset(Dataset):
 											   'deltaMzArtifactual': None}
 
 		# Load the output file
-		fileType = fileType.lower()
+
+
 		if fileType == 'qi':
 			self._loadQIDataset(datapath)
 			self.Attributes['FeatureExtractionSoftware'] = 'Progenesis QI'
@@ -147,8 +162,7 @@ class MSDataset(Dataset):
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
 			pass
-		else:
-			raise NotImplementedError
+
 
 		self._intensityData = self._intensityData.astype(float)
 		self.featureMetadata['Exclusion Details'] = None
