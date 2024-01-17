@@ -9,7 +9,7 @@ import unittest
 sys.path.append("..")
 import nPYc
 from generateTestDataset import generateTestDataset
-from nPYc.enumerations import SampleType
+from nPYc.enumerations import SampleType, AssayRole
 
 
 class test_rocorrection(unittest.TestCase):
@@ -21,11 +21,16 @@ class test_rocorrection(unittest.TestCase):
 		self.noSamp = numpy.random.randint(500, high=2000, size=None)
 		self.noFeat = numpy.random.randint(50, high=100, size=None)
 
-		self.msData = generateTestDataset(self.noSamp, self.noFeat, dtype='MSDataset')
-		self.msDataERCorrection = generateTestDataset(20, 2, dtype='MSDataset')
+		self.msData = generateTestDataset(self.noSamp, self.noFeat, dtype='MSDataset', sop='GenericMS')
+
+		self.msDataERCorrection = generateTestDataset(20, 2, dtype='MSDataset', sop='GenericMS')
 		self.msDataERCorrection._intensityData[self.msDataERCorrection.sampleMetadata['SampleType'] == SampleType.StudyPool, :] = 0.5
 		self.msDataERCorrection._intensityData[self.msDataERCorrection.sampleMetadata['SampleType'] == SampleType.StudySample, :] = 2
 		self.msDataERCorrection._intensityData[self.msDataERCorrection.sampleMetadata['SampleType'] == SampleType.ExternalReference, :] = 1
+
+		self.msDataLRCorrection = generateTestDataset(20, 2, dtype='MSDataset', sop='GenericMS')
+		self.msDataLRCorrection.sampleMetadata['SampleType'] = SampleType.StudyPool
+		self.msDataLRCorrection.sampleMetadata.loc[self.msDataLRCorrection.sampleMetadata['AssayRole'] != AssayRole.PrecisionReference, 'AssayRole'] = AssayRole.LinearityReference
 
 	def test_correctMSDataset(self):
 		with self.subTest(msg='Test correctMSdataset parallelisation'):
@@ -55,6 +60,21 @@ class test_rocorrection(unittest.TestCase):
 			numpy.testing.assert_array_almost_equal(correctedDataER.fit, expectedCorrectedERDataFit, err_msg="Correction trendlines are not equal.")
 
 			numpy.testing.assert_array_almost_equal(correctedDataER.intensityData, expectedCorrectedERDataIntensity, err_msg="Corrected intensities are not equal")
+
+		with self.subTest(msg='Test linearity reference samples are not corrected'):
+			"""
+			Check that linearity samples (by default not corrected, see 'GenericMS.py') are not corrected
+			"""
+
+			correctedDataLR = nPYc.batchAndROCorrection.correctMSdataset(self.msDataLRCorrection,
+																		 correctionSampleType=SampleType.StudyPool)
+
+			LRmask = (correctedDataLR.sampleMetadata['SampleType'] == SampleType.StudyPool) & \
+					 (correctedDataLR.sampleMetadata['AssayRole'] == AssayRole.LinearityReference)
+
+			numpy.testing.assert_array_almost_equal(correctedDataLR.intensityData[LRmask, :],
+													self.msDataLRCorrection.intensityData[LRmask, :],
+													err_msg="By default, linearity reference samples should not be corrected")
 
 
 class test_rocorrection_synthetic(unittest.TestCase):

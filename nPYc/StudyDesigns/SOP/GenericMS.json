@@ -26,5 +26,6 @@
 		"LM Resolution", "Resolution", "Sampling Cone", "Scan Time (sec)", "Source Offset"],
 	"featureMetadataNotExported":["mzmin", "mzmax", "rtmin", "rtmax", "npeaks", "ms_level", "Exclusion Details",
 		"User Excluded","blankFilter", "blankValue", "artifactualFilter", "rsdFilter", "rsdSP",
-		"correlationToDilution", "correlationToDilutionFilter", "varianceRatioFilter", "rsdSS/rsdSP"]
+		"correlationToDilution", "correlationToDilutionFilter", "varianceRatioFilter", "rsdSS/rsdSP"],
+	"samplesNotCorrected": {"SampleType" : ["StudyPool"], "AssayRole" : ["LinearityReference"]}
 }

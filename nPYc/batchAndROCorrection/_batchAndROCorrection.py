@@ -18,11 +18,20 @@ from ..objects._msDataset import MSDataset
 from ..enumerations import AssayRole, SampleType
 
 
-def correctMSdataset(data, window=11, method='LOWESS', align='median', parallelise=True, excludeFailures=True, correctionSampleType=SampleType.StudyPool):
+def correctMSdataset(data,
+					 window=11,
+					 method='LOWESS',
+					 align='median',
+					 parallelise=True,
+					 excludeFailures=True,
+					 correctionSampleType=SampleType.StudyPool):
 	"""
 	Conduct run-order correction and batch alignment on the :py:class:`~nPYc.objects.MSDataset` instance *data*, returning a new instance with corrected intensity values.
 
-	Sample are seperated into batches acording to the *'Correction Batch'* column in *data.sampleMetadata*.
+	Sample are seperated into batches according to the *'Correction Batch'* column in *data.sampleMetadata*.
+
+	Samples are only corrected if they have a value in *'Correction Batch'* AND an *'AssayRole'*/*'SampleType'*
+	combination not defined in 'samplesNotCorrected' (taken from the sop/data.Attributes['samplesNotCorrected'])
 
 	:param data: MSDataset object with measurements to be corrected
 	:type data: MSDataset
@@ -54,13 +63,25 @@ def correctMSdataset(data, window=11, method='LOWESS', align='median', paralleli
 	if not isinstance(correctionSampleType,SampleType):
 		raise TypeError("correctionType must be a SampleType")
 
+	# Define the samples to be corrected (only corrected if have value in 'Correction Batch' and not listed for
+	# exclusion in 'samplesNotCorrected'
+	samplesForCorrection = data.sampleMetadata['Correction Batch'].values.astype(float)
+
+	for s in numpy.arange(len(data.Attributes['samplesNotCorrected']['SampleType'])):
+		try:
+			mask = (data.sampleMetadata['SampleType'] == SampleType[data.Attributes['samplesNotCorrected']['SampleType'][s]]) & \
+				   (data.sampleMetadata['AssayRole'] == AssayRole[data.Attributes['samplesNotCorrected']['AssayRole'][s]])
+			samplesForCorrection[mask] = numpy.nan
+		except KeyError:
+			raise KeyError('data.Attributes[\'samplesNotCorrected\'] must contain valid SampleType/AssayRole enumeration entries')
+
 	with warnings.catch_warnings():
 		warnings.simplefilter('ignore', category=RuntimeWarning)
 
 		correctedP = _batchCorrectionHead(data.intensityData,
 									 data.sampleMetadata['Run Order'].values,
 									 (data.sampleMetadata['SampleType'].values == correctionSampleType) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
-									 data.sampleMetadata['Correction Batch'].values,
+									 samplesForCorrection,
 									 window=window,
 									 method=method,
 									 align=align,

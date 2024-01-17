@@ -24,6 +24,7 @@ from ..enumerations import AssayRole, SampleType
 from ._generateBasicPCAReport import generateBasicPCAReport
 from ..reports._finalReportPeakPantheR import _finalReportPeakPantheR
 from ..utilities._filters import blankFilter
+from ..batchAndROCorrection import correctMSdataset
 
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
@@ -1720,68 +1721,83 @@ def batchCorrectionTest(dataset, nFeatures=10, window=11):
     from ..batchAndROCorrection._batchAndROCorrection import _batchCorrection
 
     # Samplemask
-    SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
-                dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-    SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-                dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-                dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-                dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
-    sampleMask = (SSmask | SPmask | ERmask | LRmask) & (dataset.sampleMask == True).astype(bool)
+#    SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
+#                dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
+#    SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
+#                dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+#    ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
+#                dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
+#    LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
+#                dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+#    sampleMask = (SSmask | SPmask | ERmask | LRmask) & (dataset.sampleMask == True).astype(bool)
 
     # Exclude features with zero values
-    zeroMask = sum(dataset.intensityData[sampleMask, :] == 0)
-    zeroMask = zeroMask == 0
+#    zeroMask = sum(dataset.intensityData[sampleMask, :] == 0)
+#    zeroMask = sum(dataset.intensityData == 0)
+#    zeroMask = zeroMask == 0
 
     # Exclude features which fail correlation to dilution
     try:
-        passMask = numpy.logical_and(zeroMask, dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
+        #passMask = numpy.logical_and(zeroMask, dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
+        passMask = dataset.correlationToDilution >= dataset.Attributes['corrThreshold']
     except:
-        passMask = zeroMask
+        #passMask = zeroMask
+        passMask = numpy.squeeze(numpy.ones([dataset.noFeatures, 1], dtype=bool), axis=1)
 
     # Select subset of features on which to perform batch correction
     maskNum = [i for i, x in enumerate(passMask) if x]
     random.shuffle(maskNum)
 
+    if len(maskNum) > nFeatures:
+        maskNum = maskNum[:nFeatures]
+
+    preData = copy.deepcopy(dataset)
+    preData.featureMask = numpy.squeeze(numpy.zeros([preData.noFeatures, 1], dtype=bool), axis=1)
+    preData.featureMask[maskNum] = True
+    preData.applyMasks()
+
     # Do batch correction
-    featureList = []
-    correctedData = numpy.zeros([dataset.intensityData.shape[0], nFeatures])
-    fits = numpy.zeros([dataset.intensityData.shape[0], nFeatures])
-    featureIX = 0
-    parameters = dict()
-    parameters['window'] = window
-    parameters['method'] = 'LOWESS'
-    parameters['align'] = 'median'
+    postData = correctMSdataset(preData)
 
-    for feature in maskNum:
-        correctedP = _batchCorrection(dataset.intensityData[:, feature],
-                                      dataset.sampleMetadata['Run Order'].values,
-                                      SPmask,
-                                      dataset.sampleMetadata['Correction Batch'].values,
-                                      range(0, 1),  # All features
-                                      parameters,
-                                      0)
+    # Do batch correction
+    #featureList = []
+    #correctedData = numpy.zeros([dataset.intensityData.shape[0], nFeatures])
+    #fits = numpy.zeros([dataset.intensityData.shape[0], nFeatures])
+    #featureIX = 0
+    #parameters = dict()
+    #parameters['window'] = window
+    #parameters['method'] = 'LOWESS'
+    #parameters['align'] = 'median'
 
-        if sum(numpy.isfinite(correctedP[0][1])) == dataset.intensityData.shape[0]:
-            correctedData[:, featureIX] = correctedP[0][1]
-            fits[:, featureIX] = correctedP[0][2]
-            featureList.append(feature)
-            featureIX = featureIX + 1
+    #for feature in maskNum:
+    #    correctedP = _batchCorrection(dataset.intensityData[:, feature],
+    #                                  dataset.sampleMetadata['Run Order'].values,
+    #                                  SPmask,
+    #                                  dataset.sampleMetadata['Correction Batch'].values,
+    #                                  range(0, 1),  # All features
+    #                                  parameters,
+    #                                  0)
 
-        if featureIX == nFeatures:
-            break
+    #    if sum(numpy.isfinite(correctedP[0][1])) == dataset.intensityData.shape[0]:
+    #        correctedData[:, featureIX] = correctedP[0][1]
+    #        fits[:, featureIX] = correctedP[0][2]
+    #        featureList.append(feature)
+    #        featureIX = featureIX + 1
+
+    #    if featureIX == nFeatures:
+    #        break
 
     # Create copy of dataset and trim
-    preData = copy.deepcopy(dataset)
-    preData.intensityData = dataset.intensityData[:, featureList]
-    preData.featureMetadata = dataset.featureMetadata.loc[featureList, :]
-    preData.featureMetadata.reset_index(drop=True, inplace=True)
+    #preData = copy.deepcopy(dataset)
+    #preData.intensityData = dataset.intensityData[:, featureList]
+    #preData.featureMetadata = dataset.featureMetadata.loc[featureList, :]
+    #preData.featureMetadata.reset_index(drop=True, inplace=True)
+    #preData.featureMask = preData.featureMask[featureList]
 
     # Run batch correction
-    postData = copy.deepcopy(preData)
-    postData.intensityData = correctedData
-    postData.fit = fits
+    #postData = copy.deepcopy(preData)
+    #postData.intensityData = correctedData
+    #postData.fit = fits
 
     # Return results
-    return preData, postData, featureList
+    return preData, postData, maskNum #featureList
