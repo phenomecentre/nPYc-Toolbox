@@ -20,11 +20,13 @@ from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd
 from ..utilities._internal import _vcorrcoef
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
+from ..utilities.ms import generateTypeRoleMasks
 from ..enumerations import AssayRole, SampleType
 from ._generateBasicPCAReport import generateBasicPCAReport
 from ..reports._finalReportPeakPantheR import _finalReportPeakPantheR
 from ..utilities._filters import blankFilter
 from ..batchAndROCorrection import correctMSdataset
+from ..utilities._errorHandling import npycToolboxError
 
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
@@ -618,6 +620,7 @@ def _featureReport(dataset, destinationPath=None):
             if not destinationPath:
                 print('Figure 3: Acquisition structure (coloured by detector voltage).')
                 print('\x1b[31;1m Detector voltage data not available to plot\n\033[0;0m')
+
     else:
         if not destinationPath:
             print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
@@ -649,28 +652,34 @@ def _featureReport(dataset, destinationPath=None):
                   figureSize=dataset.Attributes['figureSize'])
 
         # Figure 5: TIC of linearity reference samples
-        if destinationPath:
-            item['TICinLRfigure'] = os.path.join(graphicsPath,
+        if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
+            if destinationPath:
+                item['TICinLRfigure'] = os.path.join(graphicsPath,
                                                  item['Name'] + '_TICinLR.' + dataset.Attributes['figureFormat'])
-            saveAs = item['TICinLRfigure']
-        else:
-            print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.')
+                saveAs = item['TICinLRfigure']
+            else:
+                print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.')
 
-        plotLRTIC(dataset,
-                  sampleMask=LRmask,
-                  savePath=saveAs,
-                  figureFormat=dataset.Attributes['figureFormat'],
-                  dpi=dataset.Attributes['dpi'],
-                  figureSize=dataset.Attributes['figureSize'])
+            plotLRTIC(dataset,
+                      sampleMask=LRmask,
+                      savePath=saveAs,
+                      figureFormat=dataset.Attributes['figureFormat'],
+                      dpi=dataset.Attributes['dpi'],
+                      figureSize=dataset.Attributes['figureSize'])
+        else:
+            if not destinationPath:
+                print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.')
+                print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
+
 
     else:
         if not destinationPath:
             print('Figure 4: Histogram of ' + item[
                 'corrMethod'] + ' correlation of features to serial dilution, segmented by percentile.')
-            print('Unable to calculate (no serial dilution samples present in dataset).\n')
+            print('\x1b[31;1m Unable to calculate (no serial dilution samples present in dataset).\n\033[0;0m')
 
             print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution')
-            print('Unable to calculate (no serial dilution samples present in dataset).\n')
+            print('\x1b[31;1m Unable to calculate (no serial dilution samples present in dataset).\n\033[0;0m')
 
     # Figure 6: Histogram of RSD in SP samples by abundance percentiles
     if destinationPath:
@@ -990,20 +999,22 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     """
 
     # TODO: implement plotting features by Run Order rather than by Acquired Time
-    # Check that we can plot data
+
+    # Input data checks
+
     if ('Acquired Time' not in dataset.sampleMetadata.columns) or ('Run Order' not in dataset.sampleMetadata.columns):
-        print('\x1b[31;1m Acquired Time/Run Order data (columns in dataset.sampleMetadata) not available to plot\n\033[0;0m')
-        return
+        raise npycToolboxError("Unable to generate batch and run order correction assessment report without `Acquired Time` and `Run Order` columns in `dataset.sampleMetadata`")
+
+    if not hasattr(dataset.sampleMetadata, 'Correction Batch'):
+        raise npycToolboxError("Unable to generate batch and run order correction assessment report without `dataset.sampleMetadata[`Correction Batch`]`, add manually or run `inferBatches`")
+
+    samplesForCorrection = dataset.sampleMetadata['Correction Batch'].values.astype(float)
+    if numpy.any(numpy.isnan(dataset.sampleMetadata.loc[~numpy.isnan(samplesForCorrection), 'Run Order'])):
+        raise npycToolboxError(
+            "Unable to run batch and run order correction without `dataset.sampleMetadata[`Run Order`]` info for ALL samples")
 
     # Define sample masks
-    SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-    SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+    acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
 
     # Set up template item and save required info
     item = dict()
@@ -1011,10 +1022,10 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     item['ReportType'] = 'feature summary'
     item['Nfeatures'] = dataset.intensityData.shape[1]
     item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(SSmask))
-    item['SPcount'] = str(sum(SPmask))
-    item['ERcount'] = str(sum(ERmask))
-    item['LRcount'] = str(sum(LRmask))
+    item['SScount'] = str(sum(acquiredMasks['SSmask']))
+    item['SPcount'] = str(sum(acquiredMasks['SPmask']))
+    item['ERcount'] = str(sum(acquiredMasks['ERmask']))
+    item['LRcount'] = str(sum(acquiredMasks['LRmask']))
     item['corrMethod'] = dataset.Attributes['corrMethod']
 
     ##
@@ -1034,10 +1045,6 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
 
 
     # Pre-correction report (report is example of results when batch correction applied)
-
-    # Check inputs
-    if not hasattr(dataset.sampleMetadata, 'Correction Batch'):
-        raise ValueError("Correction Batch information missing, run addSampleInfo(descriptionFormat=\'Batches\')")
 
     # Figure 1: TIC for all samples by sample type and detector voltage change
     if destinationPath:

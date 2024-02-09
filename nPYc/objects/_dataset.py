@@ -14,8 +14,8 @@ import copy
 from ..utilities import removeDuplicateColumns
 from ..utilities import normalisation
 from ..utilities.normalisation._normaliserABC import Normaliser
+from ..utilities._errorHandling import npycToolboxError
 import warnings
-from IPython.display import display
 
 
 class Dataset:
@@ -1246,9 +1246,9 @@ class Dataset:
 		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
 		# which are used in some plotting functions
 		if 'Acquired Time' in csvData:
-			csv_datetime = pandas.to_datetime(csvData['Acquired Time'], errors='ignore')
+			csv_datetime = pandas.to_datetime(csvData['Acquired Time'], errors='coerce') # errors='ignore'
 			csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S')).astype('O')
+			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S') if isinstance(x, str) else None).astype('O')
 
 		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
 		# Preserve information about sample mask alongside merge even on the case of samples missing from CSV file.
@@ -1314,13 +1314,12 @@ class Dataset:
 			#  If not in the new CSV, but previously there, keep it and don't mask
 			if len(metadataNotAvailable) > 0:
 				joinedTable.loc[metadataNotAvailable, 'Metadata Available'] = False
-#				self.sampleMask[metadataNotAvailable] = False
-#				joinedTable.loc[metadataNotAvailable, 'Exclusion Details'] = 'No Metadata in CSV'
 
 			# Print warning that samples should be added to basic CSV or excluded from dataset
-			print('The following samples should be added to "Basic CSV" file, or excluded from dataset or nPYc-Toolbox functionality may be compromised:')
+			raise npycToolboxError('The following samples should be added to "Basic CSV" file, or excluded from dataset else nPYc-Toolbox functionality may be compromised: ',
+								   table=acquired_butnotcsv)
 			#display(acquired_butnotcsv)
-			print(*acquired_butnotcsv['Sample File Name'].values, sep='\n')
+			#print(*acquired_butnotcsv['Sample File Name'].values, sep='\n')
 
 		# 1) ACQ and in "include Sample" - drop and set mask to false
 		#  Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe

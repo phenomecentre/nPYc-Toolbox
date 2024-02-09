@@ -16,6 +16,7 @@ import copy
 from datetime import datetime, timedelta
 from ..objects._msDataset import MSDataset
 from ..enumerations import AssayRole, SampleType
+from ..utilities._errorHandling import npycToolboxError
 
 
 def correctMSdataset(data,
@@ -60,8 +61,17 @@ def correctMSdataset(data,
 		raise TypeError("parallelise must be a boolean")
 	if not isinstance(excludeFailures, bool):
 		raise TypeError("excludeFailures must be a boolean")
-	if not isinstance(correctionSampleType,SampleType):
+	if not isinstance(correctionSampleType, SampleType):
 		raise TypeError("correctionType must be a SampleType")
+
+	# Input data checks
+	if ('Acquired Time' not in data.sampleMetadata.columns) and ('Run Order' not in data.sampleMetadata.columns):
+		raise npycToolboxError(
+			'Unable to run batch and run order correction without `Run Order` or `Acquired Time` columns in `dataset.sampleMetadata`')
+
+	if 'Correction Batch' not in data.sampleMetadata.columns:
+		raise npycToolboxError(
+			'Unable to run batch and run order correction without `dataset.sampleMetadata[`Correction Batch`]`, add manually or run `inferBatches`')
 
 	# Define the samples to be corrected (only corrected if have value in 'Correction Batch' and not listed for
 	# exclusion in 'samplesNotCorrected'
@@ -74,6 +84,10 @@ def correctMSdataset(data,
 			samplesForCorrection[mask] = numpy.nan
 		except KeyError:
 			raise KeyError('data.Attributes[\'samplesNotCorrected\'] must contain valid SampleType/AssayRole enumeration entries')
+
+	# Check Run Order available for all samples to be corrected and raise error if not
+	if numpy.any(numpy.isnan(data.sampleMetadata.loc[~numpy.isnan(samplesForCorrection), 'Run Order'])):
+		raise npycToolboxError("Unable to run batch and run order correction without `dataset.sampleMetadata[`Run Order`]` info for ALL samples")
 
 	with warnings.catch_warnings():
 		warnings.simplefilter('ignore', category=RuntimeWarning)
