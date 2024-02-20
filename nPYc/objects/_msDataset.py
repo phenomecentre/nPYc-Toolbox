@@ -1460,7 +1460,9 @@ class MSDataset(Dataset):
 
 		# Check `Acquired Time` or `Run Order` information available for all samples
 		if numpy.any(sampleMetadata[usefield].isnull()):
-			raise npycToolboxError("Unable to run batch and run order correction without `sampleMetadata[`" + usefield + "`]` info for ALL samples")
+			missingData = sampleMetadata.loc[sampleMetadata[usefield].isnull(),['Sample File Name', usefield]]
+			raise npycToolboxError("Unable to run batch and run order correction without `sampleMetadata[`" + usefield + "`]` info for ALL samples, info missing for:",
+								   table=missingData)
 
 		# Generate sampleMetadata sorted by run order
 		sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')

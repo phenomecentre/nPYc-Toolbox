@@ -50,6 +50,8 @@ def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, destinationPath=N
                                  classes=dataset.sampleMetadata['SampleClass'],
                                  colourType='categorical',
                                  title='SampleClass',
+                                 colourDict=dataset.Attributes['sampleTypeColours'],
+                                 markerDict=dataset.Attributes['sampleTypeMarkers'],
                                  savePath=saveAs,
                                  figures=figuresQCscores,
                                  figureFormat=dataset.Attributes['figureFormat'],

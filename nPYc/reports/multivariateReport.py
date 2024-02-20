@@ -196,7 +196,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
             # Create dictionary with key and type (categorical/continuous etc) for each biological parameter field
             for plotdata in temp:
                 # out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Plot Sample Type'])
-                out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Status'])
+                #out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Status'])
+                out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['SampleClass'])
                 includeForPlotting[plotdata] = out
 
     # Fields not to plot
@@ -235,8 +236,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
             continue
 
         # Change type if uniform, uniformBySampleType or unique (and categorical) - do not plot these
-        # out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Plot Sample Type'])
-        out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Status'])
+        #out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Status'])
+        out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['SampleClass'])
         if out in {'uniform', 'uniformBySampleType', 'unique'}:
             includeForPlotting[plotdata] = out
 
