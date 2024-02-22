@@ -650,7 +650,7 @@ def _featureReport(dataset, destinationPath=None):
                 print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.')
 
             plotLRTIC(dataset,
-                      sampleMask=LRmask,
+                      sampleMask=acquiredMasks['SRDmask'],
                       savePath=saveAs,
                       figureFormat=dataset.Attributes['figureFormat'],
                       dpi=dataset.Attributes['dpi'],

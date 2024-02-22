@@ -1,9 +1,11 @@
 import os
 import sys
 import unittest
+import copy
 
 sys.path.append("..")
 import nPYc
+from nPYc.utilities._errorHandling import npycToolboxError
 
 """
 Tests for checking specific data values remain the same after report functionality changes
@@ -25,25 +27,45 @@ class TestSampleSummaryRegression(unittest.TestCase):
                                    sop="GenericMS",
                                    noFeatureParams=9)
 
-        self.data.addSampleInfo(descriptionFormat="Basic CSV",
-                                filePath=os.path.join("..", "..",
-                                                      "npc-standard-project",
-                                                      "Regression_Testing_Data",
-                                                      "DEVSET U RPOS Basic CSV_regressionTesting.csv"))
-
-
     def test_setup(self):
         self.assertIsNotNone(self.data)
 
-    def test_XCMS_metadata_report_correct(self):
+    def test_error_correct(self):
+        """
+        Check error is thrown when sample metadata is missing from basic CSV
+        """
+        msData = copy.deepcopy(self.data)
 
-        sample_summary = nPYc.reports._generateSampleReport(self.data, returnOutput=True)
+        # This is designed to succeed if the npycToolboxError is caught, otherwise to fail
+        try:
+            self.assertRaises(npycToolboxError, msData.addSampleInfo(descriptionFormat="Basic CSV",
+                                                                 filePath=os.path.join("..", "..",
+                                                                                          "npc-standard-project",
+                                                                                          "Regression_Testing_Data",
+                                                                                          "DEVSET U RPOS Basic CSV_regressionTesting_sampleMissing.csv")))
+        except npycToolboxError:# as e:
+            #print(e)
+            return
+
+        self.fail()
+
+    def test_XCMS_metadata_report_correct(self):
         """
         Check returns against expected. sample_summary is a dictionary of dataframes with keys:
         for key in sample_summary.keys():
             print(key)
             print(sample_summary[key])
         """
+
+        # Add basic CSV info
+        self.data.addSampleInfo(descriptionFormat="Basic CSV",
+                                filePath=os.path.join("..", "..",
+                                                      "npc-standard-project",
+                                                      "Regression_Testing_Data",
+                                                      "DEVSET U RPOS Basic CSV_regressionTesting.csv"))
+
+        sample_summary = nPYc.reports._generateSampleReport(self.data, returnOutput=True)
+
         # Acquired - Totals
         self.assertEqual(sample_summary["Acquired"].loc["All", "Total"], 214)
         self.assertEqual(sample_summary["Acquired"].loc["Study Sample", "Total"], 78)
@@ -71,7 +93,7 @@ class TestSampleSummaryRegression(unittest.TestCase):
         self.assertEqual(sample_summary["Acquired"].loc["Blank", "Missing/Excluded"], 0)
         self.assertEqual(sample_summary["Acquired"].loc["Unknown", "Missing/Excluded"], 0)
 
-        self.assertEqual(sample_summary["NoMetadata Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W98")
+        #self.assertEqual(sample_summary["NoMetadata Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W98")
         self.assertEqual(sample_summary["UnknownType Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W98")
         self.assertEqual(sample_summary["NotAcquired"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W97")
         self.assertEqual(sample_summary["Excluded Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W97")

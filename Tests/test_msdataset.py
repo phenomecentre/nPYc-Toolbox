@@ -15,6 +15,7 @@ from nPYc.enumerations import AssayRole
 from nPYc.enumerations import VariableType
 from generateTestDataset import generateTestDataset
 import tempfile
+from nPYc.utilities._errorHandling import npycToolboxError
 
 
 
@@ -1352,8 +1353,9 @@ class test_msdataset_batch_inference(unittest.TestCase):
 		msData = copy.deepcopy(self.msData)
 		msData.sampleMetadata.drop('Run Order', axis=1, inplace=True)
 		msData.sampleMetadata.drop('Acquired Time', axis=1, inplace=True)
-		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without complete run order or acquired time info, skipping.',
-							msData._inferBatches)
+		#self.assertWarnsRegex(UserWarning, 'Unable to infer batches without `Run Order` or `Acquired Time` columns in dataset.sampleMetadata',
+		#					msData._inferBatches)
+		self.assertRaises(npycToolboxError, msData._inferBatches)
 
 	def test_amendbatches(self):
 
@@ -1535,6 +1537,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 	def test_feature_correlation(self):
 
 		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
+		self.msData.addSampleInfo(descriptionFormat='Infer Batches')
 
 		with self.subTest(msg='Testing Pearson correlations'):
 			correlations = numpy.array([0.99999997, 0.32017508, 1., -0.0693418])
@@ -1700,10 +1703,10 @@ class test_msdataset_import_xcms(unittest.TestCase):
 	def test_feature_correlation(self):
 
 		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
-		# self.msData.addSampleInfo(descriptionFormat='Batches')
+		self.msData.addSampleInfo(descriptionFormat='Infer Batches')
 
 		self.msData_PeakTable.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
-		# self.msData_PeakTable.addSampleInfo(descriptionFormat='Batches')
+		self.msData_PeakTable.addSampleInfo(descriptionFormat='Infer Batches')
 
 		with self.subTest(msg='Testing Pearson correlations'):
 			correlations = numpy.array([0.99999997, 0.32017508, 1., -0.0693418])
@@ -1841,7 +1844,7 @@ class test_msdataset_import_csvimport_discrete(unittest.TestCase):
 	def test_feature_correlation(self):
 
 		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
-		# self.msData.addSampleInfo(descriptionFormat='Batches')
+		self.msData.addSampleInfo(descriptionFormat='Infer Batches')
 
 		with self.subTest(msg='Testing Pearson correlations'):
 			correlations = numpy.array([0.99999997, 0.32017508, 1., -0.0693418])
@@ -2030,7 +2033,7 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 	def test_feature_correlation(self):
 
 		self.lcData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
-		# self.lcData.addSampleInfo(descriptionFormat='Batches')
+		self.lcData.addSampleInfo(descriptionFormat='Infer Batches')
 
 		with self.subTest(msg='Testing Pearson correlations'):
 			correlations = numpy.array([0.99999997, 0.32017508, 1., -0.0693418])

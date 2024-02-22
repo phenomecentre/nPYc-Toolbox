@@ -107,17 +107,16 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 	# Determine if samples have been excluded
 	if hasattr(data, 'excludedFlag') and (len(data.excludedFlag) > 0):
+
+		# Create dataframe with columns required
+		cols = ['Sample File Name', 'Sample ID', 'SampleType', 'AssayRole', 'Exclusion Details']
+		sampleMetadataExcluded = pandas.DataFrame(columns=cols)
+
+		# Add info of all previously excluded samples (keep only columns required)
 		excludedIX = [i for i, x in enumerate(data.excludedFlag) if x == 'Samples']
-		sampleMetadataExcluded = pandas.DataFrame(
-			columns=['Sample File Name', 'Sample ID', 'SampleType', 'AssayRole', 'Exclusion Details'])
-
-		# Stick info of all previously excluded samples together
 		for i in excludedIX:
-			temp = copy.deepcopy(data.sampleMetadataExcluded[i])
-
-			sampleMetadataExcluded = sampleMetadataExcluded.append(temp[['Sample File Name', 'Sample ID',
-																		 'SampleType', 'AssayRole',
-																		 'Exclusion Details']], ignore_index=True)
+			sampleMetadataExcluded = pandas.concat([sampleMetadataExcluded, data.sampleMetadataExcluded[i]], ignore_index=True)
+			sampleMetadataExcluded = sampleMetadataExcluded[sampleMetadataExcluded.columns.intersection(cols)]
 
 		# Sample type masks, and only those marked as 'sample' or 'unknown' flagged
 		excludedMasks = generateTypeRoleMasks(sampleMetadataExcluded)

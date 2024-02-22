@@ -268,6 +268,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))
+        data.addSampleInfo(descriptionFormat='Infer Batches')
         # data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
         data.corrExclusions = data.sampleMask
 
