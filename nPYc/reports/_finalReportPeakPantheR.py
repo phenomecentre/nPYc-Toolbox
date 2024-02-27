@@ -14,7 +14,7 @@ from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from ..plotting import plotTIC, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
+from ..plotting import plotIntensity, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd
 from ..utilities._internal import _vcorrcoef

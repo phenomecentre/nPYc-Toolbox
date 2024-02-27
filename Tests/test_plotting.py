@@ -299,19 +299,19 @@ class test_plotting(unittest.TestCase):
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			outputPath = os.path.join(tmpdirname, 'basic')
-			nPYc.plotting.plotTIC(msData, savePath=outputPath)
+			nPYc.plotting.plotIntensity(msData, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
 			outputPath = os.path.join(tmpdirname, 'noViolinByDetector')
-			nPYc.plotting.plotTIC(msData, addViolin=False, addBatchShading=True, savePath=outputPath)
+			nPYc.plotting.plotIntensity(msData, addViolin=False, addBatchShading=True, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
 			outputPath = os.path.join(tmpdirname, 'withBatches')
-			nPYc.plotting.plotTIC(msData, addBatchShading=True, savePath=outputPath)
+			nPYc.plotting.plotIntensity(msData, addBatchShading=True, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
 			outputPath = os.path.join(tmpdirname, 'logY')
-			nPYc.plotting.plotTIC(msData, logy= True, addViolin=False, savePath=outputPath)
+			nPYc.plotting.plotIntensity(msData, logy= True, addViolin=False, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
 
@@ -324,7 +324,7 @@ class test_plotting(unittest.TestCase):
 		#print("all columns %s" % msData.sampleMetadata.columns.values)
 
 		#'Assay Role' is not a column and should trigger a ValueError
-		self.assertRaises(ValueError, nPYc.plotting.plotTIC, msData, colourBy='Assay Role')
+		self.assertRaises(ValueError, nPYc.plotting.plotIntensity, msData, colourBy='Assay Role')
 
 
 	def test_jointplotRSDvCorrelation(self):
@@ -887,7 +887,7 @@ class test_plotting_interactive(unittest.TestCase):
 		# Not checking output for correctness, just that we don't crash
 		##
 		with self.subTest(msg='Default'):
-			data = nPYc.plotting.plotTICinteractive(self.dataset)
+			data = nPYc.plotting.plotIntensityInteractive(self.dataset)
 			self.assertIsNotNone(data)
 
 
@@ -895,19 +895,19 @@ class test_plotting_interactive(unittest.TestCase):
 
 		# Test y is valid
 		with self.subTest(msg="y must be either a value in dataset.featureMetadata['Feature Name'] or 'TIC'"):
-			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, y='failstest')
+			self.assertRaises(ValueError, nPYc.plotting.plotIntensityInteractive, self.dataset, y='failstest')
 
 		# Test x is valid
 		with self.subTest(msg="x must be \'Run Order\' or \'Acquired Time\', and must be present as a column in dataset.sampleMetadata"):
-			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, x='failstest')
+			self.assertRaises(ValueError, nPYc.plotting.plotIntensityInteractive, self.dataset, x='failstest')
 
 		# Test labelBy is valid
 		with self.subTest(msg='labelBy must be a column in dataset.sampleMetadata'):
-			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, labelBy='failstest')
+			self.assertRaises(ValueError, nPYc.plotting.plotIntensityInteractive, self.dataset, labelBy='failstest')
 
 		# Test colourBy is valid
 		with self.subTest(msg='labelBy must be a column in dataset.sampleMetadata'):
-			self.assertRaises(ValueError, nPYc.plotting.plotTICinteractive, self.dataset, colourBy='failstest')
+			self.assertRaises(ValueError, nPYc.plotting.plotIntensityInteractive, self.dataset, colourBy='failstest')
 
 	def test_plotSolventResonaceInteractive(self):
 		dataset = generateTestDataset(10, 1000, dtype='NMRDataset',

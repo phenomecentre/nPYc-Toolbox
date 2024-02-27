@@ -15,7 +15,7 @@ from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from ..plotting import plotTIC, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
+from ..plotting import plotIntensity, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd
 from ..utilities._internal import _vcorrcoef
@@ -282,7 +282,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
                 print('Figure ' + str(figNo) + ': Acquisition Structure')
                 figNo = figNo + 1
 
-            plotTIC(dataset,
+            plotIntensity(dataset,
                     addViolin=True,
                     addBatchShading=True,
                     colourBy='SampleClass',
@@ -303,7 +303,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
                 print('Figure ' + str(figNo) + ': Total Ion Count (TIC) for all samples and all features in final dataset.')
                 figNo = figNo + 1
 
-            plotTIC(dataset,
+            plotIntensity(dataset,
                     addViolin=True,
                     title='',
                     colourBy='SampleClass',
@@ -564,7 +564,7 @@ def _featureReport(dataset, destinationPath=None):
             print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
 
         # TIC all samples
-        plotTIC(dataset,
+        plotIntensity(dataset,
                 addViolin=True,
                 title='',
                 colourBy='SampleClass',
@@ -596,7 +596,7 @@ def _featureReport(dataset, destinationPath=None):
             dataset.sampleMetadata['Change in Detector Voltage'] = detectorDiff
 
             # TIC all samples
-            plotTIC(dataset,
+            plotIntensity(dataset,
                     addViolin=False,
                     addBatchShading=True,
                     colourBy='Change in Detector Voltage',
@@ -1036,7 +1036,7 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     else:
         print('Overall Total Ion Count (TIC) for all samples and features, coloured by batch.')
 
-    plotTIC(dataset,
+    plotIntensity(dataset,
             addViolin=True,
             addBatchShading=True,
             logy=logy,
@@ -1212,7 +1212,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
             print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
             print('Pre-correction.')
 
-        plotTIC(dataset,
+        plotIntensity(dataset,
                 addViolin=True,
                 title='TIC Pre Batch-Correction',
                 addBatchShading=False,
@@ -1233,7 +1233,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
         else:
             print('Post-correction.')
 
-        plotTIC(correctedDataset,
+        plotIntensity(correctedDataset,
                 addViolin=True,
                 title='TIC Post Batch-Correction',
                 addBatchShading=False,

@@ -23,7 +23,7 @@ from ._plotNMRbaseline import plotBaseline, plotBaselineInteractive
 from ._plotNMRsolvent import plotSolventResonance, plotSolventResonanceInteractive
 from ._jointplotRSDvCorrelation import jointplotRSDvCorrelation
 from ._plotRSDs import plotRSDs, plotRSDsInteractive
-from ._plotTIC import plotTIC, plotTICinteractive
+from ._plotTIC import plotIntensity, plotIntensityInteractive
 from ._plotIonMap import plotIonMap
 from ._plotBatchAndROCorrection import plotBatchAndROCorrection
 from ._multivariatePlotting import plotScree, plotScores, plotOutliers, plotLoadings, plotScoresInteractive, plotLoadingsInteractive, plotMetadataDistribution
@@ -38,7 +38,7 @@ from ._plotIonMap import plotIonMapInteractive
 from ._correlationSpectroscopy import correlationSpectroscopyInteractive
 from ._plotTargetedFeatureDistribution import plotTargetedFeatureDistribution
 
-__all__ = ['histogram', 'checkAndSetPlotAttributes','plotBatchAndROCorrection', 'plotTIC', 'plotTICinteractive', 'plotLRTIC', 'jointplotRSDvCorrelation', 'plotCorrelationToLRbyFeature',
+__all__ = ['histogram', 'checkAndSetPlotAttributes','plotBatchAndROCorrection', 'plotIntensity', 'plotIntensityInteractive', 'plotLRTIC', 'jointplotRSDvCorrelation', 'plotCorrelationToLRbyFeature',
 		   'plotIonMap', 'plotRSDs', 'plotRSDsInteractive', 'plotScree', 'plotOutliers', 'plotSpectralVariance', 'plotScores', 'plotScoresInteractive',
 		   'plotLoadings', 'plotLoadingsInteractive', 'plotDiscreteLoadings', 'plotFeatureRanges', 'plotMetadataDistribution', 'plotLOQRunOrder', 
 		   'plotFeatureLOQ', 'plotVariableScatter', 'plotAccuracyPrecision', 'plotCalibrationInteractive', 'plotLineWidth', 'plotLineWidthInteractive',

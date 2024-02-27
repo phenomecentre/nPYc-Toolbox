@@ -9,7 +9,7 @@ import copy
 from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import TargetedDataset
-from ..plotting import plotFeatureLOQ, plotLOQRunOrder, plotAccuracyPrecision, plotTIC, histogram, plotLRTIC, \
+from ..plotting import plotFeatureLOQ, plotLOQRunOrder, plotAccuracyPrecision, plotIntensity, histogram, plotLRTIC, \
 	jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, \
 	plotScores, plotLoadings, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport

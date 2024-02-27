@@ -1,7 +1,6 @@
 import plotly
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy
 import pandas
 import copy
@@ -10,9 +9,7 @@ from ._violinPlot import _violinPlotHelper
 from ..enumerations import AssayRole, SampleType
 from ..utilities.generic import createDestinationPath
 from ..objects import Dataset
-from ..plotting._multivariatePlotting import _shiftedColorMap
-from matplotlib.colors import Normalize
-import matplotlib.cm as cm
+from matplotlib.colors import rgb2hex
 import matplotlib.dates as mdates
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 from matplotlib.dates import WeekdayLocator
@@ -22,7 +19,7 @@ from matplotlib.patches import Rectangle
 import os
 import datetime
 
-def plotTIC(dataset, addViolin=True, addBatchShading=False,
+def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 			colourBy='SampleClass', colourType='categorical',
 			colourDict=None, markerDict=None, abbrDict=None,
 			logy=False, title='',
@@ -52,13 +49,12 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 	:param figureSize: Dimensions of the figure
 	:type figureSize: tuple(float, float)
 	"""
-	#print("plotTIC colourBy = %s" % colourBy)
+
 	# Check inputs
 	if not isinstance(dataset, Dataset):
 		raise TypeError('dataset must be an instance of nPYc.Dataset')
 
 	if colourBy not in dataset.sampleMetadata.columns:
-		#print(dataset.sampleMetadata.columns.values)
 		raise ValueError('colourBy must be a column in dataset.sampleMetadata')
 
 	if not (('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns)):
@@ -85,8 +81,9 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 		# Otherwise create colour dict
 		else:
 			colourDict = {}
+			colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(uniq))))
 			for u in uniq:
-				colourDict[u] = 'blue' # TODO CAZ iterate through colours
+				colourDict[u] = rgb2hex(next(colors))
 
 		# If markerDict check colour defined for every unique entry in class
 		if markerDict is not None:
@@ -147,13 +144,11 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 		acqTime = msData.sampleMetadata['Run Order']
 
 	tic = numpy.sum(msData.intensityData[:, tempFeatureMask == True], axis=1)
-	#tic = numpy.sum(msData.intensityData, axis=1)
 
 	# Colour by categorical class
 	if colourType == 'categorical':
-		#uniq = msData.sampleMetadata[colourBy].unique() defined above
 		palette = {}
-		sampleMasks = [] # sampleMasks = list()
+		sampleMasks = []
 		for u in uniq:
 			sc = ax.scatter(acqTime[msData.sampleMetadata[colourBy] == u],
 							tic[msData.sampleMetadata[colourBy] == u],
@@ -232,7 +227,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 			colIX = colIX + 1
 
 	# Annotate figure
-	ax.set_ylabel('Sum of all Feature Intensities')
+	ax.set_ylabel('Sum of Feature Intensities')
 	ax.set_xticklabels(ax.xaxis.get_majorticklabels(), rotation=45)
 	if ('Acquired Time' in msData.sampleMetadata.columns):
 		ax.set_xlabel('Acquisition Date')
@@ -247,7 +242,7 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 		pass
 	if logy:
 		ax.set_yscale('log', nonpositive='clip')
-		ax.set_ylabel('TIC (log scale)')
+		ax.set_ylabel('Sum of Feature Intensities (log scale)')
 	else:
 		ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
@@ -263,7 +258,6 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 	# Save or output
 	if savePath:
 		try:
-			#plt.savefig(savePath, bbox_extra_artists=(leg, ), bbox_inches='tight', format=figureFormat, dpi=dpi)
 			plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
 
 		except UnboundLocalError:
@@ -274,22 +268,27 @@ def plotTIC(dataset, addViolin=True, addBatchShading=False,
 		plt.show()
 
 
-def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
-					   colourBy='Correction Batch',
-						colourDict=None, markerDict=None, abbrDict=None,
-					   withExclusions=True,
-					   destinationPath=None, autoOpen=True, opacity=.6):
+def plotIntensityInteractive(dataset,
+							 x='Run Order',
+							 y='Sum of Feature Intensities',
+							 labelBy='Run Order',
+							 colourBy='Correction Batch',
+							 colourDict=None,
+							 markerDict=None,
+							 withExclusions=True,
+							 destinationPath=None,
+							 autoOpen=True,
+							 opacity=.6):
 	"""
-	Interactively visualise TIC or intensity for a given feature with plotly, provides tooltips to allow identification of samples.
+	Interactively visualise sum of all feature intensities, or intensity for a given feature with plotly, provides tooltips to allow identification of samples.
 
 	:param MSDataset dataset: Dataset object
 	:param str x: X-axis of plot, either ``Run Order`` or ``Acquired Time``
-	:param str y: Y-axis of plot, either ``TIC`` for sum of all features, or a specific feature name
+	:param str y: Y-axis of plot, either ``Sum of Feature Intensities`` for sum of all features, or a specific feature name
 	:param str labelBy: dataset.sampleMetadata column entry to display in tooltips
 	:param str colourBy: dataset.sampleMetadata column entry to colour data points by
 	:param dict colourDict:
 	:param dict markerDict:
-	:param dict abbrDict:
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
 	:param str destinationPath: file path to save html version of plot
 	:param bool autoOpen: If ``True``, opens html version of plot
@@ -302,8 +301,8 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 		msData.applyMasks()
 
 	# Checks
-	if not (y in msData.featureMetadata['Feature Name'].values) | (y == 'TIC'):
-		raise ValueError("y must be either a value in dataset.featureMetadata['Feature Name'] or 'TIC'")
+	if not (y in msData.featureMetadata['Feature Name'].values) | (y == 'Sum of Feature Intensities'):
+		raise ValueError("y must be either a value in dataset.featureMetadata['Feature Name'] or 'Sum of Feature Intensities'")
 
 	if not ((x in msData.sampleMetadata.columns) & (x in {'Run Order', 'Acquired Time'})):
 		raise ValueError("x must be \'Run Order\' or \'Acquired Time\', and must be present as a column in dataset.sampleMetadata")
@@ -326,7 +325,7 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 	data = []
 
 	# Extract y values
-	if y == 'TIC':
+	if y == 'Sum of Feature Intensities':
 		tempFeatureMask = numpy.sum(numpy.isfinite(msData.intensityData), axis=0)
 		tempFeatureMask = tempFeatureMask < msData.intensityData.shape[0]
 		values = numpy.sum(msData.intensityData[:, tempFeatureMask == False], axis=1)
@@ -348,6 +347,11 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 	# else if mixed type convert to string
 	elif len(myset) > 1:
 		classes = classes.astype(str)
+
+	# If colourBy=='SampleClass' - NPC derived classes, then use default colours and markers
+	if colourBy=='SampleClass':
+		colourDict = msData.Attributes['sampleTypeColours']
+		markerDict = msData.Attributes['sampleTypeMarkers']
 
 	# Plot NaN values in gray
 	if sum(plotnans != 0):
@@ -386,13 +390,19 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 		data.append(CLASSplot)
 
 	# Plot categorical values by unique groups
-	# add colour/marker dictionaries here?
 	else:
 		uniq = numpy.unique(classes[plotnans == False])
 		if colourDict is None:
+
 			colourDict = {}
+			colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(uniq))))
 			for u in uniq:
-				colourDict[u] = 'magenta'
+				colourDict[u] = rgb2hex(next(colors))
+
+			#colourDict = {}
+			#for u in uniq:
+			#	colourDict[u] = 'magenta'
+
 			markerDict = {}
 			for u in uniq:
 				markerDict[u] = 'diamond-dot'
@@ -403,8 +413,6 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 				y=values[classes == i],
 				mode='markers',
 				marker=dict(
-					#colorscale='Portland',
-					#symbol='circle',
 					color=colourDict[i],
 					symbol=markerDict[i]
 					),
@@ -416,7 +424,7 @@ def plotTICinteractive(dataset, x='Run Order', y='TIC', labelBy='Run Order',
 			data.append(CLASSplot)
 
 	# Overlay SR and LTR if columns present
-	if ('SampleType' in msData.sampleMetadata.columns) & ('AssayRole' in msData.sampleMetadata.columns):
+	if (colourBy != 'SampleClass') & ('SampleType' in msData.sampleMetadata.columns) & ('AssayRole' in msData.sampleMetadata.columns):
 		SRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.StudyPool) &
 				  (msData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)) #SPmask
 		LTRmask = ((msData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) &
