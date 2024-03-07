@@ -90,6 +90,7 @@ class NMRDataset(Dataset):
 
 			self.sampleMetadata['AssayRole'] = None
 			self.sampleMetadata['SampleType'] = None
+			self.sampleMetadata['SampleClass'] = None
 			self.sampleMetadata['Dilution'] = 100
 			self.sampleMetadata['Batch'] = numpy.nan
 			self.sampleMetadata['Correction Batch'] = numpy.nan
@@ -183,6 +184,11 @@ class NMRDataset(Dataset):
 		self.sampleMetadata.loc[:, 'SampleType'] = SampleType.StudySample
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Study Reference', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'SampleType'] = SampleType.ExternalReference
+
+		# Define `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
+		self.sampleMetadata.loc[:,'SampleClass'] = 'Study Sample'
+		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Study Reference', na=False).astype(bool), 'SampleClass'] = 'Study Reference'
+		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'AssayRole'] = 'Long-Term Reference'
 
 		# Update Sampling ID values using new 'SampleType', special case for Study Pool, External Reference and Procedural Blank
 		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.StudyPool)).tolist(), 'Sample ID'] = 'Study Pool Sample'

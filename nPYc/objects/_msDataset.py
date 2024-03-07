@@ -1350,7 +1350,7 @@ class MSDataset(Dataset):
 		fileNameParts.loc[
 			fileNameParts['groupingKind'].str.match('E?IC', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
 
-		# Standardised NPC types based on SampleType/AssayRole combinations
+		# Define `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
 		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudySample) & (
 					fileNameParts['AssayRole'] == AssayRole.Assay), 'SampleClass'] = 'Study Sample'
 		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudyPool) & (
