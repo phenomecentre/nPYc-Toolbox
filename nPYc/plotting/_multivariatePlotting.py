@@ -25,6 +25,7 @@ from ..enumerations import SampleType
 from ..utilities.generic import createDestinationPath
 import copy
 import datetime
+from ..enumerations import AssayRole, SampleType
 
 
 def plotScree(R2, Q2=None, title='', xlabel='', ylabel='', savePath=None, figureFormat='png', dpi=72,
@@ -560,8 +561,18 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
         return figures
 
 
-def plotScoresInteractive(dataset, pcaModel, colourBy, components=[1, 2], alpha=0.05, withExclusions=False,
-                          destinationPath=None, autoOpen=True):
+def plotScoresInteractive(dataset,
+                          pcaModel,
+                          labelBy='Run Order',
+                          colourBy='Run Order',
+                          colourDict=None,
+                          markerDict=None,
+                          components=[1, 2],
+                          alpha=0.05,
+                          withExclusions=False,
+                          destinationPath=None,
+                          autoOpen=True,
+                          opacity=.6):
     """
 	Interactively visualise PCA scores (coloured by a given sampleMetadata field, and for a given pair of components) with plotly, provides tooltips to allow identification of samples.
 
@@ -584,6 +595,9 @@ def plotScoresInteractive(dataset, pcaModel, colourBy, components=[1, 2], alpha=
 
     values = pcaModel.scores
     ns, nc = values.shape
+
+    if labelBy not in dataset.sampleMetadata.columns:
+        raise ValueError('labelBy must be a column in dataset.sampleMetadata')
 
     if colourBy not in dataset.sampleMetadata.columns:
         raise ValueError('colourBy must be a column in dataset.sampleMetadata')
@@ -619,9 +633,14 @@ def plotScoresInteractive(dataset, pcaModel, colourBy, components=[1, 2], alpha=
 
     # Data preparation
     classes = dataMasked.sampleMetadata[colourBy]
-    hovertext = dataMasked.sampleMetadata['Sample File Name'].str.cat(classes.astype(str), sep='; ' + colourBy + ': ')
+    hovertext = dataMasked.sampleMetadata['Sample File Name'].str.cat(dataMasked.sampleMetadata[labelBy].astype(str), sep='; ' + colourBy + ': ')
     plotnans = classes.isnull().values
     data = []
+
+    # If colourBy=='SampleClass' - NPC derived classes, then use default colours and markers
+    if colourBy == 'SampleClass':
+        colourDict = dataset.Attributes['sampleTypeColours']
+        markerDict = dataset.Attributes['sampleTypeMarkers']
 
     # Ensure all values in column have the same type
 
@@ -675,21 +694,71 @@ def plotScoresInteractive(dataset, pcaModel, colourBy, components=[1, 2], alpha=
     # Plot categorical values by unique groups
     else:
         uniq = numpy.unique(classes[plotnans == False])
+
+        if colourDict is None:
+            colourDict={}
+            colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(uniq))))
+            for u in uniq:
+                colourDict[u] = rgb2hex(next(colors))
+
+        if markerDict is None:
+            markerDict = {}
+            for u in uniq:
+                markerDict[u] = 'diamond-dot'
+
         for i in uniq:
             CLASSplot = go.Scatter(
-                x=values[classes == i, components[0]],
-                y=values[classes == i, components[1]],
-                mode='markers',
-                marker=dict(
-                    colorscale='Portland',
-                    symbol='circle',
-                ),
-                text=hovertext[classes == i],
-                name=i,
-                hoverinfo='text',
-                showlegend=True
+                    x=values[classes == i, components[0]],
+                    y=values[classes == i, components[1]],
+                    mode='markers',
+                    marker=dict(
+                        color=colourDict[i],
+                        symbol=markerDict[i]
+                    ),
+                    text=hovertext[classes == i],
+                    name=str(i),
+                    hoverinfo='text',
+                    showlegend=True
             )
             data.append(CLASSplot)
+
+    # Overlay SR and LTR if columns present
+    if (colourBy != 'SampleClass') & ('SampleType' in dataMasked.sampleMetadata.columns) & ('AssayRole' in dataMasked.sampleMetadata.columns):
+        SRmask = ((dataMasked.sampleMetadata['SampleType'].values == SampleType.StudyPool) &
+                  (dataMasked.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference))
+        LTRmask = ((dataMasked.sampleMetadata['SampleType'].values == SampleType.ExternalReference) &
+                   (dataMasked.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference))
+
+        SRplot = go.Scatter(
+            x=values[SRmask, components[0]],
+            y=values[SRmask, components[1]],
+            mode='markers',
+            marker=dict(
+                color='darkgreen',
+                symbol='1',
+            ),
+            text=hovertext[SRmask],
+            name='Study Reference',
+            hoverinfo='text',
+            showlegend=True,
+        )
+        data.append(SRplot)
+
+        LTRplot = go.Scatter(
+            x=values[LTRmask, components[0]],
+            y=values[LTRmask, components[1]],
+            mode='markers',
+            marker=dict(
+                color='darkorange',
+                symbol='2',
+
+            ),
+            text=hovertext[LTRmask],
+            name='Long-Term Reference',
+            hoverinfo='text',
+            showlegend=True
+        )
+        data.append(LTRplot)
 
     hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[0], components[1]]), alpha=alpha)
 

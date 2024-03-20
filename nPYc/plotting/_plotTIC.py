@@ -399,9 +399,7 @@ def plotIntensityInteractive(dataset,
 			for u in uniq:
 				colourDict[u] = rgb2hex(next(colors))
 
-			#colourDict = {}
-			#for u in uniq:
-			#	colourDict[u] = 'magenta'
+		if markerDict is None:
 
 			markerDict = {}
 			for u in uniq:
@@ -419,7 +417,8 @@ def plotIntensityInteractive(dataset,
 				text=hovertext[classes == i],
 				name=str(i),
 				hoverinfo='text',
-				showlegend=True, opacity=opacity
+				showlegend=True,
+				opacity=opacity
 				)
 			data.append(CLASSplot)
 
@@ -441,7 +440,7 @@ def plotIntensityInteractive(dataset,
 			text=hovertext[SRmask],
 			name='Study Reference',
 			hoverinfo='text',
-			showlegend=True, opacity=opacity
+			showlegend=True
 		)
 		data.append(SRplot)
 
@@ -457,7 +456,7 @@ def plotIntensityInteractive(dataset,
 			text=hovertext[LTRmask],
 			name='Long-Term Reference',
 			hoverinfo='text',
-			showlegend=True, opacity=opacity
+			showlegend=True
 		)
 		data.append(LTRplot)
 
