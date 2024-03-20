@@ -1431,7 +1431,7 @@ class MSDataset(Dataset):
 
 		# Return failure message if information not able to be inferred for any sample
 		if (self.sampleMetadata['Sample Base Name'].isnull().values.any()):
-			raise npycToolboxError('Inferring information from filenames failed for some samples, check and amend `filenameSpec` as appropriate and re-start import')
+			raise npycToolboxError('Inferring information from filenames failed for some samples, check and amend `filenameSpec` as appropriate and re-run')
 
 
 	def _inferBatches(self, gapLength=24):
