@@ -1294,8 +1294,8 @@ class MSDataset(Dataset):
 		# Print warning that samples are missing info, raw files should be located or samples should be excluded from dataset
 		missingSampleInfo = ~self.sampleMetadata['Sample File Name'].isin(instrumentParams['Sample File Name'])
 		if sum(missingSampleInfo) > 0:
-			# CAZ TODO raise error if samples missing from raw data folder
-			print('Raw data for the following samples should be added to the raw data folder, or samples should be excluded from dataset else nPYc-Toolbox functionality may be compromised:\n')
+			# Warn users if samples missing from raw data folder
+			print('\x1b[31;1mRaw data for the following samples should be added to the raw data folder, or samples should be excluded from dataset else nPYc-Toolbox functionality may be compromised:\n\033[0;0m')
 			print(*self.sampleMetadata.loc[missingSampleInfo, 'Sample File Name'].values, sep='\n')
 
 	def _getSampleMetadataFromFilename(self, filenameSpec):
@@ -1466,7 +1466,7 @@ class MSDataset(Dataset):
 		# Check `Acquired Time` or `Run Order` information available for all samples
 		if numpy.any(sampleMetadata[usefield].isnull()):
 			missingData = sampleMetadata.loc[sampleMetadata[usefield].isnull(),['Sample File Name', usefield]]
-			raise npycToolboxError("Unable to run batch and run order correction without `sampleMetadata[`" + usefield + "`]` info for ALL samples, info missing for:",
+			raise npycToolboxError("Unable to infer batches without `sampleMetadata[`" + usefield + "`]` info for ALL samples, info missing for:",
 								   table=missingData)
 
 		# Generate sampleMetadata sorted by run order
