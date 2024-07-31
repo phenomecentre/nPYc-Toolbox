@@ -12,6 +12,7 @@ from ..objects import Dataset
 from matplotlib.colors import rgb2hex
 import matplotlib.dates as mdates
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
+from matplotlib.dates import HourLocator
 from matplotlib.dates import WeekdayLocator
 from matplotlib.dates import DateFormatter
 from matplotlib import gridspec
@@ -127,11 +128,15 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 		delta = maxX - minX
 		days = delta.astype('timedelta64[D]')
 		days = days / numpy.timedelta64(1, 'D')
-		if days < 7:
+		if days < 1:
+			loc = HourLocator() # byhour=range(0, 24, 2)
+		elif days < 7:
 			loc = WeekdayLocator(byweekday=(MO, TU, WE, TH, FR, SA, SU))
+			formatter = DateFormatter('%d/%m/%y')
 		else:
 			loc = WeekdayLocator(byweekday=(MO, SA))
-		formatter = DateFormatter('%d/%m/%y')
+			formatter = DateFormatter('%d/%m/%y')
+
 
 		# Ensure 'Acquired Time' is datetime.datetime, if it's already a datetime it will trigger an AttributeError
 		try:
@@ -231,9 +236,10 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	ax.set_xticklabels(ax.xaxis.get_majorticklabels(), rotation=45)
 	if ('Acquired Time' in msData.sampleMetadata.columns):
 		ax.set_xlabel('Acquisition Date')
-		ax.set_xlim(minX, maxX)
+		#ax.set_xlim(minX, maxX)
 		ax.xaxis.set_major_locator(loc)
-		ax.xaxis.set_major_formatter(formatter)
+		if formatter:
+			ax.xaxis.set_major_formatter(formatter)
 	else:
 		ax.set_xlabel('Run Order')
 	try:
