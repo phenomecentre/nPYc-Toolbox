@@ -326,7 +326,7 @@ def plotIntensityInteractive(dataset,
 	# Data preparation
 	ns = len(msData.sampleMask)
 	classes = msData.sampleMetadata[colourBy]
-	hovertext = msData.sampleMetadata['Sample File Name'].str.cat(classes.astype(str), sep='; ' + colourBy + ': ')
+	hovertext = msData.sampleMetadata['Sample File Name'].str.cat(msData.sampleMetadata[labelBy].astype(str), sep='; ' + labelBy + ': ')
 	plotnans = classes.isnull().values
 	data = []
 
