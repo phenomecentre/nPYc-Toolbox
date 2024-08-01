@@ -73,6 +73,10 @@ def correctMSdataset(data,
 		raise npycToolboxError(
 			'Unable to run batch and run order correction without `dataset.sampleMetadata[`Correction Batch`]`, add manually or run `inferBatches`')
 
+	if numpy.any(data.sampleMetadata['Correction Batch'] == 0):
+		raise npycToolboxError(
+			'Zero values in dataset.sampleMetadata[`Correction Batch`]` are not allowed, please amend any zero values in `dataset.sampleMetadata[`Correction Batch`]` to apply correction')
+
 	# Define the samples to be corrected (only corrected if have value in 'Correction Batch' and not listed for
 	# exclusion in 'samplesNotCorrected'
 	#samplesForCorrection = data.sampleMetadata['Correction Batch'].values.astype(float)
