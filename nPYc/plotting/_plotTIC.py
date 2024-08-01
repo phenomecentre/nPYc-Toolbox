@@ -220,8 +220,8 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 
 			# Convert to matplotlib date representation
 			if ('Acquired Time' in msData.sampleMetadata.columns):
-				start = mdates.date2num(start)
-				end = mdates.date2num(end)
+				start = mdates.date2num(start)[0]
+				end = mdates.date2num(end)[0]
 			else:
 				start = start.values[0]
 				end = end.values[0]
@@ -243,7 +243,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	else:
 		ax.set_xlabel('Run Order')
 	try:
-		ax.set_ylim(ymin, ymax)
+		ax.set_ylim(bottom=ymin, top=ymax)
 	except:
 		pass
 	if logy:

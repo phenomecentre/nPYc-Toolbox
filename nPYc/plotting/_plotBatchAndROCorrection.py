@@ -218,7 +218,7 @@ def plotBatchAndROCorrection(dataset, datasetcorrected, featureList, addViolin=T
 		ax.set_ylabel('Feature Intensity')
 		if ('Acquired Time' in msData.sampleMetadata.columns):
 			ax.set_xlabel('Acquisition Date')
-			ax.set_xlim(minX, maxX)
+			ax.set_xlim(left=minX, right=maxX)
 			ax.xaxis.set_major_locator(loc)
 			ax.xaxis.set_major_formatter(formatter)
 		else:

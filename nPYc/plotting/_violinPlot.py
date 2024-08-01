@@ -49,7 +49,7 @@ def _violinPlotHelper(ax, values, sampleMasks, xlabel, ylabel, palette=None, yli
 	# ax formatting
 	ax.tick_params(axis='x', rotation=45)
 	if ylimits:
-		ax.set_ylim(ylimits)
+		ax.set_ylim(bottom=ylimits[0], top=ylimits[1])
 	if ylabel:
 		ax.set_xlabel(ylabel)
 	if logy:
