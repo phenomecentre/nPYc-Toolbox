@@ -1412,6 +1412,17 @@ class MSDataset(Dataset):
 
 		# Merge metadata back into the sampleInfo table.
 		# first remove duplicate columns (from _dataset _init_)
+		if 'Study' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Study'], axis=1, inplace=True)
+		if 'Chromatography' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Chromatography'], axis=1, inplace=True)
+		if 'Ionisation' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Ionisation'], axis=1, inplace=True)
+		if 'Instrument' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Instrument'], axis=1, inplace=True)
+		if 'Re-Run' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Re-Run'], axis=1, inplace=True)
+		if 'Suplemental Injections' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Suplemental Injections'], axis=1, inplace=True)
+		if 'SampleClass' in self.sampleMetadata.columns: self.sampleMetadata.drop(['SampleClass'], axis=1, inplace=True)
+		if 'Skipped' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Skipped'], axis=1, inplace=True)
+		if 'Matrix' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Matrix'], axis=1, inplace=True)
+		if 'Well' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Well'], axis=1, inplace=True)
+		if 'Plate' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Plate'], axis=1, inplace=True)
 		if 'AssayRole' in self.sampleMetadata.columns: self.sampleMetadata.drop(['AssayRole'], axis=1, inplace=True)
 		if 'SampleType' in self.sampleMetadata.columns: self.sampleMetadata.drop(['SampleType'], axis=1, inplace=True)
 		if 'Sample Base Name' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sample Base Name'], axis=1,
@@ -1431,7 +1442,8 @@ class MSDataset(Dataset):
 
 		# Return failure message if information not able to be inferred for any sample
 		if (self.sampleMetadata['Sample Base Name'].isnull().values.any()):
-			raise npycToolboxError('Inferring information from filenames failed for some samples, check and amend `filenameSpec` as appropriate and re-run')
+			raise npycToolboxError('Inferring information from filenames failed for some samples, check and amend `filenameSpec` as appropriate and re-run or exclude sample else nPYc-Toolbox functionality may be compromised',
+								   table=self.sampleMetadata.loc[self.sampleMetadata['Sample Base Name'].isnull(), ['Sample File Name', 'Sample Base Name']])
 
 
 	def _inferBatches(self, gapLength=24):
