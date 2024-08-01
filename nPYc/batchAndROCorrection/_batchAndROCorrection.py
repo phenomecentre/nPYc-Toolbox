@@ -75,19 +75,27 @@ def correctMSdataset(data,
 
 	# Define the samples to be corrected (only corrected if have value in 'Correction Batch' and not listed for
 	# exclusion in 'samplesNotCorrected'
-	samplesForCorrection = data.sampleMetadata['Correction Batch'].values.astype(float)
+	#samplesForCorrection = data.sampleMetadata['Correction Batch'].values.astype(float)
+	samplesForCorrection = numpy.ones(data.sampleMask.shape, dtype=bool)
 
 	for s in numpy.arange(len(data.Attributes['samplesNotCorrected']['SampleType'])):
 		try:
 			mask = (data.sampleMetadata['SampleType'] == SampleType[data.Attributes['samplesNotCorrected']['SampleType'][s]]) & \
 				   (data.sampleMetadata['AssayRole'] == AssayRole[data.Attributes['samplesNotCorrected']['AssayRole'][s]])
-			samplesForCorrection[mask] = numpy.nan
+			samplesForCorrection[mask] = False
 		except KeyError:
 			raise KeyError('data.Attributes[\'samplesNotCorrected\'] must contain valid SampleType/AssayRole enumeration entries')
 
 	# Check Run Order available for all samples to be corrected and raise error if not
-	if numpy.any(numpy.isnan(data.sampleMetadata.loc[~numpy.isnan(samplesForCorrection), 'Run Order'])):
-		raise npycToolboxError("Unable to run batch and run order correction without `dataset.sampleMetadata[`Run Order`]` info for ALL samples")
+	if numpy.any(numpy.isnan(data.sampleMetadata.loc[samplesForCorrection == True, 'Run Order'])):
+		raise npycToolboxError("Unable to run batch and run order correction without `dataset.sampleMetadata[`Run Order`]` info for ALL samples with types not listed in dataset.Attributes[`samplesNotCorrected`], please add `Run Order` info to dataset.sampleMetadata for:",
+							   table=data.sampleMetadata.loc[numpy.isnan(data.sampleMetadata['Run Order']) & samplesForCorrection == True, ['Sample File Name', 'Run Order']])
+
+	# Check Correction Batch available for all samples to be corrected and raise error if not
+	if numpy.any(numpy.isnan(data.sampleMetadata.loc[samplesForCorrection == True, 'Correction Batch'])):
+		raise npycToolboxError("Unable to run batch and run order correction without `dataset.sampleMetadata[`Correction Batch`]` info for ALL samples with types not listed in dataset.Attributes[`samplesNotCorrected`], please add `Correction Batch` info to dataset.sampleMetadata for:",
+							   table=data.sampleMetadata.loc[numpy.isnan(data.sampleMetadata['Correction Batch']) & samplesForCorrection == True, ['Sample File Name', 'Correction Batch']])
+
 
 	with warnings.catch_warnings():
 		warnings.simplefilter('ignore', category=RuntimeWarning)
@@ -95,7 +103,7 @@ def correctMSdataset(data,
 		correctedP = _batchCorrectionHead(data.intensityData,
 									 data.sampleMetadata['Run Order'].values,
 									 (data.sampleMetadata['SampleType'].values == correctionSampleType) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
-									 samplesForCorrection,
+									 data.sampleMetadata.loc[samplesForCorrection==False, 'Correction Batch'],
 									 window=window,
 									 method=method,
 									 align=align,
