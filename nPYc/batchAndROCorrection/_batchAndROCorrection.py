@@ -77,9 +77,7 @@ def correctMSdataset(data,
 		raise npycToolboxError(
 			'Zero values in dataset.sampleMetadata[`Correction Batch`]` are not allowed, please amend any zero values in `dataset.sampleMetadata[`Correction Batch`]` to apply correction')
 
-	# Define the samples to be corrected (only corrected if have value in 'Correction Batch' and not listed for
-	# exclusion in 'samplesNotCorrected'
-	#samplesForCorrection = data.sampleMetadata['Correction Batch'].values.astype(float)
+	# Define the samples to be corrected (only corrected if not listed for exclusion in 'samplesNotCorrected'
 	samplesForCorrection = numpy.ones(data.sampleMask.shape, dtype=bool)
 
 	for s in numpy.arange(len(data.Attributes['samplesNotCorrected']['SampleType'])):
@@ -100,6 +98,11 @@ def correctMSdataset(data,
 		raise npycToolboxError("Unable to run batch and run order correction without `dataset.sampleMetadata[`Correction Batch`]` info for ALL samples with types not listed in dataset.Attributes[`samplesNotCorrected`], please add `Correction Batch` info to dataset.sampleMetadata for:",
 							   table=data.sampleMetadata.loc[numpy.isnan(data.sampleMetadata['Correction Batch']) & samplesForCorrection == True, ['Sample File Name', 'Correction Batch']])
 
+	# For each `Correction Batch`, check all samples for correction have at least one `correctionSampleType`
+	batches = numpy.unique(data.sampleMetadata['Correction Batch'])
+	for batch in batches:
+		if numpy.any((data.sampleMetadata.loc[data.sampleMetadata['Correction Batch'] == batch, 'SampleType'] == correctionSampleType) & (data.sampleMetadata.loc[data.sampleMetadata['Correction Batch'] == batch, 'AssayRole'] == AssayRole.PrecisionReference)):
+			raise npycToolboxError("Unable to run batch and run order correction without at least one " + str(correctionSampleType) + " sample in each `Correction Batch`, please check and update dataset accordingly.")
 
 	with warnings.catch_warnings():
 		warnings.simplefilter('ignore', category=RuntimeWarning)
@@ -107,7 +110,7 @@ def correctMSdataset(data,
 		correctedP = _batchCorrectionHead(data.intensityData,
 									 data.sampleMetadata['Run Order'].values,
 									 (data.sampleMetadata['SampleType'].values == correctionSampleType) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
-									 data.sampleMetadata.loc[samplesForCorrection==False, 'Correction Batch'],
+									 data.sampleMetadata.loc[samplesForCorrection==True, 'Correction Batch'],
 									 window=window,
 									 method=method,
 									 align=align,
