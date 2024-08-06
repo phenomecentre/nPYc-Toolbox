@@ -814,6 +814,10 @@ class MSDataset(Dataset):
 			numpy.concatenate([sampleMetadata[c] for c in sampleMetadata.keys()], axis=0),
 			columns=sampleMetadata.keys())
 
+		# Remove full filepath from 'Sample File Name'
+		self.sampleMetadata['Sample File Name'] = [os.path.basename(x) for x in
+													 self.sampleMetadata['Sample File Name']]
+
 		# Address continuum vs Discrete
 
 		# Put Feature Names first

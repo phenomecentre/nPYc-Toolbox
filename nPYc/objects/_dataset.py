@@ -1189,6 +1189,10 @@ class Dataset:
 			if featureId != 'Feature Name':
 				currentMetadata.drop(featureId, axis=1, inplace=True)
 
+			# Rename cpdName to Compound Name (for human readability)
+			if 'cpdName' in currentMetadata.columns:
+				currentMetadata.rename(columns={'cpdName': 'Compound Name'}, inplace=True)
+
 			self.featureMetadata = currentMetadata
 
 		elif descriptionFormat.lower() == 'reference ranges':
