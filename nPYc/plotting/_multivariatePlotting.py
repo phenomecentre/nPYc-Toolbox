@@ -69,7 +69,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
                hotelling_alpha=0.05,
                plotAssociation=None, title='', xlabel='', figures=None,
                savePath=None, figureFormat='png', dpi=72,
-               figureSize=(11, 7), opacity=.4):
+               figureSize=(11, 7), opacity=.6):
     """
 	Plot PCA scores for each pair of components in PCAmodel, coloured by values defined in classes, and with Hotelling's T2 ellipse (95%)
 
@@ -140,11 +140,17 @@ def plotScores(pcaModel, classes=None, colourType=None,
     if colourType == 'categorical':
         classes = classes.astype(str)
 
-    uniq = classes.unique()
+    uniq = classes.unique().tolist()
     try:
         uniq.sort()
     except:
         pass
+
+    # Move any SR or LTR to the end, so these are plotted at the front
+    if 'Long-Term Reference' in uniq:
+        uniq.append(uniq.pop(uniq.index('Long-Term Reference')))
+    if 'Study Reference' in uniq:
+        uniq.append(uniq.pop(uniq.index('Study Reference')))
 
     # Calculate critical value for Hotelling's T2
     # Fval = f.ppf(0.95, 2, ns-2)
