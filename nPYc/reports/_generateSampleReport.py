@@ -55,10 +55,15 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	# Sample type masks
 	acquiredMasks = generateTypeRoleMasks(data.sampleMetadata)
 
-	NotInCSVmask = data.sampleMetadata['Metadata Available'] == False
+	# Masks for any study samples with missing metadata (this can be from basic CSV, LIMS, or Sample Manifest)
+	NoMetadata = data.sampleMetadata['Metadata Available'] == False
+	if 'LIMS Present' in data.sampleMetadata.columns:
+		NoMetadata = (NoMetadata == True) | (data.sampleMetadata['LIMS Present'] == False)
+	if 'SubjectInfoData' in data.sampleMetadata.columns:
+		NoMetadata = (NoMetadata == True) | (data.sampleMetadata['SubjectInfoData'] == False)
+	NoMetadata[data.sampleMetadata['SampleClass'] != 'Study Sample'] = False
 
 	# Samples marked for exclusion (either as marked as skipped or as False in sampleMask)
-
 	try:
 		markedToExclude = (data.sampleMetadata['Skipped'].values == True) | (data.sampleMask == False)
 	except:
@@ -94,9 +99,14 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	if (sum(markedToExclude) != 0):
 		sampleSummary['MarkedToExclude Details'] = data.sampleMetadata[['Sample File Name', 'Exclusion Details']][markedToExclude]
 
-	# Save details of samples of unknown type
-	if (sum(NotInCSVmask) != 0):
-		sampleSummary['NoMetadata Details'] = data.sampleMetadata[['Sample File Name']][NotInCSVmask]
+	# Save details of samples with no associated metadata
+	if (sum(NoMetadata) != 0):
+		sampleSummary['NoMetadata Details'] = data.sampleMetadata[['Sample File Name']][NoMetadata]
+
+#	if 'LIMS Present' in data.sampleMetadata.columns:
+#		if (sum(((data.sampleMetadata['LIMS Present'] == False) & (data.sampleMetadata['SampleClass'] == 'Study Sample'))) > 0):
+#			sampleSummary['NoMetadata Details'].append(data.sampleMetadata.loc[((data.sampleMetadata['LIMS Present'] == False) & (
+#					data.sampleMetadata['SampleClass'] == 'Study Sample')), 'Sample File Name'])
 
 	# Save details of samples of unknown type
 	if (sum(acquiredMasks['Unknownmask']) != 0):
@@ -210,9 +220,6 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 	# Update 'All', 'Missing/Excluded' to only reflect sample types present in data
 	sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sum(sampleSummary['Acquired']['Missing/Excluded'][1:])
-
-	# TODO - CAZ sampleSummary table 'Missing/Excluded' number is wrong
-
 
 	# Generate html report
 	if destinationPath:
