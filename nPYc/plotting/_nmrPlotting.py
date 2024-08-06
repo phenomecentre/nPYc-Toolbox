@@ -9,9 +9,12 @@ from ..enumerations import AssayRole, SampleType
 import numpy
 import plotly.graph_objs as go
 from ..enumerations import VariableType
+from ..utilities.generic import createDestinationPath
+import plotly
+import os
 
 
-def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, sampleLabels='Sample ID', nmrDataset=True):
+def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, sampleLabels='Sample ID', nmrDataset=True, destinationPath=None, autoOpen=True):
 	"""
 	Plot spectra from *dataset*.
 
@@ -30,6 +33,10 @@ def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, 
 		raise KeyError('featureNames=%s is not a column in dataset.featureMetadata.' % (featureNames))
 	if sampleLabels not in dataset.sampleMetadata.columns:
 		raise KeyError('sampleLabels=%s is not a column in dataset.sampleMetadata.' % (sampleLabels))
+
+	# Create destinationPath for saving outputs
+	if destinationPath:
+		createDestinationPath(destinationPath)
 
 	##
 	# Filter features
@@ -92,6 +99,11 @@ def plotSpectraInteractive(dataset, samples=None, xlim=None, featureNames=None, 
 				),
 				)
 	figure = go.Figure(data=data, layout=layout)
+
+	# Save to destinationPath
+	if destinationPath:
+		saveTemp = dataset.name + '_spectralData.html'
+		plotly.offline.plot(figure, filename=os.path.join(destinationPath, saveTemp), auto_open=autoOpen)
 
 	return figure
 
