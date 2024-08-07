@@ -188,7 +188,7 @@ class NMRDataset(Dataset):
 		# Define `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
 		self.sampleMetadata.loc[:,'SampleClass'] = 'Study Sample'
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Study Reference', na=False).astype(bool), 'SampleClass'] = 'Study Reference'
-		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'AssayRole'] = 'Long-Term Reference'
+		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'SampleClass'] = 'Long-Term Reference'
 
 		# Update Sampling ID values using new 'SampleType', special case for Study Pool, External Reference and Procedural Blank
 		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.StudyPool)).tolist(), 'Sample ID'] = 'Study Pool Sample'
