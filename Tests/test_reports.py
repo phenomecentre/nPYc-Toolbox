@@ -295,24 +295,33 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
     def test_reports_ms_batchcorrectiontest(self):
 
+#        data = nPYc.MSDataset(
+#            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
+#            fileType='QI')
         data = nPYc.MSDataset(
-            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
-            fileType='QI')
+            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_xcms_peakTable.csv'),
+            fileType='XCMS',
+            noFeatureParams=8
+        )
+
+        #data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name') ### CAROLINE 070824
+        #data.applyMasks()
         data.addSampleInfo(descriptionFormat='Filenames')
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))
-        # data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
+        data.addSampleInfo(descriptionFormat='Infer Batches')
+#        data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             nPYc.reports.generateReport(data, 'batch correction assessment', destinationPath=tmpdirname)
 
-            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionAssessment.html')
+            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_xcms_peakTable_report_batchCorrectionAssessment.html')
             self.assertTrue(os.path.exists(expectedPath))
 
-            testFiles = ['UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_145.0686m-z.png',
-                         'UnitTest1_PCSOP.069_QI_batchPlotFeature_3.17_262.0378m-z.png',
-                         'UnitTest1_PCSOP.069_QI_TICdetectorBatches.png']
+            testFiles = ['UnitTest1_PCSOP.069_xcms_peakTable_batchPlotFeature_3.17_145.0686m-z.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_batchPlotFeature_3.17_262.0378m-z.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_TICdetectorBatches.png']
 
             for testFile in testFiles:
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'report_batchCorrectionAssessment', testFile)

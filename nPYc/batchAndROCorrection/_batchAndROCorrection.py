@@ -100,25 +100,27 @@ def correctMSdataset(data,
 
 	# For each `Correction Batch`, check all samples for correction have at least one `correctionSampleType`
 	batches = numpy.unique(data.sampleMetadata['Correction Batch'])
+	batches = batches[~numpy.isnan(batches)]
 	for batch in batches:
-		if numpy.any((data.sampleMetadata.loc[data.sampleMetadata['Correction Batch'] == batch, 'SampleType'] == correctionSampleType) & (data.sampleMetadata.loc[data.sampleMetadata['Correction Batch'] == batch, 'AssayRole'] == AssayRole.PrecisionReference)):
+		if not numpy.any((data.sampleMetadata.loc[data.sampleMetadata['Correction Batch'] == batch, 'SampleType'] == correctionSampleType) & (data.sampleMetadata.loc[data.sampleMetadata['Correction Batch'] == batch, 'AssayRole'] == AssayRole.PrecisionReference)):
 			raise npycToolboxError("Unable to run batch and run order correction without at least one " + str(correctionSampleType) + " sample in each `Correction Batch`, please check and update dataset accordingly.")
 
 	with warnings.catch_warnings():
 		warnings.simplefilter('ignore', category=RuntimeWarning)
 
-		correctedP = _batchCorrectionHead(data.intensityData,
-									 data.sampleMetadata['Run Order'].values,
-									 (data.sampleMetadata['SampleType'].values == correctionSampleType) & (data.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference),
-									 data.sampleMetadata.loc[samplesForCorrection==True, 'Correction Batch'],
+		correctedP = _batchCorrectionHead(data.intensityData[samplesForCorrection==True,:],
+									 data.sampleMetadata.loc[samplesForCorrection==True, 'Run Order'].values,
+									 (data.sampleMetadata.loc[samplesForCorrection==True, 'SampleType'].values == correctionSampleType) & (data.sampleMetadata.loc[samplesForCorrection==True, 'AssayRole'].values == AssayRole.PrecisionReference),
+									 data.sampleMetadata.loc[samplesForCorrection==True, 'Correction Batch'].values,
 									 window=window,
 									 method=method,
 									 align=align,
 									 parallelise=parallelise)
 
 	correctedData = copy.deepcopy(data)
-	correctedData.intensityData = correctedP[0]
-	correctedData.fit = correctedP[1]
+	correctedData.intensityData[samplesForCorrection==True,:] = correctedP[0]
+	correctedData.fit = numpy.full(correctedData.intensityData.shape, numpy.nan)
+	correctedData.fit[samplesForCorrection==True,:] = correctedP[1]
 	correctedData.Attributes['Log'].append([datetime.now(),'Batch and run order correction applied'])
 
 	return correctedData
