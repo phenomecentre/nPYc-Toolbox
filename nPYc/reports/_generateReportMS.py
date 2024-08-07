@@ -884,7 +884,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     rValsRep = numpy.tile(rVals, [1, len(rsdVals)])
     rsdValsRep = numpy.reshape(numpy.tile(rsdVals, [len(rVals), 1]), rValsRep.shape, order='F')
 
-    featureNos = numpy.zeros(rValsRep.shape, dtype=numpy.int)
+    featureNos = numpy.zeros(rValsRep.shape, dtype=int)
     if withArtifactualFiltering:
         # with blankThreshold in heatmap
         if (dataset.Attributes['featureFilters']['blankFilter'] is True) & (sum(acquiredMasks['Blankmask']) >= 2):
@@ -920,7 +920,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
 
     test = pandas.DataFrame(data=numpy.transpose(numpy.concatenate([rValsRep, rsdValsRep, featureNos])),
                             columns=['Correlation to dilution', 'RSD', 'nFeatures'])
-    test = test.pivot('Correlation to dilution', 'RSD', 'nFeatures')
+    test = test.pivot(index='Correlation to dilution', columns='RSD', values='nFeatures')
 
     fig, ax = plt.subplots(1, figsize=dataset.Attributes['figureSize'], dpi=dataset.Attributes['dpi'])
     sns.heatmap(test, annot=True, fmt='g', cbar=False)

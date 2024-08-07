@@ -262,32 +262,33 @@ class test_reports_ms_generatereport(unittest.TestCase):
     def test_reports_ms_correlationtodilution(self):
 
         data = nPYc.MSDataset(
-            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
-            fileType='QI')
+            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_xcms_peakTable.csv'),
+            fileType='XCMS',
+            noFeatureParams=8
+        )
         data.addSampleInfo(descriptionFormat='Filenames')
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))
         data.addSampleInfo(descriptionFormat='Infer Batches')
-        # data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
         data.corrExclusions = data.sampleMask
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             nPYc.reports.generateReport(data, 'correlation to dilution', destinationPath=tmpdirname)
 
-            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_correlationToDilutionSummary.html')
+            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_xcms_peakTable_report_correlationToDilutionSummary.html')
             self.assertTrue(os.path.exists(expectedPath))
 
-            testFiles = ['Batch 2, series 1.0 Histogram of Correlation To Dilution.png',
-                         'Batch 2, series 1.0 LR Sample TIC (coloured by change in detector voltage).png',
-                         'Batch 2, series 1.0 LR Sample TIC (coloured by dilution).png',
-                         'Batch 4, series 2.0 Histogram of Correlation To Dilution.png',
-                         'Batch 4, series 2.0 LR Sample TIC (coloured by change in detector voltage).png',
-                         'Batch 4, series 2.0 LR Sample TIC (coloured by dilution).png',
+            testFiles = ['Batch 1, series 1.0 Histogram of Correlation To Dilution.png',
+                         'Batch 1, series 1.0 LR Sample TIC (coloured by change in detector voltage).png',
+                         'Batch 1, series 1.0 LR Sample TIC (coloured by dilution).png',
+                         'Batch 3, series 2.0 Histogram of Correlation To Dilution.png',
+                         'Batch 3, series 2.0 LR Sample TIC (coloured by change in detector voltage).png',
+                         'Batch 3, series 2.0 LR Sample TIC (coloured by dilution).png',
                          'MeanAllSubsets Histogram of Correlation To Dilution.png',
                          'MeanAllSubsets LR Sample TIC (coloured by change in detector voltage).png',
                          'MeanAllSubsets LR Sample TIC (coloured by dilution).png',
-                         'UnitTest1_PCSOP.069_QI_satFeaturesHeatmap.png']
+                         'UnitTest1_PCSOP.069_xcms_peakTable_satFeaturesHeatmap.png']
 
             for testFile in testFiles:
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'report_correlationToDilutionSummary', testFile)
@@ -295,23 +296,16 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
     def test_reports_ms_batchcorrectiontest(self):
 
-#        data = nPYc.MSDataset(
-#            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
-#            fileType='QI')
         data = nPYc.MSDataset(
             os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_xcms_peakTable.csv'),
             fileType='XCMS',
             noFeatureParams=8
         )
-
-        #data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name') ### CAROLINE 070824
-        #data.applyMasks()
         data.addSampleInfo(descriptionFormat='Filenames')
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))
         data.addSampleInfo(descriptionFormat='Infer Batches')
-#        data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             nPYc.reports.generateReport(data, 'batch correction assessment', destinationPath=tmpdirname)
@@ -330,30 +324,33 @@ class test_reports_ms_generatereport(unittest.TestCase):
     def test_reports_ms_batchcorrectionresults(self):
 
         data = nPYc.MSDataset(
-            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
-            fileType='QI')
+            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_xcms_peakTable.csv'),
+            fileType='XCMS',
+            noFeatureParams=8
+        )
         data.addSampleInfo(descriptionFormat='Filenames')
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))
-        # data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
+        data.addSampleInfo(descriptionFormat='Infer Batches')
+
         datacorrected = nPYc.batchAndROCorrection.correctMSdataset(data, parallelise=True)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             nPYc.reports.generateReport(data, 'batch correction summary', msDataCorrected=datacorrected,
                                         destinationPath=tmpdirname)
 
-            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_batchCorrectionSummary.html')
+            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_xcms_peakTable_report_batchCorrectionSummary.html')
             self.assertTrue(os.path.exists(expectedPath))
 
-            testFiles = ['npc-main.css', 'toolbox_logo.png']
-            testFiles = ['UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePRE.png',
-                         'UnitTest1_PCSOP.069_QI_BCS1_meanIntesityFeaturePOST.png',
-                         'UnitTest1_PCSOP.069_QI_BCS2_TicPRE.png', 'UnitTest1_PCSOP.069_QI_BCS2_TicPOST.png',
-                         'UnitTest1_PCSOP.069_QI_BCS3_rsdByPercPRE.png',
-                         'UnitTest1_PCSOP.069_QI_BCS3_rsdByPercPOST.png',
-                         'UnitTest1_PCSOP.069_QI_BCS4_RSDdistributionFigurePRE.png',
-                         'UnitTest1_PCSOP.069_QI_BCS4_RSDdistributionFigurePOST.png']
+            testFiles = ['UnitTest1_PCSOP.069_xcms_peakTable_BCS1_meanIntesityFeaturePRE.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_BCS1_meanIntesityFeaturePOST.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_BCS2_TicPRE.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_BCS2_TicPOST.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_BCS3_rsdByPercPRE.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_BCS3_rsdByPercPOST.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_BCS4_RSDdistributionFigurePRE.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_BCS4_RSDdistributionFigurePOST.png']
 
             for testFile in testFiles:
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'report_batchCorrectionSummary', testFile)
@@ -362,22 +359,25 @@ class test_reports_ms_generatereport(unittest.TestCase):
     def test_reports_ms_featureselection(self):
 
         data = nPYc.MSDataset(
-            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
-            fileType='QI')
+            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_xcms_peakTable.csv'),
+            fileType='XCMS',
+            noFeatureParams=8
+        )
         data.addSampleInfo(descriptionFormat='Filenames')
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))
-        data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
+        data.addSampleInfo(descriptionFormat='Infer Batches')
+
         # New version of the report requires dilution series and
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             nPYc.reports.generateReport(data, 'feature selection', destinationPath=tmpdirname)
 
-            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_featureSelectionSummary.html')
+            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_xcms_peakTable_report_featureSelectionSummary.html')
             self.assertTrue(os.path.exists(expectedPath))
 
-            testFiles = ['UnitTest1_PCSOP.069_QI_noFeatures.png']
+            testFiles = ['UnitTest1_PCSOP.069_xcms_peakTable_noFeatures.png']
 
             for testFile in testFiles:
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'report_featureSelectionSummary', testFile)
@@ -391,24 +391,30 @@ class test_reports_ms_generatereport(unittest.TestCase):
     def test_reports_ms_finalreport(self):
 
         data = nPYc.MSDataset(
-            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
-            fileType='QI')
+            os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_xcms_peakTable.csv'),
+            fileType='XCMS',
+            noFeatureParams=8
+        )
         data.addSampleInfo(descriptionFormat='Filenames')
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))
-        data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
-        data.sampleMetadata['Metadata Available'] = True
+        data.addSampleInfo(descriptionFormat='Infer Batches')
+        data.addSampleInfo(descriptionFormat='NPC LIMS',
+                           filePath=os.path.join('..', '..', 'npc-standard-project', 'Derived_Worklists',
+                                                 'UnitTest1_MS_serum_PCSOP.069.csv'))
+
         with tempfile.TemporaryDirectory() as tmpdirname:
             nPYc.reports.generateReport(data, 'final report', destinationPath=tmpdirname)
 
-            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_QI_report_finalSummary.html')
+            expectedPath = os.path.join(tmpdirname, 'UnitTest1_PCSOP.069_xcms_peakTable_report_finalSummary.html')
             self.assertTrue(os.path.exists(expectedPath))
 
-            testFiles = ['UnitTest1_PCSOP.069_QI_finalFeatureIntensityHist.png',
-                         'UnitTest1_PCSOP.069_QI_finalIonMap.png',
-                         'UnitTest1_PCSOP.069_QI_finalRSDdistributionFigure.png', 'UnitTest1_PCSOP.069_QI_finalTIC.png',
-                         'UnitTest1_PCSOP.069_QI_finalTICbatches.png']
+            testFiles = ['UnitTest1_PCSOP.069_xcms_peakTable_finalFeatureIntensityHist.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_finalIonMap.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_finalRSDdistributionFigure.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_finalTIC.png',
+                         'UnitTest1_PCSOP.069_xcms_peakTable_finalTICbatches.png']
 
             for testFile in testFiles:
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)

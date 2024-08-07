@@ -121,7 +121,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 
 	# Use 'Acquired Time' if it exists:
 	if ('Acquired Time' in msData.sampleMetadata.columns):
-
+		formatter = DateFormatter('%d/%m/%y')
 		# X axis limits for formatting
 		minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'])].values
 		maxX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'])].values
@@ -132,10 +132,10 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 			loc = HourLocator() # byhour=range(0, 24, 2)
 		elif days < 7:
 			loc = WeekdayLocator(byweekday=(MO, TU, WE, TH, FR, SA, SU))
-			formatter = DateFormatter('%d/%m/%y')
+			#formatter = DateFormatter('%d/%m/%y')
 		else:
 			loc = WeekdayLocator(byweekday=(MO, SA))
-			formatter = DateFormatter('%d/%m/%y')
+			#formatter = DateFormatter('%d/%m/%y')
 
 
 		# Ensure 'Acquired Time' is datetime.datetime, if it's already a datetime it will trigger an AttributeError
@@ -146,6 +146,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 
 	# Otherwise use 'Run Order'
 	else:
+		formatter = None
 		acqTime = msData.sampleMetadata['Run Order']
 
 	tic = numpy.sum(msData.intensityData[:, tempFeatureMask == True], axis=1)
