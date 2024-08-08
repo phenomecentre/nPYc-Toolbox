@@ -10,7 +10,7 @@ openpyxl
 pandas~=1.5.0
 plotly>=3.1.0
 scikit-learn>=0.19.1
-scipy>=1.1.0
+scipy==1.11.4
 seaborn
 setuptools>=39.1.0
 statsmodels>=0.9.0
