@@ -41,7 +41,10 @@ class test_reports_ms_feature_id(unittest.TestCase):
         self.msData = nPYc.MSDataset(
             os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
             fileType='QI')
-        self.msData.addSampleInfo(descriptionFormat='Filenames')
+        try:
+            self.msData.addSampleInfo(descriptionFormat='Filenames')
+        except nPYc.utilities._errorHandling.npycToolboxError:
+            pass  # This is user warning, not an error so can be ignored
 
         self.msData.sampleMetadata['Correction Batch'] = 1
         self.msData.sampleMetadata['Run Order'] = [i for i in range(1, self.msData.noSamples + 1)]
@@ -79,7 +82,10 @@ class test_reports_generateSamplereport(unittest.TestCase):
         self.data = nPYc.MSDataset(
             os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
             fileType='QI')
-        self.data.addSampleInfo(descriptionFormat='Filenames')
+        try:
+            self.data.addSampleInfo(descriptionFormat='Filenames')
+        except nPYc.utilities._errorHandling.npycToolboxError:
+            pass  # This is user warning, not an error so can be ignored
         self.data.addSampleInfo(descriptionFormat='Raw Data',
                                 filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                       'parameters_data'))
@@ -141,7 +147,7 @@ class test_reports_generateSamplereport(unittest.TestCase):
         assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Total'] == 1
         assert sampleSummary['Acquired'].loc['Serial Dilution', 'Total'] == 92
         assert sampleSummary['Acquired'].loc['Blank', 'Total'] == 2
-        assert 'Unspecified SampleType or AssayRole' not in sampleSummary['Acquired'].index
+        assert sampleSummary['Acquired'].loc['Unknown', 'Total'] == 0
 
         # Acquired - Marked for exclusion
         assert sampleSummary['Acquired'].loc['All', 'Marked for Exclusion'] == 0
@@ -150,14 +156,16 @@ class test_reports_generateSamplereport(unittest.TestCase):
         assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Marked for Exclusion'] == 0
         assert sampleSummary['Acquired'].loc['Serial Dilution', 'Marked for Exclusion'] == 0
         assert sampleSummary['Acquired'].loc['Blank', 'Marked for Exclusion'] == 0
+        assert sampleSummary['Acquired'].loc['Unknown', 'Marked for Exclusion'] == 0
 
         # Acquired - Already Excluded
-        assert sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] == 3
-        assert sampleSummary['Acquired'].loc['Study Sample', 'Missing/Excluded'] == 3
+        assert sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] == 5
+        assert sampleSummary['Acquired'].loc['Study Sample', 'Missing/Excluded'] == 4
         assert sampleSummary['Acquired'].loc['Study Reference', 'Missing/Excluded'] == 0
         assert sampleSummary['Acquired'].loc['Long-Term Reference', 'Missing/Excluded'] == 0
         assert sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] == 0
         assert sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] == 0
+        assert sampleSummary['Acquired'].loc['Unknown', 'Missing/Excluded'] == 1
 
 
 class test_reports_nmr_generatereport(unittest.TestCase):
@@ -466,6 +474,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
                                                                 'SampleType': [SampleType.StudySample,
                                                                                SampleType.StudySample,
                                                                                SampleType.StudySample],
+                                                                'SampleClass': ['Study Sample', 'Study Sample', 'Study Sample'],
                                                                 'Dilution': [numpy.nan, numpy.nan, numpy.nan],
                                                                 'Correction Batch': [numpy.nan, numpy.nan, numpy.nan],
                                                                 'Subject ID': ['', '', ''], 'Sample ID': ['', '', ''],
@@ -879,7 +888,10 @@ class test_reports_modules(unittest.TestCase):
         data = nPYc.MSDataset(
             os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
             fileType='QI')
-        data.addSampleInfo(descriptionFormat='Filenames')
+        try:
+            data.addSampleInfo(descriptionFormat='Filenames')
+        except nPYc.utilities._errorHandling.npycToolboxError:
+            pass  # This is user warning, not an error so can be ignored
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))

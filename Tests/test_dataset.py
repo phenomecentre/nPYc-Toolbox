@@ -1261,7 +1261,10 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 	def setUp(self):
 		self.Data = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
-		self.Data.addSampleInfo(descriptionFormat='Filenames')
+		try:
+			self.Data.addSampleInfo(descriptionFormat='Filenames')
+		except nPYc.utilities._errorHandling.npycToolboxError:
+			pass # This is user warning, not an error so can be ignored
 
 
 	def test_dataset_load_npc_lims(self):

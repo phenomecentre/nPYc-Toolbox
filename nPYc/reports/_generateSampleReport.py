@@ -215,8 +215,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	if SS_exclusions.shape[0] != 0:
 		sampleSummary['StudySamples Exclusion Details'] = SS_exclusions
 
-	# Drop rows where no samples present for that datatype
-	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
+	# Drop rows where no samples present for that datatype across any column
+	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired'].sum(axis=1) == 0], axis=0, inplace=True)
 
 	# Update 'All', 'Missing/Excluded' to only reflect sample types present in data
 	sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sum(sampleSummary['Acquired']['Missing/Excluded'][1:])

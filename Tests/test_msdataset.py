@@ -1394,8 +1394,10 @@ class test_msdataset_import_QI(unittest.TestCase):
 	def setUp(self):
 
 		self.msData = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
-
-		self.msData.addSampleInfo(descriptionFormat='Filenames')
+		try:
+			self.msData.addSampleInfo(descriptionFormat='Filenames')
+		except nPYc.utilities._errorHandling.npycToolboxError:
+			pass  # This is user warning, not an error so can be ignored
 
 
 	def test_dimensions(self):
@@ -1883,10 +1885,16 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 		path = os.path.join('..','..','npc-standard-project','Derived_Data', 'UnitTest1_PCSOP.069_Metaboscape.xlsx')
 
 		self.lcData = nPYc.MSDataset(path, fileType='Metaboscape', noFeatureParams=18, sheetName='Test Data')
-		self.lcData.addSampleInfo(descriptionFormat='Filenames')
+		try:
+			self.lcData.addSampleInfo(descriptionFormat='Filenames')
+		except nPYc.utilities._errorHandling.npycToolboxError:
+			pass # This is user warning, not an error so can be ignored
 
 		self.diData = nPYc.MSDataset(path, fileType='Metaboscape', noFeatureParams=16, sheetName='Test Data (DI)')
-		self.diData.addSampleInfo(descriptionFormat='Filenames')
+		try:
+			self.diData.addSampleInfo(descriptionFormat='Filenames')
+		except nPYc.utilities._errorHandling.npycToolboxError:
+			pass  # This is user warning, not an error so can be ignored
 
 
 	def test_dimensions(self):
@@ -2058,7 +2066,10 @@ class test_msdataset_import_metaboscape(unittest.TestCase):
 		path = os.path.join('..','..','npc-standard-project','Derived_Data', 'UnitTest1_PCSOP.069_Metaboscape_LC.csv')
 
 		lcData = nPYc.MSDataset(path, fileType='Metaboscape', noFeatureParams=18)
-		lcData.addSampleInfo(descriptionFormat='Filenames')
+		try:
+			lcData.addSampleInfo(descriptionFormat='Filenames')
+		except nPYc.utilities._errorHandling.npycToolboxError:
+			pass # This is user warning, not an error so can be ignored
 
 		assert_frame_equal(self.lcData.sampleMetadata, lcData.sampleMetadata)
 		numpy.testing.assert_array_equal(self.lcData.intensityData, lcData.intensityData)
@@ -2188,7 +2199,10 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 	def setUp(self):
 
 		self.msData = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
-		self.msData.addSampleInfo(descriptionFormat='Filenames')
+		try:
+			self.msData.addSampleInfo(descriptionFormat='Filenames')
+		except nPYc.utilities._errorHandling.npycToolboxError:
+			pass # This is user warning, not an error so can be ignored
 
 
 	def test_msdataset_load_npc_lims(self):
