@@ -543,7 +543,7 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
             plt.ylim(Yvals.min() * 1.2, Yvals.max() * 1.2)
             plt.gca().invert_xaxis()
 
-        cbar = plt.colorbar(cb)
+        cbar = plt.colorbar(cb, ax=ax)
         cbar.set_label('Loadings')
         ax.set_xlabel(Xlabel)
         ax.set_ylabel(Ylabel)
