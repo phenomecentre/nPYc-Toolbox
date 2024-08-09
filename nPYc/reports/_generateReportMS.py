@@ -1551,8 +1551,8 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
             i = i + 1
         i = i + 1
 
-    satHeatmap = sat.pivot('Average feature intensity', 'LR', 'Proportion of features')
-    satLineplot = sat.pivot('LR', 'Average feature intensity', 'Proportion of features')
+    satHeatmap = sat.pivot(index='Average feature intensity', columns='LR', values='Proportion of features')
+    satLineplot = sat.pivot(index='LR', columns='Average feature intensity', values='Proportion of features')
 
     # plot heatmap
     with sns.axes_style("white"):

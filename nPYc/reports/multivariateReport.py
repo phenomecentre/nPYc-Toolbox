@@ -592,7 +592,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         sigCor = pandas.DataFrame(sigCor, columns=['Field', 'PC', 'Correlation'])
         sigCor['Field'] = fieldNames[sigCor['Field'].values.astype('int')]
 
-        sigCor = sigCor.pivot('Field', 'PC', 'Correlation')
+        sigCor = sigCor.pivot(index='Field', columns='PC', values='Correlation')
 
         # plot heatmap
         with sns.axes_style("white"):
@@ -625,7 +625,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         sigKru = pandas.DataFrame(sigKru, columns=['Field', 'PC', 'Kruskal-Wallis p-value'])
         sigKru['Field'] = fieldNames[sigKru['Field'].values.astype('int')]
 
-        sigKru = sigKru.pivot('Field', 'PC', 'Kruskal-Wallis p-value')
+        sigKru = sigKru.pivot(index='Field', columns='PC', values='Kruskal-Wallis p-value')
 
         # plot heatmap
         with sns.axes_style("white"):
@@ -759,7 +759,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
             i = i + nc
         sigNone = pandas.DataFrame(sigNone, columns=['Field', 'PC', 'Kruskal-Wallis p-value'])
         sigNone['Field'] = fieldNames[sigNone['Field'].values.astype('int')]
-        sigNone = sigNone.pivot('Field', 'PC', 'Kruskal-Wallis p-value')
+        sigNone = sigNone.pivot(index='Field', columns='PC', values='Kruskal-Wallis p-value')
 
         figuresOTHERscores = _plotScoresLocal(dataForPlotting,
                                               fieldsKWfail,

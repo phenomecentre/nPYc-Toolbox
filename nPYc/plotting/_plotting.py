@@ -374,7 +374,7 @@ def plotCorrelationToLRbyFeature(msData, featureMask=None, title='', maxNo=5, sa
                     ignore_index=True)
 
         # Plot heatmap of correlation to dilution value
-        LRcorVals = LRcorVals.pivot('LR subset', 'Feature', 'Correlation')
+        LRcorVals = LRcorVals.pivot(index='LR subset', columns='Feature', values='Correlation')
         ax2 = sns.heatmap(LRcorVals, annot=True, fmt='.3g', vmin=-1, vmax=1, cmap='seismic', cbar=False)
 
         # Save or show
