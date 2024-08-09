@@ -210,26 +210,26 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
 
     if sum(dataset.corrExclusions) != dataset.noSamples:
         temp = ', '.join(dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
-        FeatureSelectionTable = FeatureSelectionTable.append(
-            pandas.DataFrame(data=temp, index=['Correlation to Dilution: Sample Exclusions'], columns=['Value Applied']))
+        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
+            pandas.DataFrame(data=temp, index=['Correlation to Dilution: Sample Exclusions'], columns=['Value Applied'])])
     else:
-        FeatureSelectionTable = FeatureSelectionTable.append(
-            pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied']))
-    FeatureSelectionTable = FeatureSelectionTable.append(
+        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
+            pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied'])])
+    FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
         pandas.DataFrame(data=['yes', dataset.Attributes['filterParameters']['rsdThreshold'], 'yes'],
                          index=['Relative Standard Devation (RSD)', 'RSD of SR Samples: Threshold',
-                                'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied']))
+                                'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied'])])
     if 'blankFilter' in dataset.Attributes:
         if dataset.Attributes['featureFilters']['blankFilter'] == True:
-            FeatureSelectionTable = FeatureSelectionTable.append(
-                pandas.DataFrame(data=['yes'], index=['Blank Filtering'], columns=['Value Applied']))
+            FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
+                pandas.DataFrame(data=['yes'], index=['Blank Filtering'], columns=['Value Applied'])])
     if (dataset.Attributes['featureFilters']['artifactualFilter'] == True):
-        FeatureSelectionTable = FeatureSelectionTable.append(pandas.DataFrame(
+        FeatureSelectionTable = pandas.concat([FeatureSelectionTable, pandas.DataFrame(
             data=['yes', dataset.Attributes['filterParameters']['deltaMzArtifactual'], dataset.Attributes['filterParameters']['overlapThresholdArtifactual'],
                   dataset.Attributes['filterParameters']['corrThresholdArtifactual']],
             index=['Artifactual Filtering', 'Artifactual Filtering: Delta m/z',
                    'Artifactual Filtering: Overlap Threshold', 'Artifactual Filtering: Correlation Threshold'],
-            columns=['Value Applied']))
+            columns=['Value Applied'])])
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
     
@@ -1728,46 +1728,6 @@ def batchCorrectionTest(dataset, nFeatures=10, window=11):
 
     # Do batch correction
     postData = correctMSdataset(preData)
-
-    # Do batch correction
-    #featureList = []
-    #correctedData = numpy.zeros([dataset.intensityData.shape[0], nFeatures])
-    #fits = numpy.zeros([dataset.intensityData.shape[0], nFeatures])
-    #featureIX = 0
-    #parameters = dict()
-    #parameters['window'] = window
-    #parameters['method'] = 'LOWESS'
-    #parameters['align'] = 'median'
-
-    #for feature in maskNum:
-    #    correctedP = _batchCorrection(dataset.intensityData[:, feature],
-    #                                  dataset.sampleMetadata['Run Order'].values,
-    #                                  SPmask,
-    #                                  dataset.sampleMetadata['Correction Batch'].values,
-    #                                  range(0, 1),  # All features
-    #                                  parameters,
-    #                                  0)
-
-    #    if sum(numpy.isfinite(correctedP[0][1])) == dataset.intensityData.shape[0]:
-    #        correctedData[:, featureIX] = correctedP[0][1]
-    #        fits[:, featureIX] = correctedP[0][2]
-    #        featureList.append(feature)
-    #        featureIX = featureIX + 1
-
-    #    if featureIX == nFeatures:
-    #        break
-
-    # Create copy of dataset and trim
-    #preData = copy.deepcopy(dataset)
-    #preData.intensityData = dataset.intensityData[:, featureList]
-    #preData.featureMetadata = dataset.featureMetadata.loc[featureList, :]
-    #preData.featureMetadata.reset_index(drop=True, inplace=True)
-    #preData.featureMask = preData.featureMask[featureList]
-
-    # Run batch correction
-    #postData = copy.deepcopy(preData)
-    #postData.intensityData = correctedData
-    #postData.fit = fits
 
     # Return results
     return preData, postData, maskNum #featureList

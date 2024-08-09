@@ -23,6 +23,7 @@ import numbers
 import shutil
 from IPython.display import display
 from warnings import warn
+from ..utilities._errorHandling import npycToolboxError
 
 from ..__init__ import __version__ as version
 
@@ -139,8 +140,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     if hasattr(pcaModel, '_npyc_dataset_shape'):
         if pcaModel._npyc_dataset_shape['NumberSamples'] != data.intensityData.shape[0] \
                 or pcaModel._npyc_dataset_shape['NumberFeatures'] != data.intensityData.shape[1]:
-            raise ValueError('Data dimension mismatch: Number of samples and features in the nPYc Dataset do not match'
-                             'the numbers present when PCA was fitted. Verify if withExclusions argument is matching.')
+            raise npycToolboxError('Data dimension mismatch: Number of samples and features in the nPYc Dataset do not match'
+                             ' the numbers present when PCA was fitted. Verify if withExclusions argument is matching.')
     else:
         raise ValueError('Fit a PCA model beforehand using exploratoryAnalysisPCA.')
 

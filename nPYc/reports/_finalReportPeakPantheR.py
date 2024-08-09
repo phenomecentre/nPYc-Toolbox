@@ -155,15 +155,15 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
 
     if sum(dataset.corrExclusions) != dataset.noSamples:
         temp = ', '.join(dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
-        FeatureSelectionTable = FeatureSelectionTable.append(
-            pandas.DataFrame(data=temp, index=['Correlation to Dilution: Sample Exclusions'], columns=['Value Applied']))
+        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
+            pandas.DataFrame(data=temp, index=['Correlation to Dilution: Sample Exclusions'], columns=['Value Applied'])])
     else:
-        FeatureSelectionTable = FeatureSelectionTable.append(
-            pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied']))
-    FeatureSelectionTable = FeatureSelectionTable.append(
+        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
+            pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied'])])
+    FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
         pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
                          index=['Relative Standard Devation (RSD)', 'RSD of SR Samples: Threshold',
-                                'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied']))
+                                'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied'])])
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
     
