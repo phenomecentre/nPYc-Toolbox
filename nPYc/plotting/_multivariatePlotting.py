@@ -206,23 +206,22 @@ def plotScores(pcaModel, classes=None, colourType=None,
                 if any(u in {'nan', 'NaN', 'NaT', '', 'NA'} for u in uniq):
                     nans = [i for i, x in enumerate(classes) if x in {'nan', 'NaN', 'NaT', '', 'NA'}]
                     ax.scatter(values[nans, components[i]], values[nans, components[j]], c='#D3D3D3', label='NA')
-                    nans = [i for i, x in enumerate(uniq) if x not in {'nan', 'NaN', 'NaT', '', 'NA'}]
-                    uniqnonan = uniq[nans]
+                    uniq_no_nan = [uniq[i] for i, x in enumerate(uniq) if x not in {'nan', 'NaN', 'NaT', '', 'NA'}]
                     colors_sns['NA'] = '#D3D3D3'
 
                 else:
-                    uniqnonan = uniq
+                    uniq_no_nan = uniq
 
                 # Then plot remaining classes using rainbow colourmap
                 classIX = 0
-                colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(uniqnonan))))
-                for u in uniqnonan:
+                colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(uniq_no_nan))))
+                for u in uniq_no_nan:
                     c = rgb2hex(next(colors))
                     if classIX < 20:
                         ax.scatter(values[classes.values == u, components[i]],
                                    values[classes.values == u, components[j]], c=c, label=u,
                                    alpha=opacity)  # olors[classIX], label=u)
-                    elif classIX == len(uniqnonan) - 1:
+                    elif classIX == len(uniq_no_nan) - 1:
                         ax.scatter(values[classes.values == u, components[i]],
                                    values[classes.values == u, components[j]], c='0', alpha=0, label='...')
                         ax.scatter(values[classes.values == u, components[i]],
