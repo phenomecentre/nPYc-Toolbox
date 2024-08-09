@@ -1516,38 +1516,25 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
     i = 0
     for key in sorted(LRbatchmask):
         for d in numpy.arange(0, len(dilutions) - 1):
+            low = pandas.DataFrame({'Average feature intensity': ['1. low ' + key],
+                                    'LR': [str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d])],
+                                    'Proportion of features': [
+                                        sum(medItable[lowImask, i + 1] <= medItable[lowImask, i]) / sum(
+                                            lowImask) * 100]})
+            med = pandas.DataFrame({'Average feature intensity': ['2. medium ' + key],
+                                    'LR': [str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d])],
+                                    'Proportion of features': [
+                                        sum(medItable[midImask, i + 1] <= medItable[midImask, i]) / sum(
+                                            midImask) * 100]})
+            high = pandas.DataFrame({'Average feature intensity': ['3. high ' + key],
+                                     'LR': [str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d])],
+                                     'Proportion of features': [
+                                         sum(medItable[highImask, i + 1] <= medItable[highImask, i]) / sum(
+                                             highImask) * 100]})
             if 'sat' not in locals():
-                sat = pandas.DataFrame({'Average feature intensity': ['1. low ' + key],
-                                        'LR': [str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d])],
-                                        'Proportion of features': [
-                                            sum(medItable[lowImask, i + 1] <= medItable[lowImask, i]) / sum(
-                                                lowImask) * 100]})
-                sat = sat.append({'Average feature intensity': '2. medium ' + key,
-                                  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
-                                  'Proportion of features': sum(
-                                      medItable[midImask, i + 1] <= medItable[midImask, i]) / sum(midImask) * 100},
-                                 ignore_index=True)
-                sat = sat.append({'Average feature intensity': '3. high ' + key,
-                                  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
-                                  'Proportion of features': sum(
-                                      medItable[highImask, i + 1] <= medItable[highImask, i]) / sum(highImask) * 100},
-                                 ignore_index=True)
+                sat = pandas.concat([low, med, high], ignore_index=True)
             else:
-                sat = sat.append({'Average feature intensity': '1. low ' + key,
-                                  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
-                                  'Proportion of features': sum(
-                                      medItable[lowImask, i + 1] <= medItable[lowImask, i]) / sum(lowImask) * 100},
-                                 ignore_index=True)
-                sat = sat.append({'Average feature intensity': '2. medium ' + key,
-                                  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
-                                  'Proportion of features': sum(
-                                      medItable[midImask, i + 1] <= medItable[midImask, i]) / sum(midImask) * 100},
-                                 ignore_index=True)
-                sat = sat.append({'Average feature intensity': '3. high ' + key,
-                                  'LR': str(d + 1) + '. ' + str(dilutions[d + 1]) + '<=' + str(dilutions[d]),
-                                  'Proportion of features': sum(
-                                      medItable[highImask, i + 1] <= medItable[highImask, i]) / sum(highImask) * 100},
-                                 ignore_index=True)
+                sat = pandas.concat([sat, low, med, high], ignore_index=True)
             i = i + 1
         i = i + 1
 
