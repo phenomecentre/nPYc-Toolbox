@@ -188,6 +188,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     # Tidy table for final report format
     sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
 
+    # Drop rows where no samples present for that datatype
+    sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0],
+                                   axis=0, inplace=True)
+
     sampleSummary['isFinalReport'] = True
     if 'StudySamples Exclusion Details' in sampleSummary:
         sampleSummary['studySamplesExcluded'] = True

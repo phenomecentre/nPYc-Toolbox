@@ -601,6 +601,9 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 	# Tidy table for final report format
 	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
 
+	# Drop rows where no samples present for that datatype
+	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
+
 	sampleSummary['isFinalReport'] = True
 	if 'StudySamples Exclusion Details' in sampleSummary:
 		sampleSummary['studySamplesExcluded'] = True
@@ -863,6 +866,9 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 	# Tidy table for final report format
 	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
+
+	# Drop rows where no samples present for that datatype
+	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
 
 	sampleSummary['isFinalReport'] = True
 	if 'StudySamples Exclusion Details' in sampleSummary:
