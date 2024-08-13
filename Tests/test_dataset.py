@@ -9,6 +9,7 @@ import string
 import json
 import copy
 import warnings
+from nPYc.utilities._errorHandling import npycToolboxError
 
 sys.path.append("..")
 import nPYc
@@ -1332,7 +1333,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 										  True, True, True, True, True, True, True, False], dtype=bool)
 
 		expectedSampleMetadata = pandas.DataFrame(0, index=numpy.arange(115), columns=['Sample File Name', 'Sample Base Name', 'Batch', 'Correction Batch', 'Acquired Time', 'Run Order',
-																					   'Exclusion Details', 'Metadata Available', 'Sample ID', 'AssayRole', 'SampleType', 'Dilution'])
+																					   'Exclusion Details', 'Metadata Available', 'Sample ID', 'AssayRole', 'SampleType', 'SampleClass', 'Biofluid', 'Dilution'])
 
 		expectedSampleMetadata['Sample File Name'] = ['UnitTest1_LPOS_ToF02_B1SRD01', 'UnitTest1_LPOS_ToF02_B1SRD02', 'UnitTest1_LPOS_ToF02_B1SRD03', 'UnitTest1_LPOS_ToF02_B1SRD04',
 												  'UnitTest1_LPOS_ToF02_B1SRD05', 'UnitTest1_LPOS_ToF02_B1SRD06', 'UnitTest1_LPOS_ToF02_B1SRD07', 'UnitTest1_LPOS_ToF02_B1SRD08',
@@ -1523,6 +1524,62 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 												SampleType.StudySample, SampleType.StudySample, SampleType.StudySample, SampleType.StudySample, SampleType.StudySample,
 												SampleType.ExternalReference, SampleType.StudyPool, numpy.nan]
 
+		expectedSampleMetadata['SampleClass'] = ['Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
+												 'Long-Term Reference', 'Long-Term Reference', 'Blank', 'Blank',
+												 'Study Reference', 'Study Reference', 'Study Reference',
+												 'Study Reference', 'Study Reference', 'Study Reference',
+												 'Study Reference', 'Study Reference', 'Study Reference',
+												 'Study Reference', 'Study Sample', 'Study Sample', 'Study Sample',
+												 'Study Sample', 'Study Sample', 'Study Sample', 'Study Sample',
+												 'Study Sample', 'Long-Term Reference', 'Study Reference', numpy.nan]
+
+		expectedSampleMetadata['Biofluid'] = ['Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
+											  'Serum', 'Serum', 'Serum']
+
 		expectedSampleMetadata['Dilution'] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20,
 											  20, 20, 20, 20, 40, 40, 40, 60, 60, 60, 80, 80, 80, 80, 80,
 											  100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -1543,8 +1600,9 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 			testDF.to_csv(os.path.join(tmpdirname, 'tmp.csv'))
 
 			data = nPYc.Dataset()
-			self.assertRaises(KeyError, data.addSampleInfo, descriptionFormat='Basic CSV', filePath=os.path.join(tmpdirname, 'tmp.csv'))
-
+			#self.assertRaises(KeyError, data.addSampleInfo, descriptionFormat='Basic CSV', filePath=os.path.join(tmpdirname, 'tmp.csv'))
+			self.assertRaises(npycToolboxError, data.addSampleInfo, descriptionFormat='Basic CSV',
+							  filePath=os.path.join(tmpdirname, 'tmp.csv'))
 	def test_dataset_parsefilename(self):
 
 		data = nPYc.Dataset()

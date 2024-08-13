@@ -950,28 +950,33 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 	# Figure: Distribution of RSDs in SP and SS
 	if destinationPath:
-		item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
+		saveAs = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
 														  tData.Attributes['figureFormat'])
-		saveAs = item['finalRSDdistributionFigure']
 	else:
 		print('\n\nFigure ' + str(
 			figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).')
 		figNo = figNo + 1
 		saveAs = None
+	try:
+		plotRSDs(tData,
+				 featureName=featureName,
+				 ratio=False,
+				 logx=True,
+				 sortOrder=False,
+				 withExclusions=False,
+				 color='matchReport',
+				 featName=featName,
+				 hLines=hLine,
+				 savePath=saveAs,
+				 figureFormat=tData.Attributes['figureFormat'],
+				 dpi=tData.Attributes['dpi'],
+				 figureSize=figureSize)
 
-	plotRSDs(tData,
-			 featureName=featureName,
-			 ratio=False,
-			 logx=True,
-			 sortOrder=False,
-			 withExclusions=False,
-			 color='matchReport',
-			 featName=featName,
-			 hLines=hLine,
-			 savePath=saveAs,
-			 figureFormat=tData.Attributes['figureFormat'],
-			 dpi=tData.Attributes['dpi'],
-			 figureSize=figureSize)
+		item['finalRSDdistributionFigure'] = saveAs
+
+	except ValueError:
+		if not destinationPath:
+			print('\x1b[31;1m Too many "inf" values in dataset to generate RSDs\n\033[0;0m')
 
 	if not destinationPath:
 		if item['NfeaturesFailing'] != 0:
