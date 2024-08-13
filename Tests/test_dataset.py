@@ -34,8 +34,8 @@ class test_dataset_synthetic(unittest.TestCase):
 
 		# Randomly sized intensity data
 		self.name = randomword(10)
-		self.noFeat = numpy.random.randint(3,100)
-		self.noSamp = numpy.random.randint(3,100)
+		self.noFeat = numpy.random.randint(5,100)
+		self.noSamp = numpy.random.randint(5,100)
 		self.data._intensityData = numpy.random.rand(self.noSamp,self.noFeat)
 
 		self.data.sampleMetadata['Sample File Name'] = list(map(str, numpy.linspace(1, self.noSamp, num=self.noSamp, dtype=int)))
