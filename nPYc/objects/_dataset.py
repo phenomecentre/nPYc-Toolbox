@@ -1211,6 +1211,14 @@ class Dataset:
 			csvData = pandas.read_csv(filePath, dtype={'Sample File Name': str, 'Sample ID': str})
 		currentMetadata = self.sampleMetadata.copy()
 
+		# Check for essential columns
+		required_cols = ['Sample File Name', 'Sample ID', 'AssayRole', 'SampleType', 'SampleClass', 'Dilution',
+						 'Include Sample', 'Biofluid']
+		missing_list = list(set(required_cols) - set(csvData.columns))
+
+		if len(missing_list) > 0:
+			raise npycToolboxError("Missing required columns in Basic CSV file, please ensure all of the following fields are present: " + str(missing_list))
+
 		if 'Sample File Name' not in csvData.columns:
 			raise KeyError("No 'Sample File Name' column present, unable to join tables.")
 
