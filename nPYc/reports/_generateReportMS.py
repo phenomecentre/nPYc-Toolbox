@@ -149,8 +149,8 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         saveAs = None
 
 	# TODO: change how this is done If targeted assay can use compound name to label RSD plots
-    if (hasattr(dataset.featureMetadata, 'cpdName')):
-        featureName = 'cpdName'
+    if (hasattr(dataset.featureMetadata, 'Compound Name')):
+        featureName = 'Compound Name'
         featName=True
         figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
     else:
@@ -194,7 +194,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
 
     # Update 'All', 'Missing/Excluded' to only reflect sample types present in data
     sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sum(sampleSummary['Acquired']['Missing/Excluded'][1:])
-    
+
     sampleSummary['isFinalReport'] = True
     if 'StudySamples Exclusion Details' in sampleSummary:
         sampleSummary['studySamplesExcluded'] = True

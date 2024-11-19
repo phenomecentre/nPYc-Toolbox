@@ -73,8 +73,8 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         dataset.saveFeatureMask()
 
 	# Use cpdName (targeted) to label RSD plot if available
-    if (hasattr(dataset.featureMetadata, 'cpdName')):
-        featureName = 'cpdName'
+    if (hasattr(dataset.featureMetadata, 'Compound Name')):
+        featureName = 'Compound Name'
         featName=True
         figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
     else:
@@ -227,7 +227,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
             featureName=featureName,
             ratio=False,
             logx=True,
-            sortOrder=False,
+            #sortOrder=False,
             withExclusions=False,
             color='matchReport',
             featName=featName,
