@@ -192,6 +192,9 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0],
                                    axis=0, inplace=True)
 
+    # Update 'All', 'Missing/Excluded' to only reflect sample types present in data
+    sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sum(sampleSummary['Acquired']['Missing/Excluded'][1:])
+    
     sampleSummary['isFinalReport'] = True
     if 'StudySamples Exclusion Details' in sampleSummary:
         sampleSummary['studySamplesExcluded'] = True
