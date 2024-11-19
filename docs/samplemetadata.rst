@@ -21,24 +21,26 @@ In brief, this CSV file format expects information to be provided for 6 pre-defi
 - 'Sample File Name': the 'Basic CSV' file matches based on the entries in the 'Sample File Name' column to the 'Sample File Name' in the :py:attr:`~nPYc.objects.Dataset.sampleMetadata` table
 - 'AssayRole': :term:`assay role<assay role>` as described in :doc:`studydesign`
 - 'SampleType': :term:`sample type<sample type>` as described in :doc:`studydesign`
+- 'SampleClass': :term:`sample class<sample class>` as described in :doc:`studydesign`
+- 'Biofluid': :term:`biofluid<biofluid>`
 - 'Dilution': Relative dilution factor for each sample
 - 'Include Sample': where 'Include Sample' is ``False``, the :py:attr:`~nPYc.objects.Dataset.sampleMask` for that sample will be set to ``False`` and the corresponding sample marked for exclusion from the dataset (see :doc:`masks` for details)
 
 .. table:: Minimal structure of a basic csv file
    :widths: auto
    
-   =========== ============================== =================== ================== ======== ==============
-   Sample ID   Sample File Name               AssayRole           SampleType         Dilution Include Sample
-   =========== ============================== =================== ================== ======== ==============
-   Dilution 1  UnitTest1_LPOS_ToF02_B1SRD01   Linearity Reference Study Pool         1        TRUE
-   Dilution 2  UnitTest1_LPOS_ToF02_B1SRD02   Linearity Reference Study Pool         50       TRUE
-   Sample 1    UnitTest1_LPOS_ToF02_S1W07     Assay               Study Sample       100      TRUE
-   Sample 2    UnitTest1_LPOS_ToF02_S1W08     Assay               Study Sample       100      TRUE
-   LTR         UnitTest1_LPOS_ToF02_S1W11_LTR Precision Reference External Reference 100      TRUE
-   SR          UnitTest1_LPOS_ToF02_S1W12_SR  Precision Reference Study Pool         100      TRUE
-   Sample 3    UnitTest1_LPOS_ToF02_S1W09_x   Assay               Study Sample       100      FALSE
-   Blank 1     UnitTest1_LPOS_ToF02_Blank01   Assay               Procedural Blank   0        TRUE
-   =========== ============================== =================== ================== ======== ==============
+   =========== ============================== =================== ================== =================== ======== ======== ==============
+   Sample ID   Sample File Name               AssayRole           SampleType         SampleClass         Biofluid Dilution Include Sample
+   =========== ============================== =================== ================== =================== ======== ======== ==============
+   Dilution 1  UnitTest1_LPOS_ToF02_B1SRD01   Linearity Reference Study Pool         Linearity Reference Urine    1        TRUE
+   Dilution 2  UnitTest1_LPOS_ToF02_B1SRD02   Linearity Reference Study Pool         Linearity Reference Urine    50       TRUE
+   Sample 1    UnitTest1_LPOS_ToF02_S1W07     Assay               Study Sample       Study Sample        Urine    100      TRUE
+   Sample 2    UnitTest1_LPOS_ToF02_S1W08     Assay               Study Sample       Study Sample        Urine    100      TRUE
+   LTR         UnitTest1_LPOS_ToF02_S1W11_LTR Precision Reference External Reference Long-Term Reference Urine    100      TRUE
+   SR          UnitTest1_LPOS_ToF02_S1W12_SR  Precision Reference Study Pool         Study Reference     Urine    100      TRUE
+   Sample 3    UnitTest1_LPOS_ToF02_S1W09_x   Assay               Study Sample       Study Sample        Urine    100      FALSE
+   Blank 1     UnitTest1_LPOS_ToF02_Blank01   Assay               Procedural Blank   Blank               Urine    0        TRUE
+   =========== ============================== =================== ================== ================== ========= ======== ==============
 
 Any additional columns in the basic csv file will be appended to the :py:attr:`~nPYc.objects.Dataset.sampleMetadata` table as additional sample metadata.
 

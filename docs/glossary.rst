@@ -16,6 +16,9 @@ Glossary
 	Batch Effects
 		Analytical and preparative influences that may cause a systematic difference in measurements taken at different points in time.
 
+    Biofluid
+        The source of the :term:`specimen<Study Sample>`, for example, urine, plasma, serum, etc
+
 	Correction Batch
 		In the ideal case, analytical :term:`batch<Batch Effects>` and :term:`run-order<Run-Order Effects>` effects are detected and corrected based on the :term:`analytical batches<Analytical Batch>` into which the study has been divided. However in the event of unplanned interruptions to an analysis, it may be necessary to further sub-divide the run into a series of correction batches.
 		
@@ -110,6 +113,9 @@ Glossary
 
 	Sample Batch
 		A collection of :term:`study samples<Study Sample>` (typically 80, to allow formatting onto a 96-well plate with room for :term:`reference samples<reference sample>`) plus some number of :term:`reference samples<Reference Sample>`, prepared and analysed together.
+
+	Sample Class
+		A descriptor for a specific :term:`sample type<sample type>` :term:`assay role<assay role>` combination, shorthand for ease of reference and plot labels
 
 	Sampling Event
 		The specific point in time at which a :term:`sample<Study Sample>` was generated. One sampling event may produce several equivalent :term:`aliquots<Aliquot>`. Note that obtaining samples of blood-plasma and urine from a :term:`participant` at the same time is considered two sampling events, as the biofluids obtained are not interchangeable.

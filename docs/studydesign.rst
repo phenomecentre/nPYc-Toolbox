@@ -38,6 +38,8 @@ Assay Roles are described in detail here :py:class:`~nPYc.enumerations.AssayRole
 - 'Precision Reference' acquired to characterise analytical variability
 - 'Linearity Reference' samples used assess the linearity of response (or :term:`Correlation to Dilution`) in the dataset
 
+Sample Classes are specific combinations of *Sample Type* and *Assay Role* shorthand for ease of reference and plot labels.
+
 The main samples comprising the study are named :term:`Study Sample` (SS), and are a *Study Sample*, *Assay* combination.
 
 In addition, common combinations of *Sample Type* and *Assay Role* are defined within the nPYc-Toolbox and used to characterise data quality, these include:
