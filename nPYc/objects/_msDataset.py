@@ -866,8 +866,8 @@ class MSDataset(Dataset):
 		if 'name' not in dataT.columns:
 			try:
 				# build feature name by combination of rt and m/z
-				feature_names = numpy.array([str(round(row['rt'], 2)) + '_' + str(round(row['mz'], 4)) + 'm/z' for idx, row in
-								 dataT.iterrows()])
+				feature_names = pandas.DataFrame(numpy.array([str(round(row['rt'], 2)) + '_' + str(round(row['mz'], 4)) + 'm/z' for idx, row in
+								 dataT.iterrows()]))
 				# Check for duplicated feature Names and append a '_1', etc if these exist
 				countNames = numpy.unique(feature_names, return_counts=True)
 				if max(countNames[1]) > 1:
@@ -876,7 +876,7 @@ class MSDataset(Dataset):
 						featuresToModifyIdx = numpy.where(feature_names == duplicatedFeature)[0]
 						suffixCount = 1
 						for duplicatedfeatureIdx in featuresToModifyIdx:
-							feature_names[duplicatedfeatureIdx] = feature_names[duplicatedfeatureIdx] + '_' + str(suffixCount)
+							feature_names.loc[duplicatedfeatureIdx] = feature_names.loc[duplicatedfeatureIdx] + '_' + str(suffixCount)
 							suffixCount += 1
 
 				# Insert feature name
