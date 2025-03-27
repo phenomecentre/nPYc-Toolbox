@@ -22,6 +22,9 @@
 <div class='content'>
 	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
 	{{ item.sampleSummary['Acquired'].to_html() }}
+	<p>For details on sample nomenclature see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/studydesign.html" target="_blank" rel="noopener noreferrer">Sample Nomenclature</a>
+	</p>
 	<p>*Details of any missing/excluded study samples given at the end of the report</p>
 	<p></p>
 </div>
@@ -32,7 +35,23 @@
 <div class='content'>
 	<p>Samples acquired in {{ item['batchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
 	<p>{{ item['batchesCorrect'] }})</p>
-	
+	<p>For more details on run-order and batch correction see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/batchAndROCorrection.html" target="_blank" rel="noopener noreferrer">Batch and Run-order Correction</a>
+	</p>
+	<p></p>
+	<p>
+		For LC-MS datasets, filters are applied to ensure that only high quality features are retained, for more details see:
+		<a href="https://pubmed.ncbi.nlm.nih.gov/27479709/" target="_blank" rel="noopener noreferrer">Lewis et al. 2016</a>
+		In brief, features are filtered on three key criteria:
+		<ol type="1">
+  			<li>Correlation to dilution factor (calculated from SR samples acquired at known dilution factors), assess that features are measured relative to their true abundance</li>
+  			<li>Relative Standard Deviation, RSD (calculated across repeat injections of the SR sample), assesses that features are measured precisely</li>
+  			<li>Comparing RSD in SR and SS, the biological variance (RSD in SS) should always exceed the analytical variance (RSD in SR)</li>
+		</ol>
+		For more details see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/reports.html#feature-summary-report-lc-ms-datasets" target="_blank" rel="noopener noreferrer">Feature Quality Assessment</a>
+	</p>
+
 	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
 	{{ item['FeatureSelectionTable'].to_html() }}
 	<p></p>
