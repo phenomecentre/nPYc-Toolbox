@@ -331,15 +331,15 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
                 print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
                 figNo = figNo+2
 
-	# Figure: Histogram of RSD in study pool samples
-    if destinationPath:
-        item['finalRsdHist'] = os.path.join(graphicsPath,item['Name'] + '_rsdSP.' + dataset.Attributes['figureFormat'])
-        saveAs = item['finalRsdHist']
-    else:
-        print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) histogram for study reference samples and all features in final dataset, segmented by abundance percentiles.')
-        figNo = figNo+1
+	    # Figure 3: Histogram of RSD in study pool samples
+        if destinationPath:
+            item['finalRsdHist'] = os.path.join(graphicsPath,item['Name'] + '_rsdSP.' + dataset.Attributes['figureFormat'])
+            saveAs = item['finalRsdHist']
+        else:
+            print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) histogram for study reference samples and all features in final dataset, segmented by abundance percentiles.')
+            figNo = figNo+1
 
-    histogram(dataset.rsdSP,
+        histogram(dataset.rsdSP,
                    xlabel='RSD',
                    histBins=dataset.Attributes['histBins'],
                    quantiles=dataset.Attributes['quantiles'],
@@ -349,6 +349,22 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
                    figureFormat=dataset.Attributes['figureFormat'],
                    dpi=dataset.Attributes['dpi'],
                    figureSize=dataset.Attributes['figureSize'])
+
+    # Figure 7: Scatterplot of RSD vs correlation to dilution
+    if destinationPath:
+        item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
+                                                      item['Name'] + '_rsdVsCorrelation.' + dataset.Attributes['figureFormat'])
+        saveAs = item['RsdVsCorrelationFigure']
+    else:
+        print('Figure ' + str(figNo) + ': Scatterplot of RSD vs correlation to dilution.')
+        figNo = figNo + 1
+
+    jointplotRSDvCorrelation(dataset.rsdSP,
+                             dataset.featureMetadata['correlationToDilution'].values,
+                             savePath=saveAs,
+                             figureFormat=dataset.Attributes['figureFormat'],
+                             dpi=dataset.Attributes['dpi'],
+                             figureSize=dataset.Attributes['figureSize'])
 
     # Figure: Distribution of RSDs in SP and SS
     if destinationPath:

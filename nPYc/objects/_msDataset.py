@@ -468,13 +468,19 @@ class MSDataset(Dataset):
 			if featureFilters['correlationToDilutionFilter'] is True:
 				self.featureMetadata['correlationToDilutionFilter'] = (
 							self.correlationToDilution >= correlationThreshold)
-				self.featureMetadata['correlationToDilution'] = self.correlationToDilution
+				#self.featureMetadata['correlationToDilution'] = self.correlationToDilution
 
 				featureMask &= self.featureMetadata['correlationToDilutionFilter'].values
 
 				self.Attributes['featureFilters']['correlationToDilutionFilter'] = True
 				self.Attributes['filterParameters']['corThreshold'] = correlationThreshold
 				self.Attributes['filterParameters']['corrMethod'] = self.Attributes['corrMethod']
+
+				# Only replace self.featureMetadata['correlationToDilution'] if self.correlationToDilution is not empty
+				# This is for the case when we want to plot C2D but have excluded SRD samples
+				if (numpy.all(self._correlationToDilution != numpy.ones(shape=self.featureMask.shape))):
+					print('changing c2d values')
+					self.featureMetadata['correlationToDilution'] = copy.deepcopy(self.correlationToDilution)
 
 			# Save for reporting
 			if (featureFilters['blankFilter'] is True) & (
@@ -1851,12 +1857,13 @@ class MSDataset(Dataset):
 											 'artifactualFilter': self.Attributes['featureFilters'][
 												 'artifactualFilter'], 'blankFilter': False}
 
-		self.featureMetadata.loc[:, ['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
-									 'artifactualFilter']] = True
+		# Caro 2025-04-02 commented the rest out but will it break everything?
+		#self.featureMetadata.loc[:, ['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
+		#							 'artifactualFilter']] = True
 
-		self.featureMetadata.loc[:, ['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] = numpy.nan
-		self.featureMetadata.loc[:, 'User Excluded'] = False
-		self.featureMetadata.loc[:, 'Exclusion Details'] = None
+		#self.featureMetadata.loc[:, ['rsdSP', 'rsdSS/rsdSP', 'correlationToDilution', 'blankValue']] = numpy.nan
+		#self.featureMetadata.loc[:, 'User Excluded'] = False
+		#self.featureMetadata.loc[:, 'Exclusion Details'] = None
 
 	def validateObject(self, verbose=True, raiseError=False, raiseWarning=True):
 		"""

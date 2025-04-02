@@ -1,7 +1,5 @@
 {% extends "base_QC.html" %}
 
-{% import 'sampleReportChunk.html' as sampleReport %}
-
 {% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
 {% block content %}
@@ -46,7 +44,7 @@
 		<ol type="1">
   			<li>Correlation to dilution factor (calculated from SR samples acquired at known dilution factors), assess that features are measured relative to their true abundance</li>
   			<li>Relative Standard Deviation, RSD (calculated across repeat injections of the SR sample), assesses that features are measured precisely</li>
-  			<li>Comparing RSD in SR and SS, the biological variance (RSD in SS) should always exceed the analytical variance (RSD in SR)</li>
+  			<li>Comparing RSD in SR and SS, assesses that the biological variance (RSD in SS) exceeds the analytical variance (RSD in SR)</li>
 		</ol>
 		For more details see:
 		<a href="https://npyc-toolbox.readthedocs.io/en/latest/reports.html#feature-summary-report-lc-ms-datasets" target="_blank" rel="noopener noreferrer">Feature Quality Assessment</a>
@@ -58,10 +56,10 @@
 </div>
 
 
-<!--Figure 1: RSD histogram-->
+<!--Figure 1: RSD vs C2D-->
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Residual Standard Deviation (RSD) histogram for study reference samples and all features in final dataset, segmented by abundance percentiles.</p>
-	<img src="{{ item['finalRsdHist'] }}" alt="Residual Standard Deviation (RSD) histogram for study reference samples and all features in final dataset, segmented by abundance percentiles.">
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Scatterplot of RSD in SR samples vs correlation to dilution factor.</p>
+	<img src="{{ item['RsdVsCorrelationFigure'] }}" alt="Scatterplot of RSD in SR samples vs correlation to dilution factor.">
 </div>
 
 <!--Figure 2: RSD for all samples and features passing selection-->
@@ -89,5 +87,12 @@
 	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
 	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
 {% endif %}
+
+<!--Add annotated spectra/ion maps for all NPC assays-->
+
+<div class="content">
+	<p>Annotated ion map</p>
+	<img id="Logo" src="graphics/toolbox_logo.png" />
+</div>
 
 {% endblock %}

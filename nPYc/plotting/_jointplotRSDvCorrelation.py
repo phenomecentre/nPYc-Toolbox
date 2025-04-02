@@ -5,7 +5,14 @@ import numpy
 from matplotlib import gridspec
 import os
 
-def jointplotRSDvCorrelation(rsd, correlation, histBins=100, savePath=None, figureFormat='png', dpi=72, figureSize=(11, 7)):
+def jointplotRSDvCorrelation(rsd,
+							 correlation,
+							 histBins=100,
+							 logx=False,
+							 savePath=None,
+							 figureFormat='png',
+							 dpi=72,
+							 figureSize=(11, 7)):
 	"""
 	Plot a 2D histogram of feature RSDs *vs* correlations to dilution, with marginal histograms.
 
@@ -38,14 +45,14 @@ def jointplotRSDvCorrelation(rsd, correlation, histBins=100, savePath=None, figu
 
 	# Plot the scatter
 
-	if min(rsd) <= 0:
-		bins = None
-		xscale = 'linear'
-		nbins = histBins
-	else:
+	if logx == True:
 		bins = 'log'
 		xscale = 'log'
 		nbins = 10 ** numpy.linspace(numpy.log10(min(rsd)), numpy.log10(max(rsd)), histBins)
+	else:
+		bins = None
+		xscale = 'linear'
+		nbins = histBins
 
 	with sns.axes_style("white"):
 		my_cmap = mpl.cm.get_cmap('BuPu')
@@ -61,8 +68,8 @@ def jointplotRSDvCorrelation(rsd, correlation, histBins=100, savePath=None, figu
 						  sharey=ax,
 						  xticks=[],
 						  yticks=[],
-						  frameon=False,
-						  ylim=(-1, 1))
+						  frameon=False)
+						  #ylim=(-1, 1))
 		axr.hist(correlation,
 				 color='#5673E0',
 				 orientation='horizontal',
@@ -84,10 +91,9 @@ def jointplotRSDvCorrelation(rsd, correlation, histBins=100, savePath=None, figu
 
 		# Format the axes
 		cax.axes.set_xscale(xscale)
+		cax.axes.set_yscale('linear')
 		cax.axes.set_xlabel('% RSD')
-		cax.axes.set_ylabel('Correlation to Dilution')
-
-		cax.axes.set_yticks([-1, -0.5, 0, 0.5, 1])
+		cax.axes.set_ylabel('Correlation to Dilution Factor')
 
 		cax.axes.tick_params(which='major',
 							 bottom=True,
