@@ -58,20 +58,25 @@
 
 <!--Figure 1: RSD vs C2D-->
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Scatterplot of RSD in SR samples vs correlation to dilution factor.</p>
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Heatmap of RSD in SR samples vs correlation to dilution factor across all features.</p>
 	<img src="{{ item['RsdVsCorrelationFigure'] }}" alt="Scatterplot of RSD in SR samples vs correlation to dilution factor.">
+	<p>This figure shows the distribution of two key criteria of feature quality, RSD in SR samples, and correlation to dilution factor.
+		All features pass quality criteria (see Table 2), the highest quality features are in the top left quadrant. </p>
 </div>
 
 <!--Figure 2: RSD for all samples and features passing selection-->
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).</p>
+	<p class="caption"><span class="heading">Figure&nbsp;2.</span> RSD distribution for all samples and all features in final dataset (by sample type).</p>
 	<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
+	<p>This figure shows the distribution of RSD by sample type.
+		Ordered by RSD in SR samples, the biological variance (RSD in SS) must exceed the analytical variance (RSD in SR samples) for a feature to be present in the final dataset. </p>
 </div>
 
 <!--Figure 3: Feature intensity histogram-->
 <div class='figure'>
 	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Feature Intensity histogram for all samples and all features in final dataset (by sample type).</p>
 	<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature Intensity histogram for all samples and all features in final dataset (by sample type).">
+	<p>This figure shows the feature intensity distribution by sample type.</p>
 </div>	
 
 
@@ -79,6 +84,8 @@
 <div class='figure'>
 	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Ion map of all features (coloured by log median intensity).</p>
 	<img src="{{ item.finalIonMap}}" alt="Ion map of all features (coloured by log median intensity).">
+	<p>This figure shows the coverage of features in terms of their m/z and retention time.
+		In a global profiling dataset, the a priori identity of these features is unknown, however please see the (assay specific) 'Further Information: Assay Coverage' section below for high level compound class information</p>
 </div>
 
 <!--Details of any missing/excluded samples-->
@@ -90,9 +97,27 @@
 
 <!--Add annotated spectra/ion maps for all NPC assays-->
 
-<div class="content">
-	<p>Annotated ion map</p>
-	<img id="Logo" src="graphics/toolbox_logo.png" />
+<h2>Further Information: Links</h2>
+
+<div class='content'>
+	<p>The following section includes further information on NPC assay coverage and links to methods and documentation</p>
+	<p>For information on methods, please see:
+		<a href="https://chemrxiv.org/engage/chemrxiv/article-details/61ebd6fa0716a8529e3823dc" target="_blank" rel="noopener noreferrer">Lewis et al. 2022</a>
+	</p>
+	<p>For our full documentation on pre-processing and quality control, please see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">NPC preprocessing and QC documentation (readthedocs)</a>
+	</p>
+	<p>For tutorials on pre-processing and quality control, please see:
+		<a href="https://github.com/phenomecentre/nPYc-toolbox-dementia-tutorials" target="_blank" rel="noopener noreferrer">NPC preprocessing and QC tutorials (GitHub)</a>
+	</p>
 </div>
+
+<h2>Further Information: Assay Coverage</h2>
+
+<div class='content'>
+	<p>Please scroll down for information on the theoretical coverage of NPC assays</p>
+	<embed src="graphics/NPC_assay_coverage.pdf" width="1100" height="700" type="application/pdf">
+</div>
+
 
 {% endblock %}
