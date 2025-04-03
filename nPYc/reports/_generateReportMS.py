@@ -144,6 +144,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
+
+        # Copy required file for final report
+        shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
+                     os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
     else:
         graphicsPath = None
         saveAs = None
