@@ -133,7 +133,7 @@ class MSDataset(Dataset):
 			self.Attributes['FeatureExtractionSoftware'] = 'XCMS'
 			self.VariableType = VariableType.Discrete
 		elif fileType == 'xcmsonline':
-			self._loadXCMSonlineDataset(datapath, **kwargs)
+			self._loadXCMSOnlineDataset(datapath, **kwargs)
 			self.Attributes['FeatureExtractionSoftware'] = 'XCMSonline'
 			self.VariableType = VariableType.Discrete
 		elif fileType == 'biocrates':
