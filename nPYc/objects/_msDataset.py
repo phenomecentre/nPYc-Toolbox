@@ -862,11 +862,11 @@ class MSDataset(Dataset):
 		sampleMetadata = dict()
 		sampleMetadata['Sample File Name'] = [name for name in list(values.columns.values)]
 
+		# Unify column names from peakTable/diffreports
+		dataT.rename(columns={"mzmed": "mz", "rtmed": "rt"}, inplace=True)
+
 		# Peak info
 		featureMetadata = dataT.iloc[:, :startIndex]
-
-		# Unify column names from peakTable/diffreports
-		featureMetadata.rename(columns={"mzmed": "mz", "rtmed": "rt"}, inplace=True)
 
 		# Set up featureMetadata - only if peakTable or diffreports methods used
 		if 'name' not in dataT.columns:
