@@ -16,6 +16,7 @@ from ..objects import MSDataset
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 from ..plotting import plotIntensity, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport
+from ..utilities.ms import generateTypeRoleMasks
 from ..utilities import generateLRmask, rsd
 from ..utilities._internal import _vcorrcoef
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
@@ -64,6 +65,10 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
+
+        # Copy required file for final report
+        shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
+                     os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
     else:
         graphicsPath = None
         saveAs = None
@@ -83,14 +88,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         figureSize=dataset.Attributes['figureSize']
 
 	# Define sample masks
-    SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-    SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
-             (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
+    acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
 
     # Set up template item and save required info
     item = dict()
@@ -99,15 +97,16 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     item['Nsamples'] = dataset.intensityData.shape[0]
     item['Nfeatures'] = dataset.intensityData.shape[1]
     item['NfeaturesPassing'] = sum(dataset.featureMetadata['Passing Selection'])
-    item['NfeaturesFailing'] = item['Nfeatures'] - item['NfeaturesPassing']
-    if item['NfeaturesFailing'] != 0:
+    nfeaturesFailing = item['Nfeatures'] - item['NfeaturesPassing']
+    if nfeaturesFailing != 0:
         hLine = [item['NfeaturesFailing']]
+        item['NfeaturesFailing'] = nfeaturesFailing
     else:
         hLine = None
-    item['SScount'] = str(sum(SSmask))
-    item['SPcount'] = str(sum(SPmask))
-    item['ERcount'] = str(sum(ERmask))
-    item['LRcount'] = str(sum(LRmask))
+    item['SScount'] = str(sum(acquiredMasks['SSmask']))
+    item['SPcount'] = str(sum(acquiredMasks['SPmask']))
+    item['ERcount'] = str(sum(acquiredMasks['ERmask']))
+    item['LRcount'] = str(sum(acquiredMasks['SRDmask']))
     item['corrMethod'] = dataset.Attributes['corrMethod']
     figNo = 1
 
@@ -117,9 +116,9 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         print('Final Dataset\n')
         print(str(item['Nsamples']) + ' samples')
         print(str(item['Nfeatures']) + ' features')
-        if item['NfeaturesFailing'] != 0:
+        if nfeaturesFailing != 0:
             print('\t' + str(item['NfeaturesPassing']) + ' detected and passing feature selection')
-            print('\t' + str(item['NfeaturesFailing']) + ' not detected or not present in sufficient concentration to be measured accurately')
+            print('\t' + str(item['NfeaturesFailing']) + ' not detected or not present in sufficient concentration to be measured precisely')
 
     # Table 1: Sample summary
 
@@ -200,8 +199,8 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         
         print('\nTable 2: Features selected based on the following criteria:')
         display(item['FeatureSelectionTable'])
-        if item['NfeaturesFailing'] != 0:
-            print('\n*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured accurately, thus results should be interpreted accordingly')
+        if nfeaturesFailing != 0:
+            print('\n*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured precisely, thus results should be interpreted accordingly')
          
     
     # Separate into features passing and failing feature selection for rest of report
@@ -238,8 +237,8 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
             figureSize=figureSize)
     
     if not destinationPath:
-          if item['NfeaturesFailing'] != 0:
-            print('\n*Features sorted by RSD in SR samples; with features passing selection (i.e., able to be accurately measured) above the line and those failing (i.e., not able to be accurately measured) below the line')
+          if nfeaturesFailing != 0:
+            print('\n*Features sorted by RSD in SR samples; with features passing selection (i.e., able to be precisely measured) above the line and those failing (i.e., not able to be precisely measured) below the line')
       
 
     # Figure: Histogram of log mean abundance by sample type
@@ -248,10 +247,33 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
     else:
-        print('\n\nFigure ' + str(figNo) + ': Feature intensity histogram for all samples and all features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).')
+        print('\n\nFigure ' + str(figNo) + ': Feature intensity histogram for all samples and all features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).')
         figNo = figNo+1
 
-    _plotAbundanceBySampleType(dataset, SSmask, SPmask, ERmask, saveAs)
+    _plotAbundanceBySampleType(dataset,
+                               acquiredMasks['SSmask'],
+                               acquiredMasks['SPmask'],
+                               acquiredMasks['ERmask'],
+                               saveAs)
+
+    # Figure: Ion map
+    if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
+        if destinationPath:
+            item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
+            saveAs = item['finalIonMap']
+        else:
+            print('Figure ' + str(figNo) + ': Ion map of all features (coloured by log median intensity).')
+            figNo = figNo+1
+
+        plotIonMap(dataset,
+                   savePath=saveAs,
+                   figureFormat=dataset.Attributes['figureFormat'],
+                   dpi=dataset.Attributes['dpi'],
+                   figureSize=dataset.Attributes['figureSize'])
+
+    else:
+        if not destinationPath:
+            print('No Retention Time and m/z information, unable to plot the ion map.\n')
 
     
     # Figures: Distributions for each feature PASSING SELECTION
@@ -261,7 +283,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         temp['FeatureConcentrationDistributionPassing'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistributionPassing_')
         saveAs = temp['FeatureConcentrationDistributionPassing']
     else:
-        print('Figure ' + str(figNo) + ': Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).')
+        print('Figure ' + str(figNo) + ': Relative concentration distributions, for features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).')
         figNo = figNo+1
 
 
@@ -284,14 +306,14 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     
     
     # Figures: Distributions for each feature FAILING SELECTION 
-    if item['NfeaturesFailing'] != 0:
+    if nfeaturesFailing != 0:
         figuresFeatureDistributionFailing = OrderedDict()
         temp = dict()
         if destinationPath:
             temp['FeatureConcentrationDistributionFailing'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistributionFailing_')
             saveAs = temp['FeatureConcentrationDistributionFailing']
         else:
-            print('Figure ' + str(figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) in final dataset (by sample type).')
+            print('Figure ' + str(figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be precisely measured) in final dataset (by sample type).')
             figNo = figNo+1
     
         figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(

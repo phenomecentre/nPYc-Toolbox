@@ -12,10 +12,10 @@
 <div class='content'>
 	<p>{{ item['Nsamples'] }} samples</p>
 	<p>{{ item['Nfeatures'] }} features</p>
-	{% if 'NfeaturesPassing' in item %}
+	{% if 'NfeaturesFailing' in item %}
 	<ul>
 		<li>{{ item['NfeaturesPassing'] }} detected and passing feature selection</li>
-		<li>{{ item['NfeaturesFailing'] }} not detected or not present in sufficient concentration to be measured accurately</li>
+		<li>{{ item['NfeaturesFailing'] }} not detected or not present in sufficient concentration to be measured precisely</li>
 	</ul>
 	{% endif %}	
 	<p></p>
@@ -28,57 +28,86 @@
 <div class='content'>
 	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
 	{{ item.sampleSummary['Acquired'].to_html() }}
-	<p>*Details of any missing/excluded study samples given at the end of the report.</p>
+	<p>For details on sample nomenclature see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/studydesign.html" target="_blank" rel="noopener noreferrer">Sample Nomenclature</a>
+	</p>
+	<p>*Details of any missing/excluded study samples given at the end of the report</p>
 	<p></p>
 </div>
 
 <!--Feature Summary______________________________________________________________________________________________________________-->
 <h2>Feature Summary</h2>
+
 <div class='content'>
-	<p>Samples acquired in {{ item['nBatchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
-	<p>{{ item['batchesCorrect'] }}</p>
-	
+	<p>Samples acquired in {{ item['batchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
+	<p>{{ item['batchesCorrect'] }})</p>
+	<p>For more details on run-order and batch correction see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/batchAndROCorrection.html" target="_blank" rel="noopener noreferrer">Batch and Run-order Correction</a>
+	</p>
+	<p></p>
+	<p>
+		For LC-MS datasets, filters are applied to ensure that only high quality features are retained, for more details see:
+		<a href="https://pubmed.ncbi.nlm.nih.gov/27479709/" target="_blank" rel="noopener noreferrer">Lewis et al. 2016</a>
+		In brief, features are filtered on three key criteria:
+		<ol type="1">
+  			<li>Correlation to dilution factor (calculated from SR samples acquired at known dilution factors), assess that features are measured relative to their true abundance</li>
+  			<li>Relative Standard Deviation, RSD (calculated across repeat injections of the SR sample), assesses that features are measured precisely</li>
+  			<li>Comparing RSD in SR and SS, assesses that the biological variance (RSD in SS) exceeds the analytical variance (RSD in SR)</li>
+		</ol>
+		For more details see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/reports.html#feature-summary-report-lc-ms-datasets" target="_blank" rel="noopener noreferrer">Feature Quality Assessment</a>
+	</p>
+
 	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
 	{{ item['FeatureSelectionTable'].to_html() }}
-	
+
 	{% if 'FeatureConcentrationDistributionFailing' in item %}
-		<p>*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured accurately, thus results should be interpreted accordingly.</p>
+		<p>*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured precisely, thus results should be interpreted accordingly.</p>
 	{% endif %}
 	<p></p>
 </div>
 
-
 <!--Figure: RSD for all samples and features passing selection-->
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).</p>
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> RSD distribution for all samples and all features in final dataset (by sample type)</p>
 	<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
-	{% if 'NfeaturesPassing' in item %}
-		<p>*Features sorted by RSD in study reference (SR) samples; with features passing selection (i.e., able to be accurately measured) above the line and those failing (i.e., not able to be accurately measured) below the line.</p>
+	<p>This figure shows the distribution of RSD by sample type.
+		Ordered by RSD in SR samples, the biological variance (RSD in SS) must exceed the analytical variance (RSD in SR samples) for a feature to be present in the final dataset.</p>
+	{% if 'NfeaturesFailing' in item %}
+	 <p>Features passing selection (i.e., able to be precisely measured) can be found above the line and those failing (i.e., not able to be precisely measured) below the line.
 	{% endif %}
 </div>
 
 <!--Figure: Feature intensity histogram-->
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Feature intensity histogram for all samples and all features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).</p>
+	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Feature Intensity histogram for all samples and all features in final dataset (by sample type).</p>
 	<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature Intensity histogram for all samples and all features in final dataset (by sample type).">
-</div>	
+	<p>This figure shows the feature intensity distribution by sample type.</p>
+</div>
+
+<!--Figure: Ion map of all features (coloured by log median intensity)-->
+<div class='figure'>
+	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Ion map of all features (coloured by log median intensity).</p>
+	<img src="{{ item.finalIonMap}}" alt="Ion map of all features (coloured by log median intensity).">
+	<p>This figure shows the coverage of features in terms of their m/z and retention time, please see the (assay specific) 'Further Information: Assay Coverage' section below for high level compound class information.</p>
+</div>
 
 <!--Figures: Measured concentrations distribution, for features passing selection, split by sample types.-->
-<p class="caption"><span class="heading">Figure&nbsp;3.</span> Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).</p>
+<p class="caption"><span class="heading">Figure&nbsp;4.</span> Relative concentration distributions, for features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).</p>
 <div class='figure'>	
 	
 	{% for key, value in item['FeatureConcentrationDistributionPassing'].items() %}
-		<img src="{{ value|e }}" alt="Relative concentration distributions, for features passing selection (i.e., able to be accurately measured) in final dataset (by sample type).">
+		<img src="{{ value|e }}" alt="Relative concentration distributions, for features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).">
 	{% endfor %}
 </div>
 
 <!--Figures: Measured concentrations distribution, for features failing selection, split by sample types.-->
 {% if 'FeatureConcentrationDistributionFailing' in item %}
-	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) in final dataset (by sample type).</p>
+	<p class="caption"><span class="heading">Figure&nbsp;4.</span> Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be precisely measured) in final dataset (by sample type).</p>
 	<div class='figure'>	
 	
 		{% for key, value in item['FeatureConcentrationDistributionFailing'].items() %}
-			<img src="{{ value|e }}" alt="Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be accurately measured) in final dataset (by sample type).">
+			<img src="{{ value|e }}" alt="Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be precisely measured) in final dataset (by sample type).">
 			{% endfor %}
 	</div>
 {% endif %}
@@ -90,5 +119,30 @@
 	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
 	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
 {% endif %}
+
+<!--Add annotated spectra/ion maps for all NPC assays-->
+
+<h2>Further Information: Links</h2>
+
+<div class='content'>
+	<p>The following section includes further information on NPC assay coverage and links to methods and documentation</p>
+	<p>For information on methods, please see:
+		<a href="https://chemrxiv.org/engage/chemrxiv/article-details/61ebd6fa0716a8529e3823dc" target="_blank" rel="noopener noreferrer">Lewis et al. 2022</a>
+	</p>
+	<p>For our full documentation on pre-processing and quality control, please see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">NPC preprocessing and QC documentation (readthedocs)</a>
+	</p>
+	<p>For tutorials on pre-processing and quality control, please see:
+		<a href="https://github.com/phenomecentre/nPYc-toolbox-dementia-tutorials" target="_blank" rel="noopener noreferrer">NPC preprocessing and QC tutorials (GitHub)</a>
+	</p>
+</div>
+
+<h2>Further Information: Assay Coverage</h2>
+
+<div class='content'>
+	<p>Please scroll down for information on the theoretical coverage of NPC assays</p>
+	<embed src="graphics/NPC_assay_coverage.pdf" width="1100" height="700" type="application/pdf">
+</div>
+
 
 {% endblock %}
