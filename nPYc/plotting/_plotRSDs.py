@@ -11,10 +11,11 @@ import plotly.graph_objs as go
 from .. import Dataset, MSDataset, NMRDataset
 from ..enumerations import VariableType, SampleType, AssayRole
 from ..utilities import rsd
+from ..utilities.ms import generateTypeRoleMasks
 from ._plotVariableScatter import plotVariableScatter
 
 
-def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=True, sortOrder=True, savePath=None, color=None, featName=False, hLines=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=True, sortOrder=True, savePath=None, featName=False, hLines=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotRSDs(dataset, ratio=False, savePath=None, color=None \*\*kwargs)
 
@@ -34,15 +35,25 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	:type hLines: None or list
 	:param savePath: If ``None`` plot interactively, otherwise save the figure to the path specified
 	:type savePath: None or str
-	:param color: Allows the default colour pallet to be overridden
-	:type color: None or seaborn.palettes._ColorPalette
 	:param bool featName: If ``True`` y-axis label is the feature Name, if ``False`` features are numbered.
 	"""
-	rsdTable = _plotRSDsHelper(dataset, featureName=featureName, ratio=ratio, withExclusions=withExclusions, sortOrder=sortOrder)
+
+
+
+	rsdTable = _plotRSDsHelper(dataset,
+							   featureName=featureName,
+							   ratio=ratio,
+							   withExclusions=withExclusions,
+							   sortOrder=sortOrder)
     
-	# if RSD not able to be calculated for some features - rsdTable size will be less than dataset.featureMetadata
+	# If the featureMask has been applied add a line to show failing features
+
+	# Ensure we have 'Passing Selection' column in dataset object
+	if not hasattr(dataset.featureMetadata, 'Passing Selection'):
+		dataset.featureMetadata['Passing Selection'] = dataset.featureMask
+
 	if hLines is not None:
-		if  dataset.featureMetadata.shape[0] != rsdTable.shape[0]:
+		if dataset.featureMetadata.shape[0] != rsdTable.shape[0]:
 			temp = [x for x in rsdTable['Feature Name'].values.tolist() if x in dataset.featureMetadata[featureName][dataset.featureMetadata['Passing Selection'] == False].values.tolist()]
 			hLines = [len(temp)]
 
@@ -66,7 +77,18 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	else:
 		ylab = 'Feature Number'
 
-	plotVariableScatter(rsdTable, logX=logx, xLim=xLim, xLabel=xlab, yLabel=ylab, sampletypeColor=True, hLines=hLines, vLines=None, savePath=savePath, figureFormat=figureFormat, dpi=dpi, figureSize=figureSize)
+	plotVariableScatter(rsdTable,
+						logX=logx,
+						xLim=xLim,
+						xLabel=xlab,
+						yLabel=ylab,
+						sampletypeColor=True,
+						hLines=hLines,
+						vLines=None,
+						savePath=savePath,
+						figureFormat=figureFormat,
+						dpi=dpi,
+						figureSize=figureSize)
 
 
 def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=True):
@@ -159,67 +181,61 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 
 
 def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder=True):
-	
+
 	if not dataset.VariableType == VariableType.Discrete:
 		raise ValueError('Only datasets with discreetly sampled variables are supported.')
 
 	if sum(dataset.sampleMetadata.loc[dataset.sampleMask, 'SampleType'].values == SampleType.StudySample) <= 2:
 		raise ValueError('More than two Study Samples must be defined to calculate biological RSDs.')
 
-	## Calculate RSD for every SampleType with enough PrecisionReference samples.
+	# Apply sample/feature masks if exclusions to be applied
+	msData = copy.deepcopy(dataset)
+	if withExclusions:
+		msData.applyMasks()
+
+	# Calculate RSD for SR, LTR and SS (if sufficient sample numbers, i.e., n > 3)
 	rsdVal = dict()
+	rsdVal['Feature Name'] = msData.featureMetadata.loc[:, featureName].values
 
-	precRefMask = dataset.sampleMetadata.loc[:, 'AssayRole'].values == AssayRole.PrecisionReference
-	precRefMask = numpy.logical_and(precRefMask, dataset.sampleMask)
-	sTypes = list(set(dataset.sampleMetadata.loc[precRefMask, 'SampleType'].values))
+	# Previously, the code was calculating RSD for only features with finite values,
+	# commented out for now but could be re-instated if required
 
-	if withExclusions:   
-		rsdVal['Feature Name'] = dataset.featureMetadata.loc[dataset.featureMask, featureName].values
-		rsdVal[SampleType.StudyPool] = dataset.rsdSP[dataset.featureMask]
-		ssMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & dataset.sampleMask
-		rsdList = rsd(dataset.intensityData[ssMask, :])
-		rsdVal[SampleType.StudySample] = rsdList[dataset.featureMask]
-	else:		
-		rsdVal['Feature Name'] = dataset.featureMetadata.loc[:, featureName].values
-		rsdVal[SampleType.StudyPool] = dataset.rsdSP
-		ssMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & dataset.sampleMask
-		rsdList = rsd(dataset.intensityData[ssMask, :])
-		rsdVal[SampleType.StudySample] = rsdList		
+	# Define sample masks
+	acquiredMasks = generateTypeRoleMasks(msData.sampleMetadata)
 
-	# Only keep features with finite values for SP and SS
-	finiteMask = (rsdVal[SampleType.StudyPool] < numpy.finfo(numpy.float64).max)
-	finiteMask = finiteMask & (rsdVal[SampleType.StudySample] < numpy.finfo(numpy.float64).max)
-
-	for sType in sTypes:
-		if not sTypes == SampleType.StudyPool:
-			sTypeMask = dataset.sampleMetadata.loc[:, 'SampleType'].values == sType
-			# precRefMask limits to Precision Reference and dataset.sampleMask
-			sTypeMask = numpy.logical_and(sTypeMask, precRefMask)
-
-			# minimum 3 points needed
-			if sum(sTypeMask) >= 3:
-				rsdList = rsd(dataset.intensityData[sTypeMask, :])
-				if withExclusions:
-					rsdVal[sType] = rsdList[dataset.featureMask]
-				else:
-					rsdVal[sType] = rsdList
-				finiteMask = finiteMask & (rsdVal[sType] < numpy.finfo(numpy.float64).max)
+	if sum(acquiredMasks['SPmask']) > 3:
+		rsdVal[SampleType.StudyPool] = msData.rsdSP
+		# finiteMask = (rsdVal[SampleType.StudyPool] < numpy.finfo(numpy.float64).max)
+	if sum(acquiredMasks['ERmask']) > 3:
+		rsdVal[SampleType.ExternalReference] = rsd(msData.intensityData[acquiredMasks['ERmask'], :])
+		# finiteMask = finiteMask & (rsdVal[SampleType.ExternalReference] < numpy.finfo(numpy.float64).max)
+	if sum(acquiredMasks['SSmask']) > 3:
+		rsdVal[SampleType.StudySample] = rsd(msData.intensityData[acquiredMasks['SSmask'], :])
+		# finiteMask = finiteMask & (rsdVal[SampleType.StudySample] < numpy.finfo(numpy.float64).max)
 
 	## apply finiteMask
-	for sType in rsdVal.keys():
-		rsdVal[sType] = rsdVal[sType][finiteMask]
+	#for sType in rsdVal.keys():
+		#rsdVal[sType] = rsdVal[sType][finiteMask]
 
+	# If ratio, calculate ratio of each sample type RSD to rsdSP
 	if ratio:
-		rsdSP = copy.deepcopy(rsdVal[SampleType.StudyPool])
-		for sType in sTypes:
-			rsdVal[sType] = numpy.divide(rsdVal[sType], rsdSP)
+		for sType in rsdVal.keys():
+			rsdVal[sType] = numpy.divide(rsdVal[sType], rsdVal[SampleType.StudyPool])
 
-	# reorder from largest to smallest RSD in Study Pool
+	rsdTable = pandas.DataFrame(rsdVal)
+
+	# If sortOrder, sort by FeatureMask, then order from largest to smallest RSD in Study Pool
 	if sortOrder:
-		sortIndex = reversed(numpy.argsort(rsdVal[SampleType.StudyPool]))
-		rsdTable = pandas.DataFrame(rsdVal).reindex(sortIndex)
+
+		# Ensure we have 'Passing Selection' column in dataset object
+		if not hasattr(msData.featureMetadata, 'Passing Selection'):
+			msData.featureMetadata['Passing Selection'] = msData.featureMask
+
+		msData.featureMetadata['rsdSP'] = msData.rsdSP
+		msData.featureMetadata.sort_values(by=['Passing Selection', 'rsdSP'], ascending=[False, True], inplace=True)
+		sortIndex = msData.featureMetadata.index
+		rsdTable = rsdTable.reindex(sortIndex)
 		rsdTable.reset_index(drop=True, inplace=True)
-	else:
-		rsdTable = pandas.DataFrame(rsdVal)
+
 
 	return rsdTable

@@ -36,7 +36,7 @@ register_matplotlib_converters()
 from ..__init__ import __version__ as version
 
 
-def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactualFiltering=None, destinationPath=None,
+def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy='Feature Name', withArtifactualFiltering=None, destinationPath=None,
                           msDataCorrected=None, pcaModel=None, batch_correction_window=11, logy=False):
     """
     Summarise different aspects of an MS dataset
@@ -128,7 +128,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, withArtifactual
     elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged'):
         _finalReport(msData, destinationPath, pcaModel, reportType=reportType)
     elif (reportType.lower() == 'final report peakpanther'):
-        _finalReportPeakPantheR(msData, destinationPath=destinationPath)
+        _finalReportPeakPantheR(msData, destinationPath=destinationPath, labelFeaturesBy=labelFeaturesBy)
 
 def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final report'):
     """
@@ -383,7 +383,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
             featureName=featureName,
             ratio=False,
             logx=True,
-            color='matchReport',
+            #color='matchReport',
             featName=featName,
             savePath=saveAs,
             figureFormat=dataset.Attributes['figureFormat'],
@@ -774,7 +774,7 @@ def _featureReport(dataset, destinationPath=None):
  			 featureName=featureName,
              ratio=False,
              logx=True,
-             color='matchReport',
+             #color='matchReport',
 			 featName=featName,
              savePath=saveAs,
              figureFormat=dataset.Attributes['figureFormat'],
@@ -1338,7 +1338,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
  			 featureName=featureName,
              ratio=False,
              logx=True,
-             color='matchReport',
+             #color='matchReport',
 			 featName=featName,
              savePath=saveAs,
              figureFormat=dataset.Attributes['figureFormat'],
@@ -1357,7 +1357,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 			 featureName=featureName,
              ratio=False,
              logx=True,
-             color='matchReport',
+             #color='matchReport',
 			 featName=featName,
              savePath=saveAs,
              figureFormat=dataset.Attributes['figureFormat'],

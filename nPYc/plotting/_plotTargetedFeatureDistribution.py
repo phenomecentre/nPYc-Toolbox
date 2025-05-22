@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from ..plotting._violinPlot import _violinPlotHelper
 from ..enumerations import AssayRole, SampleType
+from ..utilities.ms import generateTypeRoleMasks
 import numpy
 import math
 import copy
@@ -26,9 +27,8 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 	nf = math.ceil(nv/nax)
 	plotNo = 0
 
-	SPmask = (dataset.sampleMetadata['SampleType'] == SampleType.StudyPool) & (dataset.sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
-	SSmask = (dataset.sampleMetadata['SampleType'] == SampleType.StudySample) & (dataset.sampleMetadata['AssayRole'] == AssayRole.Assay)
-	ERmask = (dataset.sampleMetadata['SampleType'] == SampleType.ExternalReference) & (dataset.sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
+	# Define sample masks
+	acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
 
 	# Define sample masks
 	sampleMasks = []
@@ -38,14 +38,14 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 					   SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
 
 	# Plot data coloured by sample type
-	if sum(SSmask > 0) and 'SS' in sampleTypes:
-		sampleMasks.append(('SS', SSmask))
+	if sum(acquiredMasks['SSmask'] > 0) and 'SS' in sampleTypes:
+		sampleMasks.append(('SS', acquiredMasks['SSmask']))
 		palette['SS'] = sTypeColourDict[SampleType.StudySample]
-	if sum(SPmask > 0) and 'SP' in sampleTypes:
-		sampleMasks.append(('SR', SPmask))
+	if sum(acquiredMasks['SPmask'] > 0) and 'SP' in sampleTypes:
+		sampleMasks.append(('SR', acquiredMasks['SPmask']))
 		palette['SR'] = sTypeColourDict[SampleType.StudyPool]
-	if sum(ERmask > 0) and 'ER' in sampleTypes:
-		sampleMasks.append(('LTR', ERmask))
+	if sum(acquiredMasks['ERmask'] > 0) and 'ER' in sampleTypes:
+		sampleMasks.append(('LTR', acquiredMasks['ERmask']))
 		palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
 
 	# Plot

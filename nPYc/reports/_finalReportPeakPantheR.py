@@ -27,7 +27,7 @@ import operator
 from ..__init__ import __version__ as version
 
 
-def _finalReportPeakPantheR(dataset, destinationPath=None):
+def _finalReportPeakPantheR(dataset, destinationPath=None, labelFeaturesBy='Feature Name'):
     """
     Summarise different aspects of an MS dataset
 
@@ -75,17 +75,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
 
     # Ensure we have 'Passing Selection' column in dataset object
     if not hasattr(dataset.featureMetadata, 'Passing Selection'):
-        dataset.saveFeatureMask()
-
-	# Use cpdName (targeted) to label RSD plot if available
-    if (hasattr(dataset.featureMetadata, 'Compound Name')):
-        featureName = 'Compound Name'
-        featName=True
-        figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
-    else:
-        featureName = 'Feature Name'
-        featName=False
-        figureSize=dataset.Attributes['figureSize']
+        dataset.featureMetadata['Passing Selection'] = dataset.featureMask
 
 	# Define sample masks
     acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
@@ -99,8 +89,8 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     item['NfeaturesPassing'] = sum(dataset.featureMetadata['Passing Selection'])
     nfeaturesFailing = item['Nfeatures'] - item['NfeaturesPassing']
     if nfeaturesFailing != 0:
-        hLine = [item['NfeaturesFailing']]
         item['NfeaturesFailing'] = nfeaturesFailing
+        hLine = [item['NfeaturesFailing']]
     else:
         hLine = None
     item['SScount'] = str(sum(acquiredMasks['SSmask']))
@@ -205,13 +195,11 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     
     # Separate into features passing and failing feature selection for rest of report
 
-    # Sort features by featureMask then by rsdSR
-    dataset.featureMetadata['rsdSP'] = dataset.rsdSP
-    dataset.featureMetadata.sort_values(by=['Passing Selection', 'rsdSP'], ascending=[False, True], inplace=True)
-    orderNew = dataset.featureMetadata.index
-    dataset._intensityData = dataset._intensityData[:,orderNew]
-    dataset.featureMetadata.drop('rsdSP', axis=1, inplace=True)
-    dataset.featureMetadata.reset_index(drop=True, inplace=True)
+    # Sort features by featureMask
+    #dataset.featureMetadata.sort_values(by=['Passing Selection'], ascending=[False], inplace=True)
+    #orderNew = dataset.featureMetadata.index
+    #dataset._intensityData = dataset._intensityData[:,orderNew]
+    #dataset.featureMetadata.reset_index(drop=True, inplace=True)
     
     # Figure: Distribution of RSDs in SP and SS
     if destinationPath:
@@ -223,18 +211,17 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         figNo = figNo+1
 
     plotRSDs(dataset,
-            featureName=featureName,
+            featureName=labelFeaturesBy,
             ratio=False,
             logx=True,
-            #sortOrder=False,
+            sortOrder=True,
             withExclusions=False,
-            color='matchReport',
-            featName=featName,
+            featName=True,
             hLines=hLine,
             savePath=saveAs,
             figureFormat=dataset.Attributes['figureFormat'],
             dpi=dataset.Attributes['dpi'],
-            figureSize=figureSize)
+            figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35)))
     
     if not destinationPath:
           if nfeaturesFailing != 0:
@@ -290,7 +277,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
     figuresFeatureDistributionPassing = plotTargetedFeatureDistribution(
                dataset,
                featureMask=dataset.featureMetadata['Passing Selection'],
-               featureName=featureName,
+               featureName=labelFeaturesBy,
                logx=False,
                figures=figuresFeatureDistributionPassing,
                savePath=saveAs,
@@ -319,7 +306,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None):
         figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(
                    dataset,
                    featureMask=dataset.featureMetadata['Passing Selection']==False,
-                   featureName=featureName,
+                   featureName=labelFeaturesBy,
                    logx=False,
                    figures=figuresFeatureDistributionFailing,
                    savePath=saveAs,
