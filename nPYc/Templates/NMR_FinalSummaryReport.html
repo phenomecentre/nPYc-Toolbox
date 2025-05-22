@@ -1,7 +1,7 @@
 {% extends "base_QC.html" %}
 
 {% import 'pcaReport.html' as pca %}
-<!-->{% import 'sampleReportChunk.html' as sampleReport %}-->
+<!--{% import 'sampleReportChunk.html' as sampleReport %}-->
 
 {% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
@@ -23,31 +23,59 @@
 <div class='content'>
 	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
 	{{ item.sampleSummary['Acquired'].to_html() }}
+	<p>For details on sample nomenclature see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/studydesign.html" target="_blank" rel="noopener noreferrer">Sample Nomenclature</a>
+	</p>
 	<p>*Details of any missing/excluded study samples given at the end of the report</p>
 	<p></p>
 </div>
 
 <!--Spectral Data Summary_________________________________________________________________________________________________________-->
-<h2>Spectral Data Summary</h2>
+<h2>Feature Summary</h2>
 
 <div class='content'>
+	<p>Samples acquired between {{ item['start'] }} and {{ item['end'] }}.</p>
+	<p></p>
+	<p>
+		For NMR datasets, a number of qualities are assessed to determine spectral quality, for more details see:
+		<a href="http://dx.doi.org/10.1021/ac5025039" target="_blank" rel="noopener noreferrer">Dona et al. 2014</a>
+		In brief, dataset quality is assessed on the following key criteria:
+		<ol type="1">
+  			<li>Chemical shift calibration</li>
+  			<li>Peak width</li>
+  			<li>Baseline consistency</li>
+			<li>Quality of solvent suppression</li>
+		</ol>
+		For more details see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/reports.html#feature-summary-report-nmr-datasets" target="_blank" rel="noopener noreferrer">Feature Quality Assessment.</a>
+		 For these parameters, acceptable values are defined and data quality assessed according to these thresholds.
+	</p>
+
 	<p class="caption"><span class="heading">Table&nbsp;2.</span> Data processed with the following criteria:</p>
 	{{ item['DataParametersTable'].to_html() }}
-	<p>Samples acquired between {{ item['start'] }} and {{ item['end'] }}.</p>
 	<p></p>
 </div>
 
-<!--Figure 1: Line width boxplot-->
+<!--Figure 1: Line width boxplot
 <div class='figure1'>
 	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Boxplot of line width distributions (by sample type).</p>
 	<img src="{{ item['linewidthBoxplot'] }}" alt="Peak Width plot.">
-</div>
+</div>-->
 
-<!--Figure 2: Distribution in intensity of spectral data around the removed water peak region.-->
+<!--Figure 2: Distribution in intensity of spectral data around the removed water peak region.
 <div class='figure3'>
 	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Distribution in intensity of spectral data around the removed water peak region.</p>
 	<img src="{{ item['spectraSolventPeakRegion']}}" alt="Distribution in intensity of spectral data around the removed solvent peak region.">
+</div>-->
+
+<!--Figure 1: Average spectrum-->
+<div class='figure1'>
+	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Average spectral profile of dataset.</p>
+	<img src="{{ item['spectrumPlot'] }}" alt="Average spectral profile of dataset.">
+	<p>This figure shows the coverage of features in terms of their chemical shift (ppm).
+		In a global profiling dataset, the a priori identity of these features is unknown, however please see the (assay specific) 'Further Information: Assay Coverage' section below for high level compound class information.</p>
 </div>
+
 
 <!--Multivariate -->
 {% if pcaPlots %}
@@ -60,5 +88,29 @@
 	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
 	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
 {% endif %}
+
+<!--Add annotated spectra/ion maps for all NPC assays-->
+
+<h2>Further Information: Links</h2>
+
+<div class='content'>
+	<p>The following section includes further information on NPC assay coverage and links to methods and documentation</p>
+	<p>For information on methods, please see:
+		<a href="https://chemrxiv.org/engage/chemrxiv/article-details/61ebd6fa0716a8529e3823dc" target="_blank" rel="noopener noreferrer">Lewis et al. 2022</a>
+	</p>
+	<p>For our full documentation on pre-processing and quality control, please see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">NPC preprocessing and QC documentation (readthedocs)</a>
+	</p>
+	<p>For tutorials on pre-processing and quality control, please see:
+		<a href="https://github.com/phenomecentre/nPYc-toolbox-dementia-tutorials" target="_blank" rel="noopener noreferrer">NPC preprocessing and QC tutorials (GitHub)</a>
+	</p>
+</div>
+
+<h2>Further Information: Assay Coverage</h2>
+
+<div class='content'>
+	<p>Please scroll down for information on the theoretical coverage of NPC assays</p>
+	<embed src="graphics/NPC_assay_coverage.pdf" width="1100" height="700" type="application/pdf">
+</div>
 
 {% endblock %}

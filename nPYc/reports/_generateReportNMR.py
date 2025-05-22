@@ -17,7 +17,7 @@ from .._toolboxPath import toolboxPath
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
 from ._generateSampleReport import _generateSampleReport
-from ..plotting import plotSolventResonance, plotSolventResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive, histogram
+from ..plotting import plotSolventResonance, plotSolventResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive, plotLoadings
 from ._generateBasicPCAReport import generateBasicPCAReport
 from ..enumerations import AssayRole, SampleType
 
@@ -241,9 +241,13 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
+
+		# Copy required file for final report
+		shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
+					 os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
 	else:
 		saveAs = None
-    
+
     
 	item = dict()
 	item['Name'] = dataset.name
@@ -299,42 +303,65 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 		print('Spectral Data')
 		print('\nTable 2: Data processed with the following criteria:')
 		display(dataParametersTable)
-		print('\nSamples acquired between ' + item['start'] + ' and ' + item['end'] + '\n')	
+		print('\nSamples acquired between ' + item['start'] + ' and ' + item['end'] + '\n')
 
 	##
-	# LW box plot
+	# Plot spectrum
 	##
 	if destinationPath:
-		item['linewidthBoxplot'] = os.path.join(graphicsPath, item['Name'] + '_linewidthBoxplot.' + dataset.Attributes['figureFormat'])
-		saveAs = item['linewidthBoxplot']
+		item['spectrumPlot'] = os.path.join(graphicsPath, item['Name'] + '_spectrumPlot.' + dataset.Attributes['figureFormat'])
+		saveAs = item['spectrumPlot']
 	else:
-		print('Figure 1: Boxplot of line width distributions (by sample type).')
-		
-		
-	nPYc.plotting.plotPW(dataset,
-			savePath=saveAs,
-			title='',
-			figureFormat=dataset.Attributes['figureFormat'],
-			dpi=dataset.Attributes['dpi'],
-			figureSize=dataset.Attributes['figureSize'])
+		print('Figure 1: Average spectral profile of dataset')
 
-	##
-	# Solvent Peak plot
-	##
-	if destinationPath:
-		item['spectraSolventPeakRegion'] = os.path.join(graphicsPath, item['Name'] + '_spectraSolventPeakRegion.' + dataset.Attributes['figureFormat'])
-		saveAs = item['spectraSolventPeakRegion']
-		
-		plotSolventResonance(dataset,
-						 savePath=saveAs,
-						 figureFormat=dataset.Attributes['figureFormat'],
-						 dpi=dataset.Attributes['dpi'],
-						 figureSize=dataset.Attributes['figureSize'])
-				
-	else:
-		print('Figure 2: Distribution in intensity of spectral data around the removed solvent peak region.')
-		figure = plotSolventResonanceInteractive(dataset, title='')
-		iplot(figure)
+	nPYc.plotting.plotSpectralVariance(dataset,
+									   classes=None,
+									   quantiles=(25, 75),
+									   average='median',
+									   xlim=None,
+									   logy=False,
+									   title=None,
+									   savePath=saveAs,
+									   figureFormat=dataset.Attributes['figureFormat'],
+									   dpi=dataset.Attributes['dpi'],
+									   figureSize=dataset.Attributes['figureSize'])
+
+
+
+	# ##
+	# # LW box plot
+	# ##
+	# if destinationPath:
+	# 	item['linewidthBoxplot'] = os.path.join(graphicsPath, item['Name'] + '_linewidthBoxplot.' + dataset.Attributes['figureFormat'])
+	# 	saveAs = item['linewidthBoxplot']
+	# else:
+	# 	print('Figure 1: Boxplot of line width distributions (by sample type).')
+	#
+	#
+	# nPYc.plotting.plotPW(dataset,
+	# 		savePath=saveAs,
+	# 		title='',
+	# 		figureFormat=dataset.Attributes['figureFormat'],
+	# 		dpi=dataset.Attributes['dpi'],
+	# 		figureSize=dataset.Attributes['figureSize'])
+
+	# ##
+	# # Solvent Peak plot
+	# ##
+	# if destinationPath:
+	# 	item['spectraSolventPeakRegion'] = os.path.join(graphicsPath, item['Name'] + '_spectraSolventPeakRegion.' + dataset.Attributes['figureFormat'])
+	# 	saveAs = item['spectraSolventPeakRegion']
+	#
+	# 	plotSolventResonance(dataset,
+	# 					 savePath=saveAs,
+	# 					 figureFormat=dataset.Attributes['figureFormat'],
+	# 					 dpi=dataset.Attributes['dpi'],
+	# 					 figureSize=dataset.Attributes['figureSize'])
+	#
+	# else:
+	# 	print('Figure 2: Distribution in intensity of spectral data around the removed solvent peak region.')
+	# 	figure = plotSolventResonanceInteractive(dataset, title='')
+	# 	iplot(figure)
 
 	##
 	# PCA plots
