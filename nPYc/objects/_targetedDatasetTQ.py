@@ -200,13 +200,6 @@ class TargetedDataset(Dataset):
             self.VariableType = VariableType.Discrete
             self.AnalyticalPlatform = AnalyticalPlatform.MS
             self.initialiseMasks()
-        elif fileType == 'Bruker Quantification':
-            # Read files, clean object
-            self._loadBrukerXMLDataset(datapath, **kwargs)
-            # Finalise object
-            self.VariableType = VariableType.Discrete
-            self.AnalyticalPlatform = AnalyticalPlatform.NMR
-            self.initialiseMasks()
         elif fileType == 'empty':
             # Build empty object for testing
             pass
@@ -400,8 +393,8 @@ class TargetedDataset(Dataset):
         self.peakInfo = {'peakResponse': peakResponse, 'peakArea': peakArea, 'peakConcentrationDeviation': peakConcentrationDeviation, 'peakIntegrationFlag': peakIntegrationFlag, 'peakRT': peakRT}
 
         # add Dataset mandatory columns
-        self.sampleMetadata['AssayRole']         = AssayRole.UnknownRole
-        self.sampleMetadata['SampleType']        = SampleType.UnknownType
+        self.sampleMetadata['AssayRole']         = numpy.nan
+        self.sampleMetadata['SampleType']        = numpy.nan
         self.sampleMetadata['Dilution']          = numpy.nan
         self.sampleMetadata['Correction Batch']  = numpy.nan
         self.sampleMetadata['Sample ID']       = numpy.nan
@@ -726,8 +719,6 @@ class TargetedDataset(Dataset):
         excludedExpectedConcentration = []
         excludedFlag                  = []
 
-        """
-
         ## SOP is used as 'Truth', if calibReport does not match, it's a problem (Error)
         ## Then if featureMetadata does not match SOP/calibReport, use SOP as reference (message conflict)
         ## Match SOP & calibReport
@@ -780,36 +771,10 @@ class TargetedDataset(Dataset):
         if sum(featureCalibSOP['compoundName'] != featureCalibSOP['Compound']) != 0:
             raise ValueError('SOP and Calibration Report compounds names differ: ' + str(featureCalibSOP.loc[(featureCalibSOP['compoundName'] != featureCalibSOP['Compound']), ['compoundName', 'Compound']].values.tolist()))
         featureCalibSOP.drop('Compound', inplace=True, axis=1)
-        
+
         ## Match calibSOP & featureMetadata
         # left join to keep feature order and limit to features in XML
         finalFeatureMetadata = pandas.merge(left=featureMetadata, right=featureCalibSOP, how='left', left_on='TargetLynx Feature ID', right_on='compoundID', sort=False)
-        """
-
-        # Merge data with calibration report
-        finalFeatureMetadata = pandas.merge(left=featureMetadata,
-                                            right=calibReport,
-                                            how='left',
-                                            left_on='Feature Name',
-                                            right_on='Compound',
-                                            sort=False
-                                            )
-
-        finalFeatureMetadata['compoundID'] = finalFeatureMetadata['Comment']
-        finalFeatureMetadata['compoundName'] = finalFeatureMetadata['Feature Name']
-        finalFeatureMetadata['unitCorrectionFactor'] = 1 # Caro remove this entirely - it is not required
-        #finalFeatureMetadata['Unit'] = 'To Add' # Caro this needs adding or deriving from somewhere
-        finalFeatureMetadata['IS'] = finalFeatureMetadata['Cpd Info'] == 'Internal Standard'
-        finalFeatureMetadata['quantificationType'] = QuantificationType.UnknownQuantification
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Internal Standard', 'quantificationType'] = QuantificationType.IS
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with own labelled analogue', 'quantificationType'] = QuantificationType.QuantOwnLabeledAnalogue
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with alternative labelled analogue', 'quantificationType'] = QuantificationType.QuantAltLabeledAnalogue
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified without an internal standard', 'quantificationType'] = QuantificationType.QuantWithoutIS
-        finalFeatureMetadata['calibrationMethod'] = CalibrationMethod.unknownCalibration # We can remove this, everything is captured in quantification type
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Internal Standard', 'calibrationMethod'] = CalibrationMethod.noCalibration
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with own labelled analogue', 'calibrationMethod'] = CalibrationMethod.backcalculatedIS
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with alternative labelled analogue', 'calibrationMethod'] = CalibrationMethod.backcalculatedIS
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified without an internal standard', 'calibrationMethod'] = CalibrationMethod.noIS
 
         # limit to compounds present in the SOP (no report of SOP compounds not in XML)
         if finalFeatureMetadata['compoundID'].isnull().sum() != 0:
@@ -1081,139 +1046,6 @@ class TargetedDataset(Dataset):
         print(sum(keptFeat), 'feature are kept for processing,',sum(ISFeat),'IS removed')
         print('-----')
         self.Attributes['Log'].append([datetime.now(), '%d features kept for processing (%d samples). %d IS features filtered.' % (sum(keptFeat), self.noSamples, sum(ISFeat))])
-
-
-    def _loadBrukerXMLDataset(self, datapath, fileNamePattern=None, pdata=1, unit=None, **kwargs):
-        """
-        Initialise object from Bruker XML files. Read files and prepare a valid TargetedDataset.
-
-        Targeted data measurements are read and mapped to pre-defined SOPs. Once the import is finished, only properly read samples are returned and only features mapped onto the pre-defined SOP and sufficiently described. Only the first instance of a duplicated feature is kept.
-
-        :param str datapath: Path to the folder containing all `xml` files, all directories below :file:`datapath` will be scanned for valid `xml` files.
-        :param str fileNamePattern: Regex pattern to identify the `xml` files in `datapath` folder
-        :param int pdata: pdata files to parse (default 1)
-        :param unit: if features are present more than once, only keep the features with the unit passed as input.
-        :type unit: None or str
-        :raises TypeError: if `fileNamePattern` is not a string
-        :raises TypeError: if `pdata` is not an integer
-        :raises TypeError: if `unit` is not 'None' or a string
-        :raises ValueError: if `unit` is not one of the unit in the input data
-        :return: None
-        """
-        from ..utilities._readBrukerXML import importBrukerXML
-        from ..utilities.extractParams import buildFileList
-
-        if fileNamePattern is None:
-            fileNamePattern = self.Attributes['fileNamePattern']
-
-        # Check inputs
-        if not isinstance(fileNamePattern, str):
-            raise TypeError('\'fileNamePattern\' must be a string')
-        if not isinstance(pdata, int):
-            raise TypeError('\'pdata\' must be an integer')
-        if unit is not None:
-            if not isinstance(unit, str):
-                raise TypeError('\'unit\' must be a string')
-
-        ## Build a list of xml files matching the pdata in the right folder
-        pattern = re.compile(fileNamePattern)
-        filelist = buildFileList(datapath, pattern)
-        pdataPattern = re.compile('.*?pdata.*?%i' % (pdata))
-        filelist = [x for x in filelist if pdataPattern.match(x)]
-
-        ## Load intensity, sampleMetadata and featureMetadata. Files that cannot be opened raise warnings, and are filtered from the returned matrices.
-        (self.intensityData, self.sampleMetadata, self.featureMetadata) = importBrukerXML(filelist)
-
-        ## Filter unit if required
-        avUnit = self.featureMetadata['Unit'].unique().tolist()
-        if unit is not None:
-            if unit not in self.featureMetadata['Unit'].unique().tolist():
-                raise ValueError('The unit \'' + str(unit) + '\' is not present in the input data, available units: ' + str(avUnit))
-            keepMask = (self.featureMetadata['Unit'] == unit).values
-            self.featureMetadata = self.featureMetadata.loc[keepMask, :]
-            self.featureMetadata.reset_index(drop=True, inplace=True)
-            self.intensityData = self.intensityData[:, keepMask]
-
-        ## Check all features are unique, and
-        u_ids, u_counts = numpy.unique(self.featureMetadata['Feature Name'], return_counts=True)
-        if not all(u_counts == 1):
-            dupFeat = u_ids[u_counts != 1].tolist()
-            warnings.warn('The following features are present more than once, only the first occurence will be kept: ' + str(dupFeat) + '. For further filtering, available units are: ' + str(avUnit))
-            # only keep the first of duplicated features
-            keepMask = ~self.featureMetadata['Feature Name'].isin(dupFeat).values
-            keepFirstVal = [(self.featureMetadata['Feature Name'] == Feat).idxmax() for Feat in dupFeat]
-            keepMask[keepFirstVal] = True
-            self.featureMetadata = self.featureMetadata.loc[keepMask, :]
-            self.featureMetadata.reset_index(drop=True, inplace=True)
-            self.intensityData = self.intensityData[:, keepMask]
-
-        ## Reformat featureMetadata
-        # quantificationType
-        self.featureMetadata['quantificationType'] = numpy.nan
-        self.featureMetadata.loc[self.featureMetadata['type'] == 'quantification', 'quantificationType'] = QuantificationType.QuantOther
-        self.featureMetadata.loc[self.featureMetadata['type'] != 'quantification', 'quantificationType'] = QuantificationType.Monitored
-        self.featureMetadata.drop('type', inplace=True, axis=1)
-        # calibrationMethod
-        self.featureMetadata['calibrationMethod'] = numpy.nan
-        self.featureMetadata.loc[self.featureMetadata['quantificationType'] == QuantificationType.QuantOther, 'calibrationMethod'] = CalibrationMethod.otherCalibration
-        self.featureMetadata.loc[self.featureMetadata['quantificationType'] == QuantificationType.Monitored, 'calibrationMethod'] = CalibrationMethod.noCalibration
-        # rename columns
-        self.featureMetadata.rename(columns={'loq': 'LLOQ', 'lod': 'LOD', 'Lower Reference Bound': 'Lower Reference Percentile', 'Upper Reference Bound': 'Upper Reference Percentile'}, inplace=True)
-        # replace '-' with nan
-        self.featureMetadata['LLOQ'].replace('-', numpy.nan, inplace=True)
-        self.featureMetadata['LLOQ'] = [float(x) for x in self.featureMetadata['LLOQ'].tolist()]
-        self.featureMetadata['LOD'].replace('-', numpy.nan, inplace=True)
-        self.featureMetadata['LOD'] = [float(x) for x in self.featureMetadata['LOD'].tolist()]
-        # ULOQ
-        self.featureMetadata['ULOQ'] = numpy.nan
-
-        ## Initialise sampleMetadata
-        self.sampleMetadata['AssayRole'] = numpy.nan
-        self.sampleMetadata['SampleType'] = numpy.nan
-        self.sampleMetadata['Dilution'] = 100
-        self.sampleMetadata['Correction Batch'] = numpy.nan
-        self.sampleMetadata['Sample ID'] = numpy.nan
-        self.sampleMetadata['Exclusion Details'] = None
-        # add Run Order
-        self.sampleMetadata['Order'] = self.sampleMetadata.sort_values(by='Acquired Time').index
-        self.sampleMetadata['Run Order'] = self.sampleMetadata.sort_values(by='Order').index
-        self.sampleMetadata.drop('Order', axis=1, inplace=True)
-        # initialise the Batch to 1
-        self.sampleMetadata['Batch'] = [1] * self.sampleMetadata.shape[0]
-        self.sampleMetadata['Metadata Available'] = False
-
-        ## Initialise expectedConcentration
-        self.expectedConcentration = pandas.DataFrame(None, index=list(self.sampleMetadata.index), columns=self.featureMetadata['Feature Name'].tolist())
-
-        ## Initialise empty Calibration info
-        self.calibration = dict()
-        self.calibration['calibIntensityData'] = numpy.ndarray((0, self.featureMetadata.shape[0]))
-        self.calibration['calibSampleMetadata'] = pandas.DataFrame(None, columns=self.sampleMetadata.columns)
-        self.calibration['calibSampleMetadata']['Metadata Available'] = False
-        self.calibration['calibFeatureMetadata'] = pandas.DataFrame({'Feature Name': self.featureMetadata['Feature Name'].tolist()})
-        self.calibration['calibExpectedConcentration'] = pandas.DataFrame(None, columns=self.featureMetadata['Feature Name'].tolist())
-
-        ## Summary
-        print('Targeted Method: ' + self.Attributes['methodName'])
-        print(str(self.sampleMetadata.shape[0]) + ' study samples')
-        print(str(self.featureMetadata.shape[0]) + ' features (' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.IS)) + ' IS, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.QuantOwnLabeledAnalogue)) + ' quantified and validated with own labeled analogue, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.QuantAltLabeledAnalogue)) + ' quantified and validated with alternative labeled analogue, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.QuantOther)) + ' other quantification, ' + str(sum(self.featureMetadata['quantificationType'] == QuantificationType.Monitored)) + ' monitored for relative information)')
-        print('-----')
-
-        ## Apply limit of quantification?
-        self._applyLimitsOfQuantification(**kwargs)
-
-        ## clear **kwargs that have been copied to Attributes
-        for i in list(kwargs.keys()):
-            try:
-                del self.Attributes[i]
-            except:
-                pass
-        for j in ['fileNamePattern', 'pdata', 'unit']:
-            try:
-                del self.Attributes[j]
-            except:
-                pass
-
 
     def _applyLimitsOfQuantification(self, onlyLLOQ=False, **kwargs):
         """

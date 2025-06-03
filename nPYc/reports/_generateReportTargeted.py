@@ -355,7 +355,7 @@ def _featureReport(tData, item, destinationPath, numberPlotPerRowLOQ=3,
 			plotRSDs(tmpData,
 					 ratio=False,
 					 logx=True,
-					 color='matchReport',
+					 #color='matchReport', # Caro 2025-06-03 commented out, need to check
 					 featName=True,
 					 savePath=saveAs,
 					 figureFormat=tmpData.Attributes['figureFormat'],
@@ -1240,7 +1240,7 @@ def _getAccuracyPrecisionTable(tData, table='both'):
 			tmpStatTable = tmpStatTable.dropna(how='all')
 			tmpStatTable['Feature'] = featID
 			tmpStatTable['Sample Type'] = sType
-			statTable = statTable.append(tmpStatTable, ignore_index=True)
+			statTable = pandas.concat([statTable, tmpStatTable], ignore_index=True)
 
 		statTable['Sample Type'] = [str(x) for x in statTable['Sample Type'].tolist()]
 		statTable.fillna(value='', inplace=True)

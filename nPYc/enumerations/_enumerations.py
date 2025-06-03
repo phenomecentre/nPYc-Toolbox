@@ -87,6 +87,7 @@ class AssayRole(enum.Enum):
 	Assay = 'Assay'
 	PrecisionReference = 'Precision Reference'
 	LinearityReference = 'Linearity Reference'
+	AccuracyReference = 'Accuracy Reference'
 	Blank = 'Blank'
 	UnknownRole = 'Unknown Role'
 
@@ -136,6 +137,7 @@ class CalibrationMethod(enum.Enum):
 	backcalculatedIS = 'Backcalculated with Internal Standard'
 	otherCalibration = 'Other calibration method'
 	nmrCalibration = 'NMR quantitation'
+	unknownCalibration = 'Unknown'
 
 class QuantificationType(enum.Enum):
 	"""
@@ -159,10 +161,12 @@ class QuantificationType(enum.Enum):
 	IS = 'Internal Standard'
 	QuantOwnLabeledAnalogue = 'Quantified and validated with own labeled analogue'
 	QuantAltLabeledAnalogue = 'Quantified and validated with alternative labeled analogue'
+	QuantWithoutIS = 'Quantified without internal standard'
 	QuantOther = 'Other quantification'
 	Monitored = 'Monitored for relative information'
 	BrukerivDrQuant = 'Quantified using Bruker Biospin ivDr methods'
 	BrukerivDrEstimate = 'Estimated from other parameters using Bruker Biospin ivDr methods'
+	UnknownQuantification = 'Unknown'
 
 class AnalyticalPlatform(enum.Enum):
 	"""

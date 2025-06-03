@@ -76,7 +76,7 @@ def plotAccuracyPrecision(tData, accuracy=True, percentRange=None, savePath=None
         tmpStatTable = tmpStatTable.dropna(how='all')
         tmpStatTable['Feat'] = featID
         tmpStatTable['Conc'] = [str(i) for i in tmpStatTable.index]
-        statTable = statTable.append(tmpStatTable, ignore_index=True)
+        statTable = pandas.concat([statTable, tmpStatTable], ignore_index=True)
         # list separation line between compounds
         horzLines = [sum([x, tmpStatTable.shape[0]]) for x in horzLines]  # increase y of all previous lines by the number of rows added
         horzLines.append(0.5)
