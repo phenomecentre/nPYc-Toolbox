@@ -406,13 +406,6 @@ class TargetedDataset(Dataset):
         self.sampleMetadata['Correction Batch']  = numpy.nan
         self.sampleMetadata['Sample ID']       = numpy.nan
         self.sampleMetadata['Exclusion Details'] = numpy.nan
-        #self.sampleMetadata['Batch']             = numpy.nan #already created
-
-        # clear SOP parameters not needed after __matchDatasetToCalibrationReport
-        AttributesToRemove = ['compoundID', 'compoundName', 'IS', 'unitFinal', 'unitCorrectionFactor', 'calibrationMethod', 'calibrationEquation', 'quantificationType']
-        AttributesToRemove.extend(self.Attributes['externalID'])
-        for k in AttributesToRemove:
-            del self.Attributes[k]
 
         self.Attributes['Log'].append([datetime.now(),'TargetLynx data file with %d samples, %d features, loaded from \%s, calibration report read from \%s\'' % (self.noSamples, self.noFeatures, datapath, calibrationReportPath)])
 
@@ -575,39 +568,25 @@ class TargetedDataset(Dataset):
         
         The following columns are required (leave an empty value to reject a compound):
         
-        * Compound
-            The compound name, identical to the one employed in the SOP `json` file.
-        
-        * TargetLynx ID
-            The compound TargetLynx ID, identical to the one employed in the SOP `json` file.
+        * Compound: The compound name.
+        * TargetLynx ID: The compound TargetLynx ID.
+        * Unit: Units of quantification.
+        * LLOQ: Lowest limit of quantification concentration, in the same unit as indicated in TargetLynx.
+        * ULOQ: Upper limit of quantification concentration, in the same unit as indicated in TargetLynx.
 
-        * LLOQ
-            Lowest limit of quantification concentration, in the same unit as indicated in TargetLynx.
-        
-        * ULOQ
-            Upper limit of quantification concentration, in the same unit as indicated in TargetLynx.
+        The following columns are expected by :py:meth:`~TargetedDataset._targetLynxApplyLimitsOfQuantificationNoiseFilled`, if any are left empty noise concentration calculation cannot take place.:
 
-        The following columns are expected by :py:meth:`~TargetedDataset._targetLynxApplyLimitsOfQuantificationNoiseFilled`:
+        * Noise (area): Area integrated in a blank sample at the same retention time as the compound of interest
+        * Calibration Equation: Calibration equation.
+        * a: :math:`a` coefficient in the calibration equation.
+        * b: :math:`b` coefficient in the calibration equation.
 
-        * Noise (area)
-            Area integrated in a blank sample at the same retention time as the compound of interest (if left empty noise concentration calculation cannot take place).
-        
-        * a
-            :math:`a` coefficient in the calibration equation (if left empty noise concentration calculation cannot take place).
-        
-        * b
-            :math:`b` coefficient in the calibration equation (if left empty noise concentration calculation cannot take place).
+        The following columns are optional:
 
-        The following columns are recommended:
-
-        * Cpd Info
-            Additional information relating to the compound (can be left empty).
-        
-        * r
-            :math:`r` goodness of fit measure for the calibration equation (can be left empty).
-        
-        * r2
-            :math:`r^2` goodness of fit measure for the calibration equation (can be left empty).
+        * Cpd Info: Additional information relating to the compoun.
+        * r: :math:`r` goodness of fit measure for the calibration equation.
+        * r2: :math:`r^2` goodness of fit measure for the calibration equation.
+        * Unit Correction Factor: If required to correct the data.
         
         :param path: Path to the calibration report csv file.
         :type path: str
@@ -619,7 +598,7 @@ class TargetedDataset(Dataset):
         calibReport = pandas.read_csv(path)
 
         # check minimum number of columns
-        expectedCol = ['Compound', 'TargetLynx ID', 'LLOQ', 'ULOQ']
+        expectedCol = ['Compound', 'TargetLynx ID', 'Unit', 'LLOQ', 'ULOQ']
         foundCol = calibReport.columns.values.tolist()
 
         # if the set is not empty, some columns are missing from the csv
@@ -726,66 +705,6 @@ class TargetedDataset(Dataset):
         excludedExpectedConcentration = []
         excludedFlag                  = []
 
-        """
-
-        ## SOP is used as 'Truth', if calibReport does not match, it's a problem (Error)
-        ## Then if featureMetadata does not match SOP/calibReport, use SOP as reference (message conflict)
-        ## Match SOP & calibReport
-        # Load SOP
-        # calibrationMethod is 'backcalculatedIS' (use response), 'noIS' (use area), or 'noCalibration' (no corrections at all)
-        # quantificationType is:
-        #   'IS' (expects calibrationMethod=noIS)
-        #   'QuantOwnLabeledAnalogue' (would expect 'backcalculatedIS' but could use 'noIS')
-        #   'QuantAltLabeledAnalogue' (would expect 'backcalculatedIS' but could use 'noIS')
-        #   'Monitored' (which expects 'noCalibration')
-        SOPColumnsToLoad = ['compoundID', 'compoundName', 'IS', 'unitFinal', 'unitCorrectionFactor', 'calibrationMethod', 'calibrationEquation', 'quantificationType']
-        SOPColumnsToLoad.extend(self.Attributes['externalID'])
-        SOPFeatureMetadata = pandas.DataFrame.from_dict(dict((k, self.Attributes[k]) for k in SOPColumnsToLoad), orient='columns')
-        SOPFeatureMetadata['compoundID'] = pandas.to_numeric(SOPFeatureMetadata['compoundID'])
-        SOPFeatureMetadata['unitCorrectionFactor'] = pandas.to_numeric(SOPFeatureMetadata['unitCorrectionFactor'])
-        SOPFeatureMetadata['IS'] = SOPFeatureMetadata['IS'].map({'True': True, 'False': False})
-        SOPFeatureMetadata['Unit'] = SOPFeatureMetadata['unitFinal']
-        SOPFeatureMetadata.drop('unitFinal', inplace=True, axis=1)
-
-        # convert quantificationType from str to enum
-        if 'quantificationType' in SOPFeatureMetadata.columns:
-            for qType in QuantificationType:
-                SOPFeatureMetadata.loc[SOPFeatureMetadata['quantificationType'].values == qType.name, 'quantificationType'] = qType
-        # convert calibrationMethod from str to enum
-        if 'calibrationMethod' in SOPFeatureMetadata.columns:
-            for cMethod in CalibrationMethod:
-                SOPFeatureMetadata.loc[SOPFeatureMetadata['calibrationMethod'].values == cMethod.name, 'calibrationMethod'] = cMethod
-
-        # check that all quantificationType='IS' are also flagged as IS
-        # (both have same number of feature + intersection has same number of feature as one of them)
-        if (sum((SOPFeatureMetadata['quantificationType'] == QuantificationType.IS)) != sum(SOPFeatureMetadata['IS'])) | (sum((SOPFeatureMetadata['quantificationType'] == QuantificationType.IS) & SOPFeatureMetadata['IS']) != sum(SOPFeatureMetadata['IS'])):
-            raise ValueError('Check SOP file, features with quantificationType=\'IS\' must have been flagged as IS=\'True\'')
-
-        # check that all quantificationType='Monitored' have a calibrationMethod='noCalibration'
-        # (both have same number of feature + intersection has same number of feature as one of them)
-        if (sum((SOPFeatureMetadata['quantificationType'] == QuantificationType.Monitored)) != (sum(SOPFeatureMetadata['calibrationMethod'] == CalibrationMethod.noCalibration))) | (sum((SOPFeatureMetadata['quantificationType'] == QuantificationType.Monitored) & (SOPFeatureMetadata['calibrationMethod'] == CalibrationMethod.noCalibration)) != sum(SOPFeatureMetadata['quantificationType'] == QuantificationType.Monitored)):
-            raise ValueError('Check SOP file, features with quantificationType=\'Monitored\' must have a calibrationMethod=\'noCalibration\'\n quantificationType are:\n\'IS\' (expects calibrationMethod=noIS)\n\'QuantOwnLabeledAnalogue\' (would expect \'backcalculatedIS\' but could use \'noIS\' or \'otherCalibration\')\n\'QuantAltLabeledAnalogue\' (would expect \'backcalculatedIS\' but could use \'noIS\' or \'otherCalibration\')\n\'QuantOther\' (can take any CalibrationMethod)\n\'Monitored\' (which expects \'noCalibration\')')
-
-        # check number of compounds in SOP & calibReport
-        if SOPFeatureMetadata.shape[0] != calibReport.shape[0]:
-            raise ValueError('SOP and Calibration Report number of compounds differ')
-        featureCalibSOP = pandas.merge(left=SOPFeatureMetadata, right=calibReport, how='inner', left_on='compoundName', right_on='Compound', sort=False)
-        featureCalibSOP.drop('TargetLynx ID', inplace=True, axis=1)
-
-        # check we still have the same number of features (inner join)
-        if featureCalibSOP.shape[0] != SOPFeatureMetadata.shape[0]:
-            raise ValueError('SOP and Calibration Report compounds differ')
-
-        # check compound names match in SOP and calibReport after join
-        if sum(featureCalibSOP['compoundName'] != featureCalibSOP['Compound']) != 0:
-            raise ValueError('SOP and Calibration Report compounds names differ: ' + str(featureCalibSOP.loc[(featureCalibSOP['compoundName'] != featureCalibSOP['Compound']), ['compoundName', 'Compound']].values.tolist()))
-        featureCalibSOP.drop('Compound', inplace=True, axis=1)
-        
-        ## Match calibSOP & featureMetadata
-        # left join to keep feature order and limit to features in XML
-        finalFeatureMetadata = pandas.merge(left=featureMetadata, right=featureCalibSOP, how='left', left_on='TargetLynx Feature ID', right_on='compoundID', sort=False)
-        """
-
         # Merge data with calibration report
         finalFeatureMetadata = pandas.merge(left=featureMetadata,
                                             right=calibReport,
@@ -795,10 +714,6 @@ class TargetedDataset(Dataset):
                                             sort=False
                                             )
 
-        finalFeatureMetadata['compoundID'] = finalFeatureMetadata['Comment']
-        finalFeatureMetadata['compoundName'] = finalFeatureMetadata['Feature Name']
-        finalFeatureMetadata['unitCorrectionFactor'] = 1 # Caro remove this entirely - it is not required
-        #finalFeatureMetadata['Unit'] = 'To Add' # Caro this needs adding or deriving from somewhere
         finalFeatureMetadata['IS'] = finalFeatureMetadata['Cpd Info'] == 'Internal Standard'
         finalFeatureMetadata['quantificationType'] = QuantificationType.UnknownQuantification
         finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Internal Standard', 'quantificationType'] = QuantificationType.IS
@@ -811,48 +726,13 @@ class TargetedDataset(Dataset):
         finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with alternative labelled analogue', 'calibrationMethod'] = CalibrationMethod.backcalculatedIS
         finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified without an internal standard', 'calibrationMethod'] = CalibrationMethod.noIS
 
-        # limit to compounds present in the SOP (no report of SOP compounds not in XML)
-        if finalFeatureMetadata['compoundID'].isnull().sum() != 0:
-            warnings.warn("Warning: Only " + str(finalFeatureMetadata['compoundID'].notnull().sum()) + " features shared across the SOP/Calibration report (" + str(featureCalibSOP.shape[0]) + " total) and the TargetLynx output file (" + str(featureMetadata.shape[0]) + " total). " + str(finalFeatureMetadata['compoundID'].isnull().sum()) + " features discarded from the TargetLynx output file.")
-            # filter out unavailable features
-            unavailableFeatVect = finalFeatureMetadata['compoundID'].isnull().values
-            excludedSampleMetadata.append(sampleMetadata)
-            excludedFeatureMetadata.append(finalFeatureMetadata.iloc[unavailableFeatVect, :])
-            excludedIntensityData.append(intensityData[:, unavailableFeatVect])
-            excludedExpectedConcentration.append(expectedConcentration.iloc[:, unavailableFeatVect])
-            excludedFlag.append('Features')
-            finalFeatureMetadata = finalFeatureMetadata.iloc[~unavailableFeatVect, :]
-            finalIntensityData = intensityData[:, ~unavailableFeatVect]
-            finalExpectedConcentration = expectedConcentration.iloc[:, ~unavailableFeatVect]
-            finalPeakResponse = peakResponse.iloc[:, ~unavailableFeatVect]
-            finalPeakArea = peakArea.iloc[:, ~unavailableFeatVect]
-            finalPeakConcentrationDeviation = peakConcentrationDeviation.iloc[:, ~unavailableFeatVect]
-            finalPeakIntegrationFlag = peakIntegrationFlag.iloc[:, ~unavailableFeatVect]
-            finalPeakRT = peakRT.iloc[:, ~unavailableFeatVect]
-            # remove duplicate col
-            finalFeatureMetadata.drop('compoundID', inplace=True, axis=1)
-        else:
-            finalIntensityData = intensityData
-            finalExpectedConcentration = expectedConcentration
-            finalPeakResponse = peakResponse
-            finalPeakArea = peakArea
-            finalPeakConcentrationDeviation = peakConcentrationDeviation
-            finalPeakIntegrationFlag = peakIntegrationFlag
-            finalPeakRT = peakRT
-            # remove duplicate col
-            finalFeatureMetadata.drop('compoundID', inplace=True, axis=1)
-
-        # check names, keep SOP value, report differences
-        if sum(finalFeatureMetadata['Feature Name'] != finalFeatureMetadata['compoundName']) != 0:
-            warnings.warn('TargetLynx feature names & SOP/Calibration Report compounds names differ; SOP names will be used: ' + str(finalFeatureMetadata.loc[(finalFeatureMetadata['Feature Name'] != finalFeatureMetadata['compoundName']), ['Feature Name','compoundName']].values.tolist()))
-            finalFeatureMetadata['Feature Name'] = finalFeatureMetadata['compoundName']
-            finalExpectedConcentration.columns      = finalFeatureMetadata['Feature Name'].values.tolist()
-            finalPeakResponse.columns               = finalFeatureMetadata['Feature Name'].values.tolist()
-            finalPeakArea.columns                   = finalFeatureMetadata['Feature Name'].values.tolist()
-            finalPeakConcentrationDeviation.columns = finalFeatureMetadata['Feature Name'].values.tolist()
-            finalPeakIntegrationFlag.columns        = finalFeatureMetadata['Feature Name'].values.tolist()
-            finalPeakRT.columns                     = finalFeatureMetadata['Feature Name'].values.tolist()
-        finalFeatureMetadata.drop('compoundName', inplace=True, axis=1)
+        finalIntensityData = intensityData
+        finalExpectedConcentration = expectedConcentration
+        finalPeakResponse = peakResponse
+        finalPeakArea = peakArea
+        finalPeakConcentrationDeviation = peakConcentrationDeviation
+        finalPeakIntegrationFlag = peakIntegrationFlag
+        finalPeakRT = peakRT
 
         ## Add information to the sampleMetada
         finalSampleMetadata = copy.deepcopy(sampleMetadata)
@@ -867,11 +747,6 @@ class TargetedDataset(Dataset):
         finalSampleMetadata['Study Sample'] = finalSampleMetadata['Sample Type'] == 'Analyte'
         finalSampleMetadata['Blank'] = finalSampleMetadata['Sample Type'] == 'Blank'
         finalSampleMetadata['QC'] = finalSampleMetadata['Sample Type'] == 'QC'
-        # unused Sample Types
-        # sampleMetadata['Solvent'] = sampleMetadata['Sample Type'] == 'Solvent'
-        # sampleMetadata['Recovery'] = sampleMetadata['Sample Type'] == 'Recovery'
-        # sampleMetadata['Donor'] = sampleMetadata['Sample Type'] == 'Donor'
-        # sampleMetadata['Receptor'] = sampleMetadata['Sample Type'] == 'Receptor'
         finalSampleMetadata['Other'] = (~finalSampleMetadata['Calibrant'] & ~finalSampleMetadata['Study Sample'] & ~finalSampleMetadata['Blank'] & ~finalSampleMetadata['QC'])  # & ~sampleMetadata['Solvent'] & ~sampleMetadata['Recovery'] & ~sampleMetadata['Donor'] & ~sampleMetadata['Receptor']
         # Add Acquired Time
         finalSampleMetadata['Acquired Time'] = numpy.nan
@@ -888,11 +763,12 @@ class TargetedDataset(Dataset):
         # Initialise the Batch to 1
         finalSampleMetadata['Batch'] = [1]*finalSampleMetadata.shape[0]
 
-        ## Apply unitCorrectionFactor
-        finalFeatureMetadata['LLOQ'] = finalFeatureMetadata['LLOQ'] * finalFeatureMetadata['unitCorrectionFactor']  # NaN will be kept
-        finalFeatureMetadata['ULOQ'] = finalFeatureMetadata['ULOQ'] * finalFeatureMetadata['unitCorrectionFactor']
-        finalIntensityData         = finalIntensityData * finalFeatureMetadata['unitCorrectionFactor'].values
-        finalExpectedConcentration = finalExpectedConcentration * finalFeatureMetadata['unitCorrectionFactor'].values
+        ## If necessary - apply unitCorrectionFactor
+        if 'unitCorrectionFactor' in finalFeatureMetadata.columns:
+            finalFeatureMetadata['LLOQ'] = finalFeatureMetadata['LLOQ'] * finalFeatureMetadata['unitCorrectionFactor']  # NaN will be kept
+            finalFeatureMetadata['ULOQ'] = finalFeatureMetadata['ULOQ'] * finalFeatureMetadata['unitCorrectionFactor']
+            finalIntensityData         = finalIntensityData * finalFeatureMetadata['unitCorrectionFactor'].values
+            finalExpectedConcentration = finalExpectedConcentration * finalFeatureMetadata['unitCorrectionFactor'].values
 
         ## Summary
         print('TagetLynx output, Calibration report and SOP information matched:')
