@@ -332,12 +332,6 @@ class TargetedDataset(Dataset):
         else:
             self._filterTargetLynxIS(**kwargs)
 
-        # Apply limits of quantification
-        if noiseFilled:
-            self._targetLynxApplyLimitsOfQuantificationNoiseFilled(**kwargs)
-        else:
-            self._applyLimitsOfQuantification(**kwargs)
-
         # Remove peakInfo (default remove)
         if keepPeakInfo:
             self.Attributes['Log'].append([datetime.now(), 'TargetLynx peakInfo kept.'])
@@ -367,6 +361,16 @@ class TargetedDataset(Dataset):
             except:
                 pass
 
+    def replaceLimitsOfQuantification(self, noiseFilled=False, **kwargs):
+        """
+        Replace limits of quantification
+        """
+
+        # Apply limits of quantification
+        if noiseFilled:
+            self._targetLynxApplyLimitsOfQuantificationNoiseFilled(**kwargs)
+        else:
+            self._applyLimitsOfQuantification(**kwargs)
 
     def _readTargetLynxDataset(self, datapath, calibrationReportPath, **kwargs):
         """
@@ -1059,7 +1063,7 @@ class TargetedDataset(Dataset):
                 pass
 
 
-    def _applyLimitsOfQuantification(self, onlyLLOQ=False, **kwargs):
+    def _applyLimitsOfQuantification(self, replaceLLOQ=True, replaceULOQ=True, replaceNaN=True, replaceNaNwith=-numpy.inf, **kwargs):
         """
         For each feature, replace intensity values inferior to the lowest limit of quantification or superior to the upper limit of quantification, by a fixed value.
 
@@ -1081,138 +1085,64 @@ class TargetedDataset(Dataset):
         :raises AttributeError: if :py:attr:`featureMetadata['ULOQ']` is missing and onlyLLOQ==False
         """
 
-        sampleMetadata        = copy.deepcopy(self.sampleMetadata)
-        featureMetadata       = copy.deepcopy(self.featureMetadata)
-        intensityData         = copy.deepcopy(self._intensityData)
-        expectedConcentration = copy.deepcopy(self.expectedConcentration)
-        calibration           = copy.deepcopy(self.calibration)
-        if ((not hasattr(self, 'sampleMetadataExcluded')) | (not hasattr(self, 'featureMetadataExcluded')) | (not hasattr(self, 'intensityDataExcluded')) | (not hasattr(self, 'expectedConcentrationExcluded')) | (not hasattr(self, 'excludedFlag'))):
-            sampleMetadataExcluded        = []
-            featureMetadataExcluded       = []
-            intensityDataExcluded         = []
-            expectedConcentrationExcluded = []
-            excludedFlag                  = []
-        else:
-            sampleMetadataExcluded        = copy.deepcopy(self.sampleMetadataExcluded)
-            featureMetadataExcluded       = copy.deepcopy(self.featureMetadataExcluded)
-            intensityDataExcluded         = copy.deepcopy(self.intensityDataExcluded)
-            expectedConcentrationExcluded = copy.deepcopy(self.expectedConcentrationExcluded)
-            excludedFlag                  = copy.deepcopy(self.excludedFlag)
+        ## Check input columns and set up counters for log
+        monitoredcount = 0
 
-        ## Check input columns
-        if 'LLOQ' not in featureMetadata.columns:
-            raise AttributeError('the featureMetadata[\'LLOQ\'] column is absent')
-        if onlyLLOQ==False:
-            if 'ULOQ' not in featureMetadata.columns:
+        if replaceLLOQ:
+            if 'LLOQ' not in self.featureMetadata.columns:
+                raise AttributeError('the featureMetadata[\'LLOQ\'] column is absent')
+            lloqcount = 0
+
+        if replaceULOQ:
+            if 'ULOQ' not in self.featureMetadata.columns:
                 raise AttributeError('featureMetadata[\'ULOQ\'] column is absent')
+            uloqcount = 0
 
-        ## Features only Monitored are not processed and passed untouched (concatenated back at the end)
-        untouched = (featureMetadata['quantificationType'] == QuantificationType.Monitored).values
-        if sum(untouched) != 0:
-            print('The following features are only monitored and therefore not processed for LOQs: ' + str(featureMetadata.loc[untouched, 'Feature Name'].values.tolist()))
-            untouchedFeatureMetadata = featureMetadata.loc[untouched, :]
-            featureMetadata = featureMetadata.loc[~untouched, :]
-            untouchedIntensityData = intensityData[:, untouched]
-            intensityData = intensityData[:, ~untouched]
-            untouchedExpectedConcentration = expectedConcentration.loc[:, untouched]
-            expectedConcentration = expectedConcentration.loc[:, ~untouched]
-            # same reordering of the calibration
-            if isinstance(calibration, dict):
-                untouchedCalibFeatureMetadata = calibration['calibFeatureMetadata'].loc[untouched, :]
-                calibration['calibFeatureMetadata'] = calibration['calibFeatureMetadata'].loc[~untouched, :]
-                untouchedCalibIntensityData = calibration['calibIntensityData'][:, untouched]
-                calibration['calibIntensityData'] = calibration['calibIntensityData'][:, ~untouched]
-                untouchedCalibExpectedConcentration = calibration['calibExpectedConcentration'].loc[:, untouched]
-                calibration['calibExpectedConcentration'] = calibration['calibExpectedConcentration'].loc[:, ~untouched]
+        if replaceNaN:
+            nancount = 0
 
+        ## Iterate over the features, replacing LLOQ/ULOQ/NaN as required
+        for i in range(0, self.featureMetadata.shape[0]):
 
-        ## Exclude features without required information
-        unusableFeat = featureMetadata['LLOQ'].isnull().values & (featureMetadata['quantificationType'] != QuantificationType.QuantOther).values
-        if not onlyLLOQ:
-            unusableFeat = unusableFeat | (featureMetadata['ULOQ'].isnull().values & (featureMetadata['quantificationType'] != QuantificationType.QuantOther).values)
-        if sum(unusableFeat) != 0:
-            print(str(sum(unusableFeat)) + ' features cannot be pre-processed:')
-            print('\t' + str(sum(unusableFeat)) + ' features lack the required information to apply limits of quantification')
-            # store
-            sampleMetadataExcluded.append(sampleMetadata)
-            featureMetadataExcluded.append(featureMetadata.loc[unusableFeat, :])
-            intensityDataExcluded.append(intensityData[:, unusableFeat])
-            expectedConcentrationExcluded.append(expectedConcentration.loc[:, unusableFeat])
-            excludedFlag.append('Features')
-            #remove
-            featureMetadata = featureMetadata.loc[~unusableFeat, :]
-            intensityData = intensityData[:, ~unusableFeat]
-            expectedConcentration = expectedConcentration.loc[:, ~unusableFeat]
-            if isinstance(calibration, dict):
-                calibration['calibFeatureMetadata'] = calibration['calibFeatureMetadata'].loc[~unusableFeat, :]
-                calibration['calibIntensityData'] = calibration['calibIntensityData'][:, ~unusableFeat]
-                calibration['calibExpectedConcentration'] = calibration['calibExpectedConcentration'].loc[:, ~unusableFeat]
+            nanmask = numpy.isnan(self._intensityData[:, i].astype(float))
+            lloqmask = self._intensityData[:, i] < self.featureMetadata.loc[i, 'LLOQ']
+            uloqmask = self._intensityData[:, i] > self.featureMetadata.loc[i, 'ULOQ']
 
+            # Do not replace features which are only monitored
+            if self.featureMetadata.loc[i, 'quantificationType'] == QuantificationType.Monitored:
+                print(str(self.featureMetadata.loc[i, 'Feature Name']) + ' monitored for relative information and therefore not processed for LOQs')
+                monitoredcount = monitoredcount + 1
+                continue
 
-        ## Values replacement (-inf / +inf)
-        # iterate over the features
-        for i in range(0, featureMetadata.shape[0]):
-            # LLOQ
-            if not numpy.isnan(featureMetadata['LLOQ'].values[i]):
-                toReplaceLLOQ = intensityData[:, i] < featureMetadata['LLOQ'].values[i]
-                intensityData[toReplaceLLOQ, i] = -numpy.inf
+            try:
+                if replaceNaN:
+                    self._intensityData[nanmask, i] = replaceNaNwith
+                    nancount = nancount + 1
 
-            # ULOQ
-            if not onlyLLOQ:
-                if not numpy.isnan(featureMetadata['ULOQ'].values[i]):
-                    toReplaceULOQ = intensityData[:, i] > featureMetadata['ULOQ'].values[i]
-                    intensityData[toReplaceULOQ, i] = numpy.inf
+                if replaceLLOQ:
+                    self._intensityData[lloqmask, i] = -numpy.inf
+                    lloqcount = lloqcount + 1
 
+                if replaceULOQ:
+                    self._intensityData[uloqmask, i] = numpy.inf
+                    uloqcount = uloqcount + 1
 
-        ## Add back the untouched monitored features
-        if sum(untouched) != 0:
-            featureMetadata = pandas.concat([featureMetadata, untouchedFeatureMetadata], axis=0, sort=False)
-            intensityData = numpy.concatenate((intensityData, untouchedIntensityData), axis=1)
-            expectedConcentration = pandas.concat([expectedConcentration, untouchedExpectedConcentration], axis=1, sort=False)
-            # reorder the calib
-            if isinstance(calibration, dict):
-                calibration['calibFeatureMetadata'] = pandas.concat([calibration['calibFeatureMetadata'], untouchedCalibFeatureMetadata], axis=0, sort=False)
-                calibration['calibIntensityData'] = numpy.concatenate((calibration['calibIntensityData'], untouchedCalibIntensityData), axis=1)
-                calibration['calibExpectedConcentration'] = pandas.concat([calibration['calibExpectedConcentration'], untouchedCalibExpectedConcentration], axis=1, sort=False)
+            except:
+                print(str(self.featureMetadata.loc[i, 'Feature Name']) + ': unable to replace LOQs')
+                print('LLOQ: ' + str(self.featureMetadata.loc[i, 'LLOQ']))
+                print('ULOQ: ' + str(self.featureMetadata.loc[i, 'ULOQ']))
 
-        # Remove excess info
-        featureMetadata.reset_index(drop=True, inplace=True)
-        expectedConcentration.reset_index(drop=True, inplace=True)
-        if isinstance(calibration, dict):
-            calibration['calibFeatureMetadata'].reset_index(drop=True, inplace=True)
-            calibration['calibExpectedConcentration'].reset_index(drop=True, inplace=True)
+        # Log
+        logtext = 'Limits of quantification applied to: '
+        if replaceLLOQ:
+            logtext = logtext + 'LLOQ (' + str(lloqcount) + ' features, replaced with -numpy.inf); '
+        if replaceULOQ:
+            logtext = logtext + 'ULOQ (' + str(uloqcount) + ' features, replaced with numpy.inf); '
+        if replaceNaN:
+            logtext = logtext + 'NaN (' + str(nancount) + ' features, replaced with ' + str(replaceNaNwith) + '); '
+        logtext = logtext + 'monitored only so no loq applied (' + str(monitoredcount) + ')'
 
-        ## return dataset with limits of quantification applied
-        self.featureMetadata       = featureMetadata
-        self._intensityData        = intensityData
-        self.expectedConcentration = expectedConcentration
-        self.calibration           = calibration
-        self.sampleMetadataExcluded        = sampleMetadataExcluded
-        self.featureMetadataExcluded       = featureMetadataExcluded
-        self.intensityDataExcluded         = intensityDataExcluded
-        self.expectedConcentrationExcluded = expectedConcentrationExcluded
-        self.excludedFlag                  = excludedFlag
-        if sum(unusableFeat) != 0:
-            # featureMask size will be wrong, requires a reinitialisation
-            self.initialiseMasks()
-
-        ## Output and Log
-        print('Values <LLOQ replaced by -inf')
-        if not onlyLLOQ:
-            print('Values >ULOQ replaced by +inf')
-        if isinstance(calibration, dict):
-            print('\n')
-
-        # log the modifications
-        if onlyLLOQ:
-            logLimits = 'Limits of quantification applied to LLOQ'
-        else:
-            logLimits = 'Limits of quantification applied to LLOQ and ULOQ'
-        if sum(untouched) != 0:
-            logUntouchedFeatures = ' ' + str(sum(untouched)) + ' features only monitored and not processed: ' + str(untouchedFeatureMetadata.loc[:, 'Feature Name'].values.tolist()) + '.'
-        else:
-            logUntouchedFeatures = ''
-        self.Attributes['Log'].append([datetime.now(), '%s (%i samples, %i features). LLOQ are replaced by -inf.%s' % (logLimits, self.noSamples, self.noFeatures, logUntouchedFeatures)])
+        self.Attributes['Log'].append([datetime.now(), logtext])
 
 
     def _targetLynxApplyLimitsOfQuantificationNoiseFilled(self, onlyLLOQ=False, responseReference=None, **kwargs):
@@ -1936,17 +1866,16 @@ class TargetedDataset(Dataset):
             print('Limits of quantification merged to the highest LLOQ and lowest ULOQ across batch')
 
 
-    def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False, filterMetadata=True):
-        """
-        Calls :py:meth:`~Dataset.exportDataset` and raises a warning if normalisation is employed as :py:class:`TargetedDataset` :py:attr:`intensityData` can be left-censored.
-        """
-        # handle the dilution due to method... These lines are left here commented - as hopefully this will be handled more
-        # elegantly through the intensityData getter
-        # Export dataset...
-        tmpData = copy.deepcopy(self)
-        tmpData._intensityData = tmpData._intensityData * (100/tmpData.sampleMetadata['Dilution']).values[:, numpy.newaxis]
-        super(TargetedDataset, tmpData).exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
-
+#    def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False, filterMetadata=True):
+#        """
+#        Calls :py:meth:`~Dataset.exportDataset` and raises a warning if normalisation is employed as :py:class:`TargetedDataset` :py:attr:`intensityData` can be left-censored.
+#        """
+#        # handle the dilution due to method... These lines are left here commented - as hopefully this will be handled more
+#        # elegantly through the intensityData getter
+#        # Export dataset...
+#        tmpData = copy.deepcopy(self)
+#        tmpData._intensityData = tmpData._intensityData * (100/tmpData.sampleMetadata['Dilution']).values[:, numpy.newaxis]
+#        super(TargetedDataset, tmpData).exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
 
     def _exportCSV(self, destinationPath, escapeDelimiters=False):
         """

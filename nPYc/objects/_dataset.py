@@ -1740,11 +1740,7 @@ class Dataset:
 		* **UnifiedCSV** Exports :py:attr:`featureMetadata`, :py:attr:`sampleMetadata` and :py:attr:`intensityData` concatenated into a single CSV file
 
 		:param str destinationPath: Save data into the directory specified here
-		:param str format: File format for saved data, defaults to CSV.
-
-
-
-
+		:param str saveFormat: File format for saved data, defaults to CSV.
 		:param bool withExclusions: If ``True`` mask features and samples will be excluded
 		:param bool escapeDelimiters: If ``True`` remove characters commonly used as delimiters in csv files from metadata
 		:param bool filterMetadata: If ``True`` does not export the sampleMetadata and featureMetadata columns listed in self.Attributes['sampleMetadataNotExported'] and self.Attributes['featureMetadataNotExported']
