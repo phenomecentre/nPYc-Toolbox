@@ -383,21 +383,22 @@ class TargetedDataset(Dataset):
 
         # Read XML (dumb, no checks, no metadata alteration)
         sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT = self.__getDatasetFromXML(datapath)
+
         # Read calibration information from .csv (dumb, no metadata alteration, only checks for required columns)
         calibReport = self.__getCalibrationFromReport(calibrationReportPath)
+
         # Match XML, Calibration Report & SOP
-        sampleMetadata, featureMetadata, intensityData, expectedConcentration, excludedImportSampleMetadata, excludedImportFeatureMetadata, excludedImportIntensityData, excludedImportExpectedConcentration, excludedImportFlag, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT = self.__matchDatasetToCalibrationReport(sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT, calibReport)
+        sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT = self.__matchDatasetToCalibrationReport(sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT, calibReport)
 
         self.sampleMetadata        = sampleMetadata
         self.featureMetadata       = featureMetadata
         self._intensityData        = intensityData
         self.expectedConcentration = expectedConcentration
-        self.sampleMetadataExcluded        = excludedImportSampleMetadata
-        self.featureMetadataExcluded       = excludedImportFeatureMetadata
-        self.intensityDataExcluded         = excludedImportIntensityData
-        self.expectedConcentrationExcluded = excludedImportExpectedConcentration
-        self.excludedFlag                  = excludedImportFlag
-        self.peakInfo = {'peakResponse': peakResponse, 'peakArea': peakArea, 'peakConcentrationDeviation': peakConcentrationDeviation, 'peakIntegrationFlag': peakIntegrationFlag, 'peakRT': peakRT}
+        self.peakInfo = {'peakResponse': peakResponse,
+                         'peakArea': peakArea,
+                         'peakConcentrationDeviation': peakConcentrationDeviation,
+                         'peakIntegrationFlag': peakIntegrationFlag,
+                         'peakRT': peakRT}
 
         # add Dataset mandatory columns
         self.sampleMetadata['AssayRole']         = AssayRole.UnknownRole
@@ -406,6 +407,11 @@ class TargetedDataset(Dataset):
         self.sampleMetadata['Correction Batch']  = numpy.nan
         self.sampleMetadata['Sample ID']       = numpy.nan
         self.sampleMetadata['Exclusion Details'] = numpy.nan
+        self.sampleMetadataExcluded        = []
+        self.featureMetadataExcluded       = []
+        self.intensityDataExcluded         = []
+        self.expectedConcentrationExcluded = []
+        self.excludedFlag                  = []
 
         self.Attributes['Log'].append([datetime.now(),'TargetLynx data file with %d samples, %d features, loaded from \%s, calibration report read from \%s\'' % (self.noSamples, self.noFeatures, datapath, calibrationReportPath)])
 
@@ -610,17 +616,11 @@ class TargetedDataset(Dataset):
 
     def __matchDatasetToCalibrationReport(self, sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT, calibReport):
         """
-        Check the agreement of Feature IDs and Feature Names across all inputs (TargetLynx export `xml`, calibration report `csv` and SOP `json`).
-        
-        First map the calibration report and SOP information, which raise errors in case of disagreement.
-        
-        This block is then mapped to the TargetLynx `featureMetadata` (on compound ID) and overrides the TargetLynx information (raise warnings).
-        
-        Features not matched are appended to an `excludedSampleMetadata`, `excludedFeatureMetadata` and `excludedIntensityData` (excluded `peakResponse`, `peakArea`, `peakConcentrationDeviation`, `peakIntegrationFlag` and `peakRT` are discarded).
+        Check the agreement of Feature IDs and Feature Names across TargetLynx export `xml` and calibration report `csv`.
         
         Additional information is added to the `sampleMetadata` (chromatography, ionisation, acquired time, run order).
         
-        Apply the unitCorrectionFactor to the `intensityData`, `LLOQ` and `ULOQ` concentrations and `expectedConcentration`.
+        If required, apply the unitCorrectionFactor to the `intensityData`, `LLOQ` and `ULOQ` concentrations and `expectedConcentration`.
         
         :param sampleMetadata: dataframe of sample identifiers and metadata.
         :type sampleMetadata: pandas.DataFrame, :math:`n` × :math:`p`
@@ -651,16 +651,6 @@ class TargetedDataset(Dataset):
         :rtype: numpy.ndarray, :math:`n` × :math:`m`
         :return finalExpectedConcentration: pandas dataframe of expected concentration for each sample/feature
         :rtype: pandas.DataFrame, :math:`n` × :math:`m`
-        :return excludedSampleMetadata: list of pandas dataframe of excluded sample measurements for excluded features.
-        :rtype: list
-        :return excludedFeatureMetadata: list of pandas dataframe of excluded feature identifiers and metadata.
-        :rtype: list
-        :return excludedIntensityData: list of matrix of intensity measurements for excluded features.
-        :rtype: list
-        :return excludedExpectedConcentration: list of pandas dataframe of excluded expected concentration.
-        :rtype: list
-        :return excludedFlag: list of str of exclusion type ('Samples' or 'Features').
-        :rtype: list
         :return finalPeakResponse: pandas dataframe of analytical peak response.
         :rtype: pandas.DataFrame, :math:`n` × :math:`m`
         :return finalPeakArea: pandas dataframe of analytical peak area.
@@ -673,8 +663,6 @@ class TargetedDataset(Dataset):
         :rtype: pandas.DataFrame, :math:`n` × :math:`m`
         
         :raises ValueError: if the shape of sampleMetadata, featureMetadata or intensityData shape do not match.
-        :raises ValueError: if features in the calibration report and in the SOP differ (number of compounds, compound ID or compound names).
-        :raises ValueError: if in the SOP 'quantificationType', 'calibrationMethod' or 'IS' are mismatched.
         """
 
         import warnings
@@ -698,13 +686,6 @@ class TargetedDataset(Dataset):
         if intensityData.shape != peakRT.shape:
             raise ValueError('intensityData and peakRT number of compounds/samples differ')
 
-        # initialise excluded import data
-        excludedSampleMetadata        = []
-        excludedFeatureMetadata       = []
-        excludedIntensityData         = []
-        excludedExpectedConcentration = []
-        excludedFlag                  = []
-
         # Merge data with calibration report
         finalFeatureMetadata = pandas.merge(left=featureMetadata,
                                             right=calibReport,
@@ -725,14 +706,6 @@ class TargetedDataset(Dataset):
         finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with own labelled analogue', 'calibrationMethod'] = CalibrationMethod.backcalculatedIS
         finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with alternative labelled analogue', 'calibrationMethod'] = CalibrationMethod.backcalculatedIS
         finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified without an internal standard', 'calibrationMethod'] = CalibrationMethod.noIS
-
-        finalIntensityData = intensityData
-        finalExpectedConcentration = expectedConcentration
-        finalPeakResponse = peakResponse
-        finalPeakArea = peakArea
-        finalPeakConcentrationDeviation = peakConcentrationDeviation
-        finalPeakIntegrationFlag = peakIntegrationFlag
-        finalPeakRT = peakRT
 
         ## Add information to the sampleMetada
         finalSampleMetadata = copy.deepcopy(sampleMetadata)
@@ -767,20 +740,18 @@ class TargetedDataset(Dataset):
         if 'unitCorrectionFactor' in finalFeatureMetadata.columns:
             finalFeatureMetadata['LLOQ'] = finalFeatureMetadata['LLOQ'] * finalFeatureMetadata['unitCorrectionFactor']  # NaN will be kept
             finalFeatureMetadata['ULOQ'] = finalFeatureMetadata['ULOQ'] * finalFeatureMetadata['unitCorrectionFactor']
-            finalIntensityData         = finalIntensityData * finalFeatureMetadata['unitCorrectionFactor'].values
-            finalExpectedConcentration = finalExpectedConcentration * finalFeatureMetadata['unitCorrectionFactor'].values
+            intensityData = intensityData * finalFeatureMetadata['unitCorrectionFactor'].values
+            expectedConcentration = expectedConcentration * finalFeatureMetadata['unitCorrectionFactor'].values
 
         ## Summary
         print('TagetLynx output, Calibration report and SOP information matched:')
         print('Targeted Method: ' + self.Attributes['methodName'])
         print(str(finalSampleMetadata.shape[0]) + ' samples (' + str(sum(finalSampleMetadata['Calibrant'])) + ' calibration points, ' + str(sum(finalSampleMetadata['Study Sample'])) + ' study samples)')
         print(str(finalFeatureMetadata.shape[0]) + ' features (' + str(sum(finalFeatureMetadata['IS'])) + ' IS, ' + str(sum(finalFeatureMetadata['quantificationType'] == QuantificationType.QuantOwnLabeledAnalogue)) + ' quantified and validated with own labeled analogue, ' + str(sum(finalFeatureMetadata['quantificationType'] == QuantificationType.QuantAltLabeledAnalogue)) + ' quantified and validated with alternative labeled analogue, ' + str(sum(finalFeatureMetadata['quantificationType'] == QuantificationType.QuantOther)) + ' other quantification, ' + str(sum(finalFeatureMetadata['quantificationType'] == QuantificationType.Monitored)) + ' monitored for relative information)')
-        if len(excludedFeatureMetadata) != 0:
-            print(str(excludedFeatureMetadata[0].shape[0]) + ' features excluded as missing from the SOP')
         print('All concentrations converted to final units')
         print('-----')
 
-        return finalSampleMetadata, finalFeatureMetadata, finalIntensityData, finalExpectedConcentration, excludedSampleMetadata, excludedFeatureMetadata, excludedIntensityData, excludedExpectedConcentration, excludedFlag, finalPeakResponse, finalPeakArea, finalPeakConcentrationDeviation, finalPeakIntegrationFlag, finalPeakRT
+        return finalSampleMetadata, finalFeatureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT
 
 
     def _filterTargetLynxSamples(self, sampleTypeToProcess=['Study Sample', 'QC'], **kwargs):
@@ -800,9 +771,6 @@ class TargetedDataset(Dataset):
         if set(sampleTypeToProcess) - set(['Study Sample', 'Blank', 'QC', 'Other']) != set():
             raise ValueError('sampleTypeToProcess ' + str(
                 set(sampleTypeToProcess) - set(['Study Sample', 'Blank', 'QC', 'Other'])) + ' is not recognised')
-        # check excluded exist
-        if((not hasattr(self,'sampleMetadataExcluded'))|(not hasattr(self,'featureMetadataExcluded'))|(not hasattr(self,'intensityDataExcluded'))|(not hasattr(self,'expectedConcentrationExcluded'))|(not hasattr(self,'excludedFlag'))):
-            raise AttributeError('sampleMetadataExcluded, featureMetadataExcluded, intensityDataExcluded, expectedConcentrationExcluded or excludedFlag have not bee previously initialised')
 
         sampleMetadata        = copy.deepcopy(self.sampleMetadata)
         featureMetadata       = copy.deepcopy(self.featureMetadata)
