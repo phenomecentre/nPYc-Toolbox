@@ -2984,8 +2984,10 @@ class TargetedDataset(Dataset):
 
         if descriptionFormat == 'Filenames':
             filenameSpec = kwargs.get('filenameSpec', None) # default to None if not provided
-            if filenameSpec is None:
-                raise AttributeError('A \'filenameSpec\' must be provided with \'descriptionFormat==\'Filenames\'\'')
+            if filenameSpec is None:  # Use spec from SOP
+                filenameSpec = self.Attributes['filenameSpec']
+        #   if filenameSpec is None:
+        #        raise AttributeError('A \'filenameSpec\' must be provided with \'descriptionFormat==\'Filenames\'\'')
             self._getSampleMetadataFromFilename(filenameSpec)
         elif descriptionFormat == 'Batches':
             self._fillBatches()
