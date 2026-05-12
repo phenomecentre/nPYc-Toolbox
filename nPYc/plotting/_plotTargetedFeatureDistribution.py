@@ -6,7 +6,7 @@ import numpy
 import math
 import copy
 
-def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name', featureMask=None, sampleTypes=['SS', 'SP', 'ER'], logx=False, figures=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Name', orderFeaturesBy='Feature Name', featureMask=None, sampleTypes=['SS', 'SP', 'ER'], logx=False, figures=None, savePath=None):
 	"""
 	Plot the distribution (violin plots) of a set of features, e.g., peakPantheR outputs, coloured by sample type
 
@@ -34,8 +34,14 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 	sampleMasks = []
 	palette = {}
 
-	sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-					   SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
+	if 'sampleTypeColours' in dataset.Attributes.keys():
+		sTypeColourDict = copy.deepcopy(dataset.Attributes['sampleTypeColours'])
+		for stype in SampleType:
+			if stype.name in sTypeColourDict.keys():
+				sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
+	else:
+		sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
+		                   SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
 
 	# Plot data coloured by sample type
 	if sum(acquiredMasks['SSmask'] > 0) and 'SS' in sampleTypes:
@@ -51,7 +57,7 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 	# Plot
 	for figNo in range(nf):
 
-		fig, axIXs = plt.subplots(1, nax, figsize=(figureSize[0], figureSize[1]/nax), dpi=dpi)
+		fig, axIXs = plt.subplots(1, nax, figsize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1]/nax), dpi=dataset.Attributes['dpi'])
 
 		for axNo in range(len(axIXs)):
 
@@ -70,16 +76,16 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 				if valid_values.any():
 					_violinPlotHelper(axIXs[axNo], dataset.intensityData[:, plotNo], currentFeatureSampleMasks, None, 'Sample Type', palette=palette, logy=False)
 
-				axIXs[axNo].set_title(dataset.featureMetadata.loc[plotNo, featureName])
+				axIXs[axNo].set_title(dataset.featureMetadata.loc[plotNo, labelFeaturesBy])
 
 			# Advance plotNo
 			plotNo = plotNo+1
 
 		if savePath:
 			if figures is not None:
-				figures['featureDistribution_' + str(figNo)] = savePath + 'featureDistribution_' + str(figNo) + '.' + figureFormat
+				figures['featureDistribution_' + str(figNo)] = savePath + 'featureDistribution_' + str(figNo) + '.' + dataset.Attributes['figureFormat']
 
-			plt.savefig(savePath + 'featureDistribution_' + str(figNo) + '.' + figureFormat, bbox_inches='tight', format=figureFormat, dpi=dpi)
+			plt.savefig(savePath + 'featureDistribution_' + str(figNo) + '.' + dataset.Attributes['figureFormat'], bbox_inches='tight', format=dataset.Attributes['figureFormat'], dpi=dataset.Attributes['dpi'])
 			plt.close()
 		else:
 			plt.show()

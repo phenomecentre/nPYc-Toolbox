@@ -10,24 +10,19 @@ from IPython.display import display
 import warnings
 import re
 import shutil
-from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from ..plotting import plotIntensity, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
+from ..plotting import histogram, plotRSDs, plotIonMap, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport
 from ..utilities.ms import generateTypeRoleMasks
-from ..utilities import generateLRmask, rsd
-from ..utilities._internal import _vcorrcoef
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..enumerations import AssayRole, SampleType
-import operator
 
 
 from ..__init__ import __version__ as version
 
 
-def _finalReportPeakPantheR(dataset, destinationPath=None, labelFeaturesBy='Feature Name'):
+def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeaturesBy='Feature Name', withExclusions=False, orderFeaturesBy='rsdSP'):
     """
     Summarise different aspects of an MS dataset
 
@@ -73,9 +68,10 @@ def _finalReportPeakPantheR(dataset, destinationPath=None, labelFeaturesBy='Feat
         graphicsPath = None
         saveAs = None
 
-    # Ensure we have 'Passing Selection' column in dataset object
-    if not hasattr(dataset.featureMetadata, 'Passing Selection'):
-        dataset.featureMetadata['Passing Selection'] = dataset.featureMask
+    # Apply sample/feature masks if exclusions to be applied
+    dataset = copy.deepcopy(datasetOriginal)
+    if withExclusions:
+        dataset.applyMasks()
 
 	# Define sample masks
     acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
@@ -86,7 +82,7 @@ def _finalReportPeakPantheR(dataset, destinationPath=None, labelFeaturesBy='Feat
     item['ReportType'] = 'feature summary' # TODO check what this means!
     item['Nsamples'] = dataset.intensityData.shape[0]
     item['Nfeatures'] = dataset.intensityData.shape[1]
-    item['NfeaturesPassing'] = sum(dataset.featureMetadata['Passing Selection'])
+    item['NfeaturesPassing'] = sum(dataset.featureMask)
     nfeaturesFailing = item['Nfeatures'] - item['NfeaturesPassing']
     if nfeaturesFailing != 0:
         item['NfeaturesFailing'] = nfeaturesFailing
@@ -276,14 +272,11 @@ def _finalReportPeakPantheR(dataset, destinationPath=None, labelFeaturesBy='Feat
 
     figuresFeatureDistributionPassing = plotTargetedFeatureDistribution(
                dataset,
-               featureMask=dataset.featureMetadata['Passing Selection'],
+               featureMask=dataset.featureMask,
                featureName=labelFeaturesBy,
                logx=False,
                figures=figuresFeatureDistributionPassing,
-               savePath=saveAs,
-               figureFormat=dataset.Attributes['figureFormat'],
-               dpi=dataset.Attributes['dpi'],
-               figureSize=dataset.Attributes['figureSize'])
+               savePath=saveAs)
 
     for key in figuresFeatureDistributionPassing:
         if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistributionPassing[key]):
@@ -305,14 +298,11 @@ def _finalReportPeakPantheR(dataset, destinationPath=None, labelFeaturesBy='Feat
     
         figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(
                    dataset,
-                   featureMask=dataset.featureMetadata['Passing Selection']==False,
+                   featureMask=dataset.featureMask == False,
                    featureName=labelFeaturesBy,
                    logx=False,
                    figures=figuresFeatureDistributionFailing,
-                   savePath=saveAs,
-                   figureFormat=dataset.Attributes['figureFormat'],
-                   dpi=dataset.Attributes['dpi'],
-                   figureSize=dataset.Attributes['figureSize'])
+                   savePath=saveAs)
     
         for key in figuresFeatureDistributionFailing:
             if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistributionFailing[key]):

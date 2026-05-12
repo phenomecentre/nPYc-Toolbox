@@ -36,7 +36,7 @@ register_matplotlib_converters()
 from ..__init__ import __version__ as version
 
 
-def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy='Feature Name', withArtifactualFiltering=None, destinationPath=None,
+def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy='Feature Name', orderFeaturesBy='rsdSP', withArtifactualFiltering=None, destinationPath=None,
                           msDataCorrected=None, pcaModel=None, batch_correction_window=11, logy=False):
     """
     Summarise different aspects of an MS dataset
