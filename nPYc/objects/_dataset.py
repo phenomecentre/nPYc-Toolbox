@@ -109,6 +109,32 @@ class Dataset:
 		self._loadParameters(sop, sopPath)
 		self._Normalisation = normalisation.NullNormaliser()
 
+		# Define colour/marker/label options (based on keywords and enumerations)
+		self.Attributes["sampleTypeColours"] = {
+			SampleType.StudySample: "blue", "SS": "blue", "StudySample": "blue", "Assay": "blue", "Study Sample": "blue", "Sample": "blue",
+			SampleType.StudyPool: "darkgreen", "SR": "darkgreen", "StudyPool": "darkgreen", "Study Pool": "darkgreen", "Study Reference": "darkgreen",
+			SampleType.ExternalReference: "darkorange", "LTR": "darkorange", "ExternalReference": "darkorange", "External Reference": "darkorange", "Long-Term Reference": "darkorange", "Long Term Reference": "darkorange",
+			SampleType.LinearityReference: "red", "SRD": "red", "LinearityReference": "red", "Linearity Reference": "red",
+			SampleType.MethodReference: "blue", "MR": "blue", "MethodReference": "blue", "Method Reference": "blue",
+			SampleType.ProceduralBlank: "aquamarine", "ProceduralBlank": "aquamarine", "Procedural Blank": "aquamarine", "Blank": "aquamarine",
+			SampleType.UnknownType: "grey", "Other": "grey", "UnknownRole": "grey", "Unknown Role": "grey", "Unknown Type": "grey", "Unknown": "grey", "UnknownType": "grey", "nan": "grey", "NaN": "grey", "NA": "grey", "Unspecified SampleType or AssayRole": "grey"}
+		self.Attributes["sampleTypeMarkers"] = {
+			SampleType.StudySample: "8", "SS": "8", "StudySample": "8", "Assay": "8", "Study Sample": "8", "Sample": "8",
+			SampleType.StudyPool: "1", "SR": "8", "StudyPool": "1", "Study Pool": "1", "Study Reference": "1",
+			SampleType.ExternalReference: "2", "LTR": "2", "External Reference": "2", "Long-Term Reference": "2", "Long Term Reference": "2",
+			SampleType.LinearityReference: "4", "SRD": "4", "LinearityReference": "4", "Linearity Reference": "4",
+			SampleType.MethodReference: "3", "MR": "3", "MethodReference": "3", "Method Reference": "3",
+			SampleType.ProceduralBlank: "x", "ProceduralBlank": "x", "Procedural Blank": "x", "Blank": "x",
+			SampleType.UnknownType: "d", "Other": "d", "UnknownRole": "d", "Unknown Role": "d", "Unknown Type": "d", "Unknown": "d", "UnknownType": "d", "nan": "d", "NaN": "d", "NA": "d", "Unspecified SampleType or AssayRole": "d"}
+		self.Attributes["sampleTypeAbbr"] = {
+			SampleType.StudySample: "SS", "StudySample": "SS", "Assay": "Assay", "Study Sample": "SS", "Sample": "Sample",
+			SampleType.StudyPool: "SR", "StudyPool": "SR", "Study Pool": "SR", "Study Reference": "SR",
+			SampleType.ExternalReference: "LTR", "ExternalReference": "LTR", "External Reference": "LTR", "Long-Term Reference": "LTR", "Long Term Reference": "LTR",
+			SampleType.LinearityReference: "red", "LinearityReference": "SRD", "Linearity Reference": "SRD",
+			SampleType.MethodReference: "MR", "MethodReference": "MR", "Method Reference": "MR",
+			SampleType.ProceduralBlank: "Blank", "ProceduralBlank": "Blank", "Procedural Blank": "Blank", "Blank": "Blank",
+			SampleType.UnknownType: "NA", "Other": "NA", "UnknownRole": "NA", "Unknown Role": "NA", "Unknown Type": "NA", "Unknown": "NA", "UnknownType": "NA", "nan": "NA", "NaN": "NA", "NA": "NA", "Unspecified SampleType or AssayRole": "NA"}
+
 		# Allow SOP-loaded attributes to be overriden by kwargs
 		self.Attributes = {**self.Attributes, **kwargs}
 

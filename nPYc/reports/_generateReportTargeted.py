@@ -13,7 +13,6 @@ from ..plotting import plotFeatureLOQ, plotLOQRunOrder, plotAccuracyPrecision, p
 	jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, \
 	plotScores, plotLoadings, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport
-from ..reports._finalReportPeakPantheR import _plotAbundanceBySampleType
 from ..utilities import generateLRmask, rsd
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..enumerations import AssayRole, SampleType, CalibrationMethod, QuantificationType, AnalyticalPlatform

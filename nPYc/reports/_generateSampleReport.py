@@ -73,22 +73,22 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	temp = numpy.zeros([7, 3], dtype=int)
 
 	# Total numbers
-	temp[:, 0] = [sum(acquiredMasks['ALLmask']),
-					sum(acquiredMasks['SSmask']),
-					sum(acquiredMasks['SPmask']),
-					sum(acquiredMasks['ERmask']),
-					sum(acquiredMasks['SRDmask']),
-					sum(acquiredMasks['Blankmask']),
-					sum(acquiredMasks['Unknownmask'])]
+	temp[:, 0] = [sum(acquiredMasks['ALL']),
+					sum(acquiredMasks['SS']),
+					sum(acquiredMasks['SR']),
+					sum(acquiredMasks['LTR']),
+					sum(acquiredMasks['SRD']),
+					sum(acquiredMasks['Blank']),
+					sum(acquiredMasks['Unknown'])]
 
 	# Numbers marked for exclusion (either skipped or in sampleMask)
-	temp[:, 1] = [sum(markedToExclude & acquiredMasks['ALLmask']),
-					sum(markedToExclude & acquiredMasks['SSmask']),
-					sum(markedToExclude & acquiredMasks['SPmask']),
-					sum(markedToExclude & acquiredMasks['ERmask']),
-					sum(markedToExclude & acquiredMasks['SRDmask']),
-					sum(markedToExclude & acquiredMasks['Blankmask']),
-					sum(markedToExclude & acquiredMasks['Unknownmask'])]
+	temp[:, 1] = [sum(markedToExclude & acquiredMasks['ALL']),
+					sum(markedToExclude & acquiredMasks['SS']),
+					sum(markedToExclude & acquiredMasks['SR']),
+					sum(markedToExclude & acquiredMasks['LTR']),
+					sum(markedToExclude & acquiredMasks['SRD']),
+					sum(markedToExclude & acquiredMasks['Blank']),
+					sum(markedToExclude & acquiredMasks['Unknown'])]
 
 	# Convert to dataframe
 	sampleSummary['Acquired'] = pandas.DataFrame(data=temp,
@@ -109,8 +109,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 #					data.sampleMetadata['SampleClass'] == 'Study Sample')), 'Sample File Name'])
 
 	# Save details of samples of unknown type
-	if (sum(acquiredMasks['Unknownmask']) != 0):
-		sampleSummary['UnknownType Details'] = data.sampleMetadata[['Sample File Name']][acquiredMasks['Unknownmask']]
+	if (sum(acquiredMasks['Unknown']) != 0):
+		sampleSummary['UnknownType Details'] = data.sampleMetadata[['Sample File Name']][acquiredMasks['Unknown']]
 
 	# Finally - add column of samples already excluded or missing to sampleSummary
 	ALL_exclusions = pandas.DataFrame(columns=['Sample File Name', 'Sample ID', 'Exclusion Details'])
@@ -132,20 +132,20 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		# Sample type masks, and only those marked as 'sample' or 'unknown' flagged
 		excludedMasks = generateTypeRoleMasks(sampleMetadataExcluded)
 
-		sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] + sum(excludedMasks['ALLmask'])
-		sampleSummary['Acquired'].loc['Study Sample (SS)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Study Sample (SS)', 'Missing/Excluded'] + sum(excludedMasks['SSmask'])
-		sampleSummary['Acquired'].loc['Study Reference (SR)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Study Reference (SR)', 'Missing/Excluded'] + sum(excludedMasks['SPmask'])
-		sampleSummary['Acquired'].loc['Long-Term Reference (LTR)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Long-Term Reference (LTR)', 'Missing/Excluded'] + sum(excludedMasks['ERmask'])
-		sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] + sum(excludedMasks['SRDmask'])
-		sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] + sum(excludedMasks['Blankmask'])
-		sampleSummary['Acquired'].loc['Unknown', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Unknown', 'Missing/Excluded'] + sum(excludedMasks['Unknownmask'])
+		sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] + sum(excludedMasks['ALL'])
+		sampleSummary['Acquired'].loc['Study Sample (SS)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Study Sample (SS)', 'Missing/Excluded'] + sum(excludedMasks['SS'])
+		sampleSummary['Acquired'].loc['Study Reference (SR)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Study Reference (SR)', 'Missing/Excluded'] + sum(excludedMasks['SR'])
+		sampleSummary['Acquired'].loc['Long-Term Reference (LTR)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Long-Term Reference (LTR)', 'Missing/Excluded'] + sum(excludedMasks['LTR'])
+		sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] + sum(excludedMasks['SRD'])
+		sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] + sum(excludedMasks['Blank'])
+		sampleSummary['Acquired'].loc['Unknown', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Unknown', 'Missing/Excluded'] + sum(excludedMasks['Unknown'])
 
 		ALL_exclusions = pandas.concat([ALL_exclusions,
-			sampleMetadataExcluded[['Sample File Name', 'Sample ID', 'Exclusion Details']][excludedMasks['ALLmask']]],
+			sampleMetadataExcluded[['Sample File Name', 'Sample ID', 'Exclusion Details']][excludedMasks['ALL']]],
 			ignore_index=True)
 
 		SS_exclusions = pandas.concat([SS_exclusions,
-			sampleMetadataExcluded[['Sample File Name', 'Sample ID', 'Exclusion Details']][excludedMasks['SSmask']]],
+			sampleMetadataExcluded[['Sample File Name', 'Sample ID', 'Exclusion Details']][excludedMasks['SS']]],
 			ignore_index=True)
 
 	# Determine if any SS compromised (samples present in data locations but missing from data)
@@ -163,19 +163,19 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		# Save SS details
 		missingMasks = generateTypeRoleMasks(data.sampleAbsentMetadata)
 
-		sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] + sum(missingMasks['ALLmask'])
-		sampleSummary['Acquired'].loc['Study Sample (SS)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Study Sample (SS)', 'Missing/Excluded'] + sum(missingMasks['SSmask'])
-		sampleSummary['Acquired'].loc['Study Reference (SR)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Study Reference (SR)', 'Missing/Excluded'] + sum(missingMasks['SPmask'])
-		sampleSummary['Acquired'].loc['Long-Term Reference (LTR)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Long-Term Reference (LTR)', 'Missing/Excluded'] + sum(missingMasks['ERmask'])
-		sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] + sum(missingMasks['SRDmask'])
-		sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] + sum(missingMasks['Blankmask'])
-		sampleSummary['Acquired'].loc['Unknown', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Unknown', 'Missing/Excluded'] + sum(missingMasks['Unknownmask'])
+		sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] + sum(missingMasks['ALL'])
+		sampleSummary['Acquired'].loc['Study Sample (SS)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Study Sample (SS)', 'Missing/Excluded'] + sum(missingMasks['SS'])
+		sampleSummary['Acquired'].loc['Study Reference (SR)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Study Reference (SR)', 'Missing/Excluded'] + sum(missingMasks['SR'])
+		sampleSummary['Acquired'].loc['Long-Term Reference (LTR)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Long-Term Reference (LTR)', 'Missing/Excluded'] + sum(missingMasks['LTR'])
+		sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Serial Dilution', 'Missing/Excluded'] + sum(missingMasks['SRD'])
+		sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Blank', 'Missing/Excluded'] + sum(missingMasks['Blank'])
+		sampleSummary['Acquired'].loc['Unknown', 'Missing/Excluded'] = sampleSummary['Acquired'].loc['Unknown', 'Missing/Excluded'] + sum(missingMasks['Unknown'])
 
 		ALL_exclusions = pandas.concat([ALL_exclusions, data.sampleAbsentMetadata[
-			['Sample File Name', 'Sample ID', 'Exclusion Details']][missingMasks['ALLmask']]], ignore_index=True)
+			['Sample File Name', 'Sample ID', 'Exclusion Details']][missingMasks['ALL']]], ignore_index=True)
 
 		SS_exclusions = pandas.concat([SS_exclusions, data.sampleAbsentMetadata[
-			['Sample File Name', 'Sample ID', 'Exclusion Details']][missingMasks['SSmask']]], ignore_index=True)
+			['Sample File Name', 'Sample ID', 'Exclusion Details']][missingMasks['SS']]], ignore_index=True)
 
 	# Determine if any SS missing (samples present in sample manifest but missing from data locations)
 	if hasattr(data, 'subjectAbsentMetadata'):

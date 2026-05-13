@@ -15,7 +15,7 @@ from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from ..plotting import plotIntensity, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
+from ..plotting import plotIntensity, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution, plotAbundanceBySampleType
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd
 from ..utilities._internal import _vcorrcoef
@@ -171,10 +171,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     item['ReportType'] = 'feature summary'
     item['Nfeatures'] = dataset.intensityData.shape[1]
     item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(acquiredMasks['SSmask']))
-    item['SPcount'] = str(sum(acquiredMasks['SPmask']))
-    item['ERcount'] = str(sum(acquiredMasks['ERmask']))
-    item['LRcount'] = str(sum(acquiredMasks['SRDmask']))
+    item['SScount'] = str(sum(acquiredMasks['SS']))
+    item['SPcount'] = str(sum(acquiredMasks['SR']))
+    item['ERcount'] = str(sum(acquiredMasks['LTR']))
+    item['LRcount'] = str(sum(acquiredMasks['SRD']))
     item['corrMethod'] = dataset.Attributes['corrMethod']
     figNo = 1
 
@@ -383,7 +383,6 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
             featureName=featureName,
             ratio=False,
             logx=True,
-            #color='matchReport',
             featName=featName,
             savePath=saveAs,
             figureFormat=dataset.Attributes['figureFormat'],
@@ -400,12 +399,8 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         print('Figure ' + str(figNo) + ': Feature intensity histogram for all samples and all features in final dataset (by sample type)')
         figNo = figNo+1
 
-    _plotAbundanceBySampleType(dataset.intensityData,
-                               acquiredMasks['SSmask'],
-                               acquiredMasks['SPmask'],
-                               acquiredMasks['ERmask'],
-                               saveAs,
-                               dataset)
+    plotAbundanceBySampleType(dataset,
+                              saveAs)
 
     # Figure: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
@@ -518,7 +513,7 @@ def _featureReport(dataset, destinationPath=None):
     """
 
     if (hasattr(dataset.featureMetadata, 'cpdName')):
-        featureName = 'cpdName'
+        featureName = 'Compound Name'
         featName=True
         figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
     else:
@@ -536,9 +531,9 @@ def _featureReport(dataset, destinationPath=None):
     acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
 
     # Set up template item and save required info
-    item['SScount'] = str(sum(acquiredMasks['SSmask']))
-    item['SPcount'] = str(sum(acquiredMasks['SPmask']))
-    item['ERcount'] = str(sum(acquiredMasks['ERmask']))
+    item['SScount'] = str(sum(acquiredMasks['SS']))
+    item['SPcount'] = str(sum(acquiredMasks['SR']))
+    item['ERcount'] = str(sum(acquiredMasks['LTR']))
     item['corrMethod'] = dataset.Attributes['corrMethod']
 
     ##
@@ -560,8 +555,8 @@ def _featureReport(dataset, destinationPath=None):
     # Generate correlation to dilution for each batch subset - plot TIC and histogram of correlation to dilution
 
     # Mean intensities of Study Pool samples (for future plotting segmented by intensity)
-    meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[acquiredMasks['SPmask'], :], axis=0))
-    meanIntensitiesSP[numpy.mean(dataset.intensityData[acquiredMasks['SPmask'], :], axis=0) == 0] = numpy.nan
+    meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[acquiredMasks['SR'], :], axis=0))
+    meanIntensitiesSP[numpy.mean(dataset.intensityData[acquiredMasks['SR'], :], axis=0) == 0] = numpy.nan
     meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
 
     # Figure 1: Histogram of log mean abundance by sample type
@@ -573,12 +568,8 @@ def _featureReport(dataset, destinationPath=None):
     else:
         print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')
 
-    _plotAbundanceBySampleType(dataset.intensityData,
-                               acquiredMasks['SSmask'],
-                               acquiredMasks['SPmask'],
-                               acquiredMasks['ERmask'],
-                               saveAs,
-                               dataset)
+    plotAbundanceBySampleType(dataset,
+                              saveAs)
 
     if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
 
@@ -645,7 +636,7 @@ def _featureReport(dataset, destinationPath=None):
             print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
 
     # Correlation to dilution figures:
-    if sum(acquiredMasks['SRDmask']) != 0:
+    if sum(acquiredMasks['SRD']) != 0:
 
         # Figure 4: Histogram of correlation to dilution by abundance percentiles
         if destinationPath:
@@ -677,7 +668,7 @@ def _featureReport(dataset, destinationPath=None):
                 print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.')
 
             plotLRTIC(dataset,
-                      sampleMask=acquiredMasks['SRDmask'],
+                      sampleMask=acquiredMasks['SRD'],
                       savePath=saveAs,
                       figureFormat=dataset.Attributes['figureFormat'],
                       dpi=dataset.Attributes['dpi'],
@@ -719,7 +710,7 @@ def _featureReport(dataset, destinationPath=None):
               figureSize=dataset.Attributes['figureSize'])
 
     # Figure 7: Scatterplot of RSD vs correlation to dilution
-    if sum(acquiredMasks['SRDmask']) != 0:
+    if sum(acquiredMasks['SRD']) != 0:
         if destinationPath:
             item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
                                                           item['Name'] + '_rsdVsCorrelation.' + dataset.Attributes[
@@ -774,7 +765,6 @@ def _featureReport(dataset, destinationPath=None):
  			 featureName=featureName,
              ratio=False,
              logx=True,
-             #color='matchReport',
 			 featName=featName,
              savePath=saveAs,
              figureFormat=dataset.Attributes['figureFormat'],
@@ -835,7 +825,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     # Define sample masks
     acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
 
-    if (sum(acquiredMasks['SRDmask']) <= 2) | (sum(acquiredMasks['SPmask']) <= 1):
+    if (sum(acquiredMasks['SRD']) <= 2) | (sum(acquiredMasks['SR']) <= 1):
         raise ValueError('Cannot generate report - No linearity reference or '
                          'precision reference samples available')
 
@@ -869,7 +859,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     else:
         item['corrExclusions'] = 'none'
 
-    if sum(acquiredMasks['SRDmask']) > 0:
+    if sum(acquiredMasks['SRD']) > 0:
         item['corrPassed'] = str(sum(dataset.correlationToDilution >= item['corrThreshold'])) + ' passed selection.'
         passMask = numpy.logical_and(passMask, dataset.correlationToDilution >= item['corrThreshold'])
     else:
@@ -878,9 +868,9 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     # RSD in SR samples, and RSD in SS samples > RSD in SR samples
     item['rsdThreshold'] = dataset.Attributes['filterParameters']['rsdThreshold'] if dataset.Attributes['filterParameters']['rsdThreshold'] is not None else dataset.Attributes['rsdThreshold']
     item['rsdSPvsSSvarianceRatio'] = dataset.Attributes['filterParameters']['varianceRatio'] if dataset.Attributes['filterParameters']['varianceRatio'] is not None else dataset.Attributes['varianceRatio']
-    rsdSS = rsd(dataset.intensityData[acquiredMasks['SSmask'], :])
+    rsdSS = rsd(dataset.intensityData[acquiredMasks['SS'], :])
 
-    if sum(acquiredMasks['SPmask']) > 0:
+    if sum(acquiredMasks['SR']) > 0:
         item['rsdPassed'] = str(sum(dataset.rsdSP <= item['rsdThreshold'])) + ' passed selection.'
         item['rsdSPvsSSPassed'] = str(sum(dataset.rsdSP * item['rsdSPvsSSvarianceRatio'] <= rsdSS)) + ' passed selection.'
         passMask = numpy.logical_and(passMask, dataset.rsdSP <= item['rsdThreshold'])
@@ -890,7 +880,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
         item['rsdSPvsSSPassed'] = 'Not applied (no SR samples present).'
 
     # Blank mask
-    if (dataset.Attributes['featureFilters']['blankFilter'] is True) & (sum(acquiredMasks['Blankmask']) >= 2):
+    if (dataset.Attributes['featureFilters']['blankFilter'] is True) & (sum(acquiredMasks['Blank']) >= 2):
         item['BlankThreshold'] = dataset.Attributes['filterParameters']['blankThreshold'] if dataset.Attributes['filterParameters']['blankThreshold'] is not None else dataset.Attributes['blankThreshold']
 
         blankMask = blankFilter(dataset, item['BlankThreshold'])
@@ -914,7 +904,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     featureNos = numpy.zeros(rValsRep.shape, dtype=int)
     if withArtifactualFiltering:
         # with blankThreshold in heatmap
-        if (dataset.Attributes['featureFilters']['blankFilter'] is True) & (sum(acquiredMasks['Blankmask']) >= 2):
+        if (dataset.Attributes['featureFilters']['blankFilter'] is True) & (sum(acquiredMasks['Blank']) >= 2):
             for rsdNo in range(rValsRep.shape[1]):
                 featureNos[0, rsdNo] = sum(dataset.artifactualFilter(featMask=(
                             (dataset.correlationToDilution >= rValsRep[0, rsdNo]) & (
@@ -931,7 +921,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
                                         dataset.featureMask == True))))
     else:
         # with blankThreshold in heatmap
-        if (dataset.Attributes['featureFilters']['blankFilter'] is True) & (sum(acquiredMasks['Blankmask']) >= 2):
+        if (dataset.Attributes['featureFilters']['blankFilter'] is True) & (sum(acquiredMasks['Blank']) >= 2):
             for rsdNo in range(rValsRep.shape[1]):
                 featureNos[0, rsdNo] = sum(
                     (dataset.correlationToDilution >= rValsRep[0, rsdNo]) & (dataset.rsdSP <= rsdValsRep[0, rsdNo]) & (
@@ -1031,10 +1021,10 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     item['ReportType'] = 'feature summary'
     item['Nfeatures'] = dataset.intensityData.shape[1]
     item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(acquiredMasks['SSmask']))
-    item['SPcount'] = str(sum(acquiredMasks['SPmask']))
-    item['ERcount'] = str(sum(acquiredMasks['ERmask']))
-    item['LRcount'] = str(sum(acquiredMasks['SRDmask']))
+    item['SScount'] = str(sum(acquiredMasks['SS']))
+    item['SPcount'] = str(sum(acquiredMasks['SR']))
+    item['ERcount'] = str(sum(acquiredMasks['LTR']))
+    item['LRcount'] = str(sum(acquiredMasks['SRD']))
     item['corrMethod'] = dataset.Attributes['corrMethod']
 
     ##
@@ -1169,10 +1159,10 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     item['ReportType'] = 'feature summary'
     item['Nfeatures'] = dataset.intensityData.shape[1]
     item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(acquiredMasks['SSmask']))
-    item['SPcount'] = str(sum(acquiredMasks['SPmask']))
-    item['ERcount'] = str(sum(acquiredMasks['ERmask']))
-    item['LRcount'] = str(sum(acquiredMasks['SRDmask']))
+    item['SScount'] = str(sum(acquiredMasks['SS']))
+    item['SPcount'] = str(sum(acquiredMasks['SR']))
+    item['ERcount'] = str(sum(acquiredMasks['LTR']))
+    item['LRcount'] = str(sum(acquiredMasks['SRD']))
     item['corrMethod'] = dataset.Attributes['corrMethod']
 
     ##
@@ -1192,8 +1182,8 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 
 
     # Mean intensities of Study Pool samples (for future plotting segmented by intensity)
-    meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[acquiredMasks['SPmask'], :], axis=0))
-    meanIntensitiesSP[numpy.mean(dataset.intensityData[acquiredMasks['SPmask'], :], axis=0) == 0] = numpy.nan
+    meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[acquiredMasks['SR'], :], axis=0))
+    meanIntensitiesSP[numpy.mean(dataset.intensityData[acquiredMasks['SR'], :], axis=0) == 0] = numpy.nan
     meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
 
     # Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).
@@ -1207,12 +1197,8 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
         print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')
         print('Pre-correction.')
 
-    _plotAbundanceBySampleType(dataset.intensityData,
-                               acquiredMasks['SSmask'],
-                               acquiredMasks['SPmask'],
-                               acquiredMasks['ERmask'],
-                               saveAs,
-                               dataset)
+    plotAbundanceBySampleType(dataset,
+                              saveAs)
 
     # Post-correction
     if destinationPath:
@@ -1222,12 +1208,8 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     else:
         print('Post-correction.')
 
-    _plotAbundanceBySampleType(correctedDataset.intensityData,
-                               acquiredMasks['SSmask'],
-                               acquiredMasks['SPmask'],
-                               acquiredMasks['ERmask'],
-                               saveAs,
-                               correctedDataset)
+    plotAbundanceBySampleType(correctedDataset,
+                              saveAs)
 
     # Figure 2: TIC for all samples and features.
     if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
@@ -1338,7 +1320,6 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
  			 featureName=featureName,
              ratio=False,
              logx=True,
-             #color='matchReport',
 			 featName=featName,
              savePath=saveAs,
              figureFormat=dataset.Attributes['figureFormat'],
@@ -1357,7 +1338,6 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 			 featureName=featureName,
              ratio=False,
              logx=True,
-             #color='matchReport',
 			 featName=featName,
              savePath=saveAs,
              figureFormat=dataset.Attributes['figureFormat'],
@@ -1409,10 +1389,10 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
     item['ReportType'] = 'feature summary'
     item['Nfeatures'] = dataset.intensityData.shape[1]
     item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(acquiredMasks['SSmask']))
-    item['SPcount'] = str(sum(acquiredMasks['SPmask']))
-    item['ERcount'] = str(sum(acquiredMasks['ERmask']))
-    item['LRcount'] = str(sum(acquiredMasks['SRDmask']))
+    item['SScount'] = str(sum(acquiredMasks['SS']))
+    item['SPcount'] = str(sum(acquiredMasks['SR']))
+    item['ERcount'] = str(sum(acquiredMasks['LTR']))
+    item['LRcount'] = str(sum(acquiredMasks['SRD']))
     item['corrMethod'] = dataset.Attributes['corrMethod']
 
     ##
@@ -1614,46 +1594,6 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
         copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
     return None
-
-
-def _plotAbundanceBySampleType(intensityData, SSmask, SPmask, ERmask, saveAs, dataset):
-
-    # Load toolbox wide color scheme
-    if 'sampleTypeColours' in dataset.Attributes.keys():
-        sTypeColourDict = copy.deepcopy(dataset.Attributes['sampleTypeColours'])
-        for stype in SampleType:
-            if stype.name in sTypeColourDict.keys():
-                sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-    else:
-        sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-                            SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-
-    meanIntensities = OrderedDict()
-    temp = numpy.nanmean(intensityData[SSmask,:], axis=0)
-    temp[numpy.isinf(temp)] = numpy.nan
-    meanIntensities['Study Sample'] = temp
-    colour = [sTypeColourDict[SampleType.StudySample]]
-    if sum(SPmask) != 0:
-        temp = numpy.nanmean(intensityData[SPmask,:], axis=0)
-        temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Study Reference'] = temp
-        colour.append(sTypeColourDict[SampleType.StudyPool])
-    if sum(ERmask) != 0:
-        temp = numpy.nanmean(intensityData[ERmask,:], axis=0)
-        temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Long-Term Reference'] = temp
-        colour.append(sTypeColourDict[SampleType.ExternalReference])
-
-    histogram(meanIntensities,
-        xlabel='Mean Feature Intensity',
-        color=colour,
-        title='',
-        histBins=dataset.Attributes['histBins'],
-        logx=True,
-        savePath=saveAs,
-        figureFormat=dataset.Attributes['figureFormat'],
-        dpi=dataset.Attributes['dpi'],
-        figureSize=dataset.Attributes['figureSize'])
 
 
 def _localLRPlots(dataset, LRmask, corToLR, saveName, figures=None, savePath=None):

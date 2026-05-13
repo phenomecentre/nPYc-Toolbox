@@ -12,7 +12,7 @@ from .. import Dataset, MSDataset, NMRDataset
 from ..enumerations import VariableType, SampleType, AssayRole
 from ..utilities import rsd
 from ..utilities.ms import generateTypeRoleMasks
-from ._plotVariableScatter import plotVariableScatter
+from ._plotVariableScatter import plotVariableScatterCaro
 
 
 def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=True, sortOrder=True, savePath=None, featName=False, hLines=None, figureFormat='png', dpi=72, figureSize=(11,7)):
@@ -70,19 +70,22 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	else:
 		xlab = 'RSD (%)'
 
-	# Add Feature Name if required
+	# Standardise naming for plotting conventions
+	rsdTable.rename(columns={featureName: "yName"}, inplace=True)
+	print(featureName)
+	print(rsdTable.columns)
 	if featName:
-		rsdTable['yName'] = rsdTable['Feature Name']
-		ylab = 'Feature Name'
+		ylab = featureName
 	else:
 		ylab = 'Feature Number'
 
-	plotVariableScatter(rsdTable,
+	plotVariableScatterCaro(rsdTable,
 						logX=logx,
 						xLim=xLim,
 						xLabel=xlab,
 						yLabel=ylab,
-						sampletypeColor=True,
+						sTypeColourDict=dataset.Attributes['sampleTypeColours'],
+						sTypeAbbrDict=dataset.Attributes['sampleTypeAbbr'],
 						hLines=hLines,
 						vLines=None,
 						savePath=savePath,
@@ -195,7 +198,7 @@ def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclus
 
 	# Calculate RSD for SR, LTR and SS (if sufficient sample numbers, i.e., n > 3)
 	rsdVal = dict()
-	rsdVal['Feature Name'] = msData.featureMetadata.loc[:, featureName].values
+	rsdVal[featureName] = msData.featureMetadata.loc[:, featureName].values
 
 	# Previously, the code was calculating RSD for only features with finite values,
 	# commented out for now but could be re-instated if required
@@ -203,14 +206,14 @@ def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclus
 	# Define sample masks
 	acquiredMasks = generateTypeRoleMasks(msData.sampleMetadata)
 
-	if sum(acquiredMasks['SPmask']) > 3:
+	if sum(acquiredMasks['SR']) > 3:
 		rsdVal[SampleType.StudyPool] = msData.rsdSP
 		# finiteMask = (rsdVal[SampleType.StudyPool] < numpy.finfo(numpy.float64).max)
-	if sum(acquiredMasks['ERmask']) > 3:
-		rsdVal[SampleType.ExternalReference] = rsd(msData.intensityData[acquiredMasks['ERmask'], :])
+	if sum(acquiredMasks['LTR']) > 3:
+		rsdVal[SampleType.ExternalReference] = rsd(msData.intensityData[acquiredMasks['LTR'], :])
 		# finiteMask = finiteMask & (rsdVal[SampleType.ExternalReference] < numpy.finfo(numpy.float64).max)
-	if sum(acquiredMasks['SSmask']) > 3:
-		rsdVal[SampleType.StudySample] = rsd(msData.intensityData[acquiredMasks['SSmask'], :])
+	if sum(acquiredMasks['SS']) > 3:
+		rsdVal[SampleType.StudySample] = rsd(msData.intensityData[acquiredMasks['SS'], :])
 		# finiteMask = finiteMask & (rsdVal[SampleType.StudySample] < numpy.finfo(numpy.float64).max)
 
 	## apply finiteMask

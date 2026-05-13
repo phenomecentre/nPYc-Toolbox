@@ -160,35 +160,35 @@ def generateTypeRoleMasks(sampleMetadata):
 	ns = sampleMetadata.shape[0]
 
 	try:
-		ALLmask = numpy.ones(ns).astype(bool)
-		SSmask = (sampleMetadata['SampleType'] == SampleType.StudySample) & (
+		ALL = numpy.ones(ns).astype(bool)
+		SS = (sampleMetadata['SampleType'] == SampleType.StudySample) & (
 					sampleMetadata['AssayRole'] == AssayRole.Assay)
-		SPmask = (sampleMetadata['SampleType'] == SampleType.StudyPool) & (
+		SR = (sampleMetadata['SampleType'] == SampleType.StudyPool) & (
 					sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
-		ERmask = (sampleMetadata['SampleType'] == SampleType.ExternalReference) & (
+		LTR = (sampleMetadata['SampleType'] == SampleType.ExternalReference) & (
 					sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
-		SRDmask = (sampleMetadata['AssayRole'] == AssayRole.LinearityReference) & (
+		SRD = (sampleMetadata['AssayRole'] == AssayRole.LinearityReference) & (
 					sampleMetadata['SampleType'] == SampleType.StudyPool)
-		Blankmask = sampleMetadata['SampleType'] == SampleType.ProceduralBlank
+		Blank = sampleMetadata['SampleType'] == SampleType.ProceduralBlank
 
 	except:
-		ALLmask = numpy.zeros(ns).astype(bool)
-		SSmask = numpy.zeros(ns).astype(bool)
-		SPmask = numpy.zeros(ns).astype(bool)
-		ERmask = numpy.zeros(ns).astype(bool)
-		SRDmask = numpy.zeros(ns).astype(bool)
-		Blankmask = numpy.zeros(ns).astype(bool)
+		ALL = numpy.zeros(ns).astype(bool)
+		SS = numpy.zeros(ns).astype(bool)
+		SR = numpy.zeros(ns).astype(bool)
+		LTR = numpy.zeros(ns).astype(bool)
+		SRD = numpy.zeros(ns).astype(bool)
+		Blank = numpy.zeros(ns).astype(bool)
 
-	Unknownmask = (SSmask == False) & (SPmask == False) & (ERmask == False) & (SRDmask == False) & (Blankmask == False)
+	Unknown = (SS == False) & (SR == False) & (LTR == False) & (SRD == False) & (Blank == False)
 
 	TypeRoleMasks = {
-		'ALLmask': ALLmask,
-		'SSmask': SSmask,
-		'SPmask': SPmask,
-		'ERmask': ERmask,
-		'SRDmask': SRDmask,
-		'Blankmask': Blankmask,
-		'Unknownmask': Unknownmask
+		'ALL': ALL,
+		'SS': SS,
+		'SR': SR,
+		'LTR': LTR,
+		'SRD': SRD,
+		'Blank': Blank,
+		'Unknown': Unknown
 	}
 
 	return TypeRoleMasks

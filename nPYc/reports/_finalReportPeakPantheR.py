@@ -12,7 +12,7 @@ import re
 import shutil
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
-from ..plotting import histogram, plotRSDs, plotIonMap, plotTargetedFeatureDistribution
+from ..plotting import plotRSDs, plotIonMap, plotTargetedFeatureDistribution, plotAbundanceBySampleType
 from ._generateSampleReport import _generateSampleReport
 from ..utilities.ms import generateTypeRoleMasks
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
@@ -89,10 +89,10 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
         hLine = [item['NfeaturesFailing']]
     else:
         hLine = None
-    item['SScount'] = str(sum(acquiredMasks['SSmask']))
-    item['SPcount'] = str(sum(acquiredMasks['SPmask']))
-    item['ERcount'] = str(sum(acquiredMasks['ERmask']))
-    item['LRcount'] = str(sum(acquiredMasks['SRDmask']))
+    item['SScount'] = str(sum(acquiredMasks['SS']))
+    item['SPcount'] = str(sum(acquiredMasks['SR']))
+    item['ERcount'] = str(sum(acquiredMasks['LTR']))
+    item['LRcount'] = str(sum(acquiredMasks['SRD']))
     item['corrMethod'] = dataset.Attributes['corrMethod']
     figNo = 1
 
@@ -233,11 +233,8 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
         print('\n\nFigure ' + str(figNo) + ': Feature intensity histogram for all samples and all features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).')
         figNo = figNo+1
 
-    _plotAbundanceBySampleType(dataset,
-                               acquiredMasks['SSmask'],
-                               acquiredMasks['SPmask'],
-                               acquiredMasks['ERmask'],
-                               saveAs)
+    plotAbundanceBySampleType(dataset,
+                              saveAs)
 
     # Figure: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
@@ -273,7 +270,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     figuresFeatureDistributionPassing = plotTargetedFeatureDistribution(
                dataset,
                featureMask=dataset.featureMask,
-               featureName=labelFeaturesBy,
+               labelFeaturesBy=labelFeaturesBy,
                logx=False,
                figures=figuresFeatureDistributionPassing,
                savePath=saveAs)
@@ -299,7 +296,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
         figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(
                    dataset,
                    featureMask=dataset.featureMask == False,
-                   featureName=labelFeaturesBy,
+                   labelFeaturesBy=labelFeaturesBy,
                    logx=False,
                    figures=figuresFeatureDistributionFailing,
                    savePath=saveAs)
@@ -345,48 +342,3 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
         copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
     return None
-
-
-def _plotAbundanceBySampleType(dataset, SSmask, SPmask, ERmask, saveAs):
-
-    # Load toolbox wide color scheme
-    if 'sampleTypeColours' in dataset.Attributes.keys():
-        sTypeColourDict = copy.deepcopy(dataset.Attributes['sampleTypeColours'])
-        for stype in SampleType:
-            if stype.name in sTypeColourDict.keys():
-                sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-    else:
-        sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-                            SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', category=RuntimeWarning)
-        # Just for features which are passing selection
-        intensityData = dataset.intensityData[:, dataset.featureMask]
-        meanIntensities = OrderedDict()
-        temp = numpy.nanmean(intensityData[SSmask, :], axis=0)
-        temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Study Sample'] = temp
-        colour = [sTypeColourDict[SampleType.StudySample]]
-
-    if sum(SPmask) != 0:
-        temp = numpy.nanmean(intensityData[SPmask, :], axis=0)
-        temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Study Reference'] = temp
-        colour.append(sTypeColourDict[SampleType.StudyPool])
-    if sum(ERmask) != 0:
-        temp = numpy.nanmean(intensityData[ERmask, :], axis=0)
-        temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Long-Term Reference'] = temp
-        colour.append(sTypeColourDict[SampleType.ExternalReference])
-
-    histogram(meanIntensities,
-        xlabel='Mean Feature Intensity',
-        color=colour,
-        title='',
-        histBins=dataset.Attributes['histBins'],
-        logx=True,
-        savePath=saveAs,
-        figureFormat=dataset.Attributes['figureFormat'],
-        dpi=dataset.Attributes['dpi'],
-        figureSize=dataset.Attributes['figureSize'])

@@ -34,25 +34,16 @@ def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Na
 	sampleMasks = []
 	palette = {}
 
-	if 'sampleTypeColours' in dataset.Attributes.keys():
-		sTypeColourDict = copy.deepcopy(dataset.Attributes['sampleTypeColours'])
-		for stype in SampleType:
-			if stype.name in sTypeColourDict.keys():
-				sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-	else:
-		sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-		                   SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-
 	# Plot data coloured by sample type
-	if sum(acquiredMasks['SSmask'] > 0) and 'SS' in sampleTypes:
-		sampleMasks.append(('SS', acquiredMasks['SSmask']))
-		palette['SS'] = sTypeColourDict[SampleType.StudySample]
-	if sum(acquiredMasks['SPmask'] > 0) and 'SP' in sampleTypes:
-		sampleMasks.append(('SR', acquiredMasks['SPmask']))
-		palette['SR'] = sTypeColourDict[SampleType.StudyPool]
-	if sum(acquiredMasks['ERmask'] > 0) and 'ER' in sampleTypes:
-		sampleMasks.append(('LTR', acquiredMasks['ERmask']))
-		palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
+	if sum(acquiredMasks['SS'] > 0) and 'SS' in sampleTypes:
+		sampleMasks.append(('SS', acquiredMasks['SS']))
+		palette['SS'] = dataset.Attributes['sampleTypeColours'][SampleType.StudySample]
+	if sum(acquiredMasks['SR'] > 0) and 'SP' in sampleTypes:
+		sampleMasks.append(('SR', acquiredMasks['SR']))
+		palette['SR'] = dataset.Attributes['sampleTypeColours'][SampleType.StudyPool]
+	if sum(acquiredMasks['LTR'] > 0) and 'ER' in sampleTypes:
+		sampleMasks.append(('LTR', acquiredMasks['LTR']))
+		palette['LTR'] = dataset.Attributes['sampleTypeColours'][SampleType.ExternalReference]
 
 	# Plot
 	for figNo in range(nf):
