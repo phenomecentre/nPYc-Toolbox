@@ -53,7 +53,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
             os.makedirs(destinationPath)
         if not os.path.exists(os.path.join(destinationPath, 'graphics')):
             os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'finalSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
 
@@ -332,7 +332,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
  
         template = env.get_template('MS_peakPantheR_FinalSummaryReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_finalSummary.html')
 
         f = open(filename,'w')
         f.write(template.render(item=item,
