@@ -1,13 +1,9 @@
-import sys
 import os
 import numpy
 import pandas
 from collections import OrderedDict
-import matplotlib.pyplot as plt
-import seaborn as sns
 import copy
 from IPython.display import display
-import warnings
 import re
 import shutil
 from .._toolboxPath import toolboxPath
@@ -16,13 +12,13 @@ from ..plotting import plotRSDs, plotIonMap, plotTargetedFeatureDistribution, pl
 from ._generateSampleReport import _generateSampleReport
 from ..utilities.ms import generateTypeRoleMasks
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..enumerations import AssayRole, SampleType
+from ..utilities._errorHandling import npycToolboxError
 
 
 from ..__init__ import __version__ as version
 
 
-def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeaturesBy='Feature Name', withExclusions=False, orderFeaturesBy='rsdSP'):
+def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeaturesBy='Feature Name', orderFeaturesBy='rsdSP', withExclusions=False):
     """
     Summarise different aspects of an MS dataset
 
@@ -67,6 +63,14 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     else:
         graphicsPath = None
         saveAs = None
+
+
+    # Do some checks
+    if (labelFeaturesBy is not None) and (not hasattr(datasetOriginal.featureMetadata, labelFeaturesBy)):
+        raise npycToolboxError('Unable to label features by: ' + labelFeaturesBy + ' as column not present in `dataset.featureMetadata`')
+
+    if (orderFeaturesBy is not None) and (not hasattr(datasetOriginal.featureMetadata, orderFeaturesBy)):
+        raise npycToolboxError('Unable to label features by: ' + orderFeaturesBy + ' as column not present in `dataset.featureMetadata`')
 
     # Apply sample/feature masks if exclusions to be applied
     dataset = copy.deepcopy(datasetOriginal)
@@ -190,27 +194,22 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
          
     
     # Separate into features passing and failing feature selection for rest of report
-
-    # Sort features by featureMask
-    #dataset.featureMetadata.sort_values(by=['Passing Selection'], ascending=[False], inplace=True)
-    #orderNew = dataset.featureMetadata.index
-    #dataset._intensityData = dataset._intensityData[:,orderNew]
-    #dataset.featureMetadata.reset_index(drop=True, inplace=True)
     
     # Figure: Distribution of RSDs in SP and SS
     if destinationPath:
         item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
+        item['orderFeaturesBy'] = orderFeaturesBy
     else:
-        print('\n\nFigure ' + str(figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).')
+        print('\n\nFigure ' + str(figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type), ordered by ' + orderFeaturesBy)
         figNo = figNo+1
 
     plotRSDs(dataset,
             featureName=labelFeaturesBy,
             ratio=False,
             logx=True,
-            sortOrder=True,
+            sortOrder=orderFeaturesBy,
             withExclusions=False,
             featName=True,
             hLines=hLine,
@@ -221,7 +220,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     
     if not destinationPath:
           if nfeaturesFailing != 0:
-            print('\n*Features sorted by RSD in SR samples; with features passing selection (i.e., able to be precisely measured) above the line and those failing (i.e., not able to be precisely measured) below the line')
+            print('\n*Features passing selection (i.e., able to be precisely measured) plotted above the line and those failing (i.e., not able to be precisely measured) below the line')
       
 
     # Figure: Histogram of log mean abundance by sample type
@@ -271,6 +270,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
                dataset,
                featureMask=dataset.featureMask,
                labelFeaturesBy=labelFeaturesBy,
+               orderFeaturesBy=orderFeaturesBy,
                logx=False,
                figures=figuresFeatureDistributionPassing,
                savePath=saveAs)
@@ -297,6 +297,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
                    dataset,
                    featureMask=dataset.featureMask == False,
                    labelFeaturesBy=labelFeaturesBy,
+                   orderFeaturesBy=orderFeaturesBy,
                    logx=False,
                    figures=figuresFeatureDistributionFailing,
                    savePath=saveAs)

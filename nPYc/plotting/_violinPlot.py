@@ -28,13 +28,15 @@ def _violinPlotHelper(ax, values, sampleMasks, xlabel, ylabel, palette=None, yli
 	# Replace infs and -inf used to represent LLOQ and ULOQ in targeted assays.
 	#localDFpre.replace([numpy.inf, -numpy.inf], numpy.nan)
 	localDFpre.dropna(axis='columns', how='all', inplace=True) # remove empty columns
-	sns.set_color_codes(palette='deep')
+	#sns.set_color_codes(palette='deep')
+	sns.color_palette("deep")
 
 	#localDFpre = pandas.melt(localDFpre)
 
 	if palette is not None:
 		sns.violinplot(data=localDFpre,
 					   density_norm='width',
+					   alpha=0.6,
 					   #bw_method=.2,
 					   cut=0,
 					   ax=ax,
@@ -42,6 +44,7 @@ def _violinPlotHelper(ax, values, sampleMasks, xlabel, ylabel, palette=None, yli
 	else:
 		sns.violinplot(data=localDFpre,
 					   density_norm='width',
+					   alpha=0.6,
 					   #bw_method=.2,
 					   cut=0,
 					   ax=ax)

@@ -128,7 +128,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
     elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged'):
         _finalReport(msData, destinationPath, pcaModel, reportType=reportType)
     elif (reportType.lower() == 'final report peakpanther'):
-        _finalReportPeakPantheR(msData, destinationPath=destinationPath, labelFeaturesBy=labelFeaturesBy)
+        _finalReportPeakPantheR(msData, destinationPath=destinationPath, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy)
 
 def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final report'):
     """
@@ -376,11 +376,12 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
     else:
-        print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type)')
+        print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type), ordered by RSD in SR samples.')
         figNo = figNo+1
 
     plotRSDs(dataset,
             featureName=featureName,
+            sortOrder='rsdSP',
             ratio=False,
             logx=True,
             featName=featName,
@@ -759,10 +760,11 @@ def _featureReport(dataset, destinationPath=None):
                                                          'figureFormat'])
         saveAs = item['RSDdistributionFigure']
     else:
-        print('Figure 9: RSD distribution for all samples and all features in dataset (by sample type).')
+        print('Figure 9: RSD distribution for all samples and all features in dataset (by sample type), ordered by RSD in SR samples.')
 
     plotRSDs(dataset,
  			 featureName=featureName,
+             sortOrder='rsdSP',
              ratio=False,
              logx=True,
 			 featName=featName,
@@ -1313,11 +1315,12 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
                                                         dataset.Attributes['figureFormat'])
         saveAs = item['RSDdistributionFigurePRE']
     else:
-        print('Figure 4: RSD distribution for all samples and all features in dataset (by sample type).')
+        print('Figure 4: RSD distribution for all samples and all features in dataset (by sample type), ordered by RSD in SR samples.')
         print('Pre-correction.')
 
     plotRSDs(dataset,
  			 featureName=featureName,
+             sortOrder='rsdSP',
              ratio=False,
              logx=True,
 			 featName=featName,
@@ -1336,6 +1339,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 
     plotRSDs(correctedDataset,
 			 featureName=featureName,
+             sortOrder='rsdSP',
              ratio=False,
              logx=True,
 			 featName=featName,

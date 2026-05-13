@@ -45,6 +45,24 @@ def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Na
 		sampleMasks.append(('LTR', acquiredMasks['LTR']))
 		palette['LTR'] = dataset.Attributes['sampleTypeColours'][SampleType.ExternalReference]
 
+	# If order of features specified, plot features ordered by FeatureMask, then by featureMetadata 'orderFeaturesBy' column values
+	if orderFeaturesBy:
+
+		# Copy featureMetadata
+		featureInfo = copy.deepcopy(dataset.featureMetadata)
+
+		# Add 'Passing Selection' column
+		if not hasattr(featureInfo, 'Passing Selection'):
+			featureInfo['Passing Selection'] = dataset.featureMask
+
+		print("sorted by Passing Selection and then by " + orderFeaturesBy)
+		featureInfo.sort_values(by=['Passing Selection', orderFeaturesBy], ascending=[False, True], inplace=True)
+
+		sortIndex = featureInfo.index
+
+	else:
+		sortIndex = range(dataset.featureMetadata.shape[0])
+
 	# Plot
 	for figNo in range(nf):
 
@@ -59,15 +77,15 @@ def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Na
 
 				# Plot distribution of feature by sample type
 				# Remove infinites and - infinites for targeted dataset.
-				valid_values = numpy.isfinite(dataset.intensityData[:,plotNo])
+				valid_values = numpy.isfinite(dataset.intensityData[:,sortIndex[plotNo]])
 
 				currentFeatureSampleMasks = list()
 				for maskIndex in range(len(sampleMasks)):
 					currentFeatureSampleMasks.append((sampleMasks[maskIndex][0], sampleMasks[maskIndex][1] & valid_values))
 				if valid_values.any():
-					_violinPlotHelper(axIXs[axNo], dataset.intensityData[:, plotNo], currentFeatureSampleMasks, None, 'Sample Type', palette=palette, logy=False)
+					_violinPlotHelper(axIXs[axNo], dataset.intensityData[:, sortIndex[plotNo]], currentFeatureSampleMasks, None, 'Sample Type', palette=palette, logy=False)
 
-				axIXs[axNo].set_title(dataset.featureMetadata.loc[plotNo, labelFeaturesBy])
+				axIXs[axNo].set_title(dataset.featureMetadata.loc[sortIndex[plotNo], labelFeaturesBy])
 
 			# Advance plotNo
 			plotNo = plotNo+1

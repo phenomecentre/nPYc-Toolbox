@@ -15,7 +15,7 @@ from ..utilities.ms import generateTypeRoleMasks
 from ._plotVariableScatter import plotVariableScatterCaro
 
 
-def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=True, sortOrder=True, savePath=None, featName=False, hLines=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=True, sortOrder='rsdSP', savePath=None, featName=False, hLines=None, figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotRSDs(dataset, ratio=False, savePath=None, color=None \*\*kwargs)
 
@@ -28,6 +28,7 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	:param Dataset dataset: Dataset object to plot, the object must have greater that one 'Study Sample' and 'Study-Reference Sample' defined
 	:param bool ratio: If ``True`` plot the ratio of analytical variance to biological variance instead of raw values
 	:param str featureName: featureMetadata column name by which to label features
+	:param str sortOrder: featureMetadata column name by which to order features
 	:param bool logx: If ``True`` plot RSDs on a log10 scaled axis
 	:param xlim: Tuple of (min, max) RSD values to plot
 	:type xlim: None or tuple(float, float)
@@ -72,8 +73,6 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 
 	# Standardise naming for plotting conventions
 	rsdTable.rename(columns={featureName: "yName"}, inplace=True)
-	print(featureName)
-	print(rsdTable.columns)
 	if featName:
 		ylab = featureName
 	else:
@@ -183,7 +182,7 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 	return figure
 
 
-def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder=True):
+def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder='rsdSP'):
 
 	if not dataset.VariableType == VariableType.Discrete:
 		raise ValueError('Only datasets with discreetly sampled variables are supported.')
@@ -227,18 +226,26 @@ def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclus
 
 	rsdTable = pandas.DataFrame(rsdVal)
 
-	# If sortOrder, sort by FeatureMask, then order from largest to smallest RSD in Study Pool
+	# If sortOrder, sort by FeatureMask, then order by featureMetadata 'sortOrder' column values
 	if sortOrder:
 
 		# Ensure we have 'Passing Selection' column in dataset object
 		if not hasattr(msData.featureMetadata, 'Passing Selection'):
 			msData.featureMetadata['Passing Selection'] = msData.featureMask
 
-		msData.featureMetadata['rsdSP'] = msData.rsdSP
-		msData.featureMetadata.sort_values(by=['Passing Selection', 'rsdSP'], ascending=[False, True], inplace=True)
+		# Add rsdSP if required (this can be empty for the first summary reports)
+		if sortOrder == 'rsdSP':
+			msData.featureMetadata['rsdSP'] = msData.rsdSP
+
+		# Check that we have 'sortOrder' column in featureMetadata, and sort
+		if hasattr(msData.featureMetadata, sortOrder):
+			msData.featureMetadata.sort_values(by=['Passing Selection', sortOrder], ascending=[False, True], inplace=True)
+
+		else:
+			msData.featureMetadata.sort_values(by=['Passing Selection'], ascending=[False], inplace=True)
+
 		sortIndex = msData.featureMetadata.index
 		rsdTable = rsdTable.reindex(sortIndex)
 		rsdTable.reset_index(drop=True, inplace=True)
-
 
 	return rsdTable

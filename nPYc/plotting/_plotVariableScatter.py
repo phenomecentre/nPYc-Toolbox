@@ -228,7 +228,6 @@ def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='',
     else:
         plt.show()
 
-
 def plotVariableScatterCaro(inputTable, logX=False, xLim=None, xLabel='', yLabel='', sTypeColourDict=None, sTypeAbbrDict=None, hLines=None, hLineStyle='-', hBox=None, vLines=None, vLineStyle=':', vBox=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11 ,7)):
     """
     Plot values on x-axis, with ordering on the y-axis.
@@ -293,7 +292,7 @@ def plotVariableScatterCaro(inputTable, logX=False, xLim=None, xLabel='', yLabel
     sns.set_style("ticks", {'axes.linewidth': 0.75})
     fig = plt.figure(figsize=figureSize, dpi=dpi)
     ax = plt.subplot(1, 1, 1)
-    current_palette = sns.color_palette()
+    sns.color_palette("deep")
 
     data = copy.deepcopy(inputTable)
     data.reset_index(drop=True, inplace=True)
@@ -308,7 +307,6 @@ def plotVariableScatterCaro(inputTable, logX=False, xLim=None, xLabel='', yLabel
 
     # Get list of all sampletypes to plot
     workingCols = list(set(inputTable.columns.tolist()) - set(['yName']))
-    print(workingCols)
 
     # Generate colour scheme if not provided
     if sTypeColourDict is None:
