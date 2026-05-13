@@ -305,7 +305,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
         if savePath:
 
             if figures is not None:
-                saveTemp = title + 'PC' + str(components[i] + 1) + 'vsPC' + str(components[j] + 1)
+                saveTemp = title + 'PC' + str(components[i] + 1) + 'v' + str(components[j] + 1)
                 figures[saveTemp] = savePath + saveTemp + '.' + figureFormat
             else:
                 saveTemp = ''
@@ -552,7 +552,7 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
         if savePath:
 
             if figures is not None:
-                saveTemp = title + 'PCAloadingsPC' + str(i + 1)
+                saveTemp = title + 'PC' + str(i + 1)
                 figures[saveTemp] = savePath + saveTemp + '.' + figureFormat
             else:
                 saveTemp = ''
@@ -1176,9 +1176,9 @@ def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=N
         if savePath:
             if figures is not None:
                 figures['metadataDistribution_' + valueType + str(
-                    figNo)] = savePath + 'metadataDistribution_' + valueType + str(figNo) + '.' + figureFormat
+                    figNo)] = savePath + valueType + str(figNo) + '.' + figureFormat
 
-            plt.savefig(savePath + 'metadataDistribution_' + valueType + str(figNo) + '.' + figureFormat,
+            plt.savefig(savePath + valueType + str(figNo) + '.' + figureFormat,
                         bbox_inches='tight', format=figureFormat, dpi=dpi)
             plt.close()
         else:

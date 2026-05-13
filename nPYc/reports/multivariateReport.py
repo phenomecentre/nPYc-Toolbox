@@ -119,7 +119,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     # Create directory to save destinationPath
     if destinationPath:
 
-        saveDir = os.path.join(destinationPath, 'graphics', 'report_multivariate' + reportType.capitalize())
+        saveDir = os.path.join(destinationPath, 'graphics', 'multivariate' + reportType.capitalize())
 
         # If directory exists delete directory and contents
         if os.path.exists(saveDir):
@@ -301,7 +301,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
     # Scree plot
     if destinationPath:
-        item['PCA_screePlot'] = os.path.join(saveDir, item['Name'] + '_PCAscreePlot.' + data.Attributes['figureFormat'])
+        item['PCA_screePlot'] = os.path.join(saveDir, item['Name'] + '_scree.' + data.Attributes['figureFormat'])
         saveAs = item['PCA_screePlot']
         item['PCA_var_exp'] = pcaModel.modelParameters['VarExpRatio']
     else:
@@ -319,7 +319,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     # Scores plot (coloured by sample type)
     temp = dict()
     if destinationPath:
-        temp['PCA_scoresPlot'] = os.path.join(saveDir, item['Name'] + '_PCAscoresPlot_')
+        temp['PCA_scoresPlot'] = os.path.join(saveDir, item['Name'] + '_scores_')
         saveAs = temp['PCA_scoresPlot']
     else:
         print('\n\nFigure 2: PCA scores plots coloured by sample type.')
@@ -348,7 +348,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
     # Scatter plot of summed scores distance from origin (strong outliers in PCA)
     if destinationPath:
-        item['PCA_strongOutliersPlot'] = os.path.join(saveDir, item['Name'] + '_strongOutliersPlot.' + data.Attributes[
+        item['PCA_strongOutliersPlot'] = os.path.join(saveDir, item['Name'] + '_dOriginX.' + data.Attributes[
             'figureFormat'])
         saveAs = item['PCA_strongOutliersPlot']
     else:
@@ -390,7 +390,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     # Scatter plot of DmodX (moderate outliers in PCA)
     if destinationPath:
         item['PCA_modOutliersPlot'] = os.path.join(saveDir,
-                                                   item['Name'] + '_modOutliersPlot.' + data.Attributes['figureFormat'])
+                                                   item['Name'] + '_dModX.' + data.Attributes['figureFormat'])
         saveAs = item['PCA_modOutliersPlot']
     else:
         print('\n\nFigure 4: Distribution in distance from model (DmodX) by sample type.')
@@ -455,7 +455,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
     # Loadings plot
     if destinationPath:
-        temp['PCA_loadingsPlot'] = os.path.join(saveDir, item['Name'] + '_PCAloadingsPlot_')
+        temp['PCA_loadingsPlot'] = os.path.join(saveDir, item['Name'] + '_loadings_')
         saveAs = temp['PCA_loadingsPlot']
     else:
         print('\n\nFigure 5: PCA loadings plots.')
@@ -479,7 +479,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
     # Set up:
     if destinationPath:
-        temp['metadataPlot'] = os.path.join(saveDir, item['Name'] + '_metadataPlot_')
+        temp['metadataPlot'] = os.path.join(saveDir, item['Name'] + '_metadata_')
         saveAs = temp['metadataPlot']
     else:
         print('\033[1m' + '\nDistribution of Values in each Metadata Field\n' + '\033[0m')
@@ -601,7 +601,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
             sns.heatmap(sigCor, annot=True, fmt='.3g', vmin=-1, vmax=1, cmap='RdBu_r')
             if destinationPath:
                 item['sigCorHeatmap'] = os.path.join(saveDir,
-                                                     item['Name'] + '_sigCorHeatmap.' + data.Attributes['figureFormat'])
+                                                     item['Name'] + '_signif_continuous.' + data.Attributes['figureFormat'])
                 plt.savefig(item['sigCorHeatmap'], bbox_inches='tight', format=data.Attributes['figureFormat'],
                             dpi=data.Attributes['dpi'])
                 plt.close()
@@ -634,7 +634,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
             sns.heatmap(sigKru, annot=True, fmt='.3g', vmin=0, vmax=1, cmap='OrRd_r')
             if destinationPath:
                 item['sigKruHeatmap'] = os.path.join(saveDir,
-                                                     item['Name'] + '_sigKruHeatmap.' + data.Attributes['figureFormat'])
+                                                     item['Name'] + '_signif_categorical.' + data.Attributes['figureFormat'])
                 plt.savefig(item['sigKruHeatmap'], bbox_inches='tight', format=data.Attributes['figureFormat'],
                             dpi=data.Attributes['dpi'])
                 plt.close()
@@ -807,10 +807,10 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 
         template = env.get_template('NPC_MultivariateReport.html')
-        filename = os.path.join(destinationPath, data.name + '_report_multivariate' + reportType.capitalize() + '.html')
+        filename = os.path.join(destinationPath, data.name + '_multivariate' + reportType.capitalize() + '.html')
         f = open(filename, 'w')
         f.write(
-            template.render(item=item, version=version, graphicsPath='/report_multivariate' + reportType.capitalize()))
+            template.render(item=item, version=version, graphicsPath='/multivariate' + reportType.capitalize()))
         f.close()
 
         copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
@@ -830,7 +830,7 @@ def _plotScoresLocal(data, metadata, pcaModel, classType, name,
     nc = pcaModel.scores.shape[1]
 
     if saveDir:
-        temp['PCA_scoresPlot'] = os.path.join(saveDir, name + '_PCAscoresPlot_')
+        temp['PCA_scoresPlot'] = os.path.join(saveDir, name + '_scores_')
         saveAs = temp['PCA_scoresPlot']
     else:
         saveAs = None

@@ -55,7 +55,6 @@ def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Na
 		if not hasattr(featureInfo, 'Passing Selection'):
 			featureInfo['Passing Selection'] = dataset.featureMask
 
-		print("sorted by Passing Selection and then by " + orderFeaturesBy)
 		featureInfo.sort_values(by=['Passing Selection', orderFeaturesBy], ascending=[False, True], inplace=True)
 
 		sortIndex = featureInfo.index
@@ -92,9 +91,9 @@ def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Na
 
 		if savePath:
 			if figures is not None:
-				figures['featureDistribution_' + str(figNo)] = savePath + 'featureDistribution_' + str(figNo) + '.' + dataset.Attributes['figureFormat']
+				figures['featureDistribution_' + str(figNo)] = savePath + '_' + str(figNo) + '.' + dataset.Attributes['figureFormat']
 
-			plt.savefig(savePath + 'featureDistribution_' + str(figNo) + '.' + dataset.Attributes['figureFormat'], bbox_inches='tight', format=dataset.Attributes['figureFormat'], dpi=dataset.Attributes['dpi'])
+			plt.savefig(savePath + '_' + str(figNo) + '.' + dataset.Attributes['figureFormat'], bbox_inches='tight', format=dataset.Attributes['figureFormat'], dpi=dataset.Attributes['dpi'])
 			plt.close()
 		else:
 			plt.show()

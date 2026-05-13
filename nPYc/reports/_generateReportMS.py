@@ -141,7 +141,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
             os.makedirs(destinationPath)
         if not os.path.exists(os.path.join(destinationPath, 'graphics')):
             os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'finalSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
 
@@ -494,7 +494,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         elif reportType.lower() == 'final report targeted abridged':
             template = env.get_template('MS_Targeted_FinalSummaryReport_Abridged.html')
 
-        filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_finalSummary.html')
 
         f = open(filename,'w')
         f.write(template.render(item=item,
@@ -545,7 +545,7 @@ def _featureReport(dataset, destinationPath=None):
             os.makedirs(destinationPath)
         if not os.path.exists(os.path.join(destinationPath, 'graphics')):
             os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_featureSummary')
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'featureSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -804,7 +804,7 @@ def _featureReport(dataset, destinationPath=None):
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_FeatureSummaryReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_report_featureSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_featureSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
@@ -840,7 +840,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
             os.makedirs(destinationPath)
         if not os.path.exists(os.path.join(destinationPath, 'graphics')):
             os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_featureSelectionSummary')
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'featureSelectionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -980,7 +980,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_FeatureSelectionReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_report_featureSelectionSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_featureSelectionSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
@@ -1037,7 +1037,7 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
             os.makedirs(destinationPath)
         if not os.path.exists(os.path.join(destinationPath, 'graphics')):
             os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_batchCorrectionAssessment')
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'batchCorrectionAssessment')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -1124,7 +1124,7 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_BatchCorrectionAssessmentReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_report_batchCorrectionAssessment.html')
+        filename = os.path.join(destinationPath, dataset.name + '_batchCorrectionAssessment.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
@@ -1175,7 +1175,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
             os.makedirs(destinationPath)
         if not os.path.exists(os.path.join(destinationPath, 'graphics')):
             os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_batchCorrectionSummary')
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'batchCorrectionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -1361,7 +1361,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_BatchCorrectionSummaryReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_report_batchCorrectionSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_batchCorrectionSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,
@@ -1407,7 +1407,7 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
             os.makedirs(destinationPath)
         if not os.path.exists(os.path.join(destinationPath, 'graphics')):
             os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_correlationToDilutionSummary')
+        graphicsPath = os.path.join(destinationPath, 'graphics', 'correlationToDilutionSummary')
         if not os.path.exists(graphicsPath):
             os.makedirs(graphicsPath)
     else:
@@ -1586,7 +1586,7 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
 
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
         template = env.get_template('MS_CorrelationToDilutionReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_report_correlationToDilutionSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + 'correlationToDilutionSummary.html')
 
         f = open(filename, 'w')
         f.write(template.render(item=item,

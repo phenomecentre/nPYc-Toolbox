@@ -197,7 +197,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     
     # Figure: Distribution of RSDs in SP and SS
     if destinationPath:
-        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
+        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdHist.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
         item['orderFeaturesBy'] = orderFeaturesBy
@@ -225,7 +225,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
 
     # Figure: Histogram of log mean abundance by sample type
     if destinationPath:
-        item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_finalFeatureIntensityHist.' +
+        item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_intensityHist.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
     else:
@@ -238,7 +238,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     # Figure: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
         if destinationPath:
-            item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
+            item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
             saveAs = item['finalIonMap']
         else:
             print('Figure ' + str(figNo) + ': Ion map of all features (coloured by log median intensity).')
@@ -259,7 +259,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     figuresFeatureDistributionPassing = OrderedDict()
     temp = dict()
     if destinationPath:
-        temp['FeatureConcentrationDistributionPassing'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistributionPassing_')
+        temp['FeatureConcentrationDistributionPassing'] = os.path.join(graphicsPath, item['Name'] + '_passQCviolin')
         saveAs = temp['FeatureConcentrationDistributionPassing']
     else:
         print('Figure ' + str(figNo) + ': Relative concentration distributions, for features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).')
@@ -287,7 +287,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
         figuresFeatureDistributionFailing = OrderedDict()
         temp = dict()
         if destinationPath:
-            temp['FeatureConcentrationDistributionFailing'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistributionFailing_')
+            temp['FeatureConcentrationDistributionFailing'] = os.path.join(graphicsPath, item['Name'] + '_failQCviolin')
             saveAs = temp['FeatureConcentrationDistributionFailing']
         else:
             print('Figure ' + str(figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be precisely measured) in final dataset (by sample type).')
