@@ -305,7 +305,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
         if savePath:
 
             if figures is not None:
-                saveTemp = title + 'PC' + str(components[i] + 1) + 'v' + str(components[j] + 1)
+                saveTemp = title + '_PC' + str(components[i] + 1) + 'v' + str(components[j] + 1)
                 figures[saveTemp] = savePath + saveTemp + '.' + figureFormat
             else:
                 saveTemp = ''
@@ -552,7 +552,7 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
         if savePath:
 
             if figures is not None:
-                saveTemp = title + 'PC' + str(i + 1)
+                saveTemp = title + '_PC' + str(i + 1)
                 figures[saveTemp] = savePath + saveTemp + '.' + figureFormat
             else:
                 saveTemp = ''
@@ -799,8 +799,7 @@ def plotScoresInteractive(dataset,
 
     # Save to destinationPath
     if destinationPath:
-        saveTemp = dataset.name + '_PCAscoresPlot_' + colourBy + 'PC' + str(components[0] + 1) + 'vsPC' + str(
-            components[1] + 1) + '.html'
+        saveTemp = dataset.name + '_scores_' + colourBy + '_PC' + str(components[0] + 1) + 'v' + str(components[1] + 1) + '.html'
         plotly.offline.plot(figure, filename=os.path.join(destinationPath, saveTemp), auto_open=autoOpen)
 
     return figure
@@ -1018,7 +1017,7 @@ def plotLoadingsInteractive(dataset, pcaModel, component=1, withExclusions=False
             'barmode': 'stack'
         }
 
-        saveTemp = dataMasked.name + '_PCAloadingsPlot_PC' + str(component + 1) + '.html'
+        saveTemp = dataMasked.name + '_loadings_PC' + str(component + 1) + '.html'
 
     # Plot multi PC
     else:
@@ -1049,8 +1048,7 @@ def plotLoadingsInteractive(dataset, pcaModel, component=1, withExclusions=False
             'barmode': 'stack'
         }
 
-        saveTemp = dataMasked.name + '_PCAloadingsPlot_PC' + str(component[0] + 1) + 'vsPC' + str(
-            component[1] + 1) + '.html'
+        saveTemp = dataMasked.name + '_loadings_PC' + str(component[0] + 1) + 'v' + str(component[1] + 1) + '.html'
 
     figure = go.Figure(data=data, layout=layout)
 

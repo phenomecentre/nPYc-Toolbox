@@ -486,7 +486,7 @@ def plotIntensityInteractive(dataset,
 	figure = go.Figure(data=data, layout=layout)
 
 	if destinationPath:
-		saveTemp = msData.name + '_' + y.replace('/', '') + '_colourBy_' + colourBy + '.html'
+		saveTemp = msData.name + '_' + y.replace('/', '') + '_' + colourBy + '.html'
 		plotly.offline.plot(figure, filename=os.path.join(destinationPath, saveTemp), auto_open=autoOpen)
 
 	return figure
