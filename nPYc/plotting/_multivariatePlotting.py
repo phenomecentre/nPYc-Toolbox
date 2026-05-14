@@ -572,12 +572,12 @@ def plotScoresInteractive(dataset,
                           colourBy='Run Order',
                           colourDict=None,
                           markerDict=None,
+                          plotAsCategorical=False,
                           components=[1, 2],
                           alpha=0.05,
                           withExclusions=False,
                           destinationPath=None,
-                          autoOpen=True,
-                          opacity=.6):
+                          autoOpen=True):
     """
 	Interactively visualise PCA scores (coloured by a given sampleMetadata field, and for a given pair of components) with plotly, provides tooltips to allow identification of samples.
 
@@ -679,7 +679,7 @@ def plotScoresInteractive(dataset,
         data.append(NaNplot)
 
     # Plot numeric values with a colorbar
-    if classes.dtype in (int, float):
+    if (classes.dtype in (int, float)) and (plotAsCategorical==False):
         CLASSplot = go.Scatter(
             x=values[plotnans == False, components[0]],
             y=values[plotnans == False, components[1]],
