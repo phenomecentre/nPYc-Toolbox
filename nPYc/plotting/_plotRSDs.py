@@ -12,7 +12,7 @@ from .. import Dataset, MSDataset, NMRDataset
 from ..enumerations import VariableType, SampleType, AssayRole
 from ..utilities import rsd
 from ..utilities.ms import generateTypeRoleMasks
-from ._plotVariableScatter import plotVariableScatterCaro
+from ._plotVariableScatter import plotVariableScatter
 
 
 def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=True, sortOrder='rsdSP', savePath=None, featName=False, hLines=None, figureFormat='png', dpi=72, figureSize=(11,7)):
@@ -78,7 +78,7 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	else:
 		ylab = 'Feature Number'
 
-	plotVariableScatterCaro(rsdTable,
+	plotVariableScatter(rsdTable,
 						logX=logx,
 						xLim=xLim,
 						xLabel=xlab,
