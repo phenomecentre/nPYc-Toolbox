@@ -259,7 +259,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     figuresFeatureDistributionPassing = OrderedDict()
     temp = dict()
     if destinationPath:
-        temp['FeatureConcentrationDistributionPassing'] = os.path.join(graphicsPath, item['Name'] + '_passQCviolin')
+        temp['FeatureConcentrationDistributionPassing'] = os.path.join(graphicsPath, item['Name'] + '_featurePassViolin')
         saveAs = temp['FeatureConcentrationDistributionPassing']
     else:
         print('Figure ' + str(figNo) + ': Relative concentration distributions, for features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).')
@@ -287,7 +287,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
         figuresFeatureDistributionFailing = OrderedDict()
         temp = dict()
         if destinationPath:
-            temp['FeatureConcentrationDistributionFailing'] = os.path.join(graphicsPath, item['Name'] + '_failQCviolin')
+            temp['FeatureConcentrationDistributionFailing'] = os.path.join(graphicsPath, item['Name'] + '_featureFailViolin')
             saveAs = temp['FeatureConcentrationDistributionFailing']
         else:
             print('Figure ' + str(figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be precisely measured) in final dataset (by sample type).')

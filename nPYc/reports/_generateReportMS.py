@@ -1,10 +1,8 @@
-import sys
 import os
 import numpy
 import pandas
 from collections import OrderedDict
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 import copy
 from IPython.display import display
@@ -286,7 +284,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
             # Figure 1: Acquisition Structure, TIC by sample and batch
             if destinationPath:
                 item['finalTICbatches'] = os.path.join(graphicsPath,
-                                                       item['Name'] + '_finalTICbatches.' + dataset.Attributes[
+                                                       item['Name'] + '_ticBatch.' + dataset.Attributes[
                                                            'figureFormat'])
                 saveAs = item['finalTICbatches']
             else:
@@ -308,10 +306,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
             # Figure 2: Final TIC
             if destinationPath:
                 item['finalTIC'] = os.path.join(graphicsPath,
-                                                item['Name'] + '_finalTIC.' + dataset.Attributes['figureFormat'])
+                                                item['Name'] + '_tic.' + dataset.Attributes['figureFormat'])
                 saveAs = item['finalTIC']
             else:
-                print('Figure ' + str(figNo) + ': Total Ion Count (TIC) for all samples and all features in final dataset.')
+                print('Figure ' + str(figNo) + ': Total sum of feature intensities for all samples in final dataset.')
                 figNo = figNo + 1
 
             plotIntensity(dataset,
@@ -337,7 +335,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
 
 	    # Figure 3: Histogram of RSD in study pool samples
         if destinationPath:
-            item['finalRsdHist'] = os.path.join(graphicsPath,item['Name'] + '_rsdSP.' + dataset.Attributes['figureFormat'])
+            item['finalRsdHist'] = os.path.join(graphicsPath,item['Name'] + '_rsdHist.' + dataset.Attributes['figureFormat'])
             saveAs = item['finalRsdHist']
         else:
             print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) histogram for study reference samples and all features in final dataset, segmented by abundance percentiles.')
@@ -357,10 +355,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     # Figure 7: Scatterplot of RSD vs correlation to dilution
     if destinationPath:
         item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
-                                                      item['Name'] + '_rsdVsCorrelation.' + dataset.Attributes['figureFormat'])
+                                                      item['Name'] + '_rsdVc2d.' + dataset.Attributes['figureFormat'])
         saveAs = item['RsdVsCorrelationFigure']
     else:
-        print('Figure ' + str(figNo) + ': Scatterplot of RSD vs correlation to dilution.')
+        print('Figure ' + str(figNo) + ': Scatterplot of RSD in SR samples vs. correlation to dilution.')
         figNo = figNo + 1
 
     jointplotRSDvCorrelation(dataset.rsdSP,
@@ -372,7 +370,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
 
     # Figure: Distribution of RSDs in SP and SS
     if destinationPath:
-        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
+        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampletype.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
     else:
@@ -393,7 +391,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
 
     # Figure: Histogram of log mean abundance by sample type
     if destinationPath:
-        item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_finalFeatureIntensityHist.' +
+        item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_intensityHist.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
     else:
@@ -406,7 +404,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     # Figure: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
         if destinationPath:
-            item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
+            item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
             saveAs = item['finalIonMap']
         else:
             print('Figure ' + str(figNo) + ': Ion map of all features (coloured by log median intensity).')
@@ -431,7 +429,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
         # Plot distributions for each feature
         temp = dict()
         if destinationPath:
-            temp['FeatureConcentrationDistribution'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistribution_')
+            temp['FeatureConcentrationDistribution'] = os.path.join(graphicsPath, item['Name'] + '_featureViolin')
             saveAs = temp['FeatureConcentrationDistribution']
         else:
             print('Figure ' + str(figNo) + ': Relative concentration distributions, split by sample types')
@@ -563,7 +561,7 @@ def _featureReport(dataset, destinationPath=None):
     # Figure 1: Histogram of log mean abundance by sample type
     if destinationPath:
         item['FeatureIntensityFigure'] = os.path.join(graphicsPath,
-                                                      item['Name'] + '_meanIntensityFeature.' + dataset.Attributes[
+                                                      item['Name'] + '_intensityHist.' + dataset.Attributes[
                                                           'figureFormat'])
         saveAs = item['FeatureIntensityFigure']
     else:
@@ -576,11 +574,11 @@ def _featureReport(dataset, destinationPath=None):
 
         # Figure 2: Sample intensity TIC and distribution by sample type
         if destinationPath:
-            item['SampleIntensityFigure'] = os.path.join(graphicsPath, item['Name'] + '_meanIntensitySample.' + dataset.Attributes[
+            item['SampleIntensityFigure'] = os.path.join(graphicsPath, item['Name'] + '_tic.' + dataset.Attributes[
                 'figureFormat'])
             saveAs = item['SampleIntensityFigure']
         else:
-            print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
+            print('Figure 2: Total sum of feature intensities for all samples (coloured by sample type).')
 
         # TIC all samples
         plotIntensity(dataset,
@@ -601,7 +599,7 @@ def _featureReport(dataset, destinationPath=None):
 
             if destinationPath:
                 item['AcquisitionStructureFigure'] = os.path.join(graphicsPath,
-                                                                  item['Name'] + '_acquisitionStructure.' +
+                                                                  item['Name'] + '_ticDetectorV.' +
                                                                   dataset.Attributes[
                                                                       'figureFormat'])
                 saveAs = item['AcquisitionStructureFigure']
@@ -642,7 +640,7 @@ def _featureReport(dataset, destinationPath=None):
         # Figure 4: Histogram of correlation to dilution by abundance percentiles
         if destinationPath:
             item['CorrelationByPercFigure'] = os.path.join(graphicsPath,
-                                                           item['Name'] + '_correlationByPerc.' + dataset.Attributes[
+                                                           item['Name'] + '_c2dHist.' + dataset.Attributes[
                                                                'figureFormat'])
             saveAs = item['CorrelationByPercFigure']
         else:
@@ -663,10 +661,10 @@ def _featureReport(dataset, destinationPath=None):
         if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
             if destinationPath:
                 item['TICinLRfigure'] = os.path.join(graphicsPath,
-                                                 item['Name'] + '_TICinLR.' + dataset.Attributes['figureFormat'])
+                                                 item['Name'] + '_ticSRD.' + dataset.Attributes['figureFormat'])
                 saveAs = item['TICinLRfigure']
             else:
-                print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.')
+                print('Figure 5: Total sum of feature intensities for serial dilution (SRD) samples coloured by sample dilution.')
 
             plotLRTIC(dataset,
                       sampleMask=acquiredMasks['SRD'],
@@ -692,7 +690,7 @@ def _featureReport(dataset, destinationPath=None):
     # Figure 6: Histogram of RSD in SP samples by abundance percentiles
     if destinationPath:
         item['RsdByPercFigure'] = os.path.join(graphicsPath,
-                                               item['Name'] + '_rsdByPerc.' + dataset.Attributes['figureFormat'])
+                                               item['Name'] + '_rsdHist.' + dataset.Attributes['figureFormat'])
         saveAs = item['RsdByPercFigure']
     else:
         print(
@@ -714,7 +712,7 @@ def _featureReport(dataset, destinationPath=None):
     if sum(acquiredMasks['SRD']) != 0:
         if destinationPath:
             item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
-                                                          item['Name'] + '_rsdVsCorrelation.' + dataset.Attributes[
+                                                          item['Name'] + '_rsdVc2d.' + dataset.Attributes[
                                                               'figureFormat'])
             saveAs = item['RsdVsCorrelationFigure']
         else:
@@ -756,7 +754,7 @@ def _featureReport(dataset, destinationPath=None):
     # Figure 9: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type)
     if destinationPath:
         item['RSDdistributionFigure'] = os.path.join(graphicsPath,
-                                                     item['Name'] + '_RSDdistributionFigure.' + dataset.Attributes[
+                                                     item['Name'] + '_rsdSampletype.' + dataset.Attributes[
                                                          'figureFormat'])
         saveAs = item['RSDdistributionFigure']
     else:
@@ -1049,7 +1047,7 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
 
     # Figure 1: TIC for all samples by sample type and detector voltage change
     if destinationPath:
-        item['TICdetectorBatches'] = os.path.join(graphicsPath, item['Name'] + '_TICdetectorBatches.' + dataset.Attributes[
+        item['TICdetectorBatches'] = os.path.join(graphicsPath, item['Name'] + '_ticDetectorV.' + dataset.Attributes[
             'figureFormat'])
         saveAs = item['TICdetectorBatches']
     else:
@@ -1192,7 +1190,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 
     # Pre-correction
     if destinationPath:
-        item['FeatureIntensityFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS1_meanIntesityFeaturePRE.' +
+        item['FeatureIntensityFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_intensityHistPRE.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['FeatureIntensityFigurePRE']
     else:
@@ -1204,7 +1202,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 
     # Post-correction
     if destinationPath:
-        item['FeatureIntensityFigurePOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS1_meanIntesityFeaturePOST.' +
+        item['FeatureIntensityFigurePOST'] = os.path.join(graphicsPath, item['Name'] + '_intensityHistPOST.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['FeatureIntensityFigurePOST']
     else:
@@ -1217,7 +1215,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
         # Pre-correction
         if destinationPath:
-            item['TicPRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS2_TicPRE.' + dataset.Attributes['figureFormat'])
+            item['TicPRE'] = os.path.join(graphicsPath, item['Name'] + '_ticPRE.' + dataset.Attributes['figureFormat'])
             saveAs = item['TicPRE']
         else:
             print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
@@ -1239,7 +1237,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 
         # Post-correction
         if destinationPath:
-            item['TicPOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS2_TicPOST.' + dataset.Attributes['figureFormat'])
+            item['TicPOST'] = os.path.join(graphicsPath, item['Name'] + '_ticPOST.' + dataset.Attributes['figureFormat'])
             saveAs = item['TicPOST']
         else:
             print('Post-correction.')
@@ -1267,7 +1265,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     
     # Pre-correction
     if destinationPath:
-        item['RsdByPercFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS3_rsdByPercPRE.' + dataset.Attributes[
+        item['RsdByPercFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_rsdHistPRE.' + dataset.Attributes[
             'figureFormat'])
         saveAs = item['RsdByPercFigurePRE']
     else:
@@ -1289,7 +1287,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 
     # Post-correction
     if destinationPath:
-        item['RsdByPercFigurePOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS3_rsdByPercPOST.' + dataset.Attributes[
+        item['RsdByPercFigurePOST'] = os.path.join(graphicsPath, item['Name'] + '_rsdHistPOST.' + dataset.Attributes[
             'figureFormat'])
         saveAs = item['RsdByPercFigurePOST']
     else:
@@ -1311,7 +1309,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 
     # Pre-correction
     if destinationPath:
-        item['RSDdistributionFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_BCS4_RSDdistributionFigurePRE.' +
+        item['RSDdistributionFigurePRE'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampleTypePRE.' +
                                                         dataset.Attributes['figureFormat'])
         saveAs = item['RSDdistributionFigurePRE']
     else:
@@ -1331,7 +1329,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
 
     # Post-correction
     if destinationPath:
-        item['RSDdistributionFigurePOST'] = os.path.join(graphicsPath, item['Name'] + '_BCS4_RSDdistributionFigurePOST.' +
+        item['RSDdistributionFigurePOST'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampleTypePOST.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['RSDdistributionFigurePOST']
     else:
@@ -1562,7 +1560,7 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
         ax2 = satLineplot.plot(kind='line', ax=ax2, ylim=[0, 100], colormap='jet')
         if destinationPath:
             item['SatFeaturesHeatmap'] = os.path.join(graphicsPath,
-                                                      item['Name'] + '_satFeaturesHeatmap.' + dataset.Attributes[
+                                                      item['Name'] + '_c2dsaturation.' + dataset.Attributes[
                                                           'figureFormat'])
             plt.savefig(item['SatFeaturesHeatmap'], bbox_inches='tight', format=dataset.Attributes['figureFormat'],
                         dpi=dataset.Attributes['dpi'])
@@ -1619,7 +1617,7 @@ def _localLRPlots(dataset, LRmask, corToLR, saveName, figures=None, savePath=Non
 
     # Plot TIC detector voltage change
     if savePath:
-        saveTemp = saveName + ' LR Sample TIC (coloured by change in detector voltage)'
+        saveTemp = saveName + 'ticSRDDetectorV'
         figures[saveTemp] = os.path.join(savePath, saveTemp + '.' + dataset.Attributes['figureFormat'])
         saveAs = figures[saveTemp]
     else:
