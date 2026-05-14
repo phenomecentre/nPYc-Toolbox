@@ -530,7 +530,7 @@ class MSDataset(Dataset):
 										   ', '.join("{!s}={!r}".format(key, val) for (key, val) in kwargs.items()))])
 
 
-	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, filetype='Waters .raw', **kwargs):
+	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, filetype='Waters .raw', dilutionProtocol='DilutionSeries', **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`~Dataset.sampleMetadata` table.
 
@@ -554,7 +554,7 @@ class MSDataset(Dataset):
 		if descriptionFormat == 'Filenames':
 			if filenameSpec is None:  # Use spec from SOP
 				filenameSpec = self.Attributes['filenameSpec']
-			self._getSampleMetadataFromFilename(filenameSpec)
+			self._getSampleMetadataFromFilename(filenameSpec, dilutionProtocol=dilutionProtocol)
 		elif descriptionFormat == 'Infer Batches':
 			self._inferBatches()
 		else:
@@ -1295,14 +1295,19 @@ class MSDataset(Dataset):
 			print('\x1b[31;1mRaw data for the following samples should be added to the raw data folder, or samples should be excluded from dataset else nPYc-Toolbox functionality may be compromised:\n\033[0;0m')
 			print(*self.sampleMetadata.loc[missingSampleInfo, 'Sample File Name'].values, sep='\n')
 
-	def _getSampleMetadataFromFilename(self, filenameSpec):
+	def _getSampleMetadataFromFilename(self, filenameSpec, dilutionProtocol='DilutionSeries'):
 		"""
 		Infer sample acquisition metadata from standardised filename template.
+		dilutionProtocol, either 'standard' for original 96 set series, or 'reduced' for new 30 set series
 		"""
+
+		if not isinstance(dilutionProtocol, str) & (dilutionProtocol in {'DilutionSeries', 'ReducedDilutionSeries'}):
+			raise ValueError('dilutionProtocol must be one of: ' + str({'DilutionSeries', 'ReducedDilutionSeries'}))
 
 		# If the dilution series design is not defined in the SOP, load the default.
 		if not 'dilutionMap' in self.Attributes.keys():
-			dilutionMap = pandas.read_csv(os.path.join(toolboxPath(), 'StudyDesigns', 'DilutionSeries.csv'),
+			print(os.path.join(toolboxPath(), 'StudyDesigns', dilutionProtocol + '.csv'))
+			dilutionMap = pandas.read_csv(os.path.join(toolboxPath(), 'StudyDesigns', dilutionProtocol + '.csv'),
 										  index_col='Sample Name')
 			self.Attributes['dilutionMap'] = dilutionMap['Dilution Factor (%)'].to_dict()
 
