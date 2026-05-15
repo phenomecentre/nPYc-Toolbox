@@ -3,6 +3,7 @@ Generic Utility functions
 """
 import json
 import os
+import numpy as np
 
 def removeDuplicateColumns(df):
 	"""
@@ -47,3 +48,28 @@ def createDestinationPath(destinationPath):
 
 	if not os.path.exists(os.path.join(destinationPath, 'graphics')):
 		os.makedirs(os.path.join(destinationPath, 'graphics'))
+
+
+
+def sampleClassMasks(sampleMetadata):
+	"""
+	Returns a dictionary of boolean array defining locations of samples in each sampleclass.
+
+	:return: key: value pairs, SampleClass: boolean array of location in data
+	:rtype: dict
+	"""
+
+	sampleClassMasks = {}
+
+	# If SampleClass available
+	if hasattr(sampleMetadata, 'SampleClass'):
+		stypes = sampleMetadata['SampleClass'].unique()
+
+		for stype in stypes:
+			sampleClassMasks[stype] = sampleMetadata['SampleClass'] == stype
+
+	# Otherwise set all to unknown
+	else:
+		sampleClassMasks['Unknown'] = np.zeros(sampleMetadata.shape[0]).astype(bool)
+
+	return sampleClassMasks

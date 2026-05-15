@@ -77,13 +77,9 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     if withExclusions:
         dataset.applyMasks()
 
-	# Define sample masks
-    acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
-
     # Set up template item and save required info
     item = dict()
     item['Name'] = dataset.name
-    item['ReportType'] = 'feature summary' # TODO check what this means!
     item['Nsamples'] = dataset.intensityData.shape[0]
     item['Nfeatures'] = dataset.intensityData.shape[1]
     item['NfeaturesPassing'] = sum(dataset.featureMask)
@@ -93,13 +89,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
         hLine = [item['NfeaturesFailing']]
     else:
         hLine = None
-    item['SScount'] = str(sum(acquiredMasks['SS']))
-    item['SPcount'] = str(sum(acquiredMasks['SR']))
-    item['ERcount'] = str(sum(acquiredMasks['LTR']))
-    item['LRcount'] = str(sum(acquiredMasks['SRD']))
-    item['corrMethod'] = dataset.Attributes['corrMethod']
     figNo = 1
-
 
     # Final dataset summary
     if not destinationPath:

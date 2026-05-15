@@ -220,6 +220,30 @@ class Dataset:
 		else:
 			self._Normalisation = normaliser
 
+	# @property
+	# def sampleClassMasks(self):
+	# 	"""
+	# 	Returns a dictionary of boolean array defining locations of samples in each sampleclass.
+	#
+	# 	:return: key: value pairs, SampleClass: boolean array of location in data
+	# 	:rtype: dict
+	# 	"""
+	#
+	# 	self._sampleClassMasks = {}
+	#
+	# 	# If SampleClass available
+	# 	if hasattr(self.sampleMetadata, 'SampleClass'):
+	# 		stypes = self.sampleMetadata['SampleClass'].unique()
+	#
+	# 		for stype in stypes:
+	# 			self._sampleClassMasks[stype] = self.sampleMetadata['SampleClass'] == stype
+	#
+	# 	# Otherwise set all to unknown
+	# 	else:
+	# 		self._sampleClassMasks['Unknown'] = numpy.zeros(self.sampleMetadata.shape[0]).astype(bool)
+	#
+	# 	return self._sampleClassMasks
+
 	def __repr__(self):
 		"""
 		Customise printing of instance description.
