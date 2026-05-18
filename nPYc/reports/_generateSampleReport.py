@@ -347,7 +347,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 	# Finally - add column of samples already excluded or missing to sampleSummary
 	cols = ['Sample File Name', 'Sample ID', 'SampleType', 'AssayRole', 'SampleClass', 'Exclusion Details']
-	ALL_exclusions = pandas.DataFrame(columns=cols)
+	sampleSummary['Excluded Details'] = pandas.DataFrame(columns=cols)
+	sampleSummary['NotAcquired'] = pandas.DataFrame(columns=cols)
 
 	# Determine if samples have been excluded
 	if hasattr(data, 'excludedFlag') and ('Samples' in data.excludedFlag):
@@ -372,8 +373,9 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 				# Numbers missing/excluded)
 				sampleSummary['Acquired'].loc[key, 'Missing/Excluded'] = sum(excludedMasks[key])
 
-		ALL_exclusions = pandas.concat([ALL_exclusions, sampleMetadataExcluded[cols]],
-									   ignore_index=True)
+		sampleSummary['Excluded Details'] = pandas.concat([sampleSummary['Excluded Details'], sampleMetadataExcluded],
+														  axis=0,
+														  ignore_index=True)
 
 	# Determine if any SS compromised (samples present in data locations but missing from data)
 	if hasattr(data, 'sampleAbsentMetadata'):
@@ -387,20 +389,19 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		# Save sample details
 		sampleSummary['NotAcquired'] = data.sampleAbsentMetadata[cols]
 
-		# Save SS details
+		# Add missing sample numbers to 'Acquired'
 		missingMasks = sampleClassMasks(data.sampleAbsentMetadata)
 
 		for key in sampleMasks:
-
 			if (key in missingMasks) and (sum(missingMasks[key]) != 0):
-				# Numbers missing/excluded)
 				sampleSummary['Acquired'].loc[key, 'Missing/Excluded'] = sampleSummary['Acquired'].loc[key, 'Missing/Excluded'] + sum(missingMasks[key])
 
-		ALL_exclusions = pandas.concat([ALL_exclusions, data.sampleAbsentMetadata[cols]],
-									   ignore_index=True)
+		# Add missing sample details to 'Excluded Details'
+		sampleSummary['Excluded Details'] = pandas.concat([sampleSummary['Excluded Details'], data.sampleAbsentMetadata],
+		                                                  axis=0,
+		                                                  ignore_index=True)
 
-
-	# Determine if any SS missing (samples present in sample manifest but missing from data locations)
+	# Determine if any samples present in manifest but missing from data locations
 	if hasattr(data, 'subjectAbsentMetadata'):
 
 		# Remove samples which are not the same biofluid as in the dataset
@@ -412,14 +413,9 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		data.subjectAbsentMetadata['Exclusion Details'] = 'Missing/low volume'
 
 		# Save sample details
-		if 'NotAcquired' in sampleSummary.keys():
-			sampleSummary['NotAcquired'] = pandas.concat([sampleSummary['NotAcquired'],
-			                                              data.subjectAbsentMetadata[
-				                                              ['Sample File Name', 'Sample ID', 'Exclusion Details']]],
-			                                             ignore_index=True)
-		else:
-			sampleSummary['NotAcquired'] = data.subjectAbsentMetadata[
-				['Sample File Name', 'Sample ID', 'Exclusion Details']]
+		sampleSummary['NotAcquired'] = pandas.concat([sampleSummary['NotAcquired'], data.subjectAbsentMetadata],
+													 axis=0,
+													 ignore_index=True)
 
 		# Add to sample summary 'Missing/Excluded' numbers (all samples in sample manifest are study samples)
 		sampleSummary['Acquired'].loc['All', 'Missing/Excluded'] = sampleSummary['Acquired'].loc[
@@ -428,12 +424,17 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		sampleSummary['Acquired'].loc['Study Sample (SS)', 'Missing/Excluded'] = sampleSummary['Acquired'].loc[
 			                                                                         'Study Sample (SS)', 'Missing/Excluded'] + \
 		                                                                         data.subjectAbsentMetadata.shape[0]
+		for key in sampleMasks:
+			if (key in missingMasks) and (sum(missingMasks[key]) != 0):
+				sampleSummary['Acquired'].loc[key, 'Missing/Excluded'] = sampleSummary['Acquired'].loc[key, 'Missing/Excluded'] + sum(missingMasks[key])
 
-		# Add to ALL, and SS exclusions (all samples in sample manifest are study samples)
-		ALL_exclusions = pandas.concat(
-			[ALL_exclusions, data.subjectAbsentMetadata[['Sample File Name', 'Sample ID', 'Exclusion Details']]],
+		# Add missing sample details to 'Excluded Details'
+		sampleSummary['Excluded Details'] = pandas.concat(
+			[sampleSummary['Excluded Details'], data.subjectAbsentMetadata],
+			axis=0,
 			ignore_index=True)
 
+	#
 	ALL_exclusions.reset_index(inplace=True, drop=True)
 
 	# Save only if excluded samples present
