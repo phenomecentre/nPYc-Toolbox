@@ -15,7 +15,7 @@ import copy
 import networkx
 from .._toolboxPath import toolboxPath
 from ._dataset import Dataset
-from ..utilities import rsd
+from ..utilities import rsd, inferSampleClass
 from ..utilities._internal import _vcorrcoef
 from ..utilities.extractParams import extractParams
 from ..enumerations import VariableType, DatasetLevel, AssayRole, SampleType
@@ -1352,21 +1352,22 @@ class MSDataset(Dataset):
 		fileNameParts.loc[
 			fileNameParts['groupingKind'].str.match('E?IC', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
 
-		# Define `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudySample) & (
-					fileNameParts['AssayRole'] == AssayRole.Assay), 'SampleClass'] = 'Study Sample'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudyPool) & (
-					fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Study Reference'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.ExternalReference) & (
-					fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Long-Term Reference'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudyPool) & (
-					fileNameParts['AssayRole'] == AssayRole.LinearityReference), 'SampleClass'] = 'Linearity Reference'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.MethodReference) & (
-					fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Method Reference'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.ProceduralBlank) & (
-					fileNameParts['AssayRole'] == AssayRole.Blank), 'SampleClass'] = 'Blank'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.UnknownType) & (
-				fileNameParts['AssayRole'] == AssayRole.UnknownRole), 'SampleClass'] = 'Unknown'
+		# # Define `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
+		fileNameParts = inferSampleClass(fileNameParts)
+		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudySample) & (
+		# 			fileNameParts['AssayRole'] == AssayRole.Assay), 'SampleClass'] = 'Study Sample'
+		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudyPool) & (
+		# 			fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Study Reference'
+		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.ExternalReference) & (
+		# 			fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Long-Term Reference'
+		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudyPool) & (
+		# 			fileNameParts['AssayRole'] == AssayRole.LinearityReference), 'SampleClass'] = 'Linearity Reference'
+		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.MethodReference) & (
+		# 			fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Method Reference'
+		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.ProceduralBlank) & (
+		# 			fileNameParts['AssayRole'] == AssayRole.Blank), 'SampleClass'] = 'Blank'
+		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.UnknownType) & (
+		# 		fileNameParts['AssayRole'] == AssayRole.UnknownRole), 'SampleClass'] = 'Unknown'
 
 		# Skipped runs
 		fileNameParts['Skipped'] = fileNameParts['exclusion'].str.match('[Xx]', na=False)

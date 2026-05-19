@@ -4,6 +4,7 @@ Generic Utility functions
 import json
 import os
 import numpy as np
+from ..enumerations import AssayRole, SampleType
 
 def removeDuplicateColumns(df):
 	"""
@@ -50,10 +51,33 @@ def createDestinationPath(destinationPath):
 		os.makedirs(os.path.join(destinationPath, 'graphics'))
 
 
-
-def sampleClassMasks(sampleMetadata):
+def inferSampleClass(sampleMetadata):
 	"""
-	Returns a dictionary of boolean array defining locations of samples in each sampleclass.
+	Infers `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
+
+	:return: sampleMetadata with addition of column 'SampleClass', note if already present this will be overwritten
+	"""
+	sampleMetadata.loc[(sampleMetadata['SampleType'] == SampleType.StudySample) & (
+			sampleMetadata['AssayRole'] == AssayRole.Assay), 'SampleClass'] = 'Study Sample'
+	sampleMetadata.loc[(sampleMetadata['SampleType'] == SampleType.StudyPool) & (
+		sampleMetadata['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Study Reference'
+	sampleMetadata.loc[(sampleMetadata['SampleType'] == SampleType.ExternalReference) & (
+		sampleMetadata['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Long-Term Reference'
+	sampleMetadata.loc[(sampleMetadata['SampleType'] == SampleType.StudyPool) & (
+		sampleMetadata['AssayRole'] == AssayRole.LinearityReference), 'SampleClass'] = 'Linearity Reference'
+	sampleMetadata.loc[(sampleMetadata['SampleType'] == SampleType.MethodReference) & (
+		sampleMetadata['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Method Reference'
+	sampleMetadata.loc[(sampleMetadata['SampleType'] == SampleType.ProceduralBlank) & (
+		sampleMetadata['AssayRole'] == AssayRole.Blank), 'SampleClass'] = 'Blank'
+	sampleMetadata.loc[(sampleMetadata['SampleType'] == SampleType.UnknownType) & (
+		sampleMetadata['AssayRole'] == AssayRole.UnknownRole), 'SampleClass'] = 'Unknown'
+
+	return sampleMetadata
+
+
+def sampleClassMasks(sampleMetadata, on='SampleClass'):
+	"""
+	Returns a dictionary of boolean array defining locations of samples in each unique entry of column 'on', which must be a column name of sampleMetadata
 
 	:return: key: value pairs, SampleClass: boolean array of location in data
 	:rtype: dict
@@ -62,11 +86,11 @@ def sampleClassMasks(sampleMetadata):
 	sampleClassMasks = {}
 
 	# If SampleClass available
-	if hasattr(sampleMetadata, 'SampleClass'):
-		stypes = sampleMetadata['SampleClass'].unique()
+	if hasattr(sampleMetadata, on):
+		stypes = sampleMetadata[on].unique()
 
 		for stype in stypes:
-			sampleClassMasks[stype] = sampleMetadata['SampleClass'] == stype
+			sampleClassMasks[stype] = sampleMetadata[on] == stype
 
 	# Otherwise set all to unknown
 	else:
