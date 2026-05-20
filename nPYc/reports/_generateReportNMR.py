@@ -262,19 +262,13 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 
     # Generate sample summary
     
-	sampleSummary = _generateSampleReport(dataset, withExclusions=True, destinationPath=None, returnOutput=True)
-    
-    # Tidy table for final report format
-	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
-
-	# Drop rows where no samples present for that datatype
-	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
+	sampleSummary = _generateSampleReport(dataset, destinationPath=None, returnOutput=True)
 
 	sampleSummary['isFinalReport'] = True
-	if 'StudySamples Exclusion Details' in sampleSummary:
-		sampleSummary['studySamplesExcluded'] = True
-	else:
-		sampleSummary['studySamplesExcluded'] = False
+	#if 'StudySamples Exclusion Details' in sampleSummary:
+	#	sampleSummary['studySamplesExcluded'] = True
+	#else:
+	#	sampleSummary['studySamplesExcluded'] = False
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
@@ -283,7 +277,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 		print(str(item['Nfeatures']) + ' features')     
 		print('\nSample Summary')      
 		print('\nTable 1: Summary of samples present.')
-		display(sampleSummary['Acquired'])
+		display(sampleSummary['Dataset'])
 		print('\nDetails of any missing/excluded study samples given at the end of the report\n')
 
 
@@ -377,10 +371,10 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 	#  Table 3: Summary of samples excluded
 	##
 	if not destinationPath:
-		if 'StudySamples Exclusion Details' in sampleSummary:
+		if hasattr(sampleSummary, 'Missing/excluded SS Details'):
 			print('Missing/Excluded Study Samples')
 			print('\nTable 3: Details of missing/excluded study samples')
-			display(sampleSummary['StudySamples Exclusion Details'])
+			display(sampleSummary['Missing/excluded SS Details'])
 			
 	##
 	# Write HTML if saving

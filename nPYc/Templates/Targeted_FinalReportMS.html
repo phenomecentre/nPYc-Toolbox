@@ -28,7 +28,7 @@
 <h2>Sample Summary</h2>
 {% if 'sampleSummary' in item %}
     <h3>Sample Summary Table</h3>
-    {{ item['sampleSummary']['Acquired'].to_html() }}
+    {{ item.sampleSummary'['Dataset'].to_html() }}
 {% endif %}
 
 <div class='content'>
@@ -100,10 +100,10 @@
 {% endif %}
 
 <!--Details of any missing/excluded samples-->
-{% if 'StudySamples Exclusion Details' in item.sampleSummary %}
+{% if 'Missing/excluded SS Details' in item.sampleSummary %}
 	<h2>Missing/Excluded Study Samples</h2>
 	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
-	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
+	{{ item.sampleSummary['Missing/excluded SS Details'].to_html() }}
 {% endif %}
 
 {% endblock %}

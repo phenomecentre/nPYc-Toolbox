@@ -133,7 +133,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 	item['TextQType'] = textQType
 	item['CountQType'] = countQType
 	item['pcaModel'] = None
-	sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
+	sampleSummary = _generateSampleReport(tData, destinationPath=None, returnOutput=True)
 
 	if reportType.lower() == 'feature summary':
 		item = _featureReport(tData, item, destinationPath, numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
@@ -595,24 +595,18 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 	# Table 1: Sample summary
 	# Generate sample summary
-	sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
-
-	# Tidy table for final report format
-	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
-
-	# Drop rows where no samples present for that datatype
-	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
+	sampleSummary = _generateSampleReport(tData, destinationPath=None, returnOutput=True)
 
 	sampleSummary['isFinalReport'] = True
-	if 'StudySamples Exclusion Details' in sampleSummary:
-		sampleSummary['studySamplesExcluded'] = True
-	else:
-		sampleSummary['studySamplesExcluded'] = False
+	#if 'StudySamples Exclusion Details' in sampleSummary:
+	#	sampleSummary['studySamplesExcluded'] = True
+	#else:
+	#		sampleSummary['studySamplesExcluded'] = False
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
 		print('Sample Summary')
-		display(sampleSummary['Acquired'])
+		display(sampleSummary['Dataset'])
 		print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
 
@@ -771,9 +765,9 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 	# Table: Summary of missing/excluded study samples
 	if not destinationPath:
-		if 'StudySamples Exclusion Details' in sampleSummary:
+		if hasattr(sampleSummary, 'Missing/excluded SS Details'):
 			print('Missing/Excluded Study Samples')
-			display(sampleSummary['StudySamples Exclusion Details'])
+			display(sampleSummary['Missing/excluded SS Details'])
 
 	return item
 
@@ -863,23 +857,17 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	# Generate sample summary
 	sampleSummary = _generateSampleReport(tData, destinationPath=None, returnOutput=True)
 
-	# Tidy table for final report format
-	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
-
-	# Drop rows where no samples present for that datatype
-	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
-
 	sampleSummary['isFinalReport'] = True
-	if 'StudySamples Exclusion Details' in sampleSummary:
-		sampleSummary['studySamplesExcluded'] = True
-	else:
-		sampleSummary['studySamplesExcluded'] = False
+	#if 'StudySamples Exclusion Details' in sampleSummary:
+	#	sampleSummary['studySamplesExcluded'] = True
+	#else:
+	#	sampleSummary['studySamplesExcluded'] = False
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
 		print('\n\nSample Summary')
 		print('\nTable 1: Sample summary table.')
-		display(sampleSummary['Acquired'])
+		display(sampleSummary['Dataset'])
 		print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
 	# reporting columns
@@ -1048,10 +1036,10 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 	# Table 3: Summary of samples excluded
 	if not destinationPath:
-		if 'StudySamples Exclusion Details' in sampleSummary:
+		if hasattr(sampleSummary, 'Missing/excluded SS Details'):
 			print('Missing/Excluded Study Samples')
 			print('\nTable 4: Details of missing/excluded study samples')
-			display(sampleSummary['StudySamples Exclusion Details'])
+			display(sampleSummary['Missing/excluded SS Details'])
 
 
 	## Figure 5 and 6: (if available) PCA scores and loadings plots by sample type

@@ -106,27 +106,17 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
 
     sampleSummary = _generateSampleReport(dataset, destinationPath=None, returnOutput=True)
 
-    # Tidy table for final report format
-    sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
-
-    if hasattr(sampleSummary['Acquired'], 'Already Excluded'):
-        sampleSummary['Acquired'].rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
-
-    # Drop rows where no samples present for that datatype
-    sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0],
-                                   axis=0, inplace=True)
-
     sampleSummary['isFinalReport'] = True
-    if 'StudySamples Exclusion Details' in sampleSummary:
-        sampleSummary['studySamplesExcluded'] = True
-    else:
-        sampleSummary['studySamplesExcluded'] = False
+    #if 'StudySamples Exclusion Details' in sampleSummary:
+    #    sampleSummary['studySamplesExcluded'] = True
+    #else:
+    #    sampleSummary['studySamplesExcluded'] = False
     item['sampleSummary'] = sampleSummary
 
     if not destinationPath:
         print('\n\nSample Summary')
         print('\nTable 1: Sample summary table.')
-        display(sampleSummary['Acquired'])
+        display(sampleSummary['Dataset'])
         print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
 
@@ -301,10 +291,10 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
 
     # Table 3: Summary of samples excluded
     if not destinationPath:
-        if 'StudySamples Exclusion Details' in sampleSummary:
+        if hasattr(sampleSummary, 'Missing/excluded SS Details'):
             print('Missing/Excluded Study Samples')
             print('\nTable 3: Details of missing/excluded study samples')
-            display(sampleSummary['StudySamples Exclusion Details'])
+            display(sampleSummary['Missing/excluded SS Details'])
 
 
     # Write HTML if saving
