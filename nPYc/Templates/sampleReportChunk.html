@@ -2,15 +2,15 @@
 
 <div class="content">
 <!--Summary of samples acquired________________________________________________________________________________________________________________-->	
-<h2>Summary of Samples Acquired</h2>
+<h2>Summary of Samples in Dataset</h2>
 
-{{ item['Acquired'].to_html() }}
+{{ item['Dataset'].to_html() }}
 
 <!--Summary of samples missing from acquisition________________________________________________________________________________________________-->
 
-{% if 'NotAcquired' in item %}
+{% if 'Missing Details' in item %}
 	<h3>Samples Missing from Acquisition/Import (i.e., present in metadata file but not acquired/imported)</h3>
-	{{ item['NotAcquired'].to_html() }}
+	{{ item['Missing Details'].to_html() }}
 {% endif %}
 
 <!--Details of any excluded/missing samples____________________________________________________________________________________________________-->
