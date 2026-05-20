@@ -10,7 +10,6 @@ from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
 from ..plotting import plotRSDs, plotIonMap, plotTargetedFeatureDistribution, plotAbundanceBySampleType
 from ._generateSampleReport import _generateSampleReport
-from ..utilities.ms import generateTypeRoleMasks
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..utilities._errorHandling import npycToolboxError
 
