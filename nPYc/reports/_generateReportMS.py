@@ -13,7 +13,7 @@ from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
 from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from ..plotting import plotIntensity, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution, plotAbundanceBySampleType
+from ..plotting import plotIntensity, histogram, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution, plotAbundanceBySampleType
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd, sampleClassMasks
 from ..utilities._internal import _vcorrcoef
@@ -35,7 +35,7 @@ from ..__init__ import __version__ as version
 
 
 def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy='Feature Name', orderFeaturesBy='rsdSP', withArtifactualFiltering=None, destinationPath=None,
-                          msDataCorrected=None, pcaModel=None, batch_correction_window=11, logy=False):
+                          msDataCorrected=None, pcaModel=None, batch_correction_window=11, logy=False, colourSamplesBy='Dilution', colourSamplesByType='categorical'):
     """
     Summarise different aspects of an MS dataset
 
@@ -114,7 +114,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
         msData.applyMasks()
 
     if reportType.lower() == 'feature summary':
-        _featureReport(msData, destinationPath)
+        _featureReport(msData, colourSamplesBy, colourSamplesByType, destinationPath)
     elif reportType.lower() == 'correlation to dilution':
         _featureCorrelationToDilutionReport(msData, destinationPath)
     elif reportType.lower() == 'feature selection':
@@ -496,12 +496,16 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None, reportType='final
     return None
 
 
-def _featureReport(dataset, destinationPath=None):
+def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='continuous', destinationPath=None):
     """
     Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
+
+    :param dataset: Dataset object
+	:param str colourSamplesBy: column in `dataset.sampleMetadata` - if available generates plot of total sum coloured by this
+	:param str colourSampleByType: type of colour scale to use for plotting `colourSamplesBy`, one of 'categorical', 'continuous', 'continuousCentered'
     """
 
-    if (hasattr(dataset.featureMetadata, 'cpdName')):
+    if hasattr(dataset.featureMetadata, 'cpdName'):
         featureName = 'Compound Name'
         featName=True
         figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
@@ -515,20 +519,13 @@ def _featureReport(dataset, destinationPath=None):
     item['ReportType'] = 'feature summary'
     item['Nfeatures'] = dataset.intensityData.shape[1]
     item['Nsamples'] = dataset.intensityData.shape[0]
-
-    # Define sample masks
-    acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
-
-    # Set up template item and save required info
-    item['SScount'] = str(sum(acquiredMasks['SS']))
-    item['SPcount'] = str(sum(acquiredMasks['SR']))
-    item['ERcount'] = str(sum(acquiredMasks['LTR']))
     item['corrMethod'] = dataset.Attributes['corrMethod']
 
-    ##
-    # Report stats
-    ##
-    if destinationPath is not None:
+    # Define sample masks
+    sampleMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
+
+    # Initial set up
+    if destinationPath:
         if not os.path.exists(destinationPath):
             os.makedirs(destinationPath)
         if not os.path.exists(os.path.join(destinationPath, 'graphics')):
@@ -540,13 +537,17 @@ def _featureReport(dataset, destinationPath=None):
         graphicsPath = None
         saveAs = None
 
+        # Summary
+        print('Feature Summary Report For: ' + item['Name'])
+        print(str(item['Nsamples']) + ' samples')
+        print(str(item['Nfeatures']) + ' features')
 
-    # Generate correlation to dilution for each batch subset - plot TIC and histogram of correlation to dilution
-
-    # Mean intensities of Study Pool samples (for future plotting segmented by intensity)
-    meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[acquiredMasks['SR'], :], axis=0))
-    meanIntensitiesSP[numpy.mean(dataset.intensityData[acquiredMasks['SR'], :], axis=0) == 0] = numpy.nan
-    meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
+    # Mean intensities (for future plotting segmented by intensity), ideally mean of SR, otherwise mean of all samples
+    if 'Study Reference' in sampleMasks:
+        meanIntensities = numpy.log(numpy.nanmean(dataset.intensityData[sampleMasks['Study Reference'], :], axis=0))
+    else:
+        meanIntensities = numpy.log(numpy.nanmean(dataset.intensityData, axis=0))
+    meanIntensities[numpy.isinf(meanIntensities)] = numpy.nan
 
     # Figure 1: Histogram of log mean abundance by sample type
     if destinationPath:
@@ -585,37 +586,29 @@ def _featureReport(dataset, destinationPath=None):
                 savePath=saveAs)
 
         # Figure 3: Acquisition structure and detector voltage
-        if 'Detector' in dataset.sampleMetadata.columns:
+        if colourSamplesBy in dataset.sampleMetadata.columns:
 
             if destinationPath:
                 item['AcquisitionStructureFigure'] = os.path.join(graphicsPath,
-                                                                  item['Name'] + '_ticDetectorV.' +
-                                                                  dataset.Attributes[
-                                                                      'figureFormat'])
+                                                                  item['Name'] + colourSamplesBy + '.' + dataset.Attributes['figureFormat'])
+                item['colourSamplesBy'] = colourSamplesBy
                 saveAs = item['AcquisitionStructureFigure']
             else:
-                print('Figure 3: Acquisition structure (coloured by detector voltage).')
-
-            # Generate sample change in detector voltage
-            detectorDiff = dataset.sampleMetadata[['Detector', 'Run Order']].sort_values(by='Run Order')[
-                'Detector'].diff().sort_index()
-            detectorDiff[0] = 0  # no detector diff for first sample
-            dataset.sampleMetadata['Change in Detector Voltage'] = detectorDiff
+                print('Figure 3: Total sum of feature intensities for all samples (coloured by ' + colourSamplesBy + ').')
 
             # TIC all samples
             plotIntensity(dataset,
                     addViolin=False,
                     addBatchShading=True,
-                    colourBy='Change in Detector Voltage',
-                    colourType='continuousCentered',
+                    colourBy=colourSamplesBy,
+                    colourType=colourSamplesByType,
                     figureFormat=dataset.Attributes['figureFormat'],
                     dpi=dataset.Attributes['dpi'],
                     figureSize=dataset.Attributes['figureSize'],
                     savePath=saveAs)
         else:
             if not destinationPath:
-                print('Figure 3: Acquisition structure (coloured by detector voltage).')
-                print('\x1b[31;1m Detector voltage data not available to plot\n\033[0;0m')
+                print('Figure 3: Optional plot - not specified here.')
 
     else:
         if not destinationPath:
@@ -625,7 +618,7 @@ def _featureReport(dataset, destinationPath=None):
             print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
 
     # Correlation to dilution figures:
-    if sum(acquiredMasks['SRD']) != 0:
+    if 'Linearity Reference' in sampleMasks:
 
         # Figure 4: Histogram of correlation to dilution by abundance percentiles
         if destinationPath:
@@ -641,7 +634,7 @@ def _featureReport(dataset, destinationPath=None):
                   xlabel='Correlation to Dilution',
                   histBins=dataset.Attributes['histBins'],
                   quantiles=dataset.Attributes['quantiles'],
-                  inclusionVector=numpy.exp(meanIntensitiesSP),
+                  inclusionVector=numpy.exp(meanIntensities),
                   savePath=saveAs,
                   figureFormat=dataset.Attributes['figureFormat'],
                   dpi=dataset.Attributes['dpi'],
@@ -656,12 +649,26 @@ def _featureReport(dataset, destinationPath=None):
             else:
                 print('Figure 5: Total sum of feature intensities for serial dilution (SRD) samples coloured by sample dilution.')
 
-            plotLRTIC(dataset,
-                      sampleMask=acquiredMasks['SRD'],
-                      savePath=saveAs,
-                      figureFormat=dataset.Attributes['figureFormat'],
-                      dpi=dataset.Attributes['dpi'],
-                      figureSize=dataset.Attributes['figureSize'])
+            maskSample = copy.deepcopy(dataset.sampleMask)
+            maskFeature = copy.deepcopy(dataset.featureMask)
+            dataset.updateMasks(sampleTypes=[SampleType.StudyPool],
+                               assayRoles=[AssayRole.LinearityReference],
+                               filterFeatures=False)
+
+            plotIntensity(dataset,
+                    addViolin=False,
+                    addBatchShading=True,
+                    colourBy='Dilution',
+                    colourType='continuous',
+                    withExclusions=True,
+                    figureFormat=dataset.Attributes['figureFormat'],
+                    dpi=dataset.Attributes['dpi'],
+                    figureSize=dataset.Attributes['figureSize'],
+                    savePath=saveAs)
+
+            dataset.sampleMask = maskSample
+            dataset.featureMask = maskFeature
+
         else:
             if not destinationPath:
                 print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.')
@@ -690,7 +697,7 @@ def _featureReport(dataset, destinationPath=None):
               xlabel='RSD',
               histBins=dataset.Attributes['histBins'],
               quantiles=dataset.Attributes['quantiles'],
-              inclusionVector=numpy.exp(meanIntensitiesSP),
+              inclusionVector=numpy.exp(meanIntensities),
               logx=False,
               xlim=(0, 100),
               savePath=saveAs,
@@ -699,7 +706,7 @@ def _featureReport(dataset, destinationPath=None):
               figureSize=dataset.Attributes['figureSize'])
 
     # Figure 7: Scatterplot of RSD vs correlation to dilution
-    if sum(acquiredMasks['SRD']) != 0:
+    if 'Linearity Reference' in sampleMasks:
         if destinationPath:
             item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
                                                           item['Name'] + '_rsdVc2d.' + dataset.Attributes[
@@ -1593,6 +1600,7 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
 
 
 def _localLRPlots(dataset, LRmask, corToLR, saveName, figures=None, savePath=None):
+
     # Plot TIC
     if savePath:
         saveTemp = saveName + ' LR Sample TIC (coloured by dilution)'
@@ -1600,31 +1608,25 @@ def _localLRPlots(dataset, LRmask, corToLR, saveName, figures=None, savePath=Non
         saveAs = figures[saveTemp]
     else:
         print(saveName + ' LR Sample TIC (coloured by dilution)')
-        saveAs = None;
+        saveAs = None
 
-    plotLRTIC(dataset,
-              sampleMask=LRmask,
-              savePath=saveAs,
-              figureFormat=dataset.Attributes['figureFormat'],
-              dpi=dataset.Attributes['dpi'],
-              figureSize=dataset.Attributes['figureSize'])
+    maskSample = copy.deepcopy(dataset.sampleMask)
+    maskFeature = copy.deepcopy(dataset.featureMask)
+    dataset.sampleMask = LRmask
 
-    # Plot TIC detector voltage change
-    if savePath:
-        saveTemp = saveName + 'ticSRDDetectorV'
-        figures[saveTemp] = os.path.join(savePath, saveTemp + '.' + dataset.Attributes['figureFormat'])
-        saveAs = figures[saveTemp]
-    else:
-        print(saveName + ' LR Sample TIC (coloured by change in detector voltage)')
-        saveAs = None;
-    if 'Detector' in dataset.sampleMetadata.columns:
-        plotLRTIC(dataset,
-                  sampleMask=LRmask,
-                  colourByDetectorVoltage=True,
-                  savePath=saveAs,
+    plotIntensity(dataset,
+                  addViolin=False,
+                  addBatchShading=True,
+                  colourBy='Dilution',
+                  colourType='continuous',
+                  withExclusions=True,
                   figureFormat=dataset.Attributes['figureFormat'],
                   dpi=dataset.Attributes['dpi'],
-                  figureSize=dataset.Attributes['figureSize'])
+                  figureSize=dataset.Attributes['figureSize'],
+                  savePath=saveAs)
+
+    dataset.sampleMask = maskSample
+    dataset.featureMask = maskFeature
 
     # Plot histogram of correlation to dilution
     if savePath:

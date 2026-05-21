@@ -4,6 +4,13 @@
 
 {% block content %}
 
+<!--Brief summary of dataset-->
+<div class='content'>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	<p></p>
+</div>
+
 <!--Figure 1: Histogram of log mean abundance in SP samples-->
 <div class='figure'>
 	<p class="caption"><span class="heading">Figure&nbsp;1.</span> Histogram of log of mean abundance of {{ item['No Features'] }} features in {{ item.SPcount }} study reference samples.</p>
@@ -20,13 +27,13 @@
 	<p>Acquisition Time/Run Order data not available to plot.</p>
 {% endif %}
 
-<p class="caption"><span class="heading">Figure&nbsp;3.</span> Acquisition structure (coloured by detector voltage).</p>
+<p class="caption"><span class="heading">Figure&nbsp;3.</span> Acquisition structure (coloured by {{ item['colourSamplesBy'] }}).</p>
 {% if 'AcquisitionStructureFigure' in item %}
 	<div class='figure'>
-		<img src="{{ item.AcquisitionStructureFigure }}" alt="Acquisition structure (coloured by detector voltage).">
+		<img src="{{ item.AcquisitionStructureFigure }}" alt="Acquisition structure (coloured by {{ item['colourSamplesBy'] }}).">
 	</div>
 {% else %}
-	<p>Acquisition Time/Run Order data not available to plot.</p>
+	<p>Optional plot - not specified here.</p>
 {% endif %}
 
 <!--Figure 4: Histogram of Spearman correlation to dilution, segmented by abundance percentiles-->

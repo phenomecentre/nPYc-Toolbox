@@ -16,7 +16,7 @@ Most plots support a set of common configuration parameters to allow customisati
 Interactive plots utilise the plotly framework to provide controls, when using plotly you should ensure that the environment is configured according to the instructions at `Offline Plots in Plotly in Python <https://plot.ly/python/offline/>`_ 
 """
 
-from ._plotting import histogram, plotLRTIC, plotCorrelationToLRbyFeature, checkAndSetPlotAttributes
+from ._plotting import histogram, plotCorrelationToLRbyFeature, checkAndSetPlotAttributes
 from ._nmrPlotting import plotPW, plotLineWidthInteractive, plotLineWidth, plotSpectraInteractive
 from ._plotNMRcalibration import plotCalibration, plotCalibrationInteractive
 from ._plotNMRbaseline import plotBaseline, plotBaselineInteractive
@@ -39,7 +39,7 @@ from ._correlationSpectroscopy import correlationSpectroscopyInteractive
 from ._plotTargetedFeatureDistribution import plotTargetedFeatureDistribution
 from ._plotAbundanceBySampleType import plotAbundanceBySampleType
 
-__all__ = ['histogram', 'checkAndSetPlotAttributes','plotBatchAndROCorrection', 'plotIntensity', 'plotIntensityInteractive', 'plotLRTIC', 'jointplotRSDvCorrelation', 'plotCorrelationToLRbyFeature',
+__all__ = ['histogram', 'checkAndSetPlotAttributes','plotBatchAndROCorrection', 'plotIntensity', 'plotIntensityInteractive', 'jointplotRSDvCorrelation', 'plotCorrelationToLRbyFeature',
 		   'plotIonMap', 'plotRSDs', 'plotRSDsInteractive', 'plotScree', 'plotOutliers', 'plotSpectralVariance', 'plotScores', 'plotScoresInteractive',
 		   'plotLoadings', 'plotLoadingsInteractive', 'plotDiscreteLoadings', 'plotFeatureRanges', 'plotMetadataDistribution', 'plotLOQRunOrder', 
 		   'plotFeatureLOQ', 'plotVariableScatter', 'plotAccuracyPrecision', 'plotCalibrationInteractive', 'plotLineWidth', 'plotLineWidthInteractive',

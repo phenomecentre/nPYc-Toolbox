@@ -3,26 +3,20 @@ import os
 import numpy
 import pandas
 from collections import OrderedDict
-import matplotlib.pyplot as plt
 import seaborn as sns
 import copy
-from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import TargetedDataset
-from ..plotting import plotFeatureLOQ, plotLOQRunOrder, plotAccuracyPrecision, plotIntensity, histogram, plotLRTIC, \
-	jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, \
-	plotScores, plotLoadings, plotTargetedFeatureDistribution
+from ..plotting import plotFeatureLOQ, plotAccuracyPrecision, plotRSDs, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport
-from ..utilities import generateLRmask, rsd
+from ..utilities import rsd
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..enumerations import AssayRole, SampleType, CalibrationMethod, QuantificationType, AnalyticalPlatform
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
+from ..enumerations import AssayRole, SampleType, QuantificationType, AnalyticalPlatform
 from ._generateBasicPCAReport import generateBasicPCAReport
 from IPython.display import display
 from io import StringIO
-import warnings
 import re
-import shutil
+
 from ..__init__ import __version__ as version
 
 

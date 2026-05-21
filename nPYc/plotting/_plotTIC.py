@@ -151,7 +151,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 
 	tic = numpy.sum(msData.intensityData[:, tempFeatureMask == True], axis=1)
 
-	# Colour by categorical class
+	# Colour by categorical class # TODO this doesn't seem to work??
 	if colourType == 'categorical':
 		palette = {}
 		sampleMasks = []
