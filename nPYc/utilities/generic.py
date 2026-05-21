@@ -4,7 +4,10 @@ Generic Utility functions
 import json
 import os
 import numpy as np
+import re
 from ..enumerations import AssayRole, SampleType
+from .._toolboxPath import toolboxPath
+from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 
 def removeDuplicateColumns(df):
 	"""
@@ -97,3 +100,27 @@ def sampleClassMasks(sampleMetadata, on='SampleClass'):
 		sampleClassMasks['Unknown'] = np.zeros(sampleMetadata.shape[0]).astype(bool)
 
 	return sampleClassMasks
+
+
+def publishReport(item, destinationPath, graphicsPath, template, attributes, filename, version):
+	"""
+	Publishes html version of reports
+
+	:item: dict: required information and locations of graphics files to publish
+	:destinationPath: str: destination path
+	:template: str: html template to use
+	"""
+
+	# Make paths for graphics local not absolute for use in the HTML.
+	for key in item:
+		if os.path.join(destinationPath, 'graphics') in str(item[key]):
+			item[key] = re.sub('.*graphics', 'graphics', item[key])
+
+	f = open(filename, 'w')
+	f.write(template.render(item=item,
+	                        attributes=attributes,
+	                        version=version,
+	                        graphicsPath=graphicsPath))
+	f.close()
+
+	copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))

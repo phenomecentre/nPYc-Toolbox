@@ -21,15 +21,13 @@
 {% endif %}
 
 {% if 'Excluded Details' in item %}
-	{% if 'isFinalReport' in item %}
-    	{%if (item['isFinalReport'] == True) and ('StudySamples Exclusion Details' in item)%}
-        	<h3>Study Samples Missing/Excluded</h3><!--ie those marked with (_x)-->
-	    {{ item['StudySamples Exclusion Details'].to_html() }}
-	    {% endif %}
-	{% else %}
-	     <h3>Samples Excluded on Analytical Criteria</h3><!--ie those marked with (_x)-->
-	     {{ item['Excluded Details'].to_html() }}
-	{% endif %}
+	<h3>All Samples Missing/Excluded</h3>
+	{{ item['Excluded Details'].to_html() }}
+{% endif %}
+
+{% if 'StudySamples Exclusion Details' in item}
+	<h3>Study Samples Missing/Excluded</h3>
+	{{ item['StudySamples Exclusion Details'].to_html() }}
 {% endif %}
 
 {% if 'UnknownType Details' in item %}

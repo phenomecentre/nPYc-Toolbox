@@ -25,7 +25,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 			colourDict=None, markerDict=None, abbrDict=None,
 			logy=False, title='',
 			withExclusions=True, savePath=None,
-			figureFormat='png', dpi=72, figureSize=(11,7), opacity=.6):
+			opacity=.6):
 	"""
 	Visualise TIC for all or a subset of features coloured by either dilution value or detector voltage.
 	With the option to shade by batch.
@@ -45,10 +45,6 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	:param bool withExclusions: If ``False``, discard masked features from the sum
 	:param savePath: If ``None`` plot interactively, otherwise save the figure to the path specified
 	:type savePath: None or str
-	:param str figureFormat: If saving the plot, use this format
-	:param int dpi: Plot resolution
-	:param figureSize: Dimensions of the figure
-	:type figureSize: tuple(float, float)
 	"""
 
 	# Check inputs
@@ -105,7 +101,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 				abbrDict[u] = u
 
 	#sns.set_color_codes(palette='deep')
-	fig = plt.figure(figsize=figureSize, dpi=dpi)
+	fig = plt.figure(figsize=dataset.Attributes['figureSize'], dpi=dataset.Attributes['dpi'])
 	gs = gridspec.GridSpec(1, 5)
 
 	if addViolin:
@@ -265,10 +261,10 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	# Save or output
 	if savePath:
 		try:
-			plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
+			plt.savefig(savePath, bbox_inches='tight', format=dataset.Attributes['figureFormat'], dpi=dataset.Attributes['dpi'])
 
 		except UnboundLocalError:
-			plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
+			plt.savefig(savePath, bbox_inches='tight', format=dataset.Attributes['figureFormat'], dpi=dataset.Attributes['dpi'])
 		plt.close()
 	else:
 

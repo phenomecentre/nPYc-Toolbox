@@ -15,7 +15,7 @@ from ._plotVariableScatter import plotVariableScatter
 from ..utilities._errorHandling import npycToolboxError
 
 
-def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=False, sortOrder='rsdSP', savePath=None, featName=False, hLines=None, by='SampleClass', figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=False, sortOrder='rsdSP', savePath=None, featName=False, hLines=None, by='SampleClass'):
 	"""
 	plotRSDs(dataset, ratio=False, savePath=None, color=None \*\*kwargs)
 
@@ -97,9 +97,9 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 						hLines=hLines,
 						vLines=None,
 						savePath=savePath,
-						figureFormat=figureFormat,
-						dpi=dpi,
-						figureSize=figureSize)
+						figureFormat=dataset.Attributes['figureFormat'],
+						dpi=dataset.Attributes['dpi'],
+						figureSize=dataset.Attributes['figureSize'])
 
 
 def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder='rsdSP', logx=True, by='SampleClass', destinationPath=None, autoOpen=False):

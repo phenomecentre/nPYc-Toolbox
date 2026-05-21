@@ -5,7 +5,7 @@ import plotly.graph_objs as go
 from ..objects import MSDataset
 from ..enumerations import VariableType
 
-def plotIonMap(msData, useRetention=True, title=None, savePath=None, xlim=None, ylim=None, logx=False, logy=False, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotIonMap(msData, useRetention=True, title=None, savePath=None, xlim=None, ylim=None, logx=False, logy=False):
 	"""
 	plotIonMap(msData, \*\*kwargs):
 
@@ -24,7 +24,7 @@ def plotIonMap(msData, useRetention=True, title=None, savePath=None, xlim=None, 
 	if not 'm/z' in msData.featureMetadata.columns:
 		raise KeyError('msData must have m/z in the featureMetadata to plot.')
 
-	fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
+	fig, ax = plt.subplots(figsize=msData.Attributes['figureSize'], dpi=msData.Attributes['dpi'])
 
 	if ('Retention Time' in msData.featureMetadata.columns) & useRetention:
 		_plotIonMap(ax, msData, xlim, ylim)
@@ -50,7 +50,7 @@ def plotIonMap(msData, useRetention=True, title=None, savePath=None, xlim=None, 
 
 	# Save or show
 	if savePath:
-		plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
+		plt.savefig(savePath, bbox_inches='tight', format=msData.Attributes['figureFormat'], dpi=msData.Attributes['dpi'])
 		plt.close()
 	else:
 		plt.show()
