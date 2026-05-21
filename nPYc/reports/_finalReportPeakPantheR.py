@@ -176,7 +176,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     
     # Figure: Distribution of RSDs in SP and SS
     if destinationPath:
-        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdHist.' +
+        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampletype.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
         item['orderFeaturesBy'] = orderFeaturesBy

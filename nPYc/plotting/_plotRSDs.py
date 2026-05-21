@@ -7,15 +7,15 @@ import pandas
 import copy
 import os
 import plotly.graph_objs as go
-
+import plotly
 from .. import Dataset, MSDataset, NMRDataset
 from ..enumerations import VariableType, SampleType, AssayRole
-from ..utilities import rsd
-from ..utilities.ms import generateTypeRoleMasks
+from ..utilities import rsd, sampleClassMasks
 from ._plotVariableScatter import plotVariableScatter
+from ..utilities._errorHandling import npycToolboxError
 
 
-def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=True, sortOrder='rsdSP', savePath=None, featName=False, hLines=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=False, sortOrder='rsdSP', savePath=None, featName=False, hLines=None, by='SampleClass', figureFormat='png', dpi=72, figureSize=(11,7)):
 	"""
 	plotRSDs(dataset, ratio=False, savePath=None, color=None \*\*kwargs)
 
@@ -39,20 +39,29 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	:param bool featName: If ``True`` y-axis label is the feature Name, if ``False`` features are numbered.
 	"""
 
-
-
+	# Generate table of RSD values by sample type (by, default is 'SampleClass')
 	rsdTable = _plotRSDsHelper(dataset,
 							   featureName=featureName,
 							   ratio=ratio,
 							   withExclusions=withExclusions,
-							   sortOrder=sortOrder)
-    
-	# If the featureMask has been applied add a line to show failing features
+							   sortOrder=sortOrder,
+							   by=by)
+
+	cols = list(rsdTable.columns)
+	cols.remove(featureName)
+
+	# Check 'by' values are represented in the dataset.Attributes for plot colours and abbreviations
+	for col in cols:
+		if not col in dataset.Attributes['sampleTypeColours']:
+			raise npycToolboxError('Unable to colour plot by: ' + str(col) + ' as not present in `dataset.Attributes["sampleTypeColours"]`')
+		if not col in dataset.Attributes['sampleTypeAbbr']:
+			raise npycToolboxError('Unable to label plot by: ' + str(col) + ' as not present in `dataset.Attributes["sampleTypeAbbr"]`')
 
 	# Ensure we have 'Passing Selection' column in dataset object
 	if not hasattr(dataset.featureMetadata, 'Passing Selection'):
 		dataset.featureMetadata['Passing Selection'] = dataset.featureMask
 
+	# If the featureMask has been applied, add a line to show failing features
 	if hLines is not None:
 		if dataset.featureMetadata.shape[0] != rsdTable.shape[0]:
 			temp = [x for x in rsdTable['Feature Name'].values.tolist() if x in dataset.featureMetadata[featureName][dataset.featureMetadata['Passing Selection'] == False].values.tolist()]
@@ -93,7 +102,7 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 						figureSize=figureSize)
 
 
-def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=True):
+def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder='rsdSP', logx=True, by='SampleClass', destinationPath=None, autoOpen=False):
 	"""
 	Plotly-based interactive version of :py:func:`plotRSDs`
 
@@ -109,51 +118,41 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 	:param bool logx: If ``True`` plot RSDs on a log10 scaled axis
 
 	"""
-	rsdTable = _plotRSDsHelper(dataset, featureName=featureName, ratio=ratio)
+
+	# Generate table of RSD values by sample type (by, default is 'SampleClass')
+	rsdTable = _plotRSDsHelper(dataset,
+	                           featureName=featureName,
+	                           ratio=ratio,
+	                           withExclusions=withExclusions,
+	                           sortOrder=sortOrder,
+	                           by=by)
+
+	cols = list(rsdTable.columns)
+	cols.remove(featureName)
+
+	# Check 'by' values are represented in the dataset.Attributes for plot colours and abbreviations
+	for col in cols:
+		if not col in dataset.Attributes['sampleTypeColours']:
+			raise npycToolboxError('Unable to colour plot by: ' + str(col) + ' as not present in `dataset.Attributes["sampleTypeColours"]`')
+		if not col in dataset.Attributes['sampleTypeAbbr']:
+			raise npycToolboxError('Unable to label plot by: ' + str(col) + ' as not present in `dataset.Attributes["sampleTypeAbbr"]`')
 
 	reversedIndex =  numpy.arange(len(rsdTable)-1,-1, -1)
 	data = []
-	if SampleType.StudySample in rsdTable.columns:
-		studySamples = go.Scatter(
-			x = rsdTable[SampleType.StudySample].values,
-			y = reversedIndex,
-			mode = 'markers',
-			text = rsdTable['Feature Name'],
-			name = 'Study Sample',
-			marker = dict(
-				color = 'rgba(89, 117, 164, .8)',
-			),
-			hoverinfo = 'x+text',
-		)
-		data.append(studySamples)
 
-	if SampleType.ExternalReference in rsdTable.columns:
-		externalRef = go.Scatter(
-			x = rsdTable[SampleType.ExternalReference].values,
-			y = reversedIndex,
-			mode = 'markers',
-			text = rsdTable['Feature Name'],
-			name = 'Long-Term Reference',
-			marker = dict(
-				color = 'rgba(181, 93, 96, .8)',
+	for col in cols:
+		plotData = go.Scatter(
+			x=rsdTable[col].values,
+			y=reversedIndex,
+			mode='markers',
+			text=rsdTable[featureName],
+			name=dataset.Attributes['sampleTypeAbbr'][col],
+			marker=dict(
+				color=dataset.Attributes['sampleTypeColours'][col],
 			),
-			hoverinfo = 'x+text',
+			hoverinfo='x+text',
 		)
-		data.append(externalRef)
-
-	if SampleType.StudyPool in rsdTable.columns:
-		studyPool = go.Scatter(
-			x = rsdTable[SampleType.StudyPool].values,
-			y = reversedIndex,
-			mode = 'markers',
-			text = rsdTable['Feature Name'],
-			name = 'Study Reference',
-			 marker = dict(
-				color = 'rgba(95, 158, 110, .8)',
-			),
-			hoverinfo = 'x+text',
-		)
-		data.append(studyPool)
+		data.append(plotData)
 
 	if logx:
 		xaxis = dict(
@@ -177,12 +176,17 @@ def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, logx=T
 					),
 				xaxis=xaxis
 				)
+
 	figure = go.Figure(data=data, layout=layout)
+
+	# Save to destinationPath
+	if destinationPath:
+		plotly.offline.plot(figure, filename=os.path.join(destinationPath, dataset.name + '_rsdSampletype.html'), auto_open=autoOpen)
 
 	return figure
 
 
-def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder='rsdSP'):
+def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder='rsdSP', by='SampleClass'):
 
 	if not dataset.VariableType == VariableType.Discrete:
 		raise ValueError('Only datasets with discreetly sampled variables are supported.')
@@ -195,7 +199,7 @@ def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclus
 	if withExclusions:
 		msData.applyMasks()
 
-	# Calculate RSD for SR, LTR and SS (if sufficient sample numbers, i.e., n > 3)
+	# Calculate RSD for any SampleClass with n > 3
 	rsdVal = dict()
 	rsdVal[featureName] = msData.featureMetadata.loc[:, featureName].values
 
@@ -203,26 +207,17 @@ def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclus
 	# commented out for now but could be re-instated if required
 
 	# Define sample masks
-	acquiredMasks = generateTypeRoleMasks(msData.sampleMetadata)
+	sampleMasks = sampleClassMasks(msData.sampleMetadata, on=by)
 
-	if sum(acquiredMasks['SR']) > 3:
-		rsdVal[SampleType.StudyPool] = msData.rsdSP
-		# finiteMask = (rsdVal[SampleType.StudyPool] < numpy.finfo(numpy.float64).max)
-	if sum(acquiredMasks['LTR']) > 3:
-		rsdVal[SampleType.ExternalReference] = rsd(msData.intensityData[acquiredMasks['LTR'], :])
-		# finiteMask = finiteMask & (rsdVal[SampleType.ExternalReference] < numpy.finfo(numpy.float64).max)
-	if sum(acquiredMasks['SS']) > 3:
-		rsdVal[SampleType.StudySample] = rsd(msData.intensityData[acquiredMasks['SS'], :])
-		# finiteMask = finiteMask & (rsdVal[SampleType.StudySample] < numpy.finfo(numpy.float64).max)
+	for key in sampleMasks.keys():
 
-	## apply finiteMask
-	#for sType in rsdVal.keys():
-		#rsdVal[sType] = rsdVal[sType][finiteMask]
+		if sum(sampleMasks[key]) > 3:
+			rsdVal[key] = rsd(msData.intensityData[sampleMasks[key], :])
+			# finiteMask = (rsdVal[key] < numpy.finfo(numpy.float64).max)
+			# rsdVal[key] = rsdVal[key][finiteMask]
 
-	# If ratio, calculate ratio of each sample type RSD to rsdSP
-	if ratio:
-		for sType in rsdVal.keys():
-			rsdVal[sType] = numpy.divide(rsdVal[sType], rsdVal[SampleType.StudyPool])
+			if ratio:
+				rsdVal[key] = numpy.divide(rsdVal[key], msData.rsdSP)
 
 	rsdTable = pandas.DataFrame(rsdVal)
 
