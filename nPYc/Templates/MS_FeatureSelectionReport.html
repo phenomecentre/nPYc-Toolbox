@@ -4,6 +4,14 @@
 
 {% block content %}
 
+<!--Brief summary of dataset-->
+<div class='content'>
+	<span class="heading">Dataset summary.</span>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	<p></p>
+</div>
+
 <!--Heatmap of the number of features passing selection with different RSD and correlation to dilution thresholds-->
 <h3>Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds</h3>
 <div class='figure'>

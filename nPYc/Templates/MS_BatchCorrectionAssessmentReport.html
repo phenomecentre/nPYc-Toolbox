@@ -3,6 +3,15 @@
 {% block title %}Batch correction Assessment Report For: {{ item.Name}}{% endblock %}
 
 {% block content %}
+
+<!--Brief summary of dataset-->
+<div class='content'>
+	<span class="heading">Dataset summary.</span>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	<p></p>
+</div>
+
 <!-- Batch correction assessment report  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <!--Overall TIC for all samples and features-->
 <h3>Overall TIC for all samples and features, coloured by batch</h3>

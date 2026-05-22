@@ -844,7 +844,6 @@ def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=T
     # TODO: implement plotting features by Run Order rather than by Acquired Time
 
     # Input data checks
-
     if ('Acquired Time' not in dataset.sampleMetadata.columns) or ('Run Order' not in dataset.sampleMetadata.columns):
         raise npycToolboxError("Unable to generate batch and run order correction assessment report without `Acquired Time` and `Run Order` columns in `dataset.sampleMetadata`")
 
@@ -856,32 +855,9 @@ def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=T
         raise npycToolboxError(
             "Unable to run batch and run order correction without `dataset.sampleMetadata[`Run Order`]` info for ALL samples")
 
-    # Define sample masks
-    acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
-
-    # Set up template item and save required info
-    item = dict()
-    item['Name'] = dataset.name
-    item['ReportType'] = 'feature summary'
-    item['Nfeatures'] = dataset.intensityData.shape[1]
-    item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(acquiredMasks['SS']))
-    item['SPcount'] = str(sum(acquiredMasks['SR']))
-    item['ERcount'] = str(sum(acquiredMasks['LTR']))
-    item['LRcount'] = str(sum(acquiredMasks['SRD']))
+    # Initial set up
+    saveAs = None
     item['corrMethod'] = dataset.Attributes['corrMethod']
-
-    ##
-    # Report stats
-    ##
-    if destinationPath is not None:
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'correctionAssessment')
-        if not os.path.exists(graphicsPath):
-            os.makedirs(graphicsPath)
-    else:
-        graphicsPath = None
-        saveAs = None
-
 
     # Pre-correction report (report is example of results when batch correction applied)
 
@@ -960,46 +936,26 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     Generates a report post batch correction with pertinent figures (TIC, RSD etc.) before and after.
     """
 
-    if (hasattr(dataset.featureMetadata, 'cpdName')):
-        featureName = 'cpdName'
+    # Initial set up
+    saveAs = None
+
+    # If targeted assay can use compound name to label RSD plots
+    if hasattr(dataset.featureMetadata, 'Compound Name'):
+        featureName = 'Compound Name'
         featName=True
-        figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
     else:
         featureName = 'Feature Name'
         featName=False
-        figureSize=dataset.Attributes['figureSize']
 
     # Define sample masks
-    acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
+    sampleMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
 
-    # Set up template item and save required info
-    item = dict()
-    item['Name'] = dataset.name
-    item['ReportType'] = 'feature summary'
-    item['Nfeatures'] = dataset.intensityData.shape[1]
-    item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(acquiredMasks['SS']))
-    item['SPcount'] = str(sum(acquiredMasks['SR']))
-    item['ERcount'] = str(sum(acquiredMasks['LTR']))
-    item['LRcount'] = str(sum(acquiredMasks['SRD']))
-    item['corrMethod'] = dataset.Attributes['corrMethod']
-
-    ##
-    # Report stats
-    ##
-    if destinationPath is not None:
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'correctionSummary')
-        if not os.path.exists(graphicsPath):
-            os.makedirs(graphicsPath)
+    # Mean intensities (for future plotting segmented by intensity), ideally mean of SR, otherwise mean of all samples
+    if 'Study Reference' in sampleMasks:
+        meanIntensities = numpy.log(numpy.nanmean(dataset.intensityData[sampleMasks['Study Reference'], :], axis=0))
     else:
-        graphicsPath = None
-        saveAs = None
-
-
-    # Mean intensities of Study Pool samples (for future plotting segmented by intensity)
-    meanIntensitiesSP = numpy.log(numpy.nanmean(dataset.intensityData[acquiredMasks['SR'], :], axis=0))
-    meanIntensitiesSP[numpy.mean(dataset.intensityData[acquiredMasks['SR'], :], axis=0) == 0] = numpy.nan
-    meanIntensitiesSP[numpy.isinf(meanIntensitiesSP)] = numpy.nan
+        meanIntensities = numpy.log(numpy.nanmean(dataset.intensityData, axis=0))
+    meanIntensities[numpy.isinf(meanIntensities)] = numpy.nan
 
     # Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).
 
@@ -1086,7 +1042,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
               xlabel='RSD',
               histBins=dataset.Attributes['histBins'],
               quantiles=dataset.Attributes['quantiles'],
-              inclusionVector=numpy.exp(meanIntensitiesSP),
+              inclusionVector=numpy.exp(meanIntensities),
               logx=False,
               xlim=(0, 100),
               savePath=saveAs,
@@ -1106,7 +1062,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
               xlabel='RSD',
               histBins=dataset.Attributes['histBins'],
               quantiles=dataset.Attributes['quantiles'],
-              inclusionVector=numpy.exp(meanIntensitiesSP),
+              inclusionVector=numpy.exp(meanIntensities),
               logx=False,
               xlim=(0, 100),
               savePath=saveAs,
