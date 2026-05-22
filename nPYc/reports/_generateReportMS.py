@@ -424,6 +424,7 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
 
     # Initial set up
     saveAs = None
+    item['corrMethod'] = dataset.Attributes['corrMethod']
 
     # If targeted assay can use compound name to label RSD plots
     if hasattr(dataset.featureMetadata, 'cpdName'):
@@ -434,8 +435,6 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
         featureName = 'Feature Name'
         featName=False
         #figureSize=dataset.Attributes['figureSize']
-
-    item['corrMethod'] = dataset.Attributes['corrMethod']
 
     # Define sample masks
     sampleMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
@@ -690,19 +689,6 @@ def _featureSelectionReport(dataset, withArtifactualFiltering=False, destination
     # Define passmask as current featureMask
     passMask = dataset.featureMask
 
-    # Set up path to save
-    if destinationPath is not None:
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'featureSelection')
-        if not os.path.exists(graphicsPath):
-            os.makedirs(graphicsPath)
-    else:
-        graphicsPath = None
-
-    # Feature selection parameters and numbers passing
-    item = dict()
-    item['Name'] = dataset.name
-    item['Nfeatures'] = dataset.intensityData.shape[1]
-
     # Correlation to dilution
     item['corrMethod'] = dataset.Attributes['filterParameters']['corrMethod'] if dataset.Attributes['filterParameters']['corrMethod'] is not None else dataset.Attributes['corrMethod']
     item['corrThreshold'] = dataset.Attributes['filterParameters']['corrThreshold'] if dataset.Attributes['filterParameters']['corrThreshold'] is not None else dataset.Attributes['corrThreshold']
@@ -857,7 +843,6 @@ def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=T
 
     # Initial set up
     saveAs = None
-    item['corrMethod'] = dataset.Attributes['corrMethod']
 
     # Pre-correction report (report is example of results when batch correction applied)
 
@@ -1125,6 +1110,7 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None, graphicsP
 
     # Initial set up
     saveAs = None
+    item['corrThreshold'] = str(dataset.Attributes['corrThreshold'])
     item['corrMethod'] = dataset.Attributes['corrMethod']
 
     # Generate correlation to dilution for each batch subset - plot TIC and histogram of correlation to dilution
@@ -1187,8 +1173,7 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None, graphicsP
     temp.rename(columns={0: 'N Features'}, inplace=True)
 
     item['NfeaturesSummary'] = temp
-    item['corrThreshold'] = str(dataset.Attributes['corrThreshold'])
-    item['corrMethod'] = dataset.Attributes['corrMethod']
+
     if sum(dataset.corrExclusions) != dataset.noSamples:
         item['corrExclusions'] = str(
             dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)

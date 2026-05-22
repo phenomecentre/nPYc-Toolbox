@@ -10,14 +10,14 @@ from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
 from ..plotting import plotRSDs, plotIonMap, plotTargetedFeatureDistribution, plotAbundanceBySampleType
 from ._generateSampleReport import _generateSampleReport
-from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..utilities._errorHandling import npycToolboxError
+from ..utilities import publishReport
 
 
 from ..__init__ import __version__ as version
 
 
-def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeaturesBy='Feature Name', orderFeaturesBy='rsdSP', withExclusions=False):
+def _finalReportPeakPantheR(datasetOriginal, labelFeaturesBy='Feature Name', orderFeaturesBy='rsdSP', withExclusions=False, destinationPath=None, graphicsPath=None, item=None, template=None):
     """
     Summarise different aspects of an MS dataset
 
@@ -46,24 +46,6 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
 
-	# Create save directory if required
-    if destinationPath is not None:
-        if not os.path.exists(destinationPath):
-            os.makedirs(destinationPath)
-        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
-            os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'finalSummary')
-        if not os.path.exists(graphicsPath):
-            os.makedirs(graphicsPath)
-
-        # Copy required file for final report
-        shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
-                     os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
-    else:
-        graphicsPath = None
-        saveAs = None
-
-
     # Do some checks
     if (labelFeaturesBy is not None) and (not hasattr(datasetOriginal.featureMetadata, labelFeaturesBy)):
         raise npycToolboxError('Unable to label features by: ' + labelFeaturesBy + ' as column not present in `dataset.featureMetadata`')
@@ -71,16 +53,20 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     if (orderFeaturesBy is not None) and (not hasattr(datasetOriginal.featureMetadata, orderFeaturesBy)):
         raise npycToolboxError('Unable to label features by: ' + orderFeaturesBy + ' as column not present in `dataset.featureMetadata`')
 
+	# Create save directory if required
+    if destinationPath is not None:
+
+        # Copy required file for final report
+        shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
+                     os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
+
     # Apply sample/feature masks if exclusions to be applied
     dataset = copy.deepcopy(datasetOriginal)
     if withExclusions:
         dataset.applyMasks()
 
-    # Set up template item and save required info
-    item = dict()
-    item['Name'] = dataset.name
-    item['Nsamples'] = dataset.intensityData.shape[0]
-    item['Nfeatures'] = dataset.intensityData.shape[1]
+    # Initial set up
+    saveAs = None
     item['NfeaturesPassing'] = sum(dataset.featureMask)
     nfeaturesFailing = item['Nfeatures'] - item['NfeaturesPassing']
     if nfeaturesFailing != 0:
@@ -102,14 +88,11 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
     # Table 1: Sample summary
 
     # Generate sample summary
-
     sampleSummary = _generateSampleReport(dataset, destinationPath=None, returnOutput=True)
 
-    sampleSummary['isFinalReport'] = True
-    #if 'StudySamples Exclusion Details' in sampleSummary:
-    #    sampleSummary['studySamplesExcluded'] = True
-    #else:
-    #    sampleSummary['studySamplesExcluded'] = False
+    # Remove all details of all samples missing/excluded (only interested in study samples here)
+    sampleSummary.pop('Excluded Details', None)
+
     item['sampleSummary'] = sampleSummary
 
     if not destinationPath:
@@ -192,10 +175,10 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
             withExclusions=False,
             featName=True,
             hLines=hLine,
-            savePath=saveAs,
-            figureFormat=dataset.Attributes['figureFormat'],
-            dpi=dataset.Attributes['dpi'],
-            figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35)))
+            savePath=saveAs)
+            #figureFormat=dataset.Attributes['figureFormat'],
+            #dpi=dataset.Attributes['dpi'],
+            #figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35)))
     
     if not destinationPath:
           if nfeaturesFailing != 0:
@@ -224,10 +207,7 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
             figNo = figNo+1
 
         plotIonMap(dataset,
-                   savePath=saveAs,
-                   figureFormat=dataset.Attributes['figureFormat'],
-                   dpi=dataset.Attributes['dpi'],
-                   figureSize=dataset.Attributes['figureSize'])
+                   savePath=saveAs)
 
     else:
         if not destinationPath:
@@ -270,7 +250,6 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
             saveAs = temp['FeatureConcentrationDistributionFailing']
         else:
             print('Figure ' + str(figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be precisely measured) in final dataset (by sample type).')
-            figNo = figNo+1
     
         figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(
                    dataset,
@@ -296,29 +275,10 @@ def _finalReportPeakPantheR(datasetOriginal, destinationPath=None, labelFeatures
             display(sampleSummary['Missing/excluded SS Details'])
 
 
-    # Write HTML if saving
+    # Write report to HTML if saving
     if destinationPath:
 
-        # Make paths for graphics local not absolute for use in the HTML.
-        for key in item:
-            if os.path.join(destinationPath, 'graphics') in str(item[key]):
-                #print(item[key])
-                item[key] = re.sub('.*graphics', 'graphics', item[key])
-
-        # Generate report
-        from jinja2 import Environment, FileSystemLoader
-
-        env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
- 
-        template = env.get_template('MS_peakPantheR_FinalSummaryReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_finalSummary.html')
-
-        f = open(filename,'w')
-        f.write(template.render(item=item,
-                                attributes=dataset.Attributes,
-                                version=version,
-                                graphicsPath=graphicsPath))
-        f.close()
-        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+        filename = os.path.join(destinationPath, dataset.name + '_feature_report_peakpanther.html')
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
 
     return None
