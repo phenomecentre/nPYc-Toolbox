@@ -137,19 +137,28 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
         template = env.get_template('MS_FeatureSummaryReport.html')
         _featureReport(msData, colourSamplesBy=colourSamplesBy, colourSamplesByType=colourSamplesByType, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'correlation to dilution':
-        _featureCorrelationToDilutionReport(msData, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item)
+        template = env.get_template('MS_CorrelationToDilutionReport.html')
+        _featureCorrelationToDilutionReport(msData, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'feature selection':
-        _featureSelectionReport(msData, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item)
+        template = env.get_template('MS_FeatureSelectionReport.html')
+        _featureSelectionReport(msData, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'batch correction assessment':
-        _batchCorrectionAssessmentReport(msData, batch_correction_window=batch_correction_window, logy=logy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item)
+        template = env.get_template('MS_BatchCorrectionAssessmentReport.html')
+        _batchCorrectionAssessmentReport(msData, batch_correction_window=batch_correction_window, logy=logy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'batch correction summary':
-        _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item)
-    elif (reportType.lower() == 'final report') or (reportType.lower() == 'final report abridged'):
-        _finalReport(msData, reportType=reportType, pcaModel=pcaModel, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item)
+        template = env.get_template('MS_BatchCorrectionSummaryReport.html')
+        _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+    elif reportType.lower() == 'final report':
+        template = env.get_template('MS_FinalSummaryReport.html')
+        _finalReport(msData, reportType=reportType, pcaModel=pcaModel, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+    elif reportType.lower() == 'final report abridged':
+        template = env.get_template('MS_FinalSummaryReport_Abridged.html')
+        _finalReport(msData, reportType=reportType, pcaModel=pcaModel, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif (reportType.lower() == 'final report peakpanther'):
-        _finalReportPeakPantheR(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item)
+        template = env.get_template('MS_peakPantheR_FinalSummaryReport.html.html')
+        _finalReportPeakPantheR(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
 
-def _finalReport(dataset, reportType='final report', pcaModel=None, destinationPath=None, graphicsPath=None, item=None):
+def _finalReport(dataset, reportType='final report', pcaModel=None, destinationPath=None, graphicsPath=None, item=None, template=None):
     """
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
@@ -162,7 +171,6 @@ def _finalReport(dataset, reportType='final report', pcaModel=None, destinationP
     if destinationPath is not None:
         shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
                      os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
-
 
     # If targeted assay can use compound name to label RSD plots
     if hasattr(dataset.featureMetadata, 'Compound Name'):
@@ -396,35 +404,12 @@ def _finalReport(dataset, reportType='final report', pcaModel=None, destinationP
             print('\nTable 3: Details of missing/excluded study samples')
             display(sampleSummary['Missing/excluded SS Details'])
 
-    # Write HTML if saving
+
+    # Write report to HTML if saving
     if destinationPath:
 
-        # Make paths for graphics local not absolute for use in the HTML.
-        for key in item:
-            if os.path.join(destinationPath, 'graphics') in str(item[key]):
-                item[key] = re.sub('.*graphics', 'graphics', item[key])
-
-        # Generate report
-        from jinja2 import Environment, FileSystemLoader
-
-        env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-
-        if reportType.lower() == 'final report':
-            template = env.get_template('MS_FinalSummaryReport.html')
-
-        elif reportType.lower() == 'final report abridged':
-            template = env.get_template('MS_FinalSummaryReport_Abridged.html')
-
-        filename = os.path.join(destinationPath, dataset.name + '_finalSummary.html')
-
-        f = open(filename,'w')
-        f.write(template.render(item=item,
-                                attributes=dataset.Attributes,
-                                version=version,
-                                graphicsPath=graphicsPath,
-                                pcaPlots=pcaModel))
-        f.close()
-        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+        filename = os.path.join(destinationPath, dataset.name + '_' + reportType.lower.replace(' ', '_') + '.html')
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
 
     return None
 
@@ -441,6 +426,7 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
     # Initial set up
     saveAs = None
 
+    # If targeted assay can use compound name to label RSD plots
     if hasattr(dataset.featureMetadata, 'cpdName'):
         featureName = 'Compound Name'
         featName=True
@@ -687,13 +673,13 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
     # Write report to HTML if saving
     if destinationPath:
 
-        filename = os.path.join(destinationPath, dataset.name + '_featureSummary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_feature_summary.html')
         publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
 
     return None
 
 
-def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFiltering=False):
+def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFiltering=False, template=None):
     """
     Report on feature quality
     Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
@@ -829,29 +815,11 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
             print('Heatmap of the number of features passing selection with different Residual Standard Deviation (RSD) and correlation to dilution thresholds')
             plt.show()
 
-    # Write HTML if saving
-    ##
+    # Write report to HTML if saving
     if destinationPath:
-        # Make paths for graphics local not absolute for use in the HTML.
-        for key in item:
-            if os.path.join(destinationPath, 'graphics') in str(item[key]):
-                item[key] = re.sub('.*graphics', 'graphics', item[key])
 
-        # Generate report
-        from jinja2 import Environment, FileSystemLoader
-
-        env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-        template = env.get_template('MS_FeatureSelectionReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_featureSelection.html')
-
-        f = open(filename, 'w')
-        f.write(template.render(item=item,
-                                attributes=dataset.Attributes,
-                                version=version,
-                                graphicsPath=graphicsPath))
-        f.close()
-
-        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+        filename = os.path.join(destinationPath, dataset.name + '_feature_selection.html')
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
 
     else:
         print('Summary of current feature filtering parameters and number of features passing at each stage\n')
@@ -869,7 +837,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     return None
 
 
-def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correction_window=11, logy=True):
+def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correction_window=11, logy=True, template=None):
     """
     Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
     """
@@ -979,34 +947,16 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
         # Save to item
         item['figuresCorrectionExamples'] = figuresCorrectionExamples
 
-    # Write HTML if saving
-    ##
+    # Write report to HTML if saving
     if destinationPath:
-        # Make paths for graphics local not absolute for use in the HTML.
-        for key in item:
-            if os.path.join(destinationPath, 'graphics') in str(item[key]):
-                item[key] = re.sub('.*graphics', 'graphics', item[key])
 
-        # Generate report
-        from jinja2 import Environment, FileSystemLoader
-
-        env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-        template = env.get_template('MS_BatchCorrectionAssessmentReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_correctionAssessment.html')
-
-        f = open(filename, 'w')
-        f.write(template.render(item=item,
-                                attributes=dataset.Attributes,
-                                version=version,
-                                graphicsPath=graphicsPath))
-        f.close()
-
-        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+        filename = os.path.join(destinationPath, dataset.name + '_batch_correction_assessment.html')
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
 
     return None
 
 
-def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=None):
+def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=None, template=None):
     """
     Generates a report post batch correction with pertinent figures (TIC, RSD etc.) before and after.
     """
@@ -1182,10 +1132,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
              ratio=False,
              logx=True,
              featName=featName,
-             savePath=saveAs,
-             figureFormat=dataset.Attributes['figureFormat'],
-             dpi=dataset.Attributes['dpi'],
-             figureSize=figureSize)
+             savePath=saveAs)
 
     # Post-correction
     if destinationPath:
@@ -1201,39 +1148,18 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
              ratio=False,
              logx=True,
              featName=featName,
-             savePath=saveAs,
-             figureFormat=dataset.Attributes['figureFormat'],
-             dpi=dataset.Attributes['dpi'],
-             figureSize=figureSize)
+             savePath=saveAs)
 
-    # Write HTML if saving
-    ##
+    # Write report to HTML if saving
     if destinationPath:
-        # Make paths for graphics local not absolute for use in the HTML.
-        for key in item:
-            if os.path.join(destinationPath, 'graphics') in str(item[key]):
-                item[key] = re.sub('.*graphics', 'graphics', item[key])
 
-        # Generate report
-        from jinja2 import Environment, FileSystemLoader
-
-        env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-        template = env.get_template('MS_BatchCorrectionSummaryReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_correctionSummary.html')
-
-        f = open(filename, 'w')
-        f.write(template.render(item=item,
-                                attributes=dataset.Attributes,
-                                version=version,
-                                graphicsPath=graphicsPath))
-        f.close()
-
-        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+        filename = os.path.join(destinationPath, dataset.name + '_batch_correction_summary.html')
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
 
     return None
 
 
-def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
+def _featureCorrelationToDilutionReport(dataset, destinationPath=None, template=None):
     """
     Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
     """
@@ -1427,29 +1353,11 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None):
                 '\nHeatmap/lineplot showing the proportion of features (in different intensity quantiles, low:0-25, medium:25-75, and high:75-100%) where the median intensity at lower dilution factors >= that at higher dilution factors')
             plt.show()
 
-    # Write HTML if saving
-    ##
+    # Write report to HTML if saving
     if destinationPath:
-        # Make paths for graphics local not absolute for use in the HTML.
-        for key in item:
-            if os.path.join(destinationPath, 'graphics') in str(item[key]):
-                item[key] = re.sub('.*graphics', 'graphics', item[key])
 
-        # Generate report
-        from jinja2 import Environment, FileSystemLoader
-
-        env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-        template = env.get_template('MS_CorrelationToDilutionReport.html')
-        filename = os.path.join(destinationPath, dataset.name + 'correlationDilution.html')
-
-        f = open(filename, 'w')
-        f.write(template.render(item=item,
-                                attributes=dataset.Attributes,
-                                version=version,
-                                graphicsPath=graphicsPath))
-        f.close()
-
-        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+        filename = os.path.join(destinationPath, dataset.name + '_correlation_to_dilution.html')
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
 
     return None
 
