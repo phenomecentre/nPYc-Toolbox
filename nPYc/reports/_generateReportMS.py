@@ -17,7 +17,6 @@ from ..plotting import plotIntensity, histogram, jointplotRSDvCorrelation, plotR
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd, sampleClassMasks, publishReport
 from ..utilities._internal import _vcorrcoef
-from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..utilities.ms import generateTypeRoleMasks
 from ..enumerations import AssayRole, SampleType
 from ._generateBasicPCAReport import generateBasicPCAReport
@@ -679,7 +678,7 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
     return None
 
 
-def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFiltering=False, template=None):
+def _featureSelectionReport(dataset, withArtifactualFiltering=False, destinationPath=None, graphicsPath=None, item=None, template=None):
     """
     Report on feature quality
     Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
@@ -837,7 +836,7 @@ def _featureSelectionReport(dataset, destinationPath=None, withArtifactualFilter
     return None
 
 
-def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correction_window=11, logy=True, template=None):
+def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=True, destinationPath=None, graphicsPath=None, item=None, template=None):
     """
     Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
     """
@@ -956,7 +955,7 @@ def _batchCorrectionAssessmentReport(dataset, destinationPath=None, batch_correc
     return None
 
 
-def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=None, template=None):
+def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=None, graphicsPath=None, item=None, template=None):
     """
     Generates a report post batch correction with pertinent figures (TIC, RSD etc.) before and after.
     """
@@ -1159,7 +1158,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
     return None
 
 
-def _featureCorrelationToDilutionReport(dataset, destinationPath=None, template=None):
+def _featureCorrelationToDilutionReport(dataset, destinationPath=None, graphicsPath=None, item=None, template=None):
     """
     Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
     """
@@ -1168,39 +1167,16 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None, template=
     if not hasattr(dataset.sampleMetadata, 'Correction Batch'):
         raise ValueError("Correction Batch information missing, run addSampleInfo(descriptionFormat=\'Batches\')")
 
-    # Define sample masks
-    acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
-
-    # Set up template item and save required info
-    item = dict()
-    item['Name'] = dataset.name
-    item['ReportType'] = 'feature summary'
-    item['Nfeatures'] = dataset.intensityData.shape[1]
-    item['Nsamples'] = dataset.intensityData.shape[0]
-    item['SScount'] = str(sum(acquiredMasks['SS']))
-    item['SPcount'] = str(sum(acquiredMasks['SR']))
-    item['ERcount'] = str(sum(acquiredMasks['LTR']))
-    item['LRcount'] = str(sum(acquiredMasks['SRD']))
+    # Initial set up
+    saveAs = None
     item['corrMethod'] = dataset.Attributes['corrMethod']
-
-    ##
-    # Report stats
-    ##
-    if destinationPath is not None:
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'correlationDilution')
-        if not os.path.exists(graphicsPath):
-            os.makedirs(graphicsPath)
-    else:
-        graphicsPath = None
-        saveAs = None
-
 
     # Generate correlation to dilution for each batch subset - plot TIC and histogram of correlation to dilution
 
     # generate LRmask
     LRmask = generateLRmask(dataset)
 
-    # instantiate dictionarys
+    # instantiate dictionaries
     corLRbyBatch = {}  # to save correlations
     corLRsummary = {}  # summary of number of features with correlation above threshold
     corLRsummary['TotalOriginal'] = len(dataset.featureMask)
