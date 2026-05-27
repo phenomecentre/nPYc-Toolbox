@@ -25,9 +25,9 @@
 	{{ item['Excluded Details'].to_html() }}
 {% endif %}
 
-{% if 'StudySamples Exclusion Details' in item}
-	<h3>Study Samples Missing/Excluded</h3>
-	{{ item['StudySamples Exclusion Details'].to_html() }}
+{% if 'Missing/excluded SS Details' in item %}
+	<h3>Missing/Excluded Study Samples</h3>
+	{{ item.sampleSummary['Missing/excluded SS Details'].to_html() }}
 {% endif %}
 
 {% if 'UnknownType Details' in item %}

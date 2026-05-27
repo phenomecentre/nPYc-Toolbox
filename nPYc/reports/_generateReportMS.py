@@ -125,9 +125,9 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
         graphicsPath=None
 
         # Print initial summary info
-        print(item['ReportType'] + ' for ' + item['Name'])
+        print(item['ReportType'] + ' for ' + item['Name'] + '\n')
         print(str(item['Nsamples']) + ' samples')
-        print(str(item['Nfeatures']) + ' features')
+        print(str(item['Nfeatures']) + ' features\n')
 
     # Load env to get templates
     env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
@@ -154,7 +154,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
         template = env.get_template('MS_FinalSummaryReport_Abridged.html')
         _finalReport(msData, reportType=reportType, pcaModel=pcaModel, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif (reportType.lower() == 'final report peakpanther'):
-        template = env.get_template('MS_peakPantheR_FinalSummaryReport.html.html')
+        template = env.get_template('MS_peakPantheR_FinalSummaryReport.html')
         _finalReportPeakPantheR(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
 
 def _finalReport(dataset, reportType='final report', pcaModel=None, destinationPath=None, graphicsPath=None, item=None, template=None):

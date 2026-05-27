@@ -27,7 +27,7 @@
 <!--Summary of samples in final dataset-->
 <div class='content'>
 	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
-	{{ item.sampleSummary['Acquired'].to_html() }}
+	{{ item.sampleSummary['Dataset'].to_html() }}
 	<p>For details on sample nomenclature see:
 		<a href="https://npyc-toolbox.readthedocs.io/en/latest/studydesign.html" target="_blank" rel="noopener noreferrer">Sample Nomenclature</a>
 	</p>
@@ -111,12 +111,11 @@
 	</div>
 {% endif %}
 
-
 <!--Details of any missing/excluded samples-->
-{% if 'StudySamples Exclusion Details' in item.sampleSummary %}
+{% if 'Missing/excluded SS Details' in item.sampleSummary %}
 	<h2>Missing/Excluded Study Samples</h2>
 	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
-	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
+	{{ item.sampleSummary['Missing/excluded SS Details'].to_html() }}
 {% endif %}
 
 <!--Add annotated spectra/ion maps for all NPC assays-->
