@@ -53,7 +53,7 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
 
     if not hasattr(dataset.featureMetadata, orderFeaturesBy):
         raise npycToolboxError(
-            'Unable to label features by: ' + orderFeaturesBy + ' as column not present in `dataset.featureMetadata`')
+            'Unable to order features by: ' + orderFeaturesBy + ' as column not present in `dataset.featureMetadata`')
 
     # Copy required file for final report
     if destinationPath is not None:

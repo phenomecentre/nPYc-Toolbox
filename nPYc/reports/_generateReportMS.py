@@ -17,7 +17,6 @@ from ..plotting import plotIntensity, histogram, jointplotRSDvCorrelation, plotR
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd, sampleClassMasks, publishReport
 from ..utilities._internal import _vcorrcoef
-from ..utilities.ms import generateTypeRoleMasks
 from ..enumerations import AssayRole, SampleType
 from ._generateBasicPCAReport import generateBasicPCAReport
 from ..reports._finalReportPeakPantheR import _finalReportPeakPantheR
@@ -31,8 +30,8 @@ register_matplotlib_converters()
 
 from ..__init__ import __version__ as version
 
-def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy='Feature Name', orderFeaturesBy='rsdSP', withArtifactualFiltering=None, destinationPath=None,
-                      msDataCorrected=None, pcaModel=None, batch_correction_window=11, logy=False, colourSamplesBy='Dilution', colourSamplesByType='categorical'):
+def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy=None, orderFeaturesBy='rsdSP', withArtifactualFiltering=None, destinationPath=None,
+                      msDataCorrected=None, batch_correction_window=11, logy=False, colourSamplesBy='Dilution', colourSamplesByType='categorical'):
     """
     Summarise different aspects of an MS dataset
 
@@ -53,7 +52,6 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
     :param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
     :type destinationPath: None or str
     :param MSDataset msDataCorrected: Only if ``batch correction``, if msDataCorrected included will generate report post correction
-    :param PCAmodel pcaModel: Only if ``final report``, if PCAmodel object is available PCA scores plots coloured by sample type will be added to report
     """
 
     acceptableOptions = {'feature summary', 'correlation to dilution',
@@ -91,9 +89,13 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
         if not isinstance(msDataCorrected, MSDataset):
             raise TypeError('msDataCorrected must be an instance of nPYc.MSDataset')
 
-    if pcaModel is not None:
-        if not isinstance(pcaModel, ChemometricsPCA):
-            raise TypeError('pcaModel must be a ChemometricsPCA object')
+    if not hasattr(dataset.featureMetadata, orderFeaturesBy):
+        raise npycToolboxError(
+            'Unable to order features by: ' + orderFeaturesBy + ' as column not present in `dataset.featureMetadata`')
+
+    if (labelFeaturesBy) and not (hasattr(dataset.featureMetadata, labelFeaturesBy)):
+        raise npycToolboxError(
+            'Unable to label features by: ' + labelFeaturesBy + ' as column not present in `dataset.featureMetadata`')
 
     sns.set_style("whitegrid")
 
@@ -134,7 +136,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
 
     if reportType.lower() == 'feature summary':
         template = env.get_template('MS_FeatureSummaryReport.html')
-        _featureReport(msData, colourSamplesBy=colourSamplesBy, colourSamplesByType=colourSamplesByType, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+        _featureReport(msData, labelFeaturesBy=labelFeaturesBy, colourSamplesBy=colourSamplesBy, colourSamplesByType=colourSamplesByType, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'correlation to dilution':
         template = env.get_template('MS_CorrelationToDilutionReport.html')
         _featureCorrelationToDilutionReport(msData, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
@@ -146,40 +148,30 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
         _batchCorrectionAssessmentReport(msData, batch_correction_window=batch_correction_window, logy=logy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'batch correction summary':
         template = env.get_template('MS_BatchCorrectionSummaryReport.html')
-        _batchCorrectionSummaryReport(msData, msDataCorrected, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+        _batchCorrectionSummaryReport(msData, msDataCorrected, labelFeaturesBy=labelFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'final report':
         template = env.get_template('MS_FinalSummaryReport.html')
-        _finalReport(msData, reportType=reportType, pcaModel=pcaModel, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
-    elif reportType.lower() == 'final report abridged':
-        template = env.get_template('MS_FinalSummaryReport_Abridged.html')
-        _finalReport(msData, reportType=reportType, pcaModel=pcaModel, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+        _finalReport(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+    #elif reportType.lower() == 'final report abridged':
+    # TODO: remove final report abridged
+    #    template = env.get_template('MS_FinalSummaryReport_Abridged.html')
+    #    _finalReport(msData, orderFeaturesBy=orderFeaturesBy, pcaModel=pcaModel, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif (reportType.lower() == 'final report peakpanther'):
         template = env.get_template('MS_peakPantheR_FinalSummaryReport.html')
         _finalReportPeakPantheR(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
 
-def _finalReport(dataset, reportType='final report', pcaModel=None, destinationPath=None, graphicsPath=None, item=None, template=None):
+def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destinationPath=None, graphicsPath=None, item=None, template=None):
     """
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
 
     # Initial set up
     saveAs = None
-    figNo = 1
 
     # Copy required files for final report
     if destinationPath is not None:
         shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
                      os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
-
-    # If targeted assay can use compound name to label RSD plots
-    if hasattr(dataset.featureMetadata, 'Compound Name'):
-        featureName = 'Compound Name'
-        featName=True
-        #figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
-    else:
-        featureName = 'Feature Name'
-        featName=False
-        #figureSize=dataset.Attributes['figureSize']
 
     # Define sample masks
     sampleMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
@@ -273,128 +265,72 @@ def _finalReport(dataset, reportType='final report', pcaModel=None, destinationP
         display(item['FeatureSelectionTable'])
 
 
-    # ONLY 'final report': plot TIC by batch and TIC
-    if reportType.lower() == 'final report':
-
-        if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
-
-            # Figure: Acquisition Structure, TIC by sample and batch
-            if destinationPath:
-                item['finalTICbatches'] = os.path.join(graphicsPath,
-                                                       item['Name'] + '_ticBatch.' + dataset.Attributes[
-                                                           'figureFormat'])
-                saveAs = item['finalTICbatches']
-            else:
-                print('Figure ' + str(figNo) + ': Total sum of feature intensities for all samples (coloured by sample type and highlighed by batch)')
-                figNo = figNo + 1
-
-            plotIntensity(dataset,
-                          addViolin=True,
-                          addBatchShading=True,
-                          colourBy='SampleClass',
-                          colourType='categorical',
-                          colourDict=dataset.Attributes['sampleTypeColours'],
-                          markerDict=dataset.Attributes['sampleTypeMarkers'],
-                          savePath=saveAs)
-
-        else:
-
-            if not destinationPath:
-                print('Figure ' + str(figNo) + ': Total sum of feature intensities for all samples (coloured by sample type and highlighed by batch)')
-                print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
-                figNo = figNo+1
-
-        # Figure: Histogram of RSD in study pool samples
-        if destinationPath:
-            item['finalRsdHist'] = os.path.join(graphicsPath,item['Name'] + '_rsdHist.' + dataset.Attributes['figureFormat'])
-            saveAs = item['finalRsdHist']
-        else:
-            print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) histogram for study reference samples and all features in final dataset, segmented by abundance percentiles.')
-            figNo = figNo+1
-
-        histogram(dataset.rsdSP,
-                  xlabel='RSD',
-                  histBins=dataset.Attributes['histBins'],
-                  quantiles=dataset.Attributes['quantiles'],
-                  inclusionVector=numpy.exp(meanIntensities),
-                  logx=False,
-                  savePath=saveAs,
-                  figureFormat=dataset.Attributes['figureFormat'],
-                  dpi=dataset.Attributes['dpi'],
-                  figureSize=dataset.Attributes['figureSize'])
-
-    # Figure: Scatterplot of RSD vs correlation to dilution
-    if destinationPath:
-        item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
-                                                      item['Name'] + '_rsdVc2d.' + dataset.Attributes['figureFormat'])
-        saveAs = item['RsdVsCorrelationFigure']
-    else:
-        print('Figure ' + str(figNo) + ': Scatterplot of RSD in SR samples vs. correlation to dilution.')
-        figNo = figNo + 1
-
-    jointplotRSDvCorrelation(dataset.rsdSP,
-                             dataset.featureMetadata['correlationToDilution'].values,
-                             savePath=saveAs,
-                             figureFormat=dataset.Attributes['figureFormat'],
-                             dpi=dataset.Attributes['dpi'],
-                             figureSize=dataset.Attributes['figureSize'])
-
-    # Figure: Distribution of RSDs in SP and SS
+    # Figure 1: Distribution of RSD in all available samples
     if destinationPath:
         item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampletype.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
     else:
-        print('Figure ' + str(figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type), ordered by RSD in SR samples.')
-        figNo = figNo+1
+        print('Figure 1: Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type), ordered by ' + str(orderFeaturesBy))
+
+    # TODO: check what happens if rsdSP is not available
 
     plotRSDs(dataset,
-             featureName=featureName,
-             sortOrder='rsdSP',
+             featureName=labelFeaturesBy,
+             sortOrder=orderFeaturesBy,
              ratio=False,
              logx=True,
-             featName=featName,
              savePath=saveAs)
 
-    # Figure: Histogram of log mean abundance by sample type
+
+    # Figure 2: Histogram of log mean abundance by sample type
     if destinationPath:
         item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_intensityHist.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
     else:
-        print('Figure ' + str(figNo) + ': Feature intensity histogram for all samples and all features in final dataset (by sample type)')
-        figNo = figNo+1
+        print('Figure 2: Feature intensity histogram for all samples and all features in final dataset (by sample type)')
 
     plotAbundanceBySampleType(dataset,
                               saveAs)
 
-    # Figure: Ion map
+    # Figure 3: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
         if destinationPath:
             item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
             saveAs = item['finalIonMap']
         else:
-            print('Figure ' + str(figNo) + ': Ion map of all features (coloured by log median intensity).')
-            figNo = figNo+1
+            print('Figure 3: Ion map of all features (coloured by log median intensity).')
 
         plotIonMap(dataset,
                    savePath=saveAs)
 
     else:
         if not destinationPath:
+            print('Figure 3: Ion map of all features (coloured by log median intensity).')
             print('No Retention Time and m/z information, unable to plot the ion map.\n')
 
-    # ONLY 'final report' and ONLY if pcaModel available
 
-    if ((reportType.lower() == 'final report') and (pcaModel)):
+    # Figure 4: Scatterplot of RSD vs correlation to dilution (if available)
+    if not (dataset.featureMetadata['rsdSP'].isna().all()) and not (dataset.featureMetadata['correlationToDilution'].isna().all()):
 
         if destinationPath:
-            pcaPath = destinationPath
-
+            item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
+                                                          item['Name'] + '_rsdVc2d.' + dataset.Attributes['figureFormat'])
+            saveAs = item['RsdVsCorrelationFigure']
         else:
-            pcaPath = None
+            print('Figure 4: Scatterplot of RSD in SR samples vs. correlation to dilution.')
 
-        pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=figNo, destinationPath=pcaPath, fileNamePrefix='')
+        jointplotRSDvCorrelation(dataset.featureMetadata['rsdSP'].values,
+                                 dataset.featureMetadata['correlationToDilution'].values,
+                                 savePath=saveAs,
+                                 figureFormat=dataset.Attributes['figureFormat'],
+                                 dpi=dataset.Attributes['dpi'],
+                                 figureSize=dataset.Attributes['figureSize'])
+    else:
+        if not destinationPath:
+            print('Figure 4: Scatterplot of RSD in SR samples vs. correlation to dilution.')
+            print('No RSD SR and/or correlation to dilution factor info available, unable to plot figure.\n')
 
     # Table 3: Summary of samples excluded
     if not destinationPath:
@@ -406,14 +342,13 @@ def _finalReport(dataset, reportType='final report', pcaModel=None, destinationP
 
     # Write report to HTML if saving
     if destinationPath:
-
-        filename = os.path.join(destinationPath, dataset.name + '_' + reportType.lower.replace(' ', '_') + '.html')
+        filename = os.path.join(destinationPath, dataset.name + '_final_summary.html')
         publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
 
     return None
 
 
-def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='continuous', destinationPath=None, graphicsPath=None, item=None, template=None):
+def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', colourSamplesByType='continuous', destinationPath=None, graphicsPath=None, item=None, template=None):
     """
     Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
 
@@ -425,16 +360,6 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
     # Initial set up
     saveAs = None
     item['corrMethod'] = dataset.Attributes['corrMethod']
-
-    # If targeted assay can use compound name to label RSD plots
-    if hasattr(dataset.featureMetadata, 'cpdName'):
-        featureName = 'Compound Name'
-        featName=True
-        #figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
-    else:
-        featureName = 'Feature Name'
-        featName=False
-        #figureSize=dataset.Attributes['figureSize']
 
     # Define sample masks
     sampleMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
@@ -505,20 +430,46 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
         if not destinationPath:
             print('Figure 2: Sample Total Ion Count (TIC) and distribution (coloured by sample type).')
             print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
-            print('Figure 3: Acquisition structure (coloured by detector voltage).')
+            print('Figure 3: Total sum of feature intensities for all samples (coloured by ' + colourSamplesBy + ').')
             print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
+
+    # Figure 4: Histogram of RSD in SR samples by abundance percentiles (if more than 1 SR sample)
+    if ('Study Reference' in sampleMasks) and (sum(sampleMasks['Study Reference']) > 1):
+        if destinationPath:
+            item['RsdByPercFigure'] = os.path.join(graphicsPath,
+                                                   item['Name'] + '_rsdHist.' + dataset.Attributes['figureFormat'])
+            saveAs = item['RsdByPercFigure']
+        else:
+            print('Figure 4: Histogram of Residual Standard Deviation (RSD) in study reference (SR) samples, segmented by abundance percentiles.')
+
+        histogram(dataset.rsdSP,
+                  xlabel='RSD',
+                  histBins=dataset.Attributes['histBins'],
+                  quantiles=dataset.Attributes['quantiles'],
+                  inclusionVector=numpy.exp(meanIntensities),
+                  logx=False,
+                  xlim=(0, 100),
+                  savePath=saveAs,
+                  figureFormat=dataset.Attributes['figureFormat'],
+                  dpi=dataset.Attributes['dpi'],
+                  figureSize=dataset.Attributes['figureSize'])
+
+    else:
+        if not destinationPath:
+            print('Figure 4: Histogram of Residual Standard Deviation (RSD) in study reference (SR) samples, segmented by abundance percentiles.')
+            print('\x1b[31;1m Unable to calculate (insufficient SR samples present in dataset)\n\033[0;0m')
 
     # Correlation to dilution figures:
     if 'Linearity Reference' in sampleMasks:
 
-        # Figure 4: Histogram of correlation to dilution by abundance percentiles
+        # Figure 5: Histogram of correlation to dilution by abundance percentiles
         if destinationPath:
             item['CorrelationByPercFigure'] = os.path.join(graphicsPath,
                                                            item['Name'] + '_c2dHist.' + dataset.Attributes[
                                                                'figureFormat'])
             saveAs = item['CorrelationByPercFigure']
         else:
-            print('Figure 4: Histogram of ' + item[
+            print('Figure 5: Histogram of ' + item[
                 'corrMethod'] + ' correlation of features to serial dilution, segmented by percentile.')
 
         histogram(dataset.correlationToDilution,
@@ -531,14 +482,14 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
                   dpi=dataset.Attributes['dpi'],
                   figureSize=dataset.Attributes['figureSize'])
 
-        # Figure 5: TIC of linearity reference samples
+        # Figure 6: TIC of linearity reference samples
         if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
             if destinationPath:
                 item['TICinLRfigure'] = os.path.join(graphicsPath,
                                                      item['Name'] + '_ticSRD.' + dataset.Attributes['figureFormat'])
                 saveAs = item['TICinLRfigure']
             else:
-                print('Figure 5: Total sum of feature intensities for serial dilution (SRD) samples coloured by sample dilution.')
+                print('Figure 6: Total sum of feature intensities for serial dilution (SRD) samples coloured by sample dilution.')
 
             maskSample = copy.deepcopy(dataset.sampleMask)
             maskFeature = copy.deepcopy(dataset.featureMask)
@@ -559,61 +510,38 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
 
         else:
             if not destinationPath:
-                print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution.')
+                print('Figure 6: TIC of serial dilution (SRD) samples coloured by sample dilution.')
                 print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
 
+        # Figure 7: Scatterplot of RSD vs correlation to dilution
+        if 'Linearity Reference' in sampleMasks:
+            if destinationPath:
+                item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
+                                                              item['Name'] + '_rsdVc2d.' + dataset.Attributes[
+                                                                  'figureFormat'])
+                saveAs = item['RsdVsCorrelationFigure']
+            else:
+                print('Figure 7: Scatterplot of RSD vs correlation to dilution.')
+
+            jointplotRSDvCorrelation(dataset.rsdSP,
+                                     dataset.correlationToDilution,
+                                     savePath=saveAs,
+                                     figureFormat=dataset.Attributes['figureFormat'],
+                                     dpi=dataset.Attributes['dpi'],
+                                     figureSize=dataset.Attributes['figureSize'])
 
     else:
         if not destinationPath:
-            print('Figure 4: Histogram of ' + item[
+            print('Figure 5: Histogram of ' + item[
                 'corrMethod'] + ' correlation of features to serial dilution, segmented by percentile.')
             print('\x1b[31;1m Unable to calculate (no serial dilution samples present in dataset).\n\033[0;0m')
 
-            print('Figure 5: TIC of serial dilution (SRD) samples coloured by sample dilution')
+            print('Figure 6: TIC of serial dilution (SRD) samples coloured by sample dilution')
             print('\x1b[31;1m Unable to calculate (no serial dilution samples present in dataset).\n\033[0;0m')
 
-    # Figure 6: Histogram of RSD in SP samples by abundance percentiles
-    if destinationPath:
-        item['RsdByPercFigure'] = os.path.join(graphicsPath,
-                                               item['Name'] + '_rsdHist.' + dataset.Attributes['figureFormat'])
-        saveAs = item['RsdByPercFigure']
-    else:
-        print(
-            'Figure 6: Histogram of Residual Standard Deviation (RSD) in study reference (SR) samples, segmented by abundance percentiles.')
-
-    histogram(dataset.rsdSP,
-              xlabel='RSD',
-              histBins=dataset.Attributes['histBins'],
-              quantiles=dataset.Attributes['quantiles'],
-              inclusionVector=numpy.exp(meanIntensities),
-              logx=False,
-              xlim=(0, 100),
-              savePath=saveAs,
-              figureFormat=dataset.Attributes['figureFormat'],
-              dpi=dataset.Attributes['dpi'],
-              figureSize=dataset.Attributes['figureSize'])
-
-    # Figure 7: Scatterplot of RSD vs correlation to dilution
-    if 'Linearity Reference' in sampleMasks:
-        if destinationPath:
-            item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
-                                                          item['Name'] + '_rsdVc2d.' + dataset.Attributes[
-                                                              'figureFormat'])
-            saveAs = item['RsdVsCorrelationFigure']
-        else:
             print('Figure 7: Scatterplot of RSD vs correlation to dilution.')
+            print('\x1b[31;1m Unable to calculate (no serial dilution samples present in dataset).\n\033[0;0m')
 
-        jointplotRSDvCorrelation(dataset.rsdSP,
-                                 dataset.correlationToDilution,
-                                 savePath=saveAs,
-                                 figureFormat=dataset.Attributes['figureFormat'],
-                                 dpi=dataset.Attributes['dpi'],
-                                 figureSize=dataset.Attributes['figureSize'])
-
-    else:
-        if not destinationPath:
-            print('Figure 7: Scatterplot of RSD vs correlation to dilution.')
-            print('Unable to calculate (no serial dilution samples present in dataset).\n')
 
     if 'Peak Width' in dataset.featureMetadata.columns:
         # Figure 8: Histogram of chromatographic peak width
@@ -646,11 +574,10 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
         print('Figure 9: RSD distribution for all samples and all features in dataset (by sample type), ordered by RSD in SR samples.')
 
     plotRSDs(dataset,
-             featureName=featureName,
+             featureName=labelFeaturesBy,
              sortOrder='rsdSP',
              ratio=False,
              logx=True,
-             featName=featName,
              savePath=saveAs)
 
     # Figure 10: Ion map
@@ -666,7 +593,8 @@ def _featureReport(dataset, colourSamplesBy='Dilution', colourSamplesByType='con
 
     else:
         if not destinationPath:
-            print('No Retention Time and m/z information, unable to plot the ion map.\n')
+            print('\n')
+            print('\x1b[31;1m Unable to plot ion map (no retention time and m/z information available).\n\033[0;0m')
 
     # Write report to HTML if saving
     if destinationPath:
@@ -916,21 +844,13 @@ def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=T
     return None
 
 
-def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=None, graphicsPath=None, item=None, template=None):
+def _batchCorrectionSummaryReport(dataset, correctedDataset, labelFeaturesBy=None, destinationPath=None, graphicsPath=None, item=None, template=None):
     """
     Generates a report post batch correction with pertinent figures (TIC, RSD etc.) before and after.
     """
 
     # Initial set up
     saveAs = None
-
-    # If targeted assay can use compound name to label RSD plots
-    if hasattr(dataset.featureMetadata, 'Compound Name'):
-        featureName = 'Compound Name'
-        featName=True
-    else:
-        featureName = 'Feature Name'
-        featName=False
 
     # Define sample masks
     sampleMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
@@ -1067,11 +987,10 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
         print('Pre-correction.')
 
     plotRSDs(dataset,
-             featureName=featureName,
+             featureName=labelFeaturesBy,
              sortOrder='rsdSP',
              ratio=False,
              logx=True,
-             featName=featName,
              savePath=saveAs)
 
     # Post-correction
@@ -1083,11 +1002,10 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, destinationPath=Non
         print('Post-correction.')
 
     plotRSDs(correctedDataset,
-             featureName=featureName,
+             featureName=labelFeaturesBy,
              sortOrder='rsdSP',
              ratio=False,
              logx=True,
-             featName=featName,
              savePath=saveAs)
 
     # Write report to HTML if saving

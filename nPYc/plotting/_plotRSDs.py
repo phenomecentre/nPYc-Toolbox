@@ -15,7 +15,7 @@ from ._plotVariableScatter import plotVariableScatter
 from ..utilities._errorHandling import npycToolboxError
 
 
-def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=False, sortOrder='rsdSP', savePath=None, featName=False, hLines=None, by='SampleClass'):
+def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=None, withExclusions=False, sortOrder='rsdSP', savePath=None, hLines=None, by='SampleClass'):
 	"""
 	plotRSDs(dataset, ratio=False, savePath=None, color=None \*\*kwargs)
 
@@ -38,6 +38,14 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	:type savePath: None or str
 	:param bool featName: If ``True`` y-axis label is the feature Name, if ``False`` features are numbered.
 	"""
+
+	# If featureName is defined, then label by this, otherwise default label is numeric
+	# Define featName for axis labeling purposes
+	if featureName:
+		featName = True
+	else:
+		featureName = 'Feature Name'
+		featName = False
 
 	# Generate table of RSD values by sample type (by, default is 'SampleClass')
 	rsdTable = _plotRSDsHelper(dataset,
@@ -232,12 +240,14 @@ def _plotRSDsHelper(dataset, featureName='Feature Name', ratio=False, withExclus
 		if sortOrder == 'rsdSP':
 			msData.featureMetadata['rsdSP'] = msData.rsdSP
 
-		# Check that we have 'sortOrder' column in featureMetadata, and sort
-		if hasattr(msData.featureMetadata, sortOrder):
+		# Try to sort by 'sortOrder' column in featureMetadata
+		try:
 			msData.featureMetadata.sort_values(by=['Passing Selection', sortOrder], ascending=[False, True], inplace=True)
 
-		else:
-			msData.featureMetadata.sort_values(by=['Passing Selection'], ascending=[False], inplace=True)
+		except:
+			raise npycToolboxError(
+				'Unable to order features by: ' + sortOrder + ' please check column in `dataset.featureMetadata`')
+			#msData.featureMetadata.sort_values(by=['Passing Selection'], ascending=[False], inplace=True)
 
 		sortIndex = msData.featureMetadata.index
 		rsdTable = rsdTable.reindex(sortIndex)

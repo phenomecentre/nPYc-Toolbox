@@ -37,19 +37,29 @@
 	<p>Optional plot - not specified here.</p>
 {% endif %}
 
-<!--Figure 4: Histogram of Spearman correlation to dilution, segmented by abundance percentiles-->
-<p class="caption"><span class="heading">Figure&nbsp;4.</span> Histogram of {{ item.corrMethod }} correlation of features to serial dilution, segmented by percentile.</p>
+<!--Figure 4: Histogram of RSD in SP samples, segmented by abundance percentiles-->
+<p class="caption"><span class="heading">Figure&nbsp;4.</span> Histogram of Residual Standard Deviation (RSD) in {{ item.SPcount }} study reference (SR) samples, segmented by percentile.</p>
+{% if 'RsdByPercFigure' in item %}
+	<div class='figure'>
+		<img src="{{ item.RsdByPercFigure }}" alt="Histogram of RSD in {{ item.SPcount }} study reference (SR) samples, segmented by percentile.">
+	</div>
+{% else %}
+	<p>Unable to calculate (insufficient SR samples present in dataset).</p>
+{% endif %}
+
+<!--Figure 5: Histogram of Spearman correlation to dilution, segmented by abundance percentiles-->
+<p class="caption"><span class="heading">Figure&nbsp;5.</span> Histogram of {{ item.corrMethod }} correlation of features to serial dilution, segmented by percentile.</p>
 {% if 'CorrelationByPercFigure' in item %}
 	<div class='figure'>
 		<img src="{{ item.CorrelationByPercFigure }}" alt="Histogram of {{ item.corrMethod }} correlation of features to serial dilution, segmented by percentile.">
-</div>
+	</div>
 {% else %}
 	<p>Unable to calculate (no serial dilution samples present in dataset).</p>
 {% endif %}
 
 
-<!--Figure 5: TIC of linearity reference (LR) samples coloured by sample dilution-->
-<p class="caption"><span class="heading">Figure&nbsp;5.</span> Total Ion Count (TIC) of serial dilution (SRD) samples coloured by sample dilution.</p>
+<!--Figure 6: TIC of linearity reference (LR) samples coloured by sample dilution-->
+<p class="caption"><span class="heading">Figure&nbsp;6.</span> Total Ion Count (TIC) of serial dilution (SRD) samples coloured by sample dilution.</p>
 {% if 'TICinLRfigure' in item %}
 	<div class='figure'>
 		<img src="{{ item.TICinLRfigure}}" alt="TIC of serial dilution (SRD) samples coloured by sample dilution.">
@@ -57,12 +67,6 @@
 {% else %}
 	<p>Unable to calculate (no serial dilution samples present in dataset).</p>
 {% endif %}
-
-<!--Figure 6: Histogram of RSD in SP samples, segmented by abundance percentiles-->
-<div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;6.</span> Histogram of Residual Standard Deviation (RSD) in {{ item.SPcount }} study reference (SR) samples, segmented by percentile.</p>
-	<img src="{{ item.RsdByPercFigure }}" alt="Histogram of RSD in {{ item.SPcount }} study reference (SR) samples, segmented by percentile.">
-</div>
 
 <!--Figure 7: Scatterplot of RSD vs correlation to dilution-->
 <p class="caption"><span class="heading">Figure&nbsp;7.</span> Scatterplot of RSD vs. correlation to dilution.</p>
