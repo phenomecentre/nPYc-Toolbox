@@ -183,7 +183,6 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
              logx=True,
              sortOrder=orderFeaturesBy,
              withExclusions=False,
-             featName=True,
              hLines=hLine,
              savePath=saveAs)
     #figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35)))

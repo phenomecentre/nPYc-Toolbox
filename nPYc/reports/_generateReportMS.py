@@ -12,13 +12,11 @@ import shutil
 from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 from ..plotting import plotIntensity, histogram, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution, plotAbundanceBySampleType
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd, sampleClassMasks, publishReport
 from ..utilities._internal import _vcorrcoef
 from ..enumerations import AssayRole, SampleType
-from ._generateBasicPCAReport import generateBasicPCAReport
 from ..reports._finalReportPeakPantheR import _finalReportPeakPantheR
 from ..utilities._filters import blankFilter
 from ..batchAndROCorrection import correctMSdataset
@@ -43,7 +41,6 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
     * **'batch correction summary'** Generates a report post batch correction with pertinant figures (TIC, RSD etc.) before and after.
     * **'feature selection'** Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
     * **'final report'** Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
-    * **'final report abridged'** Generates an abridged summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
 
     :param MSDataset msDataTrue: MSDataset to report on
     :param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection``, ``final report`` or ``final report abridged``
@@ -57,7 +54,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
     acceptableOptions = {'feature summary', 'correlation to dilution',
                          'batch correction assessment',
                          'batch correction summary', 'feature selection',
-                         'final report', 'final report abridged',
+                         'final report',
                          'final report peakpanther'}
 
     # Check inputs
@@ -152,10 +149,6 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
     elif reportType.lower() == 'final report':
         template = env.get_template('MS_FinalSummaryReport.html')
         _finalReport(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
-    #elif reportType.lower() == 'final report abridged':
-    # TODO: remove final report abridged
-    #    template = env.get_template('MS_FinalSummaryReport_Abridged.html')
-    #    _finalReport(msData, orderFeaturesBy=orderFeaturesBy, pcaModel=pcaModel, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif (reportType.lower() == 'final report peakpanther'):
         template = env.get_template('MS_peakPantheR_FinalSummaryReport.html')
         _finalReportPeakPantheR(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
@@ -270,10 +263,9 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
         item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampletype.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
+        item['orderFeaturesBy'] = orderFeaturesBy
     else:
         print('Figure 1: Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type), ordered by ' + str(orderFeaturesBy))
-
-    # TODO: check what happens if rsdSP is not available
 
     plotRSDs(dataset,
              featureName=labelFeaturesBy,
