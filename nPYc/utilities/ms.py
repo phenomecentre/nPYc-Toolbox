@@ -2,9 +2,7 @@
 Utility functions.
 """
 import numpy
-import warnings
 import pandas
-from ..enumerations import AssayRole, SampleType
 
 def rsd(data):
 	"""
@@ -31,40 +29,6 @@ def rsd(data):
 	rsd[stdMask] = 0
 
 	return rsd
-
-
-def sequentialPrecision(data):
-	"""
-	Calculate percentage sequential precision for each column in *data*. Sequential precision for feature :math:`x` is defined as:
-
-	:math:`\mathit{{sp(x)}} = \\frac{\sqrt{(\\frac{1}{n-1} \sum_{i=1}^{n-1} (x_{i+1} - x_i)^2)/2}}{\mu_{x}} \\times 100`
-
-	:param numpy.ndarray data: *n* by *m* numpy array of measures, with features in columns, and samples in rows
-	:return: *m* vector of sequential precision measures
-	:rtype: numpy.ndarray
-	"""
-	# Calculate sample to sample difference
-	sequentialDifference = numpy.diff(data, axis=0)
-
-	# Calculate squared differences
-	sequentialDifference = numpy.square(sequentialDifference)
-
-	# Take the mean
-	sequentialDifference = numpy.mean(sequentialDifference, axis=0)
-	sequentialDifference = numpy.divide(sequentialDifference, 2.0)
-	sequentialDifference = numpy.sqrt(sequentialDifference)
-
-	# We handle divide by zeroes, so don't warn
-	with warnings.catch_warnings():
-		warnings.simplefilter("ignore")
-		sequentialDifference = numpy.divide(sequentialDifference, numpy.mean(data, axis=0))
-
-	sequentialDifference = numpy.multiply(sequentialDifference, 100)
-
-	# Replace NaNs with float MAX
-	sequentialDifference[numpy.isnan(sequentialDifference)] = numpy.finfo(numpy.float64).max
-
-	return sequentialDifference
 
 
 def generateLRmask(dataset):
@@ -112,84 +76,4 @@ def generateLRmask(dataset):
 					LRoutput[name] = seriesMask.values
 
 	return LRoutput
-
-
-def rsdsBySampleType(dataset, onlyPrecisionReferences=True, useColumn='SampleType'):
-	"""
-	Return percent RSDs calculated for the distinct class values in `useColumn`, defaults to the SampleType enums in 'SampleType'.
-
-	:param Dataset dataset: Dataset object to generate RSDs for.
-	:param bool onlyPrecisionReferences: If ``True`` only use samples with the 'AssayRole' PrecisionReference
-	:returns: Dict of RSDs for each group
-	:rtype: dict(str:numpy array)
-	"""
-	from ..enumerations import AssayRole
-	from ..objects import Dataset
-
-	if not isinstance(dataset, Dataset):
-		raise TypeError('dataset must be an instance of Dataset.')
-
-	if not useColumn in dataset.sampleMetadata.columns:
-		raise KeyError("%s is not a column in sampleMetadata." % (useColumn))
-
-	rsds = dict()
-	sampleTypes = dataset.sampleMetadata[useColumn].unique()
-	for sampleType in sampleTypes:
-
-		if onlyPrecisionReferences:
-			mask = numpy.logical_and(dataset.sampleMetadata[useColumn].values == sampleType,
-									 dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		else:
-			mask = dataset.sampleMetadata[useColumn].values == sampleType
-
-		mask = numpy.logical_and(mask, dataset.sampleMask)
-
-		if sum(mask) < 2:
-			continue
-
-		rsds[str(sampleType)] = rsd(dataset.intensityData[mask, :])
-
-	return rsds
-
-def generateTypeRoleMasks(sampleMetadata):
-	"""
-	Generate masks of standard NPC samples based on pre-defined combinations of 'SampleType' and 'AssayRole'
-	"""
-
-	# Number of samples
-	ns = sampleMetadata.shape[0]
-
-	try:
-		ALL = numpy.ones(ns).astype(bool)
-		SS = (sampleMetadata['SampleType'] == SampleType.StudySample) & (
-					sampleMetadata['AssayRole'] == AssayRole.Assay)
-		SR = (sampleMetadata['SampleType'] == SampleType.StudyPool) & (
-					sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
-		LTR = (sampleMetadata['SampleType'] == SampleType.ExternalReference) & (
-					sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
-		SRD = (sampleMetadata['AssayRole'] == AssayRole.LinearityReference) & (
-					sampleMetadata['SampleType'] == SampleType.StudyPool)
-		Blank = sampleMetadata['SampleType'] == SampleType.ProceduralBlank
-
-	except:
-		ALL = numpy.zeros(ns).astype(bool)
-		SS = numpy.zeros(ns).astype(bool)
-		SR = numpy.zeros(ns).astype(bool)
-		LTR = numpy.zeros(ns).astype(bool)
-		SRD = numpy.zeros(ns).astype(bool)
-		Blank = numpy.zeros(ns).astype(bool)
-
-	Unknown = (SS == False) & (SR == False) & (LTR == False) & (SRD == False) & (Blank == False)
-
-	TypeRoleMasks = {
-		'ALL': ALL,
-		'SS': SS,
-		'SR': SR,
-		'LTR': LTR,
-		'SRD': SRD,
-		'Blank': Blank,
-		'Unknown': Unknown
-	}
-
-	return TypeRoleMasks
 
