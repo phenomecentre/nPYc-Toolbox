@@ -66,8 +66,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 		msData.applyMasks()
 
 	# List unique classes in msData.sampleMetadata[colourBy]
-	uniq_classes = msData.sampleMetadata[colourBy].unique()
-	uniq = [str(i) for i in uniq_classes]
+	uniq = msData.sampleMetadata[colourBy].unique()
 
 	if colourType == 'categorical':
 
@@ -147,7 +146,6 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 
 	tic = numpy.sum(msData.intensityData[:, tempFeatureMask == True], axis=1)
 
-	# Colour by categorical class # TODO this doesn't seem to work??
 	if colourType == 'categorical':
 		palette = {}
 		sampleMasks = []
@@ -158,7 +156,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 							s=30,
 							c=colourDict[u],
 							alpha=opacity,
-							label=u)
+							label=abbrDict[u])
 
 			if addViolin:
 				sampleMasks.append((abbrDict[u], msData.sampleMetadata[colourBy] == u))
@@ -172,7 +170,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	# Colour by continuous class
 	else:
 
-		cmap = plt.cm.RdYlBu_r
+		cmap = plt.cm.turbo#RdYlBu_r
 
 		if colourType == 'continuous':
 			mincol = numpy.nanmin(msData.sampleMetadata[colourBy])

@@ -19,19 +19,19 @@
 </div>
 
 <!--Figure 2: Sample intensity TIC and distribution by sample type-->
-<p class="caption"><span class="heading">Figure&nbsp;2.</span> Sample TIC and distribution (coloured by sample type).</p>
+<p class="caption"><span class="heading">Figure&nbsp;2.</span> Total sum of feature intensities for all samples (coloured by sample type).</p>
 {% if 'SampleIntensityFigure' in item %}
 	<div class='figure'>
-		<img src="{{ item.SampleIntensityFigure }}" alt="Sample TIC and distribution (coloured by sample type).">
+		<img src="{{ item.SampleIntensityFigure }}" alt="Total sum of feature intensities for all samples (coloured by sample type).">
 	</div>
 {% else %}
 	<p>Acquisition Time/Run Order data not available to plot.</p>
 {% endif %}
 
-<p class="caption"><span class="heading">Figure&nbsp;3.</span> Acquisition structure (coloured by {{ item['colourSamplesBy'] }}).</p>
+<p class="caption"><span class="heading">Figure&nbsp;3.</span> Total sum of feature intensities for all samples (coloured by {{ item['colourSamplesBy'] }}) and shaded by acquisition batch (if available).</p>
 {% if 'AcquisitionStructureFigure' in item %}
 	<div class='figure'>
-		<img src="{{ item.AcquisitionStructureFigure }}" alt="Acquisition structure (coloured by {{ item['colourSamplesBy'] }}).">
+		<img src="{{ item.AcquisitionStructureFigure }}" alt="Total sum of feature intensities for all samples (coloured by {{ item['colourSamplesBy'] }}) and shaded by acquisition batch (if available).">
 	</div>
 {% else %}
 	<p>Optional plot - not specified here.</p>

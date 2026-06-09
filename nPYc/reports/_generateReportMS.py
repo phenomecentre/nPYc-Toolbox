@@ -405,7 +405,7 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
                 item['colourSamplesBy'] = colourSamplesBy
                 saveAs = item['AcquisitionStructureFigure']
             else:
-                print('Figure 3: Total sum of feature intensities for all samples (coloured by ' + colourSamplesBy + ').')
+                print('Figure 3: Total sum of feature intensities for all samples (coloured by ' + colourSamplesBy + ') and shaded by acquisition batch (if available).')
 
             # TIC all samples
             plotIntensity(dataset,
