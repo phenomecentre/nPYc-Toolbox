@@ -39,10 +39,14 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 	:param bool featName: If ``True`` y-axis label is the feature Name, if ``False`` features are numbered.
 	"""
 
-	# If featureName is defined, then label by this, otherwise default label is numeric
-	# Define featName for axis labeling purposes
+	# If featureName is defined, then label by this, otherwise default label is numeric (featName = False)
+	# Also increase size of figure for clarity, as long as there are not a large number of features
+	figureSize = dataset.Attributes['figureSize']
 	if featureName:
 		featName = True
+		if dataset.noFeatures < 350:
+			figureSize = (dataset.Attributes['figureSize'][0],
+			              dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35))
 	else:
 		featureName = 'Feature Name'
 		featName = False
@@ -107,7 +111,7 @@ def plotRSDs(dataset, featureName='Feature Name', ratio=False, logx=True, xlim=N
 						savePath=savePath,
 						figureFormat=dataset.Attributes['figureFormat'],
 						dpi=dataset.Attributes['dpi'],
-						figureSize=dataset.Attributes['figureSize'])
+						figureSize=figureSize)
 
 
 def plotRSDsInteractive(dataset, featureName='Feature Name', ratio=False, withExclusions=False, sortOrder='rsdSP', logx=True, by='SampleClass', destinationPath=None, autoOpen=False):

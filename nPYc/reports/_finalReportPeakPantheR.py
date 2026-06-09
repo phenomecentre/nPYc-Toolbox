@@ -185,7 +185,6 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
              withExclusions=False,
              hLines=hLine,
              savePath=saveAs)
-    #figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35)))
 
     if not destinationPath:
         if nfeaturesFailing != 0:
