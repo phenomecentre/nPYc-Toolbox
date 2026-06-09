@@ -1,17 +1,16 @@
 import matplotlib.pyplot as plt
 from ..plotting._violinPlot import _violinPlotHelper
-from ..enumerations import AssayRole, SampleType
-from ..utilities.ms import generateTypeRoleMasks
+from ..utilities import sampleClassMasks
+from matplotlib.colors import rgb2hex
 import numpy
 import math
 import copy
 
-def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Name', orderFeaturesBy='Feature Name', featureMask=None, sampleTypes=['SS', 'SP', 'ER'], logx=False, figures=None, savePath=None):
+def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Name', orderFeaturesBy='Feature Name', featureMask=None, figures=None, savePath=None):
 	"""
 	Plot the distribution (violin plots) of a set of features, e.g., peakPantheR outputs, coloured by sample type
 
-	:param MSDataset dataset: :py:class:`MSDataset`
-	:param bool logx: If ``True`` log-scale the x-axis
+	:param datasetOriginal dataset: :py:class:`MSDataset`
 	:param dict figures: If not ``None``, saves location of each figure for output in html report (see _generateMSReport.py)
 	"""
    
@@ -27,23 +26,26 @@ def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Na
 	nf = math.ceil(nv/nax)
 	plotNo = 0
 
-	# Define sample masks
-	acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
-
-	# Define sample masks
+	# Define sample type masks for all samples in dataset
+	acquiredMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
 	sampleMasks = []
-	palette = {}
+	palette = dataset.Attributes['sampleTypeColours']
 
-	# Plot data coloured by sample type
-	if sum(acquiredMasks['SS'] > 0) and 'SS' in sampleTypes:
-		sampleMasks.append(('SS', acquiredMasks['SS']))
-		palette['SS'] = dataset.Attributes['sampleTypeColours'][SampleType.StudySample]
-	if sum(acquiredMasks['SR'] > 0) and 'SP' in sampleTypes:
-		sampleMasks.append(('SR', acquiredMasks['SR']))
-		palette['SR'] = dataset.Attributes['sampleTypeColours'][SampleType.StudyPool]
-	if sum(acquiredMasks['LTR'] > 0) and 'ER' in sampleTypes:
-		sampleMasks.append(('LTR', acquiredMasks['LTR']))
-		palette['LTR'] = dataset.Attributes['sampleTypeColours'][SampleType.ExternalReference]
+	for key in acquiredMasks:
+
+		# Use abbreviation if available
+		if key in dataset.Attributes['sampleTypeAbbr']:
+			sampleMasks.append((dataset.Attributes['sampleTypeAbbr'][key], acquiredMasks[key]))
+
+		# Else use existing key
+		else:
+			sampleMasks.append((key, acquiredMasks[key]))
+
+	# Check all keys are in the palette, otherwise add
+	if not all(k in palette.keys() for k in acquiredMasks):
+		colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(acquiredMasks))))
+		for u in acquiredMasks:
+			palette[u] = rgb2hex(next(colors))
 
 	# If order of features specified, plot features ordered by FeatureMask, then by featureMetadata 'orderFeaturesBy' column values
 	if orderFeaturesBy:
@@ -82,7 +84,10 @@ def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Na
 				for maskIndex in range(len(sampleMasks)):
 					currentFeatureSampleMasks.append((sampleMasks[maskIndex][0], sampleMasks[maskIndex][1] & valid_values))
 				if valid_values.any():
-					_violinPlotHelper(axIXs[axNo], dataset.intensityData[:, sortIndex[plotNo]], currentFeatureSampleMasks, None, 'Sample Type', palette=palette, logy=False)
+					_violinPlotHelper(axIXs[axNo],
+									  dataset.intensityData[:, sortIndex[plotNo]],
+									  currentFeatureSampleMasks,
+									  None, 'Sample Type', palette=palette, logy=False)
 
 				axIXs[axNo].set_title(dataset.featureMetadata.loc[sortIndex[plotNo], labelFeaturesBy])
 

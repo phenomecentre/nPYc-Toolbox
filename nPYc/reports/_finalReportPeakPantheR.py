@@ -238,7 +238,6 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
         featureMask=dataset.featureMask,
         labelFeaturesBy=labelFeaturesBy,
         orderFeaturesBy=orderFeaturesBy,
-        logx=False,
         figures=figuresFeatureDistributionPassing,
         savePath=saveAs)
 
@@ -266,7 +265,6 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
             featureMask=dataset.featureMask == False,
             labelFeaturesBy=labelFeaturesBy,
             orderFeaturesBy=orderFeaturesBy,
-            logx=False,
             figures=figuresFeatureDistributionFailing,
             savePath=saveAs)
 

@@ -693,12 +693,8 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 					 ratio=False,
 					 logx=True,
 					 color='matchReport',
-					 featName=True,
 					 featureName = 'Feature Name',
-					 savePath=saveAs,
-					 figureFormat=tmpData.Attributes['figureFormat'],
-					 dpi=tmpData.Attributes['dpi'],
-					 figureSize=(tmpData.Attributes['figureSize'][0], tmpData.Attributes['figureSize'][1] * (tmpData.noFeatures / 35)))
+					 savePath=saveAs)
 
 		## Figure: Measured concentrations distribution, split by sample types.
 		temp = dict()
@@ -714,13 +710,8 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 		figuresFeatureDistribution = plotTargetedFeatureDistribution(
 				tmpData,
-				logx=False,
-				sampleTypes=['SS', 'ER'],
 				figures=figuresFeatureDistribution,
-				savePath=saveAs,
-				figureFormat=tData.Attributes['figureFormat'],
-				dpi=tData.Attributes['dpi'],
-				figureSize=tData.Attributes['figureSize'])
+				savePath=saveAs)
 
 
 		for key in figuresFeatureDistribution:
@@ -981,13 +972,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	figuresFeatureDistributionPassing = plotTargetedFeatureDistribution(
 		tData,
 		featureMask=tData.featureMetadata['Passing Selection'],
-		featureName=featureName,
-		logx=False,
 		figures=figuresFeatureDistributionPassing,
-		savePath=saveAs,
-		figureFormat=tData.Attributes['figureFormat'],
-		dpi=tData.Attributes['dpi'],
-		figureSize=tData.Attributes['figureSize'])
+		savePath=saveAs)
 
 	for key in figuresFeatureDistributionPassing:
 		if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistributionPassing[key]):
@@ -1013,13 +999,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 		figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(
 			tData,
 			featureMask=tData.featureMetadata['Passing Selection'] == False,
-			featureName=featureName,
-			logx=False,
 			figures=figuresFeatureDistributionFailing,
-			savePath=saveAs,
-			figureFormat=tData.Attributes['figureFormat'],
-			dpi=tData.Attributes['dpi'],
-			figureSize=tData.Attributes['figureSize'])
+			savePath=saveAs)
 
 		for key in figuresFeatureDistributionFailing:
 			if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistributionFailing[key]):
