@@ -10,7 +10,6 @@ import re
 import warnings
 import numbers
 from datetime import datetime, timedelta
-import logging
 import copy
 import networkx
 from .._toolboxPath import toolboxPath
@@ -19,10 +18,7 @@ from ..utilities import rsd, inferSampleClass
 from ..utilities._internal import _vcorrcoef
 from ..utilities.extractParams import extractParams
 from ..enumerations import VariableType, DatasetLevel, AssayRole, SampleType
-from ..utilities import removeTrailingColumnNumbering
 from ..utilities._filters import blankFilter
-from ..utilities.normalisation._normaliserABC import Normaliser
-from ..utilities.normalisation._nullNormaliser import NullNormaliser
 from ..utilities._errorHandling import npycToolboxError
 
 

@@ -375,6 +375,7 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
     plotAbundanceBySampleType(dataset,
                               saveAs)
 
+    # Acquisition structure figures
     if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
 
         # Figure 2: Sample intensity TIC and distribution by sample type
@@ -425,8 +426,11 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
             print('Figure 3: Total sum of feature intensities for all samples (coloured by ' + colourSamplesBy + ').')
             print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
 
-    # Figure 4: Histogram of RSD in SR samples by abundance percentiles (if more than 1 SR sample)
+
+    # RSD figures
     if ('Study Reference' in sampleMasks) and (sum(sampleMasks['Study Reference']) > 1):
+
+        # Figure 4: Histogram of RSD in SR samples by abundance percentiles (if more than 1 SR sample)
         if destinationPath:
             item['RsdByPercFigure'] = os.path.join(graphicsPath,
                                                    item['Name'] + '_rsdHist.' + dataset.Attributes['figureFormat'])
@@ -446,22 +450,43 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
                   dpi=dataset.Attributes['dpi'],
                   figureSize=dataset.Attributes['figureSize'])
 
+        # Figure 5: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type)
+        if destinationPath:
+            item['RSDdistributionFigure'] = os.path.join(graphicsPath,
+                                                         item['Name'] + '_rsdSampletype.' + dataset.Attributes[
+                                                             'figureFormat'])
+            saveAs = item['RSDdistributionFigure']
+        else:
+            print(
+                'Figure 5: RSD distribution for all samples and all features in dataset (by sample type), ordered by RSD in SR samples.')
+
+        plotRSDs(dataset,
+                 featureName=labelFeaturesBy,
+                 sortOrder='rsdSP',
+                 ratio=False,
+                 logx=True,
+                 savePath=saveAs)
+
+
     else:
         if not destinationPath:
             print('Figure 4: Histogram of Residual Standard Deviation (RSD) in study reference (SR) samples, segmented by abundance percentiles.')
             print('\x1b[31;1m Unable to calculate (insufficient SR samples present in dataset)\n\033[0;0m')
 
+            print('Figure 5: RSD distribution for all samples and all features in dataset (by sample type), ordered by RSD in SR samples.')
+            print('\x1b[31;1m Unable to calculate (insufficient SR samples present in dataset)\n\033[0;0m')
+
     # Correlation to dilution figures:
     if 'Linearity Reference' in sampleMasks:
 
-        # Figure 5: Histogram of correlation to dilution by abundance percentiles
+        # Figure 6: Histogram of correlation to dilution by abundance percentiles
         if destinationPath:
             item['CorrelationByPercFigure'] = os.path.join(graphicsPath,
                                                            item['Name'] + '_c2dHist.' + dataset.Attributes[
                                                                'figureFormat'])
             saveAs = item['CorrelationByPercFigure']
         else:
-            print('Figure 5: Histogram of ' + item[
+            print('Figure 6: Histogram of ' + item[
                 'corrMethod'] + ' correlation of features to serial dilution, segmented by percentile.')
 
         histogram(dataset.correlationToDilution,
@@ -474,14 +499,14 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
                   dpi=dataset.Attributes['dpi'],
                   figureSize=dataset.Attributes['figureSize'])
 
-        # Figure 6: TIC of linearity reference samples
+        # Figure 7: TIC of linearity reference samples
         if ('Acquired Time' in dataset.sampleMetadata.columns) or ('Run Order' in dataset.sampleMetadata.columns):
             if destinationPath:
                 item['TICinLRfigure'] = os.path.join(graphicsPath,
                                                      item['Name'] + '_ticSRD.' + dataset.Attributes['figureFormat'])
                 saveAs = item['TICinLRfigure']
             else:
-                print('Figure 6: Total sum of feature intensities for serial dilution (SRD) samples coloured by sample dilution.')
+                print('Figure 7: Total sum of feature intensities for serial dilution (SRD) samples coloured by sample dilution.')
 
             maskSample = copy.deepcopy(dataset.sampleMask)
             maskFeature = copy.deepcopy(dataset.featureMask)
@@ -502,18 +527,18 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
 
         else:
             if not destinationPath:
-                print('Figure 6: TIC of serial dilution (SRD) samples coloured by sample dilution.')
+                print('Figure 7: TIC of serial dilution (SRD) samples coloured by sample dilution.')
                 print('\x1b[31;1m Acquired Time/Run Order data not available to plot\n\033[0;0m')
 
-        # Figure 7: Scatterplot of RSD vs correlation to dilution
-        if 'Linearity Reference' in sampleMasks:
+        # Figure 8: Scatterplot of RSD vs correlation to dilution
+        if ('Study Reference' in sampleMasks) and (sum(sampleMasks['Study Reference']) > 1):
             if destinationPath:
                 item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
                                                               item['Name'] + '_rsdVc2d.' + dataset.Attributes[
                                                                   'figureFormat'])
                 saveAs = item['RsdVsCorrelationFigure']
             else:
-                print('Figure 7: Scatterplot of RSD vs correlation to dilution.')
+                print('Figure 8: Scatterplot of RSD vs correlation to dilution.')
 
             jointplotRSDvCorrelation(dataset.rsdSP,
                                      dataset.correlationToDilution,
@@ -522,27 +547,32 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
                                      dpi=dataset.Attributes['dpi'],
                                      figureSize=dataset.Attributes['figureSize'])
 
+        else:
+            if not destinationPath:
+                print('Figure 8: Scatterplot of RSD vs correlation to dilution.')
+                print('\x1b[31;1m Unable to calculate (insufficient SR samples present in dataset)\n\033[0;0m')
+
     else:
         if not destinationPath:
-            print('Figure 5: Histogram of ' + item[
+            print('Figure 6: Histogram of ' + item[
                 'corrMethod'] + ' correlation of features to serial dilution, segmented by percentile.')
             print('\x1b[31;1m Unable to calculate (no serial dilution samples present in dataset).\n\033[0;0m')
 
-            print('Figure 6: TIC of serial dilution (SRD) samples coloured by sample dilution')
+            print('Figure 7: TIC of serial dilution (SRD) samples coloured by sample dilution')
             print('\x1b[31;1m Unable to calculate (no serial dilution samples present in dataset).\n\033[0;0m')
 
-            print('Figure 7: Scatterplot of RSD vs correlation to dilution.')
+            print('Figure 8: Scatterplot of RSD vs correlation to dilution.')
             print('\x1b[31;1m Unable to calculate (no serial dilution samples present in dataset).\n\033[0;0m')
 
-
+    # Figure 9: Histogram of chromatographic peak width
     if 'Peak Width' in dataset.featureMetadata.columns:
-        # Figure 8: Histogram of chromatographic peak width
+
         if destinationPath:
             item['PeakWidthFigure'] = os.path.join(graphicsPath,
                                                    item['Name'] + '_peakWidth.' + dataset.Attributes['figureFormat'])
             saveAs = item['PeakWidthFigure']
         else:
-            print('Figure 8: Histogram of chromatographic peak width.')
+            print('Figure 9: Histogram of chromatographic peak width.')
 
         histogram(dataset.featureMetadata['Peak Width'],
                   xlabel='Peak Width (minutes)',
@@ -553,24 +583,9 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
                   figureSize=dataset.Attributes['figureSize'])
     else:
         if not destinationPath:
-            print('Figure 8: Histogram of chromatographic peak width.')
+            print('Figure 9: Histogram of chromatographic peak width.')
             print('\x1b[31;1m Peak width data not available to plot\n\033[0;0m')
 
-    # Figure 9: Residual Standard Deviation (RSD) distribution for all samples and all features in dataset (by sample type)
-    if destinationPath:
-        item['RSDdistributionFigure'] = os.path.join(graphicsPath,
-                                                     item['Name'] + '_rsdSampletype.' + dataset.Attributes[
-                                                         'figureFormat'])
-        saveAs = item['RSDdistributionFigure']
-    else:
-        print('Figure 9: RSD distribution for all samples and all features in dataset (by sample type), ordered by RSD in SR samples.')
-
-    plotRSDs(dataset,
-             featureName=labelFeaturesBy,
-             sortOrder='rsdSP',
-             ratio=False,
-             logx=True,
-             savePath=saveAs)
 
     # Figure 10: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
@@ -585,7 +600,7 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
 
     else:
         if not destinationPath:
-            print('\n')
+            print('Figure 10: Ion map of all features (coloured by log median intensity).')
             print('\x1b[31;1m Unable to plot ion map (no retention time and m/z information available).\n\033[0;0m')
 
     # Write report to HTML if saving
