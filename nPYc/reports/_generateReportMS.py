@@ -200,35 +200,45 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
 
-    nBatchCollect = len((numpy.unique(dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
+    # Report on acquisition structure
+    nBatchCollect = len((numpy.unique(
+        dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
     if nBatchCollect == 1:
         item['batchesCollect'] = '1 batch'
     else:
         item['batchesCollect'] = str(nBatchCollect) + ' batches'
 
-    if hasattr(dataset, 'fit'):
-        nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
-        if nBatchCorrect == 1:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOWESS regression fitted to SR samples in 1 batch)'
-        else:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOWESS regression fitted to SR samples in ' + str(nBatchCorrect) + ' batches)'
-    else:
-        item['batchesCorrect'] =  'Run-order and batch correction not required'
+    start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[
+                                       dataset.sampleMetadata['Run Order'] == min(
+                                           dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+    end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(
+        dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+    item['start'] = start.strftime('%d/%m/%y')
+    item['end'] = end.strftime('%d/%m/%y')
 
-    if 'Acquired Time' in dataset.sampleMetadata.columns:
-        start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
-        end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
-        item['start'] = start.strftime('%d/%m/%y')
-        item['end'] = end.strftime('%d/%m/%y')
-    else:
-        item['start'] = 'unknown'
-        item['end'] = 'unknown'
+    # Report on whether batch/run order correction applied
+    if hasattr(dataset, 'fit'):
+        nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[
+                                              ~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(
+            int))
+        if nBatchCorrect == 1:
+            item['batchesCorrect'] = '1 batch'
+        else:
+            item['batchesCorrect'] = str(nBatchCorrect) + ' batches'
+
+    # Report on whether feature filtering applied
+    if any(dataset.Attributes['featureFilters'].values()):
+        item['featuresFiltered'] = True
 
     if not destinationPath:
         print('\nFeature Summary')
 
         print('\nSamples acquired in ' + item['batchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
-        print(item['batchesCorrect'])
+
+        if 'batchesCorrect' in item:
+            print('\nRun-order and batch correction applied (LOWESS regression fitted to SR samples in ' + item['batchesCorrect'])
+        else:
+            print('\nRun-order and batch correction not applied')
 
         print('\nTable 2: Features selected based on the following criteria:')
         display(item['FeatureSelectionTable'])

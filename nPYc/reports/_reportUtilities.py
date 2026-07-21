@@ -12,7 +12,7 @@ def _generateFeatureFilteringSummary(dataset):
 
     # RSD in SR samples
     if dataset.Attributes['featureFilters']['rsdFilter']:
-        filters['RSD in SR samples'] = True
+        filters['Relative Standard Devation (RSD) in SR samples'] = True
         filters['RSD in SR Samples: Threshold'] = dataset.Attributes['filterParameters']['rsdThreshold']
     else:
         filters['Relative Standard Devation (RSD) in SR samples'] = False

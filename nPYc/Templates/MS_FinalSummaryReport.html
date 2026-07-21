@@ -42,19 +42,30 @@
 	{% else %}
 		<p>Run-order and batch correction not applied</p>
 	{% endif %}
-	<p></p>
-	<p>
-		For LC-MS datasets, filters are applied to ensure that only high quality features are retained, for more details see:
-		<a href="https://pubmed.ncbi.nlm.nih.gov/27479709/" target="_blank" rel="noopener noreferrer">Lewis et al. 2016</a>
-		In brief, features are filtered on three key criteria:
-		<ol type="1">
-			<li>Relative Standard Deviation, RSD (calculated across repeat injections of the SR sample), assesses that features are measured precisely</li>
-  			<li>Correlation to dilution factor (calculated from SR samples acquired at known dilution factors), assess that features are measured relative to their true abundance</li>
-			<li>Comparing RSD in SR and SS, assesses that the biological variance (RSD in SS) exceeds the analytical variance (RSD in SR)</li>
-		</ol>
-		For more details see:
-		<a href="https://npyc-toolbox.readthedocs.io/en/latest/reports.html#feature-summary-report-lc-ms-datasets" target="_blank" rel="noopener noreferrer">Feature Quality Assessment</a>
-	</p>
+
+	{% if 'featuresFiltered' in item %}
+		<p>
+			For LC-MS datasets, filters are applied to ensure that only high quality features are retained, for more details see:
+			<a href="https://pubmed.ncbi.nlm.nih.gov/27479709/" target="_blank" rel="noopener noreferrer">Lewis et al. 2016</a>
+			In brief, features are filtered on three key criteria:
+			<ol type="1">
+				<li>Relative Standard Deviation, RSD (calculated across repeat injections of the SR sample), assesses that features are measured precisely</li>
+				<li>Correlation to dilution factor (calculated from SR samples acquired at known dilution factors), assess that features are measured relative to their true abundance</li>
+				<li>Comparing RSD in SR and SS, assesses that the biological variance (RSD in SS) exceeds the analytical variance (RSD in SR)</li>
+			</ol>
+			For more details see:
+			<a href="https://npyc-toolbox.readthedocs.io/en/latest/reports.html#feature-summary-report-lc-ms-datasets" target="_blank" rel="noopener noreferrer">Feature Quality Assessment</a>
+		</p>
+	{% else %}
+		<p>
+			Important note: owing to sample number/volume limitations samples were acquired without our usual quality control samples and procedures.
+			Samples have been acquired in triplicate to enable assessment of analytical/instrumental performance, however, feature quality
+			according to recommended metrics (see:
+			<a href="https://pubmed.ncbi.nlm.nih.gov/27479709/" target="_blank" rel="noopener noreferrer">Lewis et al. 2016</a>)
+			can not be determined. Any observations can be interpreted qualitatively, for more confidence in feature quality
+			and robust analyses, larger sample numbers/volumes should be collected and analysed if possible.
+		</p>
+	{% endif %}
 
 	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
 	{{ item['FeatureSelectionTable'].to_html() }}
