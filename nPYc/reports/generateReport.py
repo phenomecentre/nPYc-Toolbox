@@ -6,7 +6,7 @@ from ..reports._generateReportNMR import _generateReportNMR
 from ..reports._generateReportTargeted import _generateReportTargeted
 from ..utilities.generic import createDestinationPath
 
-def generateReport(data, reportType, destinationPath=None, **kwargs):
+def generateReport(data, reportType, destinationPath=None, autoOpen=False, **kwargs):
 	"""
 	Generates one of a range of reports visualising different qualities of the dataset. Reports can be plotted interactively, or saved to disk.
 
@@ -67,7 +67,7 @@ def generateReport(data, reportType, destinationPath=None, **kwargs):
 	# Generate method specific summary report
 	else:
 		if isinstance(data, MSDataset):
-			_generateReportMS(data, reportType.lower(), destinationPath=destinationPath, **kwargs)
+			_generateReportMS(data, reportType.lower(), destinationPath=destinationPath, autoOpen=autoOpen, **kwargs)
 		if isinstance(data, NMRDataset):
 			_generateReportNMR(data, reportType.lower(), destinationPath=destinationPath, **kwargs)
 		if isinstance(data, TargetedDataset):

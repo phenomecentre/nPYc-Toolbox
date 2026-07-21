@@ -40,15 +40,11 @@ def generateLRmask(dataset):
 	"""
 	from ..enumerations import AssayRole, SampleType
 
-	if dataset.corrExclusions is None:
-		raise ValueError('dataset.corrExclusions is not defined')
-
 	# instantiate sample mask dictionary
 	LRoutput = dict()
 
 	if not 'Dilution Series' in dataset.sampleMetadata.columns:
 		lrMask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
-		lrMask = numpy.logical_and(lrMask, dataset.corrExclusions)
 		LRoutput['All Dilution Samples'] = lrMask
 
 	else:
@@ -76,4 +72,3 @@ def generateLRmask(dataset):
 					LRoutput[name] = seriesMask.values
 
 	return LRoutput
-

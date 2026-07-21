@@ -16,6 +16,7 @@ from ..plotting import plotIntensity, histogram, jointplotRSDvCorrelation, plotR
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd, sampleClassMasks, publishReport
 from ..utilities._internal import _vcorrcoef
+from ..reports._reportUtilities import _generateFeatureFilteringSummary
 from ..enumerations import AssayRole, SampleType
 from ..reports._finalReportPeakPantheR import _finalReportPeakPantheR
 from ..utilities._filters import blankFilter
@@ -28,12 +29,14 @@ register_matplotlib_converters()
 
 from ..__init__ import __version__ as version
 
-def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy=None, orderFeaturesBy='rsdSP', withArtifactualFiltering=None, destinationPath=None,
+def _generateReportMS(dataset, reportType, withExclusions=False,
+                      labelFeaturesBy=None, orderFeaturesBy='rsdSP', withArtifactualFiltering=None,
+                      destinationPath=None, autoOpen=False,
                       msDataCorrected=None, batch_correction_window=11, logy=False, colourSamplesBy='Dilution', colourSamplesByType='categorical'):
     """
     Summarise different aspects of an MS dataset
 
-    Generate reports for ``feature summary``, ``correlation to dilution``, ``batch correction assessment``, ``batch correction summary``, ``feature selection``, ``final report`` or ``final report abridged``
+    Generate reports for ``feature summary``, ``correlation to dilution``, ``batch correction assessment``, ``batch correction summary``, ``feature selection`` or ``final report``
 
     * **'feature summary'** Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
     * **'correlation to dilution'** Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
@@ -43,7 +46,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
     * **'final report'** Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
 
     :param MSDataset msDataTrue: MSDataset to report on
-    :param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection``, ``final report`` or ``final report abridged``
+    :param str reportType: Type of report to generate, one of ``feature summary``, ``correlation to dilution``, ``batch correction``, ``feature selection`` or ``final report``
     :param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
     :param None or bool withArtifactualFiltering: If ``None`` use the value from ``Attributes['artifactualFilter']``. If ``True`` apply artifactual filtering to the ``feature selection`` report and ``final report``
     :param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
@@ -133,7 +136,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
 
     if reportType.lower() == 'feature summary':
         template = env.get_template('MS_FeatureSummaryReport.html')
-        _featureReport(msData, labelFeaturesBy=labelFeaturesBy, colourSamplesBy=colourSamplesBy, colourSamplesByType=colourSamplesByType, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+        _featureReport(msData, labelFeaturesBy=labelFeaturesBy, colourSamplesBy=colourSamplesBy, colourSamplesByType=colourSamplesByType, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'correlation to dilution':
         template = env.get_template('MS_CorrelationToDilutionReport.html')
         _featureCorrelationToDilutionReport(msData, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
@@ -142,18 +145,18 @@ def _generateReportMS(dataset, reportType, withExclusions=False, labelFeaturesBy
         _featureSelectionReport(msData, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'batch correction assessment':
         template = env.get_template('MS_BatchCorrectionAssessmentReport.html')
-        _batchCorrectionAssessmentReport(msData, batch_correction_window=batch_correction_window, logy=logy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+        _batchCorrectionAssessmentReport(msData, batch_correction_window=batch_correction_window, logy=logy, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'batch correction summary':
         template = env.get_template('MS_BatchCorrectionSummaryReport.html')
-        _batchCorrectionSummaryReport(msData, msDataCorrected, labelFeaturesBy=labelFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+        _batchCorrectionSummaryReport(msData, msDataCorrected, labelFeaturesBy=labelFeaturesBy, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'final report':
         template = env.get_template('MS_FinalSummaryReport.html')
-        _finalReport(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+        _finalReport(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template)
     elif (reportType.lower() == 'final report peakpanther'):
         template = env.get_template('MS_peakPantheR_FinalSummaryReport.html')
-        _finalReportPeakPantheR(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, graphicsPath=graphicsPath, item=item, template=template)
+        _finalReportPeakPantheR(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template)
 
-def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destinationPath=None, graphicsPath=None, item=None, template=None):
+def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destinationPath=None, autoOpen=False, graphicsPath=None, item=None, template=None):
     """
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
@@ -193,34 +196,7 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
         print('\nDetails of any missing/excluded study samples given at the end of the report\n')
 
     # Table 2: Feature Selection parameters
-
-    FeatureSelectionTable = pandas.DataFrame(
-        data=['yes', dataset.Attributes['corrMethod'], dataset.Attributes['corrThreshold']],
-        index=['Correlation to Dilution', 'Correlation to Dilution: Method', 'Correlation to Dilution: Threshold'],
-        columns=['Value Applied'])
-
-    if sum(dataset.corrExclusions) != dataset.noSamples:
-        temp = ', '.join(dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
-        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-                                               pandas.DataFrame(data=temp, index=['Correlation to Dilution: Sample Exclusions'], columns=['Value Applied'])])
-    else:
-        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-                                               pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied'])])
-    FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-                                           pandas.DataFrame(data=['yes', dataset.Attributes['filterParameters']['rsdThreshold'], 'yes'],
-                                                            index=['Relative Standard Devation (RSD)', 'RSD of SR Samples: Threshold',
-                                                                   'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied'])])
-    if 'blankFilter' in dataset.Attributes:
-        if dataset.Attributes['featureFilters']['blankFilter']:
-            FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-                                                   pandas.DataFrame(data=['yes'], index=['Blank Filtering'], columns=['Value Applied'])])
-    if dataset.Attributes['featureFilters']['artifactualFilter']:
-        FeatureSelectionTable = pandas.concat([FeatureSelectionTable, pandas.DataFrame(
-            data=['yes', dataset.Attributes['filterParameters']['deltaMzArtifactual'], dataset.Attributes['filterParameters']['overlapThresholdArtifactual'],
-                  dataset.Attributes['filterParameters']['corrThresholdArtifactual']],
-            index=['Artifactual Filtering', 'Artifactual Filtering: Delta m/z',
-                   'Artifactual Filtering: Overlap Threshold', 'Artifactual Filtering: Correlation Threshold'],
-            columns=['Value Applied'])])
+    FeatureSelectionTable = _generateFeatureFilteringSummary(dataset)
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
 
@@ -256,7 +232,7 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
 
         print('\nTable 2: Features selected based on the following criteria:')
         display(item['FeatureSelectionTable'])
-
+        print('\n')
 
     # Figure 1: Distribution of RSD in all available samples
     if destinationPath:
@@ -335,12 +311,12 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
     # Write report to HTML if saving
     if destinationPath:
         filename = os.path.join(destinationPath, dataset.name + '_final_summary.html')
-        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     return None
 
 
-def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', colourSamplesByType='continuous', destinationPath=None, graphicsPath=None, item=None, template=None):
+def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', colourSamplesByType='continuous', destinationPath=None, autoOpen=False, graphicsPath=None, item=None, template=None):
     """
     Generates feature summary report, plots figures including those for feature abundance, sample TIC and acquisition structure, correlation to dilution, RSD and an ion map.
 
@@ -607,12 +583,12 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
     if destinationPath:
 
         filename = os.path.join(destinationPath, dataset.name + '_feature_summary.html')
-        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     return None
 
 
-def _featureSelectionReport(dataset, withArtifactualFiltering=False, destinationPath=None, graphicsPath=None, item=None, template=None):
+def _featureSelectionReport(dataset, withArtifactualFiltering=False, destinationPath=None, autoOpen=False, graphicsPath=None, item=None, template=None):
     """
     Report on feature quality
     Generates a summary of the number of features passing feature selection (with current settings as definite in the SOP), and a heatmap showing how this number would be affected by changes to RSD and correlation to dilution thresholds.
@@ -739,7 +715,7 @@ def _featureSelectionReport(dataset, withArtifactualFiltering=False, destination
     if destinationPath:
 
         filename = os.path.join(destinationPath, dataset.name + '_feature_selection.html')
-        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     else:
         print('Summary of current feature filtering parameters and number of features passing at each stage\n')
@@ -757,7 +733,7 @@ def _featureSelectionReport(dataset, withArtifactualFiltering=False, destination
     return None
 
 
-def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=True, destinationPath=None, graphicsPath=None, item=None, template=None):
+def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=True, destinationPath=None, autoOpen=False, graphicsPath=None, item=None, template=None):
     """
     Generates a report before batch correction showing TIC overall and intensity and batch correction fit for a subset of features, to aid specification of batch start and end points.
     """
@@ -846,12 +822,12 @@ def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=T
     if destinationPath:
 
         filename = os.path.join(destinationPath, dataset.name + '_batch_correction_assessment.html')
-        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     return None
 
 
-def _batchCorrectionSummaryReport(dataset, correctedDataset, labelFeaturesBy=None, destinationPath=None, graphicsPath=None, item=None, template=None):
+def _batchCorrectionSummaryReport(dataset, correctedDataset, labelFeaturesBy=None, destinationPath=None, autoOpen=False, graphicsPath=None, item=None, template=None):
     """
     Generates a report post batch correction with pertinent figures (TIC, RSD etc.) before and after.
     """
@@ -1019,12 +995,12 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, labelFeaturesBy=Non
     if destinationPath:
 
         filename = os.path.join(destinationPath, dataset.name + '_batch_correction_summary.html')
-        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     return None
 
 
-def _featureCorrelationToDilutionReport(dataset, destinationPath=None, graphicsPath=None, item=None, template=None):
+def _featureCorrelationToDilutionReport(dataset, destinationPath=None, autoOpen=False, graphicsPath=None, item=None, template=None):
     """
     Generates a more detailed report on correlation to dilution, broken down by batch subset with TIC, detector voltage, a summary, and heatmap indicating potential saturation or other issues.
     """
@@ -1199,7 +1175,7 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None, graphicsP
     if destinationPath:
 
         filename = os.path.join(destinationPath, dataset.name + '_correlation_to_dilution.html')
-        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     return None
 

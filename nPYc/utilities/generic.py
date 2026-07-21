@@ -3,6 +3,7 @@ Generic Utility functions
 """
 import json
 import os
+import webbrowser
 import numpy as np
 import re
 from ..enumerations import AssayRole, SampleType
@@ -102,7 +103,7 @@ def sampleClassMasks(sampleMetadata, on='SampleClass'):
 	return sampleClassMasks
 
 
-def publishReport(item, destinationPath, graphicsPath, template, attributes, filename, version):
+def publishReport(item, destinationPath, graphicsPath, template, attributes, filename, version, autoOpen=False):
 	"""
 	Publishes html version of reports
 
@@ -124,3 +125,6 @@ def publishReport(item, destinationPath, graphicsPath, template, attributes, fil
 	f.close()
 
 	copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+
+	if autoOpen:
+		webbrowser.open('file://' + os.path.realpath(filename))

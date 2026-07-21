@@ -12,12 +12,13 @@ from ..plotting import plotRSDs, plotIonMap, plotTargetedFeatureDistribution, pl
 from ._generateSampleReport import _generateSampleReport
 from ..utilities._errorHandling import npycToolboxError
 from ..utilities import publishReport
+from ..reports._reportUtilities import _generateFeatureFilteringSummary
 
 from ..__init__ import __version__ as version
 
 
 def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeaturesBy='rsdSP',
-                            destinationPath=None, graphicsPath=None, item=None, template=None):
+                            destinationPath=None, autoOpen=False, graphicsPath=None, item=None, template=None):
     """
     Summarise different aspects of an MS dataset
 
@@ -98,28 +99,7 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
         print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
     # Table 2: Feature Selection parameters
-    FeatureSelectionTable = pandas.DataFrame(
-        data=['yes', dataset.Attributes['corrMethod'], dataset.Attributes['corrThreshold']],
-        index=['Correlation to Dilution', 'Correlation to Dilution: Method', 'Correlation to Dilution: Threshold'],
-        columns=['Value Applied'])
-
-    if sum(dataset.corrExclusions) != dataset.noSamples:
-        temp = ', '.join(dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
-        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-                                               pandas.DataFrame(data=temp,
-                                                                index=['Correlation to Dilution: Sample Exclusions'],
-                                                                columns=['Value Applied'])])
-    else:
-        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-                                               pandas.DataFrame(data=['none'],
-                                                                index=['Correlation To Dilution: Sample Exclusions'],
-                                                                columns=['Value Applied'])])
-    FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-                                           pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
-                                                            index=['Relative Standard Devation (RSD)',
-                                                                   'RSD of SR Samples: Threshold',
-                                                                   'RSD of SS Samples > RSD of SR Samples'],
-                                                            columns=['Value Applied'])])
+    FeatureSelectionTable = _generateFeatureFilteringSummary(dataset)
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
 
@@ -135,14 +115,9 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
                                               ~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(
             int))
         if nBatchCorrect == 1:
-            item[
-                'batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in 1 batch)'
+            item['batchesCorrect'] = '1 batch'
         else:
-            item[
-                'batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in ' + str(
-                nBatchCorrect) + ' batches)'
-    else:
-        item['batchesCorrect'] = 'Run-order and batch correction not required'
+            item['batchesCorrect'] = str(nBatchCorrect) + ' batches)'
 
     start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[
                                        dataset.sampleMetadata['Run Order'] == min(
@@ -285,6 +260,6 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
     # Write report to HTML if saving
     if destinationPath:
         filename = os.path.join(destinationPath, dataset.name + '_feature_report_peakpanther.html')
-        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version)
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     return None

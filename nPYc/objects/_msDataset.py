@@ -78,7 +78,6 @@ class MSDataset(Dataset):
 		else:
 			raise NotImplementedError("Unfortunately '%s' is not yet recognised as an input format to nPYc.MSDataset." % fileType)
 
-		self.corrExclusions = None
 		self._correlationToDilution = numpy.array(None)
 		try:
 			self.Attributes['artifactualFilter'] = (self.Attributes['artifactualFilter'] == 'True')
@@ -201,9 +200,6 @@ class MSDataset(Dataset):
 		:return: Vector of feature correlations to dilution
 		:rtype: numpy.ndarray
 		"""
-		if self.corrExclusions is None:
-			self.corrExclusions = copy.deepcopy(self.sampleMask)
-			self.__corrExclusions = copy.deepcopy(self.corrExclusions)
 
 		lrMask = numpy.logical_and(self.sampleMetadata['SampleType'] == SampleType.StudyPool,
 								   self.sampleMetadata['AssayRole'] == AssayRole.LinearityReference)
@@ -211,24 +207,27 @@ class MSDataset(Dataset):
 		if sum(lrMask) == 0:
 			self._correlationToDilution = numpy.ones(shape=self.featureMask.shape)
 			print('No StudyPool samples defined with AssayRole equal to LinearityReference')
+
 		else:
+			self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'])
+			self.__corrMethod = self.Attributes['corrMethod']
 
-			if not self._correlationToDilution.any():
-
-				self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'],
-																		 exclusions=self.corrExclusions)
-
-				self.__corrMethod = self.Attributes['corrMethod']
-				self.__corrExclusions = self.corrExclusions
-
-			elif (self.__corrMethod != self.Attributes['corrMethod']) | (
-					numpy.array_equal(self.__corrExclusions, self.corrExclusions) == False):
-
-				self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'],
-																		 exclusions=self.corrExclusions)
-
-				self.__corrMethod = self.Attributes['corrMethod']
-				self.__corrExclusions = copy.deepcopy(self.corrExclusions)
+			# if not self._correlationToDilution.any():
+			#
+			# 	self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'],
+			# 															 exclusions=self.corrExclusions)
+			#
+			# 	self.__corrMethod = self.Attributes['corrMethod']
+			# 	#self.__corrExclusions = self.corrExclusions
+			#
+			# elif (self.__corrMethod != self.Attributes['corrMethod']) | (
+			# 		numpy.array_equal(self.__corrExclusions, self.corrExclusions) == False):
+			#
+			# 	self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'],
+			# 															 exclusions=self.corrExclusions)
+			#
+			# 	self.__corrMethod = self.Attributes['corrMethod']
+			# 	self.__corrExclusions = copy.deepcopy(self.corrExclusions)
 
 		return self._correlationToDilution
 
@@ -419,12 +418,6 @@ class MSDataset(Dataset):
 				raise TypeError(
 					'overlapThresholdArtifactual must be a number , %s provided' % (type(overlapThresholdArtifactual)))
 
-		# under development
-		# if aggregateRedundantFeatures is True:
-		# if self.VariableType != VariableType.Discrete:
-		#		raise TypeError('aggregateRedundantFeatures is only applicable to MSDataset objects containing data of type \'Discrete\'.')
-		#	self.Attributes['overlapThresholdArtifactual'] = overlapThresholdArtifactual
-
 		if filterFeatures:
 
 			self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False,
@@ -437,7 +430,11 @@ class MSDataset(Dataset):
 												   'deltaMzArtifactual': None}
 
 			# Keep all manual feature exclusions and regenerate the proper tests
-			featureMask = numpy.copy(~self.featureMetadata['User Excluded'].values)
+			#featureMask = numpy.copy(~self.featureMetadata['User Excluded'].values)
+
+			# I think that it should be using the self.featureMask as a starting point, the 'User Excluded' values are
+			# never set from what I can see!
+			featureMask = numpy.copy(self.featureMask)
 
 			if featureFilters['rsdFilter'] is True:
 				self.featureMetadata['rsdFilter'] = (self.rsdSP <= rsdThreshold)
@@ -469,7 +466,7 @@ class MSDataset(Dataset):
 				featureMask &= self.featureMetadata['correlationToDilutionFilter'].values
 
 				self.Attributes['featureFilters']['correlationToDilutionFilter'] = True
-				self.Attributes['filterParameters']['corThreshold'] = correlationThreshold
+				self.Attributes['filterParameters']['corrThreshold'] = correlationThreshold
 				self.Attributes['filterParameters']['corrMethod'] = self.Attributes['corrMethod']
 
 				# Only replace self.featureMetadata['correlationToDilution'] if self.correlationToDilution is not empty
@@ -1554,14 +1551,13 @@ class MSDataset(Dataset):
 		self.sampleMetadata.loc[:, 'Correction Batch'] = newBatch
 
 	def __correlateToDilution(self, method='pearson', sampleType=SampleType.StudyPool,
-							  assayRole=AssayRole.LinearityReference, exclusions=True):
+							  assayRole=AssayRole.LinearityReference):
 		"""
 		Calculates correlation of feature intesities to dilution.
 
-		If a 'Dilution Series' column is present in sampleMetadata, correlation are calcualted on each sub-series, then averaged, otherwise they are
+		If a 'Dilution Series' column is present in sampleMetadata, correlation are calculated on each sub-series, then averaged, otherwise they are
 
 		:params str method: 'pearson' or 'spearman'
-		:params list exclusion: list of Linarity Reference sample subsets to mask from correlation calculation
 		"""
 
 		# Check inputs
@@ -1570,14 +1566,10 @@ class MSDataset(Dataset):
 		if not isinstance(method, str) & (method in {'pearson', 'spearman'}):
 			raise ValueError('method must be == \'pearson\' or \'spearman\'')
 
+		# If individual dilution series are not defined, consider all LR samples together
 		if not 'Dilution Series' in self.sampleMetadata.columns:
-			##
-			# If indervidual dilution series are not defined, consider all LR samples together
-			##
 			lrMask = numpy.logical_and(self.sampleMetadata['SampleType'] == sampleType,
 									   self.sampleMetadata['AssayRole'] == assayRole)
-			lrMask = numpy.logical_and(lrMask,
-									   exclusions)
 
 			if sum(lrMask) == 0:
 				raise ValueError('No %s samples defined with an AssayRole of %s' % (sampleType, assayRole))
@@ -1587,10 +1579,9 @@ class MSDataset(Dataset):
 									  method=method,
 									  sampleMask=lrMask)
 
+		# If sub-series are defined, calculate correlations for each then average
 		else:
-			##
-			# If sub-series are defined, calcuate corrs for each then average
-			##
+
 			batches = self.sampleMetadata['Dilution Series'].unique()
 			mask = pandas.notnull(batches)
 			batches = batches[mask]
@@ -1599,8 +1590,6 @@ class MSDataset(Dataset):
 			index = 0
 			for batch in batches:
 				lrMask = self.sampleMetadata['Dilution Series'].values == batch
-				lrMask = numpy.logical_and(lrMask,
-										   exclusions)
 
 				correlations[index, :] = _vcorrcoef(self._intensityData,
 													self.sampleMetadata['Dilution'].values,
@@ -1614,8 +1603,8 @@ class MSDataset(Dataset):
 		returnValues[numpy.isnan(returnValues)] = 0
 
 		self.Attributes['Log'].append([datetime.now(),
-									   'Feature correlation to dilution calculated with : method(%s); exclusions(%s)' % (
-									   method, exclusions)])
+									   'Feature correlation to dilution calculated with : method(%s)' % (
+									   method)])
 
 		return returnValues
 
@@ -1838,13 +1827,13 @@ class MSDataset(Dataset):
 		Re-initialise :py:attr:`featureMask` and :py:attr:`sampleMask` to match the current dimensions of :py:attr:`intensityData`, and include all samples.
 		"""
 		super().initialiseMasks()
-		self.corrExclusions = copy.deepcopy(self.sampleMask)
-		self.__corrExclusions = copy.deepcopy(self.corrExclusions)
+
+		# Caro 2026-07-21 commented this out but will it break everything?
 		# artifactual filter is a tricky one, and should only be modified by using applyMasks
-		self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False,
-											 'correlationToDilutionFilter': False,
-											 'artifactualFilter': self.Attributes['featureFilters'][
-												 'artifactualFilter'], 'blankFilter': False}
+		#self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False,
+		#										 'correlationToDilutionFilter': False,
+		#									 'artifactualFilter': self.Attributes['featureFilters'][
+		#										 'artifactualFilter'], 'blankFilter': False}
 
 		# Caro 2025-04-02 commented the rest out but will it break everything?
 		#self.featureMetadata.loc[:, ['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
@@ -1869,7 +1858,6 @@ class MSDataset(Dataset):
 		Column type() in pandas.DataFrame are established on the first sample when necessary
 		Does not check for uniqueness in :py:attr:`~sampleMetadata['Sample File Name']`
 		Does not currently check :py:attr:`~Attributes['Raw Data Path']` type
-		Does not currently check :py:attr:`~corrExclusions` type
 
 		:param verbose: if True the result of each check is printed (default True)
 		:type verbose: bool
@@ -1910,7 +1898,6 @@ class MSDataset(Dataset):
 		:raises AttributeError: if self.Attributes['Feature Names'] does not exist
 		:raises TypeError: if self.Attributes['Feature Names'] is not a str
 		:raises TypeError: if self.VariableType is not an enum 'VariableType'
-		:raises AttributeError: if self.corrExclusions does not exist
 		:raises AttributeError: if self._correlationToDilution does not exist
 		:raises TypeError: if self._correlationToDilution is not a numpy.ndarray
 		:raises AttributeError: if self._artifactualLinkageMatrix does not exist
@@ -2223,21 +2210,6 @@ class MSDataset(Dataset):
 											 raiseWarning, exception=TypeError(failure))
 			# end Variabletype
 
-			## self.corrExclusions
-			# exist
-			condition = hasattr(self, 'corrExclusions')
-			success = 'Check self.corrExclusions exists:\tOK'
-			failure = 'Check self.corrExclusions exists:\tFailure, no attribute \'self.corrExclusions\''
-			failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-											 raiseWarning, exception=AttributeError(failure))
-			# if condition:
-			# 	 # which test here?
-			#	 condition = isinstance(self.corrExclusions, str)
-			#	 success = 'Check self.corrExclusions is a str:\tOK'
-			#	 failure = 'Check self.corrExclusions is a str:\tFailure, \'self.corrExclusions\' is ' + str(type(self.corrExclusions))
-			#	 failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=TypeError(failure))
-			# end self.corrExclusions
-
 			## self._correlationToDilution
 			# exist
 			condition = hasattr(self, '_correlationToDilution')
@@ -2548,8 +2520,7 @@ class MSDataset(Dataset):
 			expectedSet = set({'Attributes', 'VariableType', '_Normalisation', '_name', 'fileName', 'filePath',
 							   '_intensityData', 'sampleMetadata', 'featureMetadata', 'sampleMask', 'featureMask',
 							   'sampleMetadataExcluded', 'intensityDataExcluded', 'featureMetadataExcluded',
-							   'excludedFlag',
-							   'corrExclusions', '_correlationToDilution', '_artifactualLinkageMatrix',
+							   'excludedFlag', '_correlationToDilution', '_artifactualLinkageMatrix',
 							   '_tempArtifactualLinkageMatrix'})
 			objectSet = set(self.__dict__.keys())
 			additionalAttributes = objectSet - expectedSet
