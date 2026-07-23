@@ -62,7 +62,7 @@
 			Samples have been acquired in triplicate to enable assessment of analytical/instrumental performance, however, feature quality
 			according to recommended metrics (see:
 			<a href="https://pubmed.ncbi.nlm.nih.gov/27479709/" target="_blank" rel="noopener noreferrer">Lewis et al. 2016</a>)
-			can not be determined. Any observations can be interpreted qualitatively, for more confidence in feature quality
+			cannot be determined. Any observations can be interpreted qualitatively, for more confidence in feature quality
 			and robust analyses, larger sample numbers/volumes should be collected and analysed if possible.
 		</p>
 	{% endif %}
@@ -72,33 +72,29 @@
 	<p></p>
 </div>
 
-<!--Figure 1: RSD for all samples and features passing selection-->
+<!--Figure 1: Feature intensity histogram-->
+<p class="caption"><span class="heading">Figure&nbsp;1.</span> Feature Intensity histogram for all samples and all features in final dataset (by sample type).</p>
 <div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;1.</span> RSD distribution for all samples and all features in final dataset (by sample type)</p>
-	<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
-	<p>This figure shows the distribution of RSD by sample type, ordered by {{ item['orderFeaturesBy'] }}.</p>
-	{% if 'NfeaturesFailing' in item %}
-	 <p>Features passing selection (i.e., able to be well measured) can be found above the line and those failing (i.e., not able to be well measured) below the line.
-	{% endif %}
-</div>
-
-<!--Figure 2: Feature intensity histogram-->
-<div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;2.</span> Feature Intensity histogram for all samples and all features in final dataset (by sample type).</p>
 	<img src="{{ item['finalFeatureIntensityHist'] }}" alt="Feature Intensity histogram for all samples and all features in final dataset (by sample type).">
 	<p>This figure shows the feature intensity distribution by sample type.</p>
 </div>
 
-<!--Figure 3: Ion map of all features (coloured by log median intensity)-->
-<div class='figure'>
-	<p class="caption"><span class="heading">Figure&nbsp;3.</span> Ion map of all features (coloured by log median intensity).</p>
-	<img src="{{ item.finalIonMap}}" alt="Ion map of all features (coloured by log median intensity).">
-	<p>This figure shows the coverage of features in terms of their m/z and retention time.
-		In a global profiling dataset, the a priori identity of these features is unknown, however please see the (assay specific) 'Further Information: Assay Coverage' section below for high level compound class information.</p>
-</div>
+<!--Figure 2: RSD for all samples and features passing selection (if available)-->
+<p class="caption"><span class="heading">Figure&nbsp;2.</span> RSD distribution for all samples and all features in final dataset (by sample type)</p>
+{% if 'finalRSDdistributionFigure' in item %}
+	<div class='figure'>
+		<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
+		<p>This figure shows the distribution of RSD by sample type, ordered by {{ item['orderFeaturesBy'] }}.</p>
+		{% if 'NfeaturesFailing' in item %}
+	 	<p>Features passing selection (i.e., able to be well measured) can be found above the line and those failing (i.e., not able to be well measured) below the line.
+		{% endif %}
+	</div>
+{% else %}
+	<p>Unable to calculate (insufficient SR samples present in dataset).</p>
+{% endif %}
 
-<!--Figure 4: RSD in SR vs correlation to dilution factor (if available)-->
-<p class="caption"><span class="heading">Figure&nbsp;4.</span> Scatterplot of RSD in SR samples vs. correlation to dilution.</p>
+<!--Figure 3: RSD in SR vs correlation to dilution factor (if available)-->
+<p class="caption"><span class="heading">Figure&nbsp;3.</span> Scatterplot of RSD in SR samples vs. correlation to dilution.</p>
 {% if 'RsdVsCorrelationFigure' in item %}
 	<div class='figure'>
 		<img src="{{ item.RsdVsCorrelationFigure }}" alt="Scatterplot of RSD in SR samples vs. correlation to dilution.">
@@ -107,6 +103,17 @@
 	</div>
 {% else %}
 	<p>RSD SR and/or correlation to dilution factor data not available to plot.</p>
+{% endif %}
+
+<!--Figure 4: Ion map of all features (coloured by log median intensity)-->
+<p class="caption"><span class="heading">Figure&nbsp;4.</span> Ion map of all features (coloured by log median intensity).</p>
+{% if 'finalIonMap' in item %}
+	<div class='figure'>
+		<img src="{{ item.finalIonMap}}" alt="Ion map of all features (coloured by log median intensity).">
+		<p>This figure shows the coverage of features in terms of their m/z and retention time. In a global profiling dataset, the a priori identity of these features is unknown, however please see the (assay specific) 'Further Information: Assay Coverage' section below for high level compound class information.</p>
+	</div>
+{% else %}
+	<p>Retention Time and/or m/z information unavailable, unable to plot the ion map.</p>
 {% endif %}
 
 <!--Details of any missing/excluded samples-->

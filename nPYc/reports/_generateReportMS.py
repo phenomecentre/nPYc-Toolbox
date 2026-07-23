@@ -244,52 +244,46 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
         display(item['FeatureSelectionTable'])
         print('\n')
 
-    # Figure 1: Distribution of RSD in all available samples
-    if destinationPath:
-        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampletype.' +
-                                                          dataset.Attributes['figureFormat'])
-        saveAs = item['finalRSDdistributionFigure']
-        item['orderFeaturesBy'] = orderFeaturesBy
-    else:
-        print('Figure 1: Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type), ordered by ' + str(orderFeaturesBy))
-
-    plotRSDs(dataset,
-             featureName=labelFeaturesBy,
-             sortOrder=orderFeaturesBy,
-             ratio=False,
-             logx=True,
-             savePath=saveAs)
-
-
-    # Figure 2: Histogram of log mean abundance by sample type
+    # Figure 1: Histogram of log mean abundance by sample type
     if destinationPath:
         item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_intensityHist.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
     else:
-        print('Figure 2: Feature intensity histogram for all samples and all features in final dataset (by sample type)')
+        print('Figure 1: Feature intensity histogram for all samples and all features in final dataset (by sample type)')
 
     plotAbundanceBySampleType(dataset,
                               saveAs)
 
-    # Figure 3: Ion map
-    if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
-        if destinationPath:
-            item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
-            saveAs = item['finalIonMap']
-        else:
-            print('Figure 3: Ion map of all features (coloured by log median intensity).')
+    # Feature quality figures
+    if ('Study Reference' in sampleMasks) and (sum(sampleMasks['Study Reference']) > 1):
 
-        plotIonMap(dataset,
-                   savePath=saveAs)
+        # Figure 2: Distribution of RSD in all available samples
+        if destinationPath:
+            item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampletype.' +
+                                                              dataset.Attributes['figureFormat'])
+            saveAs = item['finalRSDdistributionFigure']
+            item['orderFeaturesBy'] = orderFeaturesBy
+        else:
+            print(
+                'Figure 2: Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type), ordered by ' + str(
+                    orderFeaturesBy))
+
+        plotRSDs(dataset,
+                 featureName=labelFeaturesBy,
+                 sortOrder=orderFeaturesBy,
+                 ratio=False,
+                 logx=True,
+                 savePath=saveAs)
 
     else:
         if not destinationPath:
-            print('Figure 3: Ion map of all features (coloured by log median intensity).')
-            print('No Retention Time and m/z information, unable to plot the ion map.\n')
+            print(
+                'Figure 2: Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type), ordered by ' + str(
+                    orderFeaturesBy))
+            print('\x1b[31;1m Unable to calculate (insufficient SR samples present in dataset)\n\033[0;0m')
 
-
-    # Figure 4: Scatterplot of RSD vs correlation to dilution (if available)
+    # Figure 3: Scatterplot of RSD vs correlation to dilution (if available)
     if not (dataset.featureMetadata['rsdSP'].isna().all()) and not (dataset.featureMetadata['correlationToDilution'].isna().all()):
 
         if destinationPath:
@@ -297,7 +291,7 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
                                                           item['Name'] + '_rsdVc2d.' + dataset.Attributes['figureFormat'])
             saveAs = item['RsdVsCorrelationFigure']
         else:
-            print('Figure 4: Scatterplot of RSD in SR samples vs. correlation to dilution.')
+            print('Figure 3: Scatterplot of RSD in SR samples vs. correlation to dilution.')
 
         jointplotRSDvCorrelation(dataset.featureMetadata['rsdSP'].values,
                                  dataset.featureMetadata['correlationToDilution'].values,
@@ -307,8 +301,25 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
                                  figureSize=dataset.Attributes['figureSize'])
     else:
         if not destinationPath:
-            print('Figure 4: Scatterplot of RSD in SR samples vs. correlation to dilution.')
-            print('No RSD SR and/or correlation to dilution factor info available, unable to plot figure.\n')
+            print('Figure 3: Scatterplot of RSD in SR samples vs. correlation to dilution.')
+            print('\x1b[31;1m No RSD SR and/or correlation to dilution factor info available, unable to plot figure\n\033[0;0m')
+
+
+    # Figure 3: Ion map
+    if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
+        if destinationPath:
+            item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
+            saveAs = item['finalIonMap']
+        else:
+            print('Figure 4: Ion map of all features (coloured by log median intensity).')
+
+        plotIonMap(dataset,
+                   savePath=saveAs)
+
+    else:
+        if not destinationPath:
+            print('Figure 4: Ion map of all features (coloured by log median intensity).')
+            print('\x1b[31;1m Retention Time and/or m/z information unavailable, unable to plot the ion map.\n\033[0;0m')
 
     # Table 3: Summary of samples excluded
     if not destinationPath:

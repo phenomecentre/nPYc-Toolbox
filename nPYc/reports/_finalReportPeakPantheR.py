@@ -48,6 +48,9 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
     """
 
     # Do some checks
+    if labelFeaturesBy is None:
+        labelFeaturesBy = 'Feature Name'
+
     if not hasattr(dataset.featureMetadata, labelFeaturesBy):
         raise npycToolboxError(
             'Unable to label features by: ' + labelFeaturesBy + ' as column not present in `dataset.featureMetadata`')
@@ -74,9 +77,6 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
 
     # Final dataset summary
     if not destinationPath:
-        print('Final Dataset\n')
-        print(str(item['Nsamples']) + ' samples')
-        print(str(item['Nfeatures']) + ' features')
         if nfeaturesFailing != 0:
             print('\t' + str(item['NfeaturesPassing']) + ' detected and passing feature selection')
             print('\t' + str(item[
