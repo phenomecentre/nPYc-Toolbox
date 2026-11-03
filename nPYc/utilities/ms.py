@@ -63,9 +63,6 @@ def generateLRmask(dataset):
 				seriesMask = numpy.logical_and(dataset.sampleMetadata['Batch'] == batch,
 											   dataset.sampleMetadata['Dilution Series'] == series)
 
-				seriesMask = numpy.logical_and(seriesMask,
-											   dataset.corrExclusions)
-
 				# Only store if there are any samples in this series
 				if sum(seriesMask) > 0:
 					name = 'Batch %s, series %s' % (str(batch), str(series))

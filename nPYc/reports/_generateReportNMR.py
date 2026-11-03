@@ -91,7 +91,7 @@ def _featureReport(dataset, destinationPath=None):
 	# Report stats
 	##
 	if destinationPath is not None:
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_featureSummary')
+		graphicsPath = os.path.join(destinationPath, 'graphics', 'feature_summary')
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
 
@@ -218,7 +218,7 @@ def _featureReport(dataset, destinationPath=None):
 
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 		template = env.get_template('NMR_QCSummaryReport.html')
-		filename = os.path.join(destinationPath, dataset.name + '_report_featureSummary.html')
+		filename = os.path.join(destinationPath, dataset.name + '_feature_summary.html')
 
 		f = open(filename,'w')
 		f.write(template.render(item=item,
@@ -238,7 +238,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
     
     # Create save directory if required
 	if destinationPath is not None:
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
+		graphicsPath = os.path.join(destinationPath, 'graphics', 'final_report')
 		if not os.path.exists(graphicsPath):
 			os.makedirs(graphicsPath)
 
@@ -390,7 +390,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 		template = env.get_template('NMR_FinalSummaryReport.html')
-		filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
+		filename = os.path.join(destinationPath, dataset.name + '_final_report.html')
 
 		f = open(filename,'w')
 		f.write(template.render(item=item,

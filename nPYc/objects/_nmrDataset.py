@@ -279,7 +279,7 @@ class NMRDataset(Dataset):
 			columnNames.extend(sampleQCChecks)
 			fail_summary = self.sampleMetadata.loc[:, columnNames]
 
-			fail_summary = fail_summary[(fail_summary == True).any(1)]
+			fail_summary = fail_summary[(fail_summary == True).any(axis=1)]
 
 			idxToMask = fail_summary.index
 

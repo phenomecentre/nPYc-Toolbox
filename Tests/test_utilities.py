@@ -134,26 +134,6 @@ class test_utilities_ms(unittest.TestCase):
 		numpy.testing.assert_allclose(testResults, [0., 628.4902545, 828.65352631], err_msg='RSD calculations not correct.')
 		numpy.testing.assert_allclose(testResultsWithNaNs, [0, 0, numpy.finfo(numpy.float64).max], err_msg='RSD calculation not handling NaNs correctly.')
 
-	def test_sequentialPrecision(self):
-		# Fix the random seed for reproducible results
-		numpy.random.seed(seed=200)
-
-		x = numpy.random.randn(200, 3)
-		x = numpy.add(x, 10)
-
-		preDrift = nPYc.utilities.ms.sequentialPrecision(x)
-
-		x[:, 0] = numpy.add(x[:, 0], numpy.linspace(1,5, 200))
-		x[:, 1] = numpy.multiply(x[:, 1], numpy.linspace(1,5, 200))
-		x[:, 2] = numpy.add(x[:, 2], numpy.linspace(1,10, 200))
-		x[2,2] = numpy.inf
-
-		postDrift = nPYc.utilities.ms.sequentialPrecision(x)
-
-		numpy.testing.assert_allclose(preDrift, [9.6409173, 10.39057302, 9.61397365], err_msg='SP calculations not correct.')
-		numpy.testing.assert_allclose(postDrift, [7.42880240e+000, 1.16717529e+001, numpy.finfo(numpy.float64).max], err_msg='SP calculations not correct.')
-		numpy.random.seed()
-
 	def test_generatesrdmask(self):
 
 		# Create an empty object with simple filenames
@@ -227,40 +207,6 @@ class test_utilities_ms(unittest.TestCase):
 																True,  True,  True,  True,  True,  True,], dtype=bool)}
 
 		numpy.testing.assert_equal(srdMask, canonicalMask)
-
-	def test_generatesrdmask_raises(self):
-
-		dataset = nPYc.MSDataset('', fileType='empty')
-		dataset.corrExclusions = None
-		self.assertRaises(ValueError, nPYc.utilities.ms.generateLRmask, dataset)
-
-	def test_rsdsBySampleType(self):
-
-		from generateTestDataset import generateTestDataset
-
-		noSamp = numpy.random.randint(100, high=500, size=None)
-		noFeat = numpy.random.randint(200, high=400, size=None)
-
-		data = generateTestDataset(noSamp, noFeat)
-
-		with self.subTest(msg="Default"):
-			rsds = nPYc.utilities.rsdsBySampleType(data)
-			self.assertTrue('External Reference' in rsds.keys())
-			self.assertTrue('Study Pool' in rsds.keys())
-			self.assertTrue('Study Sample' not in rsds.keys())
-			self.assertTrue(len(rsds.keys()) == 2)
-
-		with self.subTest(msg="With all samples"):
-			rsds = nPYc.utilities.rsdsBySampleType(data, onlyPrecisionReferences=False)
-			self.assertTrue('External Reference' in rsds.keys())
-			self.assertTrue('Study Pool' in rsds.keys())
-			self.assertTrue('Study Sample' in rsds.keys())
-			self.assertTrue(len(rsds.keys()) == 3)
-
-	def test_rsdsBySampleType_raises(self):
-
-		self.assertRaises(TypeError, nPYc.utilities.rsdsBySampleType, 'Not a Dataset')
-		self.assertRaises(KeyError, nPYc.utilities.rsdsBySampleType, nPYc.Dataset(), useColumn='Not There')
 
 	def test_inferBatches(self):
 

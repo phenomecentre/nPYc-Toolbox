@@ -249,6 +249,9 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
         item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_intensityHist.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
+
+        print(saveAs)
+
     else:
         print('Figure 1: Feature intensity histogram for all samples and all features in final dataset (by sample type)')
 
@@ -263,6 +266,9 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
             item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampletype.' +
                                                               dataset.Attributes['figureFormat'])
             saveAs = item['finalRSDdistributionFigure']
+
+            print(saveAs)
+
             item['orderFeaturesBy'] = orderFeaturesBy
         else:
             print(
@@ -290,6 +296,8 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
             item['RsdVsCorrelationFigure'] = os.path.join(graphicsPath,
                                                           item['Name'] + '_rsdVc2d.' + dataset.Attributes['figureFormat'])
             saveAs = item['RsdVsCorrelationFigure']
+
+            print(saveAs)
         else:
             print('Figure 3: Scatterplot of RSD in SR samples vs. correlation to dilution.')
 
@@ -310,6 +318,9 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
         if destinationPath:
             item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
             saveAs = item['finalIonMap']
+
+            print(saveAs)
+
         else:
             print('Figure 4: Ion map of all features (coloured by log median intensity).')
 
@@ -331,7 +342,7 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
 
     # Write report to HTML if saving
     if destinationPath:
-        filename = os.path.join(destinationPath, dataset.name + '_final_summary.html')
+        filename = os.path.join(destinationPath, dataset.name + '_final_report.html')
         publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     return None
@@ -366,6 +377,8 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
                                                       item['Name'] + '_intensityHist.' + dataset.Attributes[
                                                           'figureFormat'])
         saveAs = item['FeatureIntensityFigure']
+
+        print(saveAs)
     else:
         print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')
 
@@ -625,12 +638,6 @@ def _featureSelectionReport(dataset, withArtifactualFiltering=False, destination
     item['corrMethod'] = dataset.Attributes['filterParameters']['corrMethod'] if dataset.Attributes['filterParameters']['corrMethod'] is not None else dataset.Attributes['corrMethod']
     item['corrThreshold'] = dataset.Attributes['filterParameters']['corrThreshold'] if dataset.Attributes['filterParameters']['corrThreshold'] is not None else dataset.Attributes['corrThreshold']
 
-    if sum(dataset.corrExclusions) != dataset.noSamples:
-        item['corrExclusions'] = str(
-            dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
-    else:
-        item['corrExclusions'] = 'none'
-
     if 'Linearity Reference' in sampleMasks:
         item['corrPassed'] = str(sum(dataset.correlationToDilution >= item['corrThreshold'])) + ' passed selection.'
         passMask = numpy.logical_and(passMask, dataset.correlationToDilution >= item['corrThreshold'])
@@ -742,7 +749,7 @@ def _featureSelectionReport(dataset, withArtifactualFiltering=False, destination
         print('Summary of current feature filtering parameters and number of features passing at each stage\n')
         print('Number of features in original dataset: ' + str(item['Nfeatures']) + '\n')
         print('Features filtered on:')
-        print('Correlation (' + item['corrMethod'] + ', exclusions: ' + item['corrExclusions'] + ') to dilution greater than ' + str(item['corrThreshold']) + ': ' + item['corrPassed'])
+        print('Correlation (' + item['corrMethod'] + ') to dilution greater than ' + str(item['corrThreshold']) + ': ' + item['corrPassed'])
         print('Relative Standard Deviation (RSD) in study reference (SR) samples below ' + str(item['rsdThreshold']) + ': ' + item['rsdPassed'])
         print('RSD in study samples (SS) * ' + str(item['rsdSPvsSSvarianceRatio']) + ' >= RSD in SR samples: ' + item['rsdSPvsSSPassed'])
         if 'BlankThreshold' in item:
@@ -780,7 +787,7 @@ def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=T
 
     # Figure 1: TIC for all samples by sample type and detector voltage change
     if destinationPath:
-        item['TICdetectorBatches'] = os.path.join(graphicsPath, item['Name'] + '_ticDetectorV.' + dataset.Attributes[
+        item['TICdetectorBatches'] = os.path.join(graphicsPath, item['Name'] + '_ticBatches.' + dataset.Attributes[
             'figureFormat'])
         saveAs = item['TICdetectorBatches']
     else:
@@ -813,7 +820,7 @@ def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=T
         featureName = str(numpy.squeeze(preData.featureMetadata.loc[feature, 'Feature Name'])).replace('/', '-')
         if destinationPath:
             figuresCorrectionExamples['Feature ' + featureName] = os.path.join(graphicsPath, item[
-                'Name'] + '_batchPlotFeature_' + featureName + '.' + dataset.Attributes['figureFormat'])
+                'Name'] + '_' + featureName + '.' + dataset.Attributes['figureFormat'])
             saveAs = figuresCorrectionExamples['Feature ' + featureName]
         else:
             print('Feature ' + featureName)
@@ -1096,12 +1103,6 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None, autoOpen=
 
     item['NfeaturesSummary'] = temp
 
-    if sum(dataset.corrExclusions) != dataset.noSamples:
-        item['corrExclusions'] = str(
-            dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
-    else:
-        item['corrExclusions'] = 'none'
-
     if not destinationPath:
         print('Number of features exceeding correlation to dilution threshold (' + str(
             item['corrThreshold']) + ') for each LR sample subset/correlation to dilution method')
@@ -1109,7 +1110,6 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None, autoOpen=
 
         print('\nCurrent correlation settings:' +
               '\nCorrelation method: ' + item['corrMethod'] +
-              '\nCorrelation exclusions: ' + item['corrExclusions'] +
               '\nCorrelation threshold: ' + item['corrThreshold'])
 
     # Assessment of potential saturation
@@ -1181,7 +1181,7 @@ def _featureCorrelationToDilutionReport(dataset, destinationPath=None, autoOpen=
         ax2 = satLineplot.plot(kind='line', ax=ax2, ylim=[0, 100], colormap='jet')
         if destinationPath:
             item['SatFeaturesHeatmap'] = os.path.join(graphicsPath,
-                                                      item['Name'] + '_c2dsaturation.' + dataset.Attributes[
+                                                      item['Name'] + '_c2dSaturation.' + dataset.Attributes[
                                                           'figureFormat'])
             plt.savefig(item['SatFeaturesHeatmap'], bbox_inches='tight', format=dataset.Attributes['figureFormat'],
                         dpi=dataset.Attributes['dpi'])
@@ -1205,7 +1205,7 @@ def _localLRPlots(dataset, LRmask, corToLR, saveName, figures=None, savePath=Non
 
     # Plot TIC
     if savePath:
-        saveTemp = saveName + ' LR Sample TIC (coloured by dilution)'
+        saveTemp = saveName + ' tic'
         figures[saveTemp] = os.path.join(savePath, saveTemp + '.' + dataset.Attributes['figureFormat'])
         saveAs = figures[saveTemp]
     else:
@@ -1229,7 +1229,7 @@ def _localLRPlots(dataset, LRmask, corToLR, saveName, figures=None, savePath=Non
 
     # Plot histogram of correlation to dilution
     if savePath:
-        saveTemp = saveName + ' Histogram of Correlation To Dilution'
+        saveTemp = saveName + ' c2dHist'
         figures[saveTemp] = os.path.join(savePath, saveTemp + '.' + dataset.Attributes['figureFormat'])
         saveAs = figures[saveTemp]
     else:

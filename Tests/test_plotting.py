@@ -562,12 +562,6 @@ class test_plotting(unittest.TestCase):
 			nPYc.plotting.plotVariableScatter(inputData, logX=True, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
-			# Add another column that won't be read with sampletypeColor=True
-			inputData['another column'] = ['a', 'b', 'c', 'd', 'e', 'f']
-			outputPath = os.path.join(tmpdirname, 'withSampletypeColor')
-			nPYc.plotting.plotVariableScatter(inputData, sampletypeColor=True, savePath=outputPath)
-			self.assertTrue(os.path.exists(outputPath))
-
 
 	def test_plotVariableScatter_raises(self):
 

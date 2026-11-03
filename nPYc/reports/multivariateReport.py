@@ -119,7 +119,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     # Create directory to save destinationPath
     if destinationPath:
 
-        saveDir = os.path.join(destinationPath, 'graphics', 'multivariate' + reportType.capitalize())
+        saveDir = os.path.join(destinationPath, 'graphics', 'multivariate_' + reportType.lower())
 
         # If directory exists delete directory and contents
         if os.path.exists(saveDir):
@@ -455,7 +455,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
     # Loadings plot
     if destinationPath:
-        temp['PCA_loadingsPlot'] = os.path.join(saveDir, item['Name'] + '_loadings_')
+        temp['PCA_loadingsPlot'] = os.path.join(saveDir, item['Name'] + '_loadings')
         saveAs = temp['PCA_loadingsPlot']
     else:
         print('\n\nFigure 5: PCA loadings plots.')
@@ -807,10 +807,10 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 
         template = env.get_template('NPC_MultivariateReport.html')
-        filename = os.path.join(destinationPath, data.name + '_multivariate' + reportType.capitalize() + '.html')
+        filename = os.path.join(destinationPath, data.name + '_multivariate_' + reportType.lower() + '.html')
         f = open(filename, 'w')
         f.write(
-            template.render(item=item, version=version, graphicsPath='/multivariate' + reportType.capitalize()))
+            template.render(item=item, version=version, graphicsPath='/multivariate_' + reportType.lower()))
         f.close()
 
         copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))

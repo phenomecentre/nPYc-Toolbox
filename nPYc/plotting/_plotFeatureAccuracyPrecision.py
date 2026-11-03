@@ -129,4 +129,20 @@ def plotAccuracyPrecision(tData, accuracy=True, percentRange=None, savePath=None
         yL = 'Feature'
         hL = horzLines
 
-        plotVariableScatter(statTable, logX=logx, xLim=None, sampletypeColor=True, xLabel=xL, yLabel=yL, hLines=hL, hLineStyle='-', hBox=hB, vLines=vL, vLineStyle=':', vBox=vB, savePath=savePath, figureFormat=figureFormat, dpi=dpi, figureSize=figsize)
+        plotVariableScatter(statTable,
+                            logX=logx,
+                            xLim=None,
+                            #sTypeColourDict=tData.Attributes['sampleTypeColours'],
+                            #sTypeAbbrDict=tData.Attributes['sampleTypeAbbr'],
+                            xLabel=xL,
+                            yLabel=yL,
+                            hLines=hL,
+                            hLineStyle='-',
+                            hBox=hB,
+                            vLines=vL,
+                            vLineStyle=':',
+                            vBox=vB,
+                            savePath=savePath,
+                            figureFormat=figureFormat,
+                            dpi=dpi,
+                            figureSize=figsize)

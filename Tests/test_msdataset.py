@@ -784,12 +784,6 @@ class test_msdataset_synthetic(unittest.TestCase):
 
 			numpy.testing.assert_array_almost_equal(correlations, _vcorrcoef(dataset.intensityData, dataset.sampleMetadata['Dilution'].values))
 
-		with self.subTest(msg='Checking corr exclusions'):
-			dataset.corrExclusions = None
-
-			numpy.testing.assert_array_almost_equal(correlations, _vcorrcoef(dataset.intensityData, dataset.sampleMetadata['Dilution'].values))
-
-
 	def test_correlateToDilution_raises(self):
 
 		noSamp = numpy.random.randint(30, high=500, size=None)
@@ -1073,12 +1067,6 @@ class test_msdataset_synthetic(unittest.TestCase):
 			badDataset.VariableType = 'not an enum'
 			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset': False, 'QC': False, 'sampleMetadata': False})
 			self.assertRaises(TypeError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
-
-		with self.subTest(msg='self.corrExclusions does not exist'):
-			badDataset = copy.deepcopy(self.msData)
-			delattr(badDataset, 'corrExclusions')
-			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicMSDataset': False, 'QC': False, 'sampleMetadata': False})
-			self.assertRaises(AttributeError, badDataset.validateObject, verbose=False, raiseError=True, raiseWarning=False)
 
 		with self.subTest(msg='self._correlationToDilution does not exist'):
 			badDataset = copy.deepcopy(self.msData)
