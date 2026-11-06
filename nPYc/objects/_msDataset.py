@@ -1311,6 +1311,9 @@ class MSDataset(Dataset):
 		baseNameParser = re.compile(filenameSpec, re.VERBOSE)
 		fileNameParts = self.sampleMetadata['Sample File Name'].str.extract(baseNameParser, expand=False)
 
+		# Set type for numeric columns
+		fileNameParts['injectionNo'] = pandas.to_numeric(fileNameParts['injectionNo'], errors='coerce')
+
 		# Deal with badly ordered exclusions
 		fileNameParts['exclusion'].loc[fileNameParts['exclusion2'].isnull() == False] = fileNameParts['exclusion2'].loc[
 			fileNameParts['exclusion2'].isnull() == False]
@@ -1372,13 +1375,13 @@ class MSDataset(Dataset):
 		# Get well numbers
 		fileNameParts.loc[
 			fileNameParts['groupingKind'].str.match('Blank|E?IC', na=False).astype(bool), 'injectionNo'] = -1
-		fileNameParts['Well'] = pandas.to_numeric(fileNameParts['injectionNo'])
+		fileNameParts['Well'] = pandas.to_numeric(fileNameParts['injectionNo'], errors='coerce')
 
 		# Plate / grouping no
-		fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'])
+		fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'], errors='coerce')
 
 		# Get batch where it is explicit in file name
-		fileNameParts['Batch'] = pandas.to_numeric(fileNameParts['baseName'].str.extract('B(\d+?)[SE]', expand=False))
+		fileNameParts['Batch'] = pandas.to_numeric(fileNameParts['baseName'].str.extract('B(\d+?)[SE]', expand=False), errors='coerce')
 		fileNameParts['Correction Batch'] = numpy.nan
 
 		# Map dilution series names to dilution level

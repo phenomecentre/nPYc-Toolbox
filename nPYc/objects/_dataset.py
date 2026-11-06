@@ -1294,16 +1294,12 @@ class Dataset:
 				currentMetadata.drop(column, axis=1, inplace=True)
 
 		# If AssayRole or SampleType columns are present parse strings into enums
-
-		csvData['AssayRole'] = [(x.replace(" ", "")).lower() if type(x) is str else numpy.nan for x in csvData['AssayRole']]
-		csvData['SampleType'] = [(x.replace(" ", "")).lower() if type(x) is str else numpy.nan for x in csvData['SampleType']]
-
 		if 'AssayRole' in csvData.columns:
 			for role in AssayRole:
-				csvData.loc[csvData['AssayRole'].values == (str(role).replace(" ",  "")).lower(), 'AssayRole'] = role
+				csvData['AssayRole'].replace(str(role), role, inplace=True)
 		if 'SampleType' in csvData.columns:
 			for stype in SampleType:
-				csvData.loc[csvData['SampleType'].values == (str(stype).replace(" ", "")).lower(), 'SampleType'] = stype
+				csvData['SampleType'].replace(str(stype), stype, inplace=True)
 
 		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
 		# which are used in some plotting functions
@@ -1336,13 +1332,10 @@ class Dataset:
 			sampleAbsentMetadata = csv_butnotacq.copy(deep=True)
 
 			# Convert SampleType and AssayRole to standard enums format
-			for st in SampleType:
-				sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'].str.match(st.value, na=False).astype(
-					bool), 'SampleType'] = st
-
-			for ar in AssayRole:
-				sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'].str.match(ar.value, na=False).astype(
-					bool), 'AssayRole'] = ar
+			for role in AssayRole:
+				sampleAbsentMetadata['AssayRole'].replace(str(role), role, inplace=True)
+			for stype in SampleType:
+				sampleAbsentMetadata['SampleType'].replace(str(stype), stype, inplace=True)
 
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in sampleAbsentMetadata.columns if c[-2:] != '_y']
