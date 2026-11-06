@@ -17,7 +17,7 @@ import plotly.graph_objs as go
 import pandas
 import numpy
 from ._violinPlot import _violinPlotHelper
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
+#from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 from ._plotDiscreteLoadings import plotDiscreteLoadings
 from ._plotting import checkAndSetPlotAttributes
 from ..objects import Dataset
@@ -91,8 +91,8 @@ def plotScores(pcaModel, classes=None, colourType=None,
     #print("----->> Plotting scores %s" % colourType)
     # Check inputs
 
-    if not isinstance(pcaModel, ChemometricsPCA):
-        raise TypeError('PCAmodel must be an instance of ChemometricsPCA')
+#    if not isinstance(pcaModel, ChemometricsPCA):
+#        raise TypeError('PCAmodel must be an instance of ChemometricsPCA')
 
     if classes is not None and colourType is None:
         raise ValueError('If classes is specified, colourType must be')
@@ -335,10 +335,12 @@ def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
 	:param dict colourDict:
 	:param dict markerDict:
 	:param dict abbrDict:
-
-	:param float fCrit: If not none, plots a line at Fcrit
-	:param float fCritAlpha: Alpha value for Fcrit (for legend)
-	:param float pCritPercentile: If not none, plots a line at this quantile
+	:param fCrit: If not none, plots a line at Fcrit
+	:type fCrit: None or float or int
+	:param fCritAlpha: Alpha value for Fcrit (for legend)
+	:type fCritAlpha: float or int
+	:param pCritPercentile: If not none, plots a line at this quantile
+	:type pCritPercentile: None or int or float
 	:param str title: Title for the plot
 	:param str xlabel: Label for the x-axis
 	"""
@@ -595,8 +597,8 @@ def plotScoresInteractive(dataset,
     if not isinstance(dataset, Dataset):
         raise TypeError('dataset must be an instance of nPYc.Dataset')
 
-    if not isinstance(pcaModel, ChemometricsPCA):
-        raise TypeError('PCAmodel must be a ChemometricsPCA object')
+    #if not isinstance(pcaModel, ChemometricsPCA):
+    #    raise TypeError('PCAmodel must be a ChemometricsPCA object')
 
     values = pcaModel.scores
     ns, nc = values.shape
@@ -827,8 +829,8 @@ def plotLoadingsInteractive(dataset, pcaModel, component=1, withExclusions=False
     if not isinstance(dataset, Dataset):
         raise TypeError('dataset must be an instance of nPYc.Dataset')
 
-    if not isinstance(pcaModel, ChemometricsPCA):
-        raise TypeError('PCAmodel must be a ChemometricsPCA object')
+    #if not isinstance(pcaModel, ChemometricsPCA):
+    #    raise TypeError('PCAmodel must be a ChemometricsPCA object')
 
     if numpy.min(component) < 1:
         raise ValueError('integer value in component can not be less than 1')

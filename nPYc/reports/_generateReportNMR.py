@@ -18,7 +18,7 @@ from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
 from ._generateSampleReport import _generateSampleReport
 from ..plotting import plotSolventResonance, plotSolventResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive, plotLoadings
-from ._generateBasicPCAReport import generateBasicPCAReport
+#from ._generateBasicPCAReport import generateBasicPCAReport
 from ..enumerations import AssayRole, SampleType
 
 from ..__init__ import __version__ as version

@@ -13,11 +13,11 @@ import seaborn as sns
 import copy
 from .._toolboxPath import toolboxPath
 from ..objects import Dataset
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
+from ..multivariate import PCAmodel
 from ..multivariate.multivariateUtilities import pcaSignificance, metadataTypeGrouping
 from ..plotting._multivariatePlotting import plotMetadataDistribution, plotScree, plotScores, plotLoadings, plotOutliers
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..enumerations import AssayRole, SampleType
+from ._generateSampleReport import _generateSampleReport
 import re
 import numbers
 import shutil
@@ -29,8 +29,8 @@ from ..__init__ import __version__ as version
 
 
 def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusions=False, biologicalMeasurements=None,
-                       dModX_criticalVal=None, dModX_criticalVal_type=None, scores_criticalVal=None, kw_threshold=0.05,
-                       r_threshold=0.3, hotellings_alpha=0.05, excludeFields=None, destinationPath=None):
+                       dModX_criticalVal=None, scores_criticalVal=None, kw_threshold=0.05,
+                       r_threshold=0.3, excludeFields=None, destinationPath=None):
     """
 	PCA based analysis of a dataset. A PCA model is generated for the data object, then potential associations between the scores and any sample metadata determined by correlation (continuous data) or a Kruskal-Wallis test (categorical data).
 
@@ -45,17 +45,14 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 	:param str reportType: Type of sample metadata to report on, one of ``analytical``, ``biological`` or ``all``
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
 	:param dict biologicalMeasurements: Dictionary of type of data contained in each biological sampleMetadata field. Keys are sampleMetadata column names, and values one of 'categorical', 'continuous', 'date'
-	:param dModX_criticalVal: Samples with a value in DModX space exceeding this critical value are listed as potential outliers
-	:type dModX_criticalVal: None or float
-	:param dModX_criticalVal_type: Type of critical value in DModX, one of ``Fcrit`` or ``Percentile``
-	:type dModX_criticalVal_type: None or str
-	:param scores_criticalVal: Samples with a value in scores space exceeding this critical value are listed as potential outliers
-	:type scores_criticalVal: None or float
+	:param dModX_criticalVal: Samples with a value in DModX space exceeding this critical value (percentage) are listed as potential outliers
+	:type dModX_criticalVal: None or int
+	:param scores_criticalVal: Samples with a value in scores space exceeding this critical value (percentage) are listed as potential outliers
+	:type scores_criticalVal: None or int
 	:param kw_threshold: Fields with a Kruskal-Willis p-value greater than this are not deemed to have a significant association with the PCA score
 	:type kw_threshold: None or float
 	:param r_threshold: Fields with a (absolute) correlation coefficient value less than this are not deemed to have a significant association with the PCA score
 	:type r_threshold: None or float
-	:param float hotellings_alpha: Alpha value for plotting the Hotelling's ellipse in scores plots (default = 0.05)
 	:param excludeFields: If not None, list of sample metadata fields to be additionally excluded from analysis
 	:type excludeFields: None or list
 	:param destinationPath: If ``None`` plot interactively, otherwise save report to the path specified
@@ -66,8 +63,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     if not isinstance(dataTrue, Dataset):
         raise TypeError('dataTrue must be an instance of nPYc.Dataset')
 
-    if not isinstance(pcaModel, ChemometricsPCA):
-        raise TypeError('PCA model must be an instance of pyChemometrics.ChemometricsPCA')
+    if not isinstance(pcaModel, PCAmodel):
+        raise TypeError('PCA model must be an instance of nPYc.multivariate.PCAmodel')
 
     if not isinstance(reportType, str) & (reportType in {'all', 'analytical', 'biological'}):
         raise ValueError('reportType must be == ' + str({'all', 'analytical', 'biological'}))
@@ -83,19 +80,12 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
             raise ValueError('biologicalMeasurements values must be == ' + str({'categorical', 'continuous', 'date'}))
 
     if dModX_criticalVal is not None:
-        if not isinstance(dModX_criticalVal, numbers.Number) & ((dModX_criticalVal < 1) & (dModX_criticalVal > 0)):
-            raise ValueError('dModX_criticalVal must be a number in the range 0 to 1')
-        if dModX_criticalVal_type is None:
-            raise ValueError('If dModX_criticalVal is specfied, specify dModX_criticalVal_type (must be == ' + str(
-                {'Fcrit', 'Percentile'}) + ')')
-
-    if dModX_criticalVal_type is not None:
-        if not isinstance(dModX_criticalVal_type, str) & (dModX_criticalVal_type in {'Fcrit', 'Percentile'}):
-            raise ValueError('dModX_criticalVal_type must be == ' + str({'Fcrit', 'Percentile'}))
+        if not isinstance(dModX_criticalVal, numbers.Number) & ((dModX_criticalVal < 100) & (dModX_criticalVal > 0)):
+            raise ValueError('dModX_criticalVal must be a number in the range 0 to 100')
 
     if scores_criticalVal is not None:
-        if not isinstance(scores_criticalVal, numbers.Number) & ((scores_criticalVal < 1) & (scores_criticalVal > 0)):
-            raise ValueError('scores_criticalVal must be a number in the range 0 to 1')
+        if not isinstance(scores_criticalVal, numbers.Number) & ((scores_criticalVal < 100) & (scores_criticalVal > 0)):
+            raise ValueError('scores_criticalVal must be a number in the range 0 to 100')
 
     if kw_threshold is not None:
         if not isinstance(kw_threshold, numbers.Number) or kw_threshold < 0:
@@ -104,9 +94,6 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     if r_threshold is not None:
         if not isinstance(r_threshold, numbers.Number) or r_threshold < 0:
             raise ValueError('r_threshold must be a positive number')
-
-    if not isinstance(hotellings_alpha, numbers.Number) & ((hotellings_alpha < 1) & (hotellings_alpha > 0)):
-        raise ValueError('hotellings_alpha must be a number in the range 0 to 1')
 
     if excludeFields is not None:
         if not isinstance(excludeFields, list):
@@ -133,7 +120,6 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
     # Filter dataset if required
     data = copy.deepcopy(dataTrue)
-
     if withExclusions:
         data.applyMasks()
 
@@ -151,34 +137,22 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     figuresCORscores = OrderedDict()
     figuresKWscores = OrderedDict()
     figuresOTHERscores = OrderedDict()
+
     item = dict()
-    item['ReportType'] = reportType.title()
     item['Name'] = data.name
-    ns, nv = data.intensityData.shape
-    item['Nfeatures'] = str(nv)
-    item['Nsamples'] = str(ns)
-    SPmask = (data.sampleMetadata['SampleType'] == SampleType.StudyPool) & (
-                data.sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
-    item['SPcount'] = str(sum(SPmask))
-    SSmask = (data.sampleMetadata['SampleType'] == SampleType.StudySample) & (
-                data.sampleMetadata['AssayRole'] == AssayRole.Assay)
-    item['SScount'] = str(sum(SSmask))
-    ERmask = (data.sampleMetadata['SampleType'] == SampleType.ExternalReference) & (
-                data.sampleMetadata['AssayRole'] == AssayRole.PrecisionReference)
-    item['ERcount'] = str(sum(ERmask))
-    item['OTHERcount'] = str(ns - sum(SSmask) - sum(SPmask) - sum(ERmask))
-    # data.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-    # data.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-    # data.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
-    # data.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
-
+    item['ReportType'] = reportType.capitalize()
+    item['Nfeatures'] = data.intensityData.shape[1]
+    item['Nsamples'] = data.intensityData.shape[0]
     item['Normalisation'] = str(dataTrue.Normalisation)
+    item['Scaling'] = pcaModel.inputparams['scaling']
 
-    special_scaling = dict([(0, 'mc'), (1, 'uv'), (0.5, 'par')])
-    if pcaModel.scaler.scale_power in special_scaling:
-        item['Scaling'] = special_scaling[pcaModel.scaler.scale_power]
-    else:
-        item['Scaling'] = str(pcaModel.scaler.scale_power)
+    # Generate sample summary
+    sampleSummary = _generateSampleReport(data, destinationPath=None, returnOutput=True)
+
+    # Remove all details of all samples missing/excluded (only interested in study samples here)
+    sampleSummary.pop('Excluded Details', None)
+
+    item['sampleSummary'] = sampleSummary
 
     # Fields to plot
     includeForPlotting = {}
@@ -188,7 +162,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
     if reportType in {'biological', 'all'}:
 
-        if biologicalMeasurements is not None:
+        if biologicalMeasurements:
             includeForPlotting.update(biologicalMeasurements)
 
         else:
@@ -196,14 +170,12 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
             # Create dictionary with key and type (categorical/continuous etc) for each biological parameter field
             for plotdata in temp:
-                # out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Plot Sample Type'])
-                #out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Status'])
                 out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['SampleClass'])
                 includeForPlotting[plotdata] = out
 
     # Fields not to plot
     excludeFromPlotting = data.Attributes['excludeFromPlotting']
-    if excludeFields != None:
+    if excludeFields:
         excludeFromPlotting.append(excludeFields)
 
     # Remove fields either marked not to plot or not present in sampleMetadata
@@ -217,7 +189,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     for plotdata in includeForPlotting.keys():
 
         # Check all values in column have the same type
-        myset = set(list(type(data.sampleMetadata[plotdata][i]) for i in range(ns)))
+        myset = set(list(type(data.sampleMetadata[plotdata][i]) for i in range(item['Nsamples'])))
 
         if len(myset) == 1:
             pass
@@ -237,7 +209,6 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
             continue
 
         # Change type if uniform, uniformBySampleType or unique (and categorical) - do not plot these
-        #out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['Status'])
         out = metadataTypeGrouping(data.sampleMetadata[plotdata], sampleGroups=data.sampleMetadata['SampleClass'])
         if out in {'uniform', 'uniformBySampleType', 'unique'}:
             includeForPlotting[plotdata] = out
@@ -253,47 +224,28 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                                               range(dataForPlotting.columns.get_loc(dup).sum())]
         dataForPlotting.columns = cols
 
-    nc = pcaModel.ncomps
-
-    item['Ncomponents'] = str(nc)
+    nc = pcaModel.outputstats['n_components_fitted']
+    item['Ncomponents'] = str(pcaModel.outputstats['n_components_fitted'])
+    item['dModX_criticalVal'] = 'None'
+    item['scores_criticalVal'] = 'None'
     if dModX_criticalVal is not None:
-        if dModX_criticalVal_type == 'Fcrit':
-            item['dModX_criticalVal'] = dModX_criticalVal_type + ' (' + str(dModX_criticalVal) + ')'
-        else:
-            item['dModX_criticalVal'] = 'Q' + str(100 - dModX_criticalVal * 100)
-    else:
-        item['dModX_criticalVal'] = 'None'
-
+        item['dModX_criticalVal'] = 'Q' + str(dModX_criticalVal)
     if scores_criticalVal is not None:
-        item['scores_criticalVal'] = 'Q' + str(100 - scores_criticalVal * 100)
-    else:
-        item['scores_criticalVal'] = 'None'
+        item['scores_criticalVal'] = 'Q' + str(scores_criticalVal)
 
-    # Add check for if 2nd component added for plotting purposes only
-    if nc == 2:
-        if ((pcaModel.cvParameters['Q2X_Scree'][1] - pcaModel.cvParameters['Q2X_Scree'][0]) /
-                pcaModel.cvParameters['Q2X_Scree'][0] < pcaModel.cvParameters['stopping_condition']):
-            item['Ncomponents_optimal'] = '1'
 
     # Datast summary
     if destinationPath is None:
         print('\033[1m' + 'Dataset' + '\033[0m')
-        print('\nOriginal data consists of ' + item['Nsamples'] + ' samples and ' + item['Nfeatures'] + ' features')
-        print('\t' + item['SScount'] + ' Study Samples')
-        print('\t' + item['SPcount'] + ' Study Reference Samples')
-        print('\t' + item['ERcount'] + ' Long-Term Reference Samples')
-        print('\t' + item['OTHERcount'] + ' Other Samples')
+        print('\nOriginal data consists of ' + str(item['Nsamples']) + ' samples and ' + str(item['Nfeatures']) + ' features')
+        print('\nTable 1: Summary of samples present')
+        display(sampleSummary['Dataset'])
 
         print('\033[1m' + '\nPCA Analysis' + '\033[0m')
         print('\nPCA Model Parameters')
         print('\tNormalisation method: ' + item['Normalisation'])
         print('\tScaling: ' + item['Scaling'])
         print('\tNumber of components: ' + item['Ncomponents'])
-
-        if 'Ncomponents_optimal' in item:
-            print(
-                '\t' + '\033[1m' + 'IMPORTANT NOTE: Optimal number of components: 1 (second component added for plotting purposes)' + '\033[0m')
-
         print('\tCritical value for flagging outliers in DmodX space: ' + item['dModX_criticalVal'])
         print('\tCritical value for flagging outliers in scores space: ' + item['scores_criticalVal'])
 
@@ -307,14 +259,15 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     else:
         print('\nFigure 1: PCA scree plot of variance explained by each component (cumulative)')
 
-    plotScree(pcaModel.cvParameters['R2X_Scree'],
-              Q2=pcaModel.cvParameters['Q2X_Scree'],
+    plotScree(pcaModel.outputstats['R2X_Scree'],
+              #Q2=pcaModel.cvParameters['Q2X_Scree'],
               xlabel='Component',
               ylabel='Percentage variance (cumulative)',
               savePath=saveAs,
               figureFormat=data.Attributes['figureFormat'],
               dpi=data.Attributes['dpi'],
               figureSize=data.Attributes['figureSize'])
+
 
     # Scores plot (coloured by sample type)
     temp = dict()
@@ -331,7 +284,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                  markerDict=data.Attributes['sampleTypeMarkers'],
                                  title='SampleClass',
                                  figures=figuresQCscores,
-                                 hotelling_alpha=hotellings_alpha,
+                                 hotelling_alpha=0.05,
                                  savePath=saveAs,
                                  figureFormat=data.Attributes['figureFormat'],
                                  dpi=data.Attributes['dpi'],
@@ -358,15 +311,11 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         data.sampleMetadata['Run Order'] = data.sampleMetadata.index.values
 
     # Flag potential strong outliers (exceed outliers_criticalVal)
+    which_scores_outlier = numpy.zeros(sumT.shape, dtype=bool)
     if scores_criticalVal is not None:
-        PcritPercentile = 100 - scores_criticalVal * 100
-        quantilesVals = numpy.percentile(sumT, [100 - scores_criticalVal * 100])
+        quantilesVals = numpy.percentile(sumT, [scores_criticalVal])
         which_scores_outlier = (sumT >= quantilesVals)
         item['Noutliers_strong'] = str(sum(which_scores_outlier))
-
-    else:
-        PcritPercentile = None
-        which_scores_outlier = numpy.zeros(sumT.shape, dtype=bool)
 
     plotOutliers(sumT,
                  data.sampleMetadata['Run Order'],
@@ -377,13 +326,13 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                  abbrDict=data.Attributes['sampleTypeAbbr'],
                  addViolin=True,
                  ylabel='Summed distance from origin (all PCs)',
-                 pCritPercentile=PcritPercentile,
+                 pCritPercentile=scores_criticalVal,
                  savePath=saveAs,
                  figureFormat=data.Attributes['figureFormat'],
                  dpi=data.Attributes['dpi'],
                  figureSize=data.Attributes['figureSize'])
 
-    if (scores_criticalVal is not None) & (destinationPath is None):
+    if (any(which_scores_outlier)) & (destinationPath is None):
         print('\nExcluding samples with total distance from origin exceeding the ' + item[
             'scores_criticalVal'] + ' limit would result in ' + item['Noutliers_strong'] + ' exclusions.')
 
@@ -395,47 +344,30 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     else:
         print('\n\nFigure 4: Distribution in distance from model (DmodX) by sample type.')
 
-    sample_dmodx_values = pcaModel.dmodx(data.intensityData)
-
-    # Define defaults for plotting if no critical values specified by user
-    PcritPercentile = None
-    Fcrit = pcaModel._dmodx_fcrit(data.intensityData, alpha=0.05)
-    FcritAlpha = 0.05
-    which_dmodx_outlier = numpy.zeros(sample_dmodx_values.shape, dtype=bool)
-
-    # Flag potential moderate outliers (exceed critical value)
-    if dModX_criticalVal is not None:
-        if dModX_criticalVal_type == 'Fcrit':
-            dModX_threshold = pcaModel._dmodx_fcrit(data.intensityData, alpha=dModX_criticalVal)
-            Fcrit = dModX_threshold
-            FcritAlpha = dModX_criticalVal
-
-        else:
-            dModX_threshold = numpy.percentile(sample_dmodx_values, [100 - dModX_criticalVal * 100])
-            PcritPercentile = 100 - dModX_criticalVal * 100
-
-        which_dmodx_outlier = (sample_dmodx_values >= dModX_threshold)
-
+    # Flag potential moderate outliers (exceed critical value) Caro come back to this
+    which_dmodx_outlier = numpy.zeros(pcaModel.outputstats['DmodX'].shape, dtype=bool)
+    if dModX_criticalVal:
+        dModX_threshold = numpy.percentile(pcaModel.outputstats['DmodX'], [dModX_criticalVal])
+        which_dmodx_outlier = (pcaModel.outputstats['DmodX'] >= dModX_threshold)
         item['Noutliers_moderate'] = str(sum(which_dmodx_outlier))
 
-    plotOutliers(sample_dmodx_values,
+    plotOutliers(pcaModel.outputstats['DmodX'],
                  data.sampleMetadata['Run Order'],
-                 # sampleType=data.sampleMetadata['Plot Sample Type'],
                  sampleType=data.sampleMetadata['SampleClass'],
                  addViolin=True,
                  colourDict=data.Attributes['sampleTypeColours'],
                  markerDict=data.Attributes['sampleTypeMarkers'],
                  abbrDict=data.Attributes['sampleTypeAbbr'],
-                 fCrit=Fcrit,
-                 fCritAlpha=FcritAlpha,
-                 pCritPercentile=PcritPercentile,
+                 fCrit=None,#pcaModel.outputstats['DmodX_Fcrit'],
+                 fCritAlpha=None,#pcaModel.inputparams['f_crit_alpha'],
+                 pCritPercentile=dModX_criticalVal,
                  ylabel='DmodX',
                  savePath=saveAs,
                  figureFormat=data.Attributes['figureFormat'],
                  dpi=data.Attributes['dpi'],
                  figureSize=data.Attributes['figureSize'])
 
-    if (dModX_criticalVal is not None) & (destinationPath is None):
+    if (any(which_dmodx_outlier)) & (destinationPath is None):
         print('\nExcluding samples with DmodX exceeding the ' + item['dModX_criticalVal'] + ' limit would result in ' +
               item['Noutliers_moderate'] + ' exclusions.')
 
@@ -655,7 +587,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         print('\n\nFigure 9: PCA scores plots coloured by metadata (significance by correlation).')
 
     if valueType.count('continuous') > 0:
-        if r_threshold == 'None':
+        if r_threshold is None:
             r_threshold = numpy.min(abs(sigCor.values))
         item['Ncorr_passing'] = str(sum((abs(sigCor.values) >= r_threshold).any(axis=1) == True))
         if destinationPath is None:
@@ -669,7 +601,6 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                                 pcaModel,
                                                 'continuous',
                                                 data.name,
-                                                alpha=hotellings_alpha,
                                                 plotAssociation=sigCor,
                                                 r_threshold=r_threshold,
                                                 saveDir=saveAs,
@@ -689,13 +620,13 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                 'Ncorr_passing'] + ' fields where correlation coefficient to PCA scores exceeded threshold of ' + str(
                 r_threshold))
 
-    # Plots for catagorical data fields (passing Kruskal-Wallis threshold)
+    # Plots for categorical data fields (passing Kruskal-Wallis threshold)
     item['Nkw_passing'] = '0'
     if destinationPath is None:
         print('\n\nFigure 10: PCA scores plots coloured by metadata (significance by Kruskal-Wallis).')
 
     if countKW > 0:
-        if kw_threshold == 'None':
+        if kw_threshold is None:
             kw_threshold = numpy.max(abs(sigKru.values))
         item['Nkw_passing'] = str(sum((sigKru.values <= kw_threshold).any(axis=1) == True))
         if destinationPath is None:
@@ -707,8 +638,8 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
             figuresKWscores = _plotScoresLocal(dataForPlotting,
                                                fields,
                                                pcaModel,
-                                               'categorical', data.name,
-                                               alpha=hotellings_alpha,
+                                               'categorical',
+                                               data.name,
                                                plotAssociation=sigKru,
                                                kw_threshold=kw_threshold,
                                                saveDir=saveAs,
@@ -716,19 +647,6 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                                figureFormat=data.Attributes['figureFormat'],
                                                dpi=data.Attributes['dpi'],
                                                figureSize=data.Attributes['figureSize'])
-
-            figuresQCscores = plotScores(pcaModel,
-                                         classes=data.sampleMetadata['SampleClass'],
-                                         colourType='categorical',
-                                         colourDict=data.Attributes['sampleTypeColours'],
-                                         markerDict=data.Attributes['sampleTypeMarkers'],
-                                         title='SampleClass',
-                                         figures=figuresQCscores,
-                                         hotelling_alpha=hotellings_alpha,
-                                         savePath=saveAs,
-                                         figureFormat=data.Attributes['figureFormat'],
-                                         dpi=data.Attributes['dpi'],
-                                         figureSize=data.Attributes['figureSize'])
 
             if destinationPath is not None:
                 for key in figuresKWscores:
@@ -742,7 +660,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                 'Nkw_passing'] + ' fields where Kruskal-Wallis p-value against PCA scores exceeded threshold of ' + str(
                 kw_threshold))
 
-    # Plots for catagorical data fields (with insufficient numbers to test significance)
+    # Plots for categorical data fields (with insufficient numbers to test significance)
     if destinationPath is None:
         print(
             '\n\nFigure 11: PCA scores plots coloured by metadata (insufficent sample numbers to estimate significance).')
@@ -767,8 +685,6 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                               pcaModel,
                                               'categorical',
                                               data.name,
-
-                                              alpha=hotellings_alpha,
                                               plotAssociation=sigNone,
                                               saveDir=saveAs,
                                               figures=figuresOTHERscores,
@@ -819,7 +735,7 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
 
 
 def _plotScoresLocal(data, metadata, pcaModel, classType, name,
-                     alpha=0.05, plotAssociation=None, r_threshold=None,
+                     plotAssociation=None, r_threshold=None,
                      kw_threshold=None, saveDir=None, figures=None,
                      figureFormat='png', dpi=72, figureSize=(11, 7)):
     """
@@ -862,7 +778,7 @@ def _plotScoresLocal(data, metadata, pcaModel, classType, name,
                        classes=data.iloc[:, index].squeeze(),
                        colourType=classType,
                        components=components,
-                       hotelling_alpha=alpha,
+                       hotelling_alpha=0.05,
                        plotAssociation=sigLocal,
                        title=plotdata,
                        figures=figures,

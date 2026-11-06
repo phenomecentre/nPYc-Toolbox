@@ -3,7 +3,7 @@ import re
 from collections import OrderedDict
 
 from ..plotting import plotScores, plotLoadings
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
+#from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 
 
 def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, destinationPath=None, fileNamePrefix=''):
@@ -19,8 +19,8 @@ def generateBasicPCAReport(pcaModel, dataset, figureCounter=1, destinationPath=N
 	:returns: Dictionary of paths figures where saved to if destinationPath was not ``None``
 	:rtype: dict
 	"""
-    if not isinstance(pcaModel, ChemometricsPCA):
-        raise TypeError('pcaModel must be a ChemometricsPCA object')
+    #if not isinstance(pcaModel, ChemometricsPCA):
+    #    raise TypeError('pcaModel must be a ChemometricsPCA object')
 
     returnDict = dict()
 
