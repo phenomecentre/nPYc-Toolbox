@@ -1,7 +1,5 @@
 import numpy
-import seaborn as sns
 import matplotlib.pyplot as plt
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 from nPYc.objects import Dataset
 
 def plotDiscreteLoadings(npycDataset, pcaModel, nbComponentPerRow=3, firstComponent=1, metadataColumn='Feature Name', sort=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11, 7)):
@@ -18,9 +16,6 @@ def plotDiscreteLoadings(npycDataset, pcaModel, nbComponentPerRow=3, firstCompon
 
 	if not isinstance(npycDataset, Dataset):
 		raise TypeError('npycDataset must be a Dataset object')
-
-	if not isinstance(pcaModel, ChemometricsPCA):
-		raise TypeError('pcaModel must be an instance of ChemometricsPCA.')
 
 	if (firstComponent >= pcaModel.ncomps) or (firstComponent <= 0):
 		raise ValueError(

@@ -970,60 +970,6 @@ class test_reports_modules(unittest.TestCase):
                 for plotName in report[groupName].keys():
                     self.assertTrue(os.path.exists(report[groupName][plotName]))
 
-    @unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_reports_generateBasicPCAReport(self, mock_stdout):
-
-        from nPYc.reports._generateBasicPCAReport import generateBasicPCAReport
-        from nPYc.multivariate import exploratoryAnalysisPCA
-        from nPYc.enumerations import AssayRole, SampleType
-
-        # Synthetic data
-        noSamp = numpy.random.randint(100, high=500, size=None)
-        noFeat = numpy.random.randint(200, high=400, size=None)
-
-        dataset = generateTestDataset(noSamp, noFeat)
-
-        SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
-                    dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-        SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-                    dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-        ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-                    dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-
-        dataset.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-        dataset.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-        dataset.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Pool'
-        dataset.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'External Reference'
-
-        pcaModel = exploratoryAnalysisPCA(dataset)
-
-        with tempfile.TemporaryDirectory() as tmpdirname:
-
-            if not os.path.exists(os.path.join(tmpdirname, 'graphics')):
-                os.makedirs(os.path.join(tmpdirname, 'graphics'))
-
-            report = generateBasicPCAReport(pcaModel, dataset, destinationPath=tmpdirname)
-
-            for groupName in report['QCscores'].keys():
-                path = os.path.join(tmpdirname, report['QCscores'][groupName])
-                self.assertTrue(os.path.exists(path))
-
-            for groupName in report['loadings'].keys():
-                path = os.path.join(tmpdirname, report['loadings'][groupName])
-                self.assertTrue(os.path.exists(path))
-
-    # with self.subTest(msg='ploting interactivly'):
-    #
-    # 	report = generateBasicPCAReport(pcaModel, dataset, destinationPath=None)
-    # 	self.assertIsNone(report)
-
-    def test_reports_generateBasicPCAReport_raises(self):
-
-        from nPYc.reports._generateBasicPCAReport import generateBasicPCAReport
-
-        self.assertRaises(TypeError, generateBasicPCAReport, 'not a ChemometricsPCA object', None)
-
-
 class test_reports_multivariate(unittest.TestCase):
 
     def setUp(self):

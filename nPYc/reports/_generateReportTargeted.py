@@ -12,7 +12,6 @@ from ._generateSampleReport import _generateSampleReport
 from ..utilities import rsd
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ..enumerations import AssayRole, SampleType, QuantificationType, AnalyticalPlatform
-from ._generateBasicPCAReport import generateBasicPCAReport
 from IPython.display import display
 from io import StringIO
 import re
@@ -20,7 +19,7 @@ import re
 from ..__init__ import __version__ as version
 
 
-def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinationPath=None, numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20, pcaModel=None):
+def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinationPath=None, numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20):
 	"""
 	Summarise different aspects of a Targeted Dataset
 
@@ -135,10 +134,10 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 		item = _mergeLOQAssessemnt(tData, item, destinationPath,
 								   numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
 	elif (reportType.lower() == 'final report') and (tData.AnalyticalPlatform == AnalyticalPlatform.MS):
-		item = _finalReportMS(tData, item, destinationPath, pcaModel, withAccPrec=True,
+		item = _finalReportMS(tData, item, destinationPath, withAccPrec=True,
 							  numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
 	elif (reportType.lower() == 'final report') and (tData.AnalyticalPlatform == AnalyticalPlatform.NMR):
-		item = _finalReportNMR(tData, item, destinationPath, pcaModel)
+		item = _finalReportNMR(tData, item, destinationPath)
 
 	template_options = {'featureSummary': 'Targeted_FeatureSummaryReport.html',
 						'mergeLoqAssessment': 'Targeted_MergeLOQReport.html',
@@ -722,32 +721,6 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 		figNo = figNo+1
 
-
-	## Figure 5 and 6: (if available) PCA scores and loadings plots by sample type
-	if pcaModel is not None:
-		# Get sample types
-		#SSmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
-		#			tData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-		#SPmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-		#			tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		#ERmask = (tData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-		#			tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		# Linearity references not commonly used, but left here throughout.
-		#LRmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-		#			tData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
-
-		#tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-		#tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-		#tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
-		#tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
-
-		if pcaModel:
-			if destinationPath:
-				pcaPath = destinationPath
-			else:
-				pcaPath = None
-			pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=figNo, destinationPath=pcaPath, fileNamePrefix='')
-
 	# Table: Summary of missing/excluded study samples
 	if not destinationPath:
 		if hasattr(sampleSummary, 'Missing/excluded SS Details'):
@@ -810,14 +783,6 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	else:
 		graphicsPath = None
 
-	# Define sample masks
-	SSmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
-			 (tData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-	SPmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
-			 (tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	ERmask = (tData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
-			 (tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-
 	# Modify the required fields in item
 	item['NfeaturesPassing'] = numpy.where(tData.featureMetadata['Passing Selection'])[0].shape[0]
 	item['NfeaturesFailing'] = int(item['Nfeatures']) - item['NfeaturesPassing']
@@ -843,10 +808,6 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	sampleSummary = _generateSampleReport(tData, destinationPath=None, returnOutput=True)
 
 	sampleSummary['isFinalReport'] = True
-	#if 'StudySamples Exclusion Details' in sampleSummary:
-	#	sampleSummary['studySamplesExcluded'] = True
-	#else:
-	#	sampleSummary['studySamplesExcluded'] = False
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
@@ -1015,27 +976,6 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 			print('Missing/Excluded Study Samples')
 			print('\nTable 4: Details of missing/excluded study samples')
 			display(sampleSummary['Missing/excluded SS Details'])
-
-
-	## Figure 5 and 6: (if available) PCA scores and loadings plots by sample type
-	if pcaModel is not None:
-
-		#tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-		#tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-		#tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
-		#tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
-
-
-		if destinationPath:
-			pcaPath = destinationPath
-		else:
-			pcaPath = None
-
-		pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=4, destinationPath=pcaPath,
-										fileNamePrefix='')
-		item['pcaModel'] = pcaModel
-	else:
-		item['pcaModel'] = None
 
 	if destinationPath:
 		# Make paths for graphics local not absolute for use in the HTML.

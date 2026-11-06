@@ -17,11 +17,9 @@ import plotly.graph_objs as go
 import pandas
 import numpy
 from ._violinPlot import _violinPlotHelper
-#from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 from ._plotDiscreteLoadings import plotDiscreteLoadings
 from ._plotting import checkAndSetPlotAttributes
 from ..objects import Dataset
-from ..enumerations import SampleType
 from ..utilities.generic import createDestinationPath
 import copy
 import datetime
@@ -133,7 +131,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
     else:
         plotTitle = ''
 
-    if classes is None:
+    if classes:
         classes = pandas.Series('Sample' for i in range(ns))
         colourType = 'categorical'
 
@@ -152,8 +150,6 @@ def plotScores(pcaModel, classes=None, colourType=None,
     if 'Study Reference' in uniq:
         uniq.append(uniq.pop(uniq.index('Study Reference')))
 
-    # Calculate critical value for Hotelling's T2
-    # Fval = f.ppf(0.95, 2, ns-2)
     # Plot scores for each pair of components
     for i in numpy.arange(0, nc, 2):
 
@@ -162,7 +158,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
         else:
             j = i + 1
 
-        if plotAssociation is not None:
+        if plotAssociation:
             fig = plt.figure(figsize=figureSize, dpi=dpi)
             gs = gridspec.GridSpec(2, 10)
             ax = plt.subplot(gs[:, 3:])
@@ -175,8 +171,6 @@ def plotScores(pcaModel, classes=None, colourType=None,
         hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[i], components[j]]),
                                                   alpha=hotelling_alpha)
 
-        # a = numpy.sqrt(numpy.var(values[:,components[i]])*Fval*2*((ns-1)/(ns-2)));
-        # b = numpy.sqrt(numpy.var(values[:,components[j]])*Fval*2*((ns-1)/(ns-2)));
         ellipse = Ellipse(xy=(0, 0), width=hotelling_ellipse[0] * 2, height=hotelling_ellipse[1] * 2,
                           edgecolor='k', fc='None', lw=2)
         ax.add_patch(ellipse)
@@ -192,7 +186,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
         if colourType == 'categorical':
             # Plot according to user defined colours if available
 
-            if colourDict is not None:
+            if colourDict:
 
                 for u in uniq:
                     ax.scatter(values[classes.values == u, components[i]],
@@ -234,7 +228,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
                     classIX = classIX + 1
                     colors_sns[str(u)] = c
 
-            if plotAssociation is not None:
+            if plotAssociation:
                 nonans = [i for i, x in enumerate(classes) if x in {'nan', 'NaN', 'NaT', '', 'NA'}]
                 plotClasses = classes.copy()
                 plotClasses[nonans] = 'NA'
@@ -271,7 +265,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
             cbar = plt.colorbar(cb, ax=ax)
             cbar.set_label(title)
 
-            if plotAssociation is not None:
+            if plotAssociation:
                 xvalnan = numpy.unique(classes[plotnans == False])
                 xvalnan = xvalnan[-1] + xvalnan[-1] - xvalnan[-2]
 
@@ -316,7 +310,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
             plt.show()
 
     # Return figures if saving for output in html report
-    if figures is not None:
+    if figures:
         return figures
 
 
@@ -365,7 +359,7 @@ def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
                                            defaultVal="blue")
     markerDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=markerDict, dictName="markerDict", defaultVal="o")
 
-    if abbrDict is not None:
+    if abbrDict:
         if not all(k in abbrDict.keys() for k in uniq):
             raise ValueError(
                 'If abbrDict is specified every key should appear in the SampleClass column')
@@ -398,8 +392,6 @@ def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
         palette[abbrDict[u]] = colourDict[u]
 
     xmin, xmax = ax.get_xlim()
-
-    # TODO: DmodX from pyChemometrics, what about the other measure?
 
     # Plot lines at quantiles
     for q in numpy.arange(0, len(quantiles)):

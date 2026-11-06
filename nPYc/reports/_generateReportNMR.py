@@ -1,29 +1,22 @@
 import os
-import numpy
-import pandas
 import nPYc
 import copy
 import pandas
 import re
-import warnings
 import shutil
 import seaborn as sns
 from plotly.offline import iplot
 from IPython.display import display, HTML
 
-
 from ..objects import NMRDataset
 from .._toolboxPath import toolboxPath
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
 from ._generateSampleReport import _generateSampleReport
-from ..plotting import plotSolventResonance, plotSolventResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive, plotLoadings
-#from ._generateBasicPCAReport import generateBasicPCAReport
-from ..enumerations import AssayRole, SampleType
+from ..plotting import plotSolventResonance, plotSolventResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive
 
 from ..__init__ import __version__ as version
 
-def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath=None, pcaModel=None):
+def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath=None):
 	"""
 	Generate reports on NMRdataset objects, possible options are: ``feature summary`` or ``final report``
 	
@@ -265,10 +258,6 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 	sampleSummary = _generateSampleReport(dataset, destinationPath=None, returnOutput=True)
 
 	sampleSummary['isFinalReport'] = True
-	#if 'StudySamples Exclusion Details' in sampleSummary:
-	#	sampleSummary['studySamplesExcluded'] = True
-	#else:
-	#	sampleSummary['studySamplesExcluded'] = False
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
@@ -319,53 +308,6 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 									   figureFormat=dataset.Attributes['figureFormat'],
 									   dpi=dataset.Attributes['dpi'],
 									   figureSize=dataset.Attributes['figureSize'])
-
-
-
-	# ##
-	# # LW box plot
-	# ##
-	# if destinationPath:
-	# 	item['linewidthBoxplot'] = os.path.join(graphicsPath, item['Name'] + '_linewidthBoxplot.' + dataset.Attributes['figureFormat'])
-	# 	saveAs = item['linewidthBoxplot']
-	# else:
-	# 	print('Figure 1: Boxplot of line width distributions (by sample type).')
-	#
-	#
-	# nPYc.plotting.plotPW(dataset,
-	# 		savePath=saveAs,
-	# 		title='',
-	# 		figureFormat=dataset.Attributes['figureFormat'],
-	# 		dpi=dataset.Attributes['dpi'],
-	# 		figureSize=dataset.Attributes['figureSize'])
-
-	# ##
-	# # Solvent Peak plot
-	# ##
-	# if destinationPath:
-	# 	item['spectraSolventPeakRegion'] = os.path.join(graphicsPath, item['Name'] + '_spectraSolventPeakRegion.' + dataset.Attributes['figureFormat'])
-	# 	saveAs = item['spectraSolventPeakRegion']
-	#
-	# 	plotSolventResonance(dataset,
-	# 					 savePath=saveAs,
-	# 					 figureFormat=dataset.Attributes['figureFormat'],
-	# 					 dpi=dataset.Attributes['dpi'],
-	# 					 figureSize=dataset.Attributes['figureSize'])
-	#
-	# else:
-	# 	print('Figure 2: Distribution in intensity of spectral data around the removed solvent peak region.')
-	# 	figure = plotSolventResonanceInteractive(dataset, title='')
-	# 	iplot(figure)
-
-	##
-	# PCA plots
-	##
-	if pcaModel:
-		if destinationPath:
-			pcaPath = destinationPath
-		else:
-			pcaPath = None
-		pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=3, destinationPath=pcaPath, fileNamePrefix='')
 
 	##
 	#  Table 3: Summary of samples excluded
