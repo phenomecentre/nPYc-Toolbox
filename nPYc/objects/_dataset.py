@@ -1,13 +1,9 @@
-import scipy
 import numpy
 import pandas
 import os
-#import isatools.isatab as isatab
-import json
 import inspect
 import re
-from ..enumerations import VariableType, DatasetLevel, SampleType, AssayRole
-from ..utilities.generic import removeDuplicateColumns
+from ..enumerations import VariableType, SampleType, AssayRole
 from .._toolboxPath import toolboxPath
 from datetime import datetime
 import copy
@@ -1256,9 +1252,12 @@ class Dataset:
 
 		try:
 			dateparse = lambda x: datetime.strptime(x, '%d/%m/%Y %H:%M')
-			csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str}, parse_dates=['Acquired Time'], date_parser=dateparse)
+			csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str,
+													   'AssayRole': object, 'SampleType': object},
+									  parse_dates=['Acquired Time'], date_parser=dateparse)
 		except:
-			csvData = pandas.read_csv(filePath, dtype={'Sample File Name': str, 'Sample ID': str})
+			csvData = pandas.read_csv(filePath, dtype={'Sample File Name': str, 'Sample ID': str,
+													   'AssayRole': object, 'SampleType': object})
 		currentMetadata = self.sampleMetadata.copy()
 
 		# Check for essential columns
@@ -1269,23 +1268,22 @@ class Dataset:
 		if len(missing_list) > 0:
 			raise npycToolboxError("Missing required columns in Basic CSV file, please ensure all of the following fields are present: " + str(missing_list))
 
-		if 'Sample File Name' not in csvData.columns:
-			raise KeyError("No 'Sample File Name' column present, unable to join tables.")
-
 		# Check if there are any duplicates in the csv file
 		u_ids, u_counts = numpy.unique(csvData['Sample File Name'], return_counts=True)
 		if any(u_counts > 1):
 			warnings.warn('Check and remove duplicates in CSV file')
 			return
 
-		# Store previous AssayRole and SampleType in case they were parsed using from filename:
-		#
-		oldAssayRole = currentMetadata['AssayRole']
-		oldSampleType = currentMetadata['SampleType']
-		oldDilution = currentMetadata['Dilution']
-		##
+		# Check information for all samples is present in csvFile
+		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False), :]
+
+		if acquired_butnotcsv.shape[0] != 0:
+			# Print warning that samples should be added to basic CSV or excluded from dataset
+			raise npycToolboxError(
+				'The following samples should be added to "Basic CSV" file, or excluded from dataset else nPYc-Toolbox functionality may be compromised: ',
+				table=acquired_butnotcsv)
+
 		# If colums exist in both csv data and dataset.sampleMetadata remove them from sampleMetadata
-		##
 		columnsToRemove = csvData.columns
 		columnsToRemove = columnsToRemove.drop(['Sample File Name'])
 
@@ -1293,37 +1291,44 @@ class Dataset:
 			if column in currentMetadata.columns:
 				currentMetadata.drop(column, axis=1, inplace=True)
 
-		# If AssayRole or SampleType columns are present parse strings into enums
-		if 'AssayRole' in csvData.columns:
-			for role in AssayRole:
-				csvData['AssayRole'].replace(str(role), role, inplace=True)
-		if 'SampleType' in csvData.columns:
-			for stype in SampleType:
-				csvData['SampleType'].replace(str(stype), stype, inplace=True)
+		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
+		joinedTable = pandas.merge(currentMetadata, csvData, how='left', on='Sample File Name', sort=False)
+
+		# Ensure AssayRole and SampleType columns are enums where matching
+		for role in AssayRole:
+			joinedTable.loc[joinedTable['AssayRole']==str(role), 'AssayRole'] = role
+			#joinedTable['AssayRole'].replace(str(role), role, inplace=True)
+		for stype in SampleType:
+			joinedTable.loc[joinedTable['SampleType'] == str(stype), 'SampleType'] = stype
+			#joinedTable['SampleType'].replace(str(stype), stype, inplace=True)
 
 		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
 		# which are used in some plotting functions
 		if 'Acquired Time' in csvData:
-			csv_datetime = pandas.to_datetime(csvData['Acquired Time'], errors='coerce') # errors='ignore'
+			csv_datetime = pandas.to_datetime(joinedTable['Acquired Time'], errors='coerce') # errors='ignore'
 			csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S') if isinstance(x, str) else None).astype('O')
+			joinedTable['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S') if isinstance(x, str) else None).astype('O')
 
-		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
-		# Preserve information about sample mask alongside merge even on the case of samples missing from CSV file.
+		# By default, everything in the CSV has metadata available
+		joinedTable['Metadata Available'] = True
 
-		# Is this required?? Masked field doesn't seem to be used anywhere else
-		currentMetadata['Masked'] = False
-		currentMetadata.loc[(self.sampleMask == False), 'Masked'] = True
+		# Set sampleMask for acquired samples where 'Include Sample' column false
+		if 'Include Sample' in csvData.columns:
+			which_to_drop = joinedTable[joinedTable['Include Sample'] == False].index
+			self.sampleMask[which_to_drop] = False
+			joinedTable.drop('Include Sample', inplace=True, axis=1)
 
-		joinedTable = pandas.merge(currentMetadata, csvData, how='left', left_on='Sample File Name',
-								   right_on='Sample File Name', sort=False)
+		# Add 'Batch' if not available - Caro check this
+		if 'Batch' not in joinedTable.columns:
+			joinedTable['Batch'] = 1
 
-		merged_samples = pandas.merge(currentMetadata, csvData, how='inner', left_on='Sample File Name',
-								   right_on='Sample File Name', sort=False)
+		# Add 'Sample Base Name' if not available (note - just setting to 'Sample File Name')
+		if 'Sample Base Name' not in joinedTable.columns:
+			joinedTable['Sample Base Name'] = joinedTable['Sample File Name']
 
-		merged_samples = merged_samples['Sample File Name']
-
-		merged_indices = joinedTable[joinedTable['Sample File Name'].isin(merged_samples)].index
+		# Reset index and save to self
+		joinedTable.reset_index(inplace=True, drop=True)
+		self.sampleMetadata = joinedTable
 
 		# Samples in the CSV file but not acquired will go for sampleAbsentMetadata, for consistency with NPC Lims import
 		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(currentMetadata['Sample File Name']) == False, :]
@@ -1337,75 +1342,9 @@ class Dataset:
 			for stype in SampleType:
 				sampleAbsentMetadata['SampleType'].replace(str(stype), stype, inplace=True)
 
-			# Remove duplicate columns (these will be appended with _x or _y)
-			cols = [c for c in sampleAbsentMetadata.columns if c[-2:] != '_y']
-			sampleAbsentMetadata = sampleAbsentMetadata[cols]
-			sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
-
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
-		# By default everything in the CSV has metadata available and samples mentioned there will not be masked
-		# unless Include Sample field was == False
-		joinedTable.loc[merged_indices, 'Metadata Available'] = True
-
-		# Samples in the folder and processed but not mentioned in the CSV.
-		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False), :]
-
-		# Ensure that acquired but no csv only counts samples which 1 are not in CSV and 2 - also have no other kind of
-		# AssayRole information provided (from parsing filenames for example)
-		if acquired_butnotcsv.shape[0] != 0:
-
-			noMetadataIndex = acquired_butnotcsv.index
-			# Find samples where metadata was there previously and is not on the new CSV
-			previousMetadataAvailable = currentMetadata.loc[(~oldSampleType.isnull()) & (~oldAssayRole.isnull())
-															& ((currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False)), :].index
-			metadataNotAvailable = [x for x in noMetadataIndex if x not in previousMetadataAvailable]
-			# Keep old AssayRoles and SampleTypes for cases not mentioned in CSV for which this information was previously
-			# available
-			joinedTable.loc[previousMetadataAvailable, 'AssayRole'] = oldAssayRole[previousMetadataAvailable]
-			joinedTable.loc[previousMetadataAvailable, 'SampleType'] = oldSampleType[previousMetadataAvailable]
-			joinedTable.loc[previousMetadataAvailable, 'Dilution'] = oldDilution[previousMetadataAvailable]
-			
-			#  If not in the new CSV, but previously there, keep it and don't mask
-			if len(metadataNotAvailable) > 0:
-				joinedTable.loc[metadataNotAvailable, 'Metadata Available'] = False
-
-			# Print warning that samples should be added to basic CSV or excluded from dataset
-			raise npycToolboxError('The following samples should be added to "Basic CSV" file, or excluded from dataset else nPYc-Toolbox functionality may be compromised: ',
-								   table=acquired_butnotcsv)
-			#display(acquired_butnotcsv)
-			#print(*acquired_butnotcsv['Sample File Name'].values, sep='\n')
-
-		# 1) ACQ and in "include Sample" - drop and set mask to false
-		#  Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
-
-		# Remove acquired samples where Include sample column equals false - does not remove, just masks the sample
-		if 'Include Sample' in csvData.columns:
-			which_to_drop = joinedTable[joinedTable['Include Sample'] == False].index
-			#self.intensityData = numpy.delete(self.intensityData, which_to_drop, axis=0)
-			#self.sampleMask = numpy.delete(self.sampleMask, which_to_drop)
-			self.sampleMask[which_to_drop] = False
-			#joinedTable.drop(which_to_drop, axis=0, inplace=True)
-			joinedTable.drop('Include Sample', inplace=True, axis=1)
-
-		previously_masked = joinedTable[joinedTable['Masked'] == True].index
-		self.sampleMask[previously_masked] = False
-		joinedTable.drop('Masked', inplace=True, axis=1)
-		# Regenerate the dataframe index for joined table
-		joinedTable.reset_index(inplace=True, drop=True)
-		self.sampleMetadata = joinedTable
-
-		# Commented out as we shouldn't need this here after removing the LIMS, but lets keep it
-		# This should make it work - but its assuming the sample "NAME" is the same as File name as in LIMS.
-		self.sampleMetadata['Sample Base Name'] = self.sampleMetadata['Sample File Name']
-
-		# Ensure there is a batch column
-		if 'Batch' not in self.sampleMetadata:
-			self.sampleMetadata['Batch'] = 1
-
-		# Check all samples have metadata
-
-
+		# Add to log
 		self.Attributes['Log'].append([datetime.now(), 'Basic CSV matched from %s' % (filePath)])
 
 	def _getSampleMetadataFromFilename(self, filenameSpec):

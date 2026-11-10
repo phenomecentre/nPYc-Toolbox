@@ -55,12 +55,12 @@ def jointplotRSDvCorrelation(rsd,
 		nbins = histBins
 
 	with sns.axes_style("white"):
-		my_cmap = mpl.cm.get_cmap('BuPu')
-		my_cmap.set_under('w')
+		#my_cmap = mpl.cm.get_cmap('BuPu')
+		#my_cmap.set_under('w')
 		cax = ax.hexbin(rsd, correlation,
 						bins=bins,
 						xscale=xscale,
-						cmap=my_cmap,
+						cmap='BuPu',
 						vmin=.01)
 
 		#Create Y-marginal (right)
