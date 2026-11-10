@@ -1,6 +1,7 @@
 import plotly
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy
 import pandas
 import copy
@@ -201,7 +202,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 					~numpy.isnan(msData.sampleMetadata['Batch'].values)])).astype(int)
 
 		# Define the colours (different for each batch) and get axis y-limits
-		cmap = plt.get_cmap('gnuplot')
+		cmap = matplotlib.colormaps.get_cmap('gnuplot')
 		colors = [cmap(i) for i in numpy.linspace(0, 1, len(batches)+1)]
 		ymin, ymax = ax.get_ylim()
 		colIX = 1

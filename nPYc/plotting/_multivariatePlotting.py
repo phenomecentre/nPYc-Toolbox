@@ -1118,7 +1118,7 @@ def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=N
                 #temp.sort_index(inplace=True)
 
                 ix = 0
-                cmap = plt.get_cmap('tab10')
+                cmap = matplotlib.colormaps.get_cmap('tab10')
 
                 for i in temp.index:
                     colors.append(rgb2hex(cmap(ix)[:3]))

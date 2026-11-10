@@ -1,4 +1,5 @@
 import numpy
+import matplotlib
 import matplotlib.pyplot as plt
 from nPYc.objects import Dataset
 
@@ -59,7 +60,7 @@ def plotDiscreteLoadings(npycDataset, pcaModel, nbComponentPerRow=3, firstCompon
 							c=numpy.absolute(pcaModel.loadings[i, sortOrder]),
 							linewidths=1,
 							edgecolor='none',
-							cmap=plt.get_cmap('plasma'),
+							cmap=matplotlib.colormaps.get_cmap('plasma'),
 							marker='o',
 							zorder=10)
 
