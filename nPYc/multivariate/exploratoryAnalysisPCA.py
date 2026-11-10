@@ -1,86 +1,60 @@
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from pyChemometrics.ChemometricsScaler import ChemometricsScaler
-
+from .pcamodel import PCAmodel
 from nPYc.objects._dataset import Dataset
 import copy
 
-
-def exploratoryAnalysisPCA(npycDataset, scaling=1, maxComponents=10, minQ2=0.05, withExclusions=False, **kwargs):
+def exploratoryAnalysisPCA(npycDataset,
+                           withExclusions=False,
+                           scaling='uv',
+                           n_components=6,
+                           svd_solver='auto',
+                           f_crit_alpha=0.05,
+                           minR2=None,
+                           **kwargs):
     """
 
-    Performs and exploratory analysis using PCA on the data contained in an :py:class:`~nPYc:objects.Dataset`.
+    Performs an exploratory analysis using PCA on the data contained in an :py:class:`~nPYc:objects.Dataset`.
 
     :param Dataset npycDataset: Dataset to model
-    :param scaling: Choice of scaling.
-    :param int maxComponents: Maximum number of components to fit.
-    :param minQ2: Minimum % of improvement in Q2Y over the previous component to add .
     :param Boolean withExclusions: If True, PCA will be fitted on the npyc_dataset after applying feature and sample Mask, if False the PCA is performed on whole dataset.
+    :param str scaling: Choice of scaling, either 'mc' for mean-centered only or 'uv' for univariate.
+    :param n_components: Number of components to keep. See sklearn.decomposition.PCA n_components.
+    :param svd_solver: SVD solver. See sklearn.decomposition.PCA scd_solver.
+    :param float f_crit_alpha: Critical value for defining outliers in DModX
+    :param minR2: Minimum % of improvement in R2 over the previous component to continue adding components
+    :type minR2: None or float
     :return: Fitted PCA model
-    :rtype: ChemometricsPCA
+    :rtype: PCAmodel
     """
 
-    try:
+    # Some initial checks
 
-        if not isinstance(npycDataset, Dataset):
-            raise TypeError('npycDataset argument must be one of the nPYc dataset objects')
+    if not isinstance(npycDataset, Dataset):
+        raise TypeError('npycDataset argument must be one of the nPYc dataset objects')
 
-        if not isinstance(scaling, (float, int)) or (scaling < 0 or scaling > 1):
-            raise TypeError('scaling must be a number between 0 and 1. Recommended values are '
-                            '0 (mean centring), 1 (Unit Variance)and 0.5 (Pareto)')
-        if not isinstance(maxComponents, (float, int)) or maxComponents <= 0:
-            raise TypeError('MinQ2 must be a positive number')
+    if not isinstance(withExclusions, bool):
+        raise TypeError('withExclusions must be a bool')
 
-        if not isinstance(minQ2, (float, int)):
-            raise TypeError('MinQ2 must be a number')
+    if not isinstance(scaling, str) & (scaling in {'uv', 'mc'}):
+        raise ValueError('reportType must be either `uv` (univariate) or `mc` (mean-centered only)')
+
+    if minR2 is not None:
+        if not isinstance(minR2, float):
+            raise TypeError('MinR2 must be `None` or a number')
+
+    # Apply sample/feature masks if exclusions to be applied
+    dataset = copy.deepcopy(npycDataset)
+    if withExclusions:
+        dataset.applyMasks()
+
+    # Fit a PCAmodel
+    pcamodel = PCAmodel()
+
+    fittedModel = pcamodel.doPCA(dataset,
+                                 n_components=n_components,
+                                 scaling=scaling,
+                                 svd_solver=svd_solver,
+                                 f_crit_alpha=f_crit_alpha,
+                                 **kwargs)
 
 
-        scaler_obj = ChemometricsScaler(scaling)
-
-        PCAmodel = ChemometricsPCA(ncomps=maxComponents, scaler=scaler_obj)
-
-
-        # Parse the dara for the cases with exclusion = True and False
-        if withExclusions:
-            npycDatasetmaskApplied = copy.deepcopy(npycDataset)
-            npycDatasetmaskApplied.applyMasks()
-            data = npycDatasetmaskApplied.intensityData			
-
-            # generate hash
-            # samp_mask_hash = sha1(numpy.ascontiguousarray(npyc_dataset.sampleMask)).hexdigest()
-            # feat_mask_hash = sha1(numpy.ascontiguousarray(npyc_dataset.featureMask)).hexdigest()
-            # PCAmodel._npyc_hash = {'SampleMask': samp_mask_hash, 'FeatureMask': feat_mask_hash}
-        else:
-            data = npycDataset.intensityData
-
-        PCAmodel._npyc_dataset_shape = {'NumberSamples': data.shape[0], 'NumberFeatures': data.shape[1]}
-
-        # Do nothing else
-
-        PCAmodel.fit(data)
-        scree_cv = PCAmodel._screecv_optimize_ncomps(data, total_comps=maxComponents, stopping_condition=minQ2, **kwargs)
-
-        # After choosing number of components, re-initialize the model
-
-        PCAmodel.ncomps = scree_cv['Scree_n_components']
-        
-        # Set the miminum number of components to 2
-        # TODO: fix plotScores to enable plotting of one component models
-        if PCAmodel.ncomps == 1:
-            scree_cv = PCAmodel._screecv_optimize_ncomps(data, total_comps=2, stopping_condition=-100000, **kwargs)
-            PCAmodel.ncomps = scree_cv['Scree_n_components']
-			
-        PCAmodel.fit(data, **kwargs)
-        # Append the old scree plot to the object
-        PCAmodel.cvParameters = scree_cv
-        PCAmodel.cvParameters['total_comps'] = maxComponents
-        PCAmodel.cvParameters['stopping_condition'] = minQ2
-		
-        # Cross-validation
-        PCAmodel.cross_validation(data, press_impute=False, **kwargs)
-
-        return PCAmodel
-
-    except TypeError as terr:
-        raise terr
-    except Exception as exp:
-        raise exp
+    return fittedModel

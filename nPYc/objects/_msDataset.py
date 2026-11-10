@@ -1348,29 +1348,15 @@ class MSDataset(Dataset):
 		fileNameParts.loc[
 			fileNameParts['groupingKind'].str.match('E?IC', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
 
-		# # Define `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
+		# Define `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
 		fileNameParts = inferSampleClass(fileNameParts)
-		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudySample) & (
-		# 			fileNameParts['AssayRole'] == AssayRole.Assay), 'SampleClass'] = 'Study Sample'
-		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudyPool) & (
-		# 			fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Study Reference'
-		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.ExternalReference) & (
-		# 			fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Long-Term Reference'
-		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudyPool) & (
-		# 			fileNameParts['AssayRole'] == AssayRole.LinearityReference), 'SampleClass'] = 'Linearity Reference'
-		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.MethodReference) & (
-		# 			fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Method Reference'
-		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.ProceduralBlank) & (
-		# 			fileNameParts['AssayRole'] == AssayRole.Blank), 'SampleClass'] = 'Blank'
-		# fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.UnknownType) & (
-		# 		fileNameParts['AssayRole'] == AssayRole.UnknownRole), 'SampleClass'] = 'Unknown'
 
 		# Skipped runs
 		fileNameParts['Skipped'] = fileNameParts['exclusion'].str.match('[Xx]', na=False)
 
 		# Get matrix
 		fileNameParts['Matrix'] = fileNameParts['groupingKind'].str.extract('^([AC-Z]{1,2})(?<!IC)$', expand=False)
-		fileNameParts['Matrix'].fillna('', inplace=True)
+		fileNameParts['Matrix'] = fileNameParts['Matrix'].fillna('')
 
 		# Get well numbers
 		fileNameParts.loc[
@@ -1380,19 +1366,15 @@ class MSDataset(Dataset):
 		# Plate / grouping no
 		fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'], errors='coerce')
 
-		# Get batch where it is explicit in file name
-		fileNameParts['Batch'] = pandas.to_numeric(fileNameParts['baseName'].str.extract('B(\d+?)[SE]', expand=False), errors='coerce')
-		fileNameParts['Correction Batch'] = numpy.nan
-
 		# Map dilution series names to dilution level
 		fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract('(?:.+_?)(SRD\d\d)(?:_?.*)',
 																		  expand=False).replace(
 			self.Attributes['dilutionMap'])
-		fileNameParts['Dilution'] = fileNameParts['Dilution'].astype(float)
+		fileNameParts['Dilution'] = pandas.to_numeric(fileNameParts['Dilution'], errors='coerce')
 
-		# Blank out NAs for neatness
-		fileNameParts['reruns'].fillna('', inplace=True)
-		fileNameParts['extraInjections'].fillna('', inplace=True)
+		# Blank out NAs for neatness (note: inplace=True doesn't seem to work)
+		fileNameParts['reruns'] = fileNameParts['reruns'].fillna('')
+		fileNameParts['extraInjections'] = fileNameParts['extraInjections'].fillna('')
 
 		# Drop unwanted columns
 		fileNameParts.drop(['exclusion', 'reference', 'groupingKind', 'injectionNo', 'injectionKind', 'groupingNo'],
@@ -1404,32 +1386,22 @@ class MSDataset(Dataset):
 		fileNameParts.rename(columns={'study': 'Study'}, inplace=True)
 		fileNameParts.rename(columns={'baseName': 'Sample Base Name'}, inplace=True)
 		fileNameParts.rename(columns={'fileName': 'Sample File Name'}, inplace=True)
-		fileNameParts.rename(columns={'suplementalInfo': 'Suplemental Info'}, inplace=True)
+		fileNameParts.rename(columns={'suplementalInfo': 'Supplemental Info'}, inplace=True)
 		fileNameParts.rename(columns={'ionisation': 'Ionisation'}, inplace=True)
-		fileNameParts.rename(columns={'extraInjections': 'Suplemental Injections'}, inplace=True)
+		fileNameParts.rename(columns={'extraInjections': 'Supplemental Injections'}, inplace=True)
 		fileNameParts.rename(columns={'reruns': 'Re-Run'}, inplace=True)
 
 		# Merge metadata back into the sampleInfo table.
-		# first remove duplicate columns (from _dataset _init_)
-		if 'Study' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Study'], axis=1, inplace=True)
-		if 'Chromatography' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Chromatography'], axis=1, inplace=True)
-		if 'Ionisation' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Ionisation'], axis=1, inplace=True)
-		if 'Instrument' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Instrument'], axis=1, inplace=True)
-		if 'Re-Run' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Re-Run'], axis=1, inplace=True)
-		if 'Suplemental Injections' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Suplemental Injections'], axis=1, inplace=True)
-		if 'SampleClass' in self.sampleMetadata.columns: self.sampleMetadata.drop(['SampleClass'], axis=1, inplace=True)
-		if 'Skipped' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Skipped'], axis=1, inplace=True)
-		if 'Matrix' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Matrix'], axis=1, inplace=True)
-		if 'Well' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Well'], axis=1, inplace=True)
-		if 'Plate' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Plate'], axis=1, inplace=True)
-		if 'AssayRole' in self.sampleMetadata.columns: self.sampleMetadata.drop(['AssayRole'], axis=1, inplace=True)
-		if 'SampleType' in self.sampleMetadata.columns: self.sampleMetadata.drop(['SampleType'], axis=1, inplace=True)
-		if 'Sample Base Name' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sample Base Name'], axis=1,
-																					   inplace=True)
-		if 'Dilution' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
-		if 'Batch' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Batch'], axis=1, inplace=True)
-		if 'Correction Batch' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Correction Batch'], axis=1,
-																					   inplace=True)
+
+		# Remove any pre-existing columns (created in _init_) from dataset.sampleMetadata
+		columnsToRemove = ['Study', 'Chromatography', 'Ionisation', 'Instrument', 'Re-Run', 'Supplemental Injections',
+						   'SampleClass', 'Skipped', 'Matrix', 'Well', 'Plate', 'AssayRole', 'SampleType',
+						   'Sample Base Name', 'Dilution']
+
+		for column in columnsToRemove:
+			if column in self.sampleMetadata.columns:
+				self.sampleMetadata.drop(column, axis=1, inplace=True)
+
 		# merge
 		self.sampleMetadata = pandas.merge(self.sampleMetadata, fileNameParts, left_on='Sample File Name',
 										   right_on='Sample File Name', how='left', sort=False)

@@ -1,14 +1,8 @@
-import copy
-
-from networkx.algorithms.components import number_attracting_components
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import scipy.stats as stats
 import pandas as pd
 import numpy as np
-
-from nPYc import MSDataset
-
 
 # Can we just use sklearn-PCA?
 class PCAmodel:
@@ -31,21 +25,15 @@ class PCAmodel:
         self.modelParameters = dict() # Tidy this up in due course
         self._isfitted = False
 
-    def doPCA(self, dataset, withExclusions=False, scaling='uv', n_components=6, svd_solver='auto', f_crit_alpha = 0.05, **kwargs):
+    def doPCA(self, msData,
+              scaling='uv', n_components=6, svd_solver='auto',
+              f_crit_alpha = 0.05, **kwargs):
 
         """
         Perform PCA on the provided data matrix.
 
         Uses scikit-learn PCA: see documentation for available options
         """
-
-        # Initial checks
-
-
-        # Apply sample/feature masks if exclusions to be applied
-        msData = copy.deepcopy(dataset)
-        if withExclusions:
-            msData.applyMasks()
 
         self._npyc_dataset_shape = {'NumberSamples': msData.intensityData.shape[0], 'NumberFeatures': msData.intensityData.shape[1]}
 
@@ -103,7 +91,6 @@ class PCAmodel:
         self.inputparams['n_components'] = n_components
         self.inputparams['svd_solver'] = svd_solver
         self.inputparams['scaling'] = scaling
-        self.inputparams['withExclusions'] = withExclusions
         self.inputparams['f_crit_alpha'] = f_crit_alpha
         self.inputparams = {**self.inputparams, **kwargs}
 

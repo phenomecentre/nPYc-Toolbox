@@ -1283,7 +1283,7 @@ class Dataset:
 				'The following samples should be added to "Basic CSV" file, or excluded from dataset else nPYc-Toolbox functionality may be compromised: ',
 				table=acquired_butnotcsv)
 
-		# If colums exist in both csv data and dataset.sampleMetadata remove them from sampleMetadata
+		# If columns exist in both csv data and dataset.sampleMetadata remove them from sampleMetadata
 		columnsToRemove = csvData.columns
 		columnsToRemove = columnsToRemove.drop(['Sample File Name'])
 
