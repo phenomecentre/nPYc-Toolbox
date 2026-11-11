@@ -194,8 +194,6 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
         if len(myset) == 1:
             pass
 
-        # elif all((my == pandas._libs.tslib.NaTType or my == pandas._libs.tslib.Timestamp) for my in myset):
-        # 	pass
         elif str in myset:
             data.sampleMetadata[plotdata] = data.sampleMetadata[plotdata].astype(str)
             warning_string = "Ensure datatype of all entries in \"{0}\" are consistent. Column \"{0}\" has been typecasted to str".format(
@@ -290,11 +288,12 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                  dpi=data.Attributes['dpi'],
                                  figureSize=data.Attributes['figureSize'])
 
-    for key in figuresQCscores:
-        if os.path.join(destinationPath, 'graphics') in str(figuresQCscores[key]):
-            figuresQCscores[key] = re.sub('.*graphics', 'graphics', figuresQCscores[key])
+    if destinationPath:
+        for key in figuresQCscores:
+            if os.path.join(destinationPath, 'graphics') in str(figuresQCscores[key]):
+                figuresQCscores[key] = re.sub('.*graphics', 'graphics', figuresQCscores[key])
 
-    item['QCscores'] = figuresQCscores
+        item['QCscores'] = figuresQCscores
 
     # Calculate sum of scores across all PCs for each sample
     sumT = numpy.sum(numpy.absolute(pcaModel.scores), axis=1)
@@ -401,11 +400,12 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
                                    dpi=data.Attributes['dpi'],
                                    figureSize=data.Attributes['figureSize'])
 
-    for key in figuresLoadings:
-        if os.path.join(destinationPath, 'graphics') in str(figuresLoadings[key]):
-            figuresLoadings[key] = re.sub('.*graphics', 'graphics', figuresLoadings[key])
+    if destinationPath:
+        for key in figuresLoadings:
+            if os.path.join(destinationPath, 'graphics') in str(figuresLoadings[key]):
+                figuresLoadings[key] = re.sub('.*graphics', 'graphics', figuresLoadings[key])
 
-    item['loadings'] = figuresLoadings
+        item['loadings'] = figuresLoadings
 
     # Plot metadata and assess potential association with PCA scores
 

@@ -1381,15 +1381,15 @@ class MSDataset(Dataset):
 						   axis=1, inplace=True)
 
 		# Swap in user friendly file names
-		fileNameParts.rename(columns={'chromatography': 'Chromatography'}, inplace=True)
-		fileNameParts.rename(columns={'instrument': 'Instrument'}, inplace=True)
-		fileNameParts.rename(columns={'study': 'Study'}, inplace=True)
-		fileNameParts.rename(columns={'baseName': 'Sample Base Name'}, inplace=True)
-		fileNameParts.rename(columns={'fileName': 'Sample File Name'}, inplace=True)
-		fileNameParts.rename(columns={'suplementalInfo': 'Supplemental Info'}, inplace=True)
-		fileNameParts.rename(columns={'ionisation': 'Ionisation'}, inplace=True)
-		fileNameParts.rename(columns={'extraInjections': 'Supplemental Injections'}, inplace=True)
-		fileNameParts.rename(columns={'reruns': 'Re-Run'}, inplace=True)
+		fileNameParts.rename(columns={'chromatography': 'Chromatography',
+									  'instrument': 'Instrument',
+									  'study': 'Study',
+									  'baseName': 'Sample Base Name',
+									  'fileName': 'Sample File Name',
+									  'suplementalInfo': 'Supplemental Info',
+									  'ionisation': 'Ionisation',
+									  'extraInjections': 'Supplemental Injections',
+									  'reruns': 'Re-Run'}, inplace=True)
 
 		# Merge metadata back into the sampleInfo table.
 

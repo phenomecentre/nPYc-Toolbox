@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 from matplotlib.collections import LineCollection
 import matplotlib.dates as mdates
+from matplotlib.patches import Ellipse
 import os
 import seaborn as sns
 import plotly
@@ -62,28 +63,42 @@ def plotScree(R2, Q2=None, title='', xlabel='', ylabel='', savePath=None, figure
         plt.show()
 
 
-def plotScores(pcaModel, classes=None, colourType=None,
-               colourDict=None, markerDict=None, components=None,
+def plotScores(pcaModel,
+               classes=None,
+               colourType=None,
+               colourDict={},
+               markerDict={},
+               components=None,
                hotelling_alpha=0.05,
-               plotAssociation=None, title='', xlabel='', figures=None,
-               savePath=None, figureFormat='png', dpi=72,
-               figureSize=(11, 7), opacity=.6):
+               plotAssociation=None,
+               title='',
+               xlabel='',
+               figures=None,
+               savePath=None,
+               figureFormat='png',
+               dpi=72,
+               figureSize=(11, 7),
+               opacity=.6):
     """
 	Plot PCA scores for each pair of components in PCAmodel, coloured by values defined in classes, and with Hotelling's T2 ellipse (95%)
 
 	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
-	:param pandas.Series classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
-	:param str colourType: either 'categorical' or 'continuous'
+	:param classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
+	:type classes: None or pandas.Series
+	:param colourType: either 'categorical' or 'continuous'
+	:type colourType: None or str
 	:param dict colourDict:
 	:param dict markerDict:
 	:param components: If ``None`` plots all components in model, else plots those specified in components
-	:type components: tuple (int, int)
+	:type components: None or tuple (int, int)
 	:param float hotelling_alpha: Significance value for plotting Hotellings ellipse
-	:param bool plotAssociation: If ``True``, plots the association between each set of PCA scores and the metadata values
+	:param plotAssociation: If ``True``, plots the association between each set of PCA scores and the metadata values
+	:type plotAssociation: None or pandas.DataFrame
 	:param numpy.array significance: Significance of association of scores from each component with values in classes from correlation or Kruskal-Wallis test for example (see multivariateReport.py)
 	:param str title: Title for the plot
 	:param str xlabel: Label for the x-axis
-	:param dict figures: If not ``None``, saves location of each figure for output in html report (see multivariateReport.py)
+	:param figures: If specified saves location of each figure for output in html report (see multivariateReport.py)
+	:type figures: None or dict
 	"""
 
     #print("----->> Plotting scores %s" % colourType)
@@ -92,23 +107,20 @@ def plotScores(pcaModel, classes=None, colourType=None,
 #    if not isinstance(pcaModel, ChemometricsPCA):
 #        raise TypeError('PCAmodel must be an instance of ChemometricsPCA')
 
-    if classes is not None and colourType is None:
-        raise ValueError('If classes is specified, colourType must be')
+#    if classes is not None and colourType is None:
+#        raise ValueError('If classes is specified, colourType must be')
 
-    if colourType:
-        if colourType not in {'categorical', 'continuous', 'continuousCentered'}:
-            raise ValueError('colourType must be == ' + str({'categorical', 'continuous','continuousCentered'}))
+    if colourType not in {'categorical', 'continuous', 'continuousCentered'}:
+        raise ValueError('colourType must be == ' + str({'categorical', 'continuous','continuousCentered'}))
 
-        # If colourDict check colour defined for every unique entry in class
-    if classes is not None and colourDict is not None:
+    # If colourDict check colour defined for every unique entry in class
+    if colourDict:
         uniq = classes.unique()
         if not all(k in colourDict.keys() for k in uniq):
             print("dict keys are %s" % colourDict.keys())
             print("Category keys are %s" % uniq)
             raise ValueError(
                 'If classes and colourDict are specified every unique entry in class must be a key in colourDict')
-
-    from matplotlib.patches import Ellipse
 
     # Preparation
     values = pcaModel.scores
@@ -131,7 +143,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
     else:
         plotTitle = ''
 
-    if classes:
+    if classes is None:
         classes = pandas.Series('Sample' for i in range(ns))
         colourType = 'categorical'
 
@@ -158,14 +170,15 @@ def plotScores(pcaModel, classes=None, colourType=None,
         else:
             j = i + 1
 
-        if plotAssociation:
+        if plotAssociation is None:
+            print('code reached')
+            fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
+        else:
             fig = plt.figure(figsize=figureSize, dpi=dpi)
             gs = gridspec.GridSpec(2, 10)
             ax = plt.subplot(gs[:, 3:])
             ax1 = plt.subplot(gs[0, : 2])
             ax2 = plt.subplot(gs[1, : 2])
-        else:
-            fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
 
         # Add Hotelling's T2
         hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[i], components[j]]),
@@ -228,7 +241,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
                     classIX = classIX + 1
                     colors_sns[str(u)] = c
 
-            if plotAssociation:
+            if plotAssociation is not None:
                 nonans = [i for i, x in enumerate(classes) if x in {'nan', 'NaN', 'NaT', '', 'NA'}]
                 plotClasses = classes.copy()
                 plotClasses[nonans] = 'NA'
@@ -265,7 +278,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
             cbar = plt.colorbar(cb, ax=ax)
             cbar.set_label(title)
 
-            if plotAssociation:
+            if plotAssociation is not None:
                 xvalnan = numpy.unique(classes[plotnans == False])
                 xvalnan = xvalnan[-1] + xvalnan[-1] - xvalnan[-2]
 
@@ -564,8 +577,8 @@ def plotScoresInteractive(dataset,
                           pcaModel,
                           labelBy='Run Order',
                           colourBy='Run Order',
-                          colourDict=None,
-                          markerDict=None,
+                          colourDict={},
+                          markerDict={},
                           plotAsCategorical=False,
                           components=[1, 2],
                           alpha=0.05,
@@ -694,14 +707,12 @@ def plotScoresInteractive(dataset,
     else:
         uniq = numpy.unique(classes[plotnans == False])
 
-        if colourDict is None:
-            colourDict={}
+        if not colourDict:
             colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(uniq))))
             for u in uniq:
                 colourDict[u] = rgb2hex(next(colors))
 
-        if markerDict is None:
-            markerDict = {}
+        if not markerDict:
             for u in uniq:
                 markerDict[u] = 'diamond-dot'
 
