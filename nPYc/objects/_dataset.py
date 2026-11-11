@@ -1133,7 +1133,7 @@ class Dataset:
 
 				# Delete excluded samples
 				self.sampleMetadata = self.sampleMetadata.loc[self.sampleMask]
-				self.sampleMetadata.reset_index(drop=True, inplace=True)
+				self.sampleMetadata = self.sampleMetadata.reset_index(drop=True)
 				self._intensityData = self._intensityData[self.sampleMask, :]
 
 				if hasattr(self, 'fit'):
@@ -1151,7 +1151,7 @@ class Dataset:
 
 				# Delete excluded features
 				self.featureMetadata = self.featureMetadata.loc[self.featureMask]
-				self.featureMetadata.reset_index(drop=True, inplace=True)
+				self.featureMetadata = self.featureMetadata.reset_index(drop=True)
 				self._intensityData = self._intensityData[:, self.featureMask]
 
 			self.Attributes['Log'].append([datetime.now(), '%i samples and %i features removed from dataset.' % (
@@ -1202,7 +1202,8 @@ class Dataset:
 		* **'Reference Ranges'** JSON file specifying upper and lower reference ranges for a feature.
 
 		:param str filePath: Path to the additional data to be added
-		:param str descriptionFormat:
+		:param descriptionFormat:
+		:type descriptionFormat: str or None
 		:param str featureId: Unique feature Id field in the metadata file provided to match with internal Feature Name
 		:raises NotImplementedError: if the descriptionFormat is not understood
 		"""
@@ -1226,18 +1227,18 @@ class Dataset:
 
 			for column in columnsToRemove:
 				if column in currentMetadata.columns:
-					currentMetadata.drop(column, axis=1, inplace=True)
+					currentMetadata =currentMetadata.drop(column, axis=1)
 
 			currentMetadata = currentMetadata.merge(csvData, how='left', left_on='Feature Name',
 													right_on=featureId, sort=False)
 
 			# Avoid duplicating feature ID field
 			if featureId != 'Feature Name':
-				currentMetadata.drop(featureId, axis=1, inplace=True)
+				currentMetadata = currentMetadata.drop(featureId, axis=1)
 
 			# Rename cpdName to Compound Name (for human readability)
 			if 'cpdName' in currentMetadata.columns:
-				currentMetadata.rename(columns={'cpdName': 'Compound Name'}, inplace=True)
+				currentMetadata = currentMetadata.rename(columns={'cpdName': 'Compound Name'})
 
 			self.featureMetadata = currentMetadata
 
@@ -1289,7 +1290,7 @@ class Dataset:
 
 		for column in columnsToRemove:
 			if column in currentMetadata.columns:
-				currentMetadata.drop(column, axis=1, inplace=True)
+				currentMetadata = currentMetadata.drop(column, axis=1)
 
 		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
 		joinedTable = pandas.merge(currentMetadata, csvData, how='left', on='Sample File Name', sort=False)
@@ -1297,10 +1298,8 @@ class Dataset:
 		# Ensure AssayRole and SampleType columns are enums where matching
 		for role in AssayRole:
 			joinedTable.loc[joinedTable['AssayRole']==str(role), 'AssayRole'] = role
-			#joinedTable['AssayRole'].replace(str(role), role, inplace=True)
 		for stype in SampleType:
 			joinedTable.loc[joinedTable['SampleType'] == str(stype), 'SampleType'] = stype
-			#joinedTable['SampleType'].replace(str(stype), stype, inplace=True)
 
 		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
 		# which are used in some plotting functions
@@ -1316,7 +1315,7 @@ class Dataset:
 		if 'Include Sample' in csvData.columns:
 			which_to_drop = joinedTable[joinedTable['Include Sample'] == False].index
 			self.sampleMask[which_to_drop] = False
-			joinedTable.drop('Include Sample', inplace=True, axis=1)
+			joinedTable = joinedTable.drop('Include Sample', axis=1)
 
 		# Add 'Batch' if not available - Caro check this
 		if 'Batch' not in joinedTable.columns:
@@ -1327,7 +1326,7 @@ class Dataset:
 			joinedTable['Sample Base Name'] = joinedTable['Sample File Name']
 
 		# Reset index and save to self
-		joinedTable.reset_index(inplace=True, drop=True)
+		joinedTable = joinedTable.reset_index(drop=True)
 		self.sampleMetadata = joinedTable
 
 		# Samples in the CSV file but not acquired will go for sampleAbsentMetadata, for consistency with NPC Lims import
@@ -1338,9 +1337,9 @@ class Dataset:
 
 			# Convert SampleType and AssayRole to standard enums format
 			for role in AssayRole:
-				sampleAbsentMetadata['AssayRole'].replace(str(role), role, inplace=True)
+				sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'] == str(role), 'AssayRole'] = role
 			for stype in SampleType:
-				sampleAbsentMetadata['SampleType'].replace(str(stype), stype, inplace=True)
+				sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'] == str(stype), 'SampleType'] = role
 
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
@@ -1374,7 +1373,7 @@ class Dataset:
 
 		# rename 'sample ID' to 'sampling ID' to match sampleMetadata format
 		if any(self.limsFile.columns.str.match('Sampling ID')):
-			self.limsFile.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
+			self.limsFile = self.limsFile.rename(columns={'Sampling ID': 'Sample ID'})
 
 		# Prepare data
 		# Create normalised columns
@@ -1387,9 +1386,12 @@ class Dataset:
 
 		# Match limsFile to sampleMetdata for samples with data PRESENT
 		# Remove already present columns
-		if 'Sampling ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sampling ID'], axis=1, inplace=True)
-		if 'Sample ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sample ID'], axis=1, inplace=True)
-		if 'Subject ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Subject ID'], axis=1, inplace=True)
+		if 'Sampling ID' in self.sampleMetadata.columns:
+			self.sampleMetadata = self.sampleMetadata.drop(['Sampling ID'], axis=1)
+		if 'Sample ID' in self.sampleMetadata.columns:
+			self.sampleMetadata = self.sampleMetadata.drop(['Sample ID'], axis=1)
+		if 'Subject ID' in self.sampleMetadata.columns:
+			self.sampleMetadata = self.sampleMetadata.drop(['Subject ID'], axis=1)
 
 		merged_samples = pandas.merge(self.sampleMetadata, self.limsFile, how='inner',left_on='Sample Base Name Normalised',
 									  right_on='Assay data name Normalised', sort=False)
@@ -1411,16 +1413,15 @@ class Dataset:
 		# Remove duplicate columns (these will be appended with _x or _y)
 		cols = [c for c in self.sampleMetadata.columns if c[-2:] != '_y']
 		self.sampleMetadata = self.sampleMetadata[cols]
-		self.sampleMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
+		self.sampleMetadata = self.sampleMetadata.rename(columns=lambda x: x.replace('_x', ''))
 
 		# Find samples present in LIMS but not acquired
 		lims_butnotacq = self.limsFile.loc[self.limsFile['Assay data name Normalised'].isin(
 			self.sampleMetadata['Sample Base Name Normalised']) == False, :]
 
 		# Removed normalised index coloumns
-		self.sampleMetadata.drop(labels=['Sample Base Name Normalised', 'Assay data name Normalised'], axis=1,
-								 inplace=True)
-		self.limsFile.drop(labels=['Assay data name Normalised'], axis=1, inplace=True)
+		self.sampleMetadata = self.sampleMetadata.drop(labels=['Sample Base Name Normalised', 'Assay data name Normalised'], axis=1)
+		self.limsFile = self.limsFile.drop(labels=['Assay data name Normalised'], axis=1)
 
 		# Enforce string type on matched data
 		self.sampleMetadata['Assay data name'] = self.sampleMetadata['Assay data name'].astype(str)
@@ -1457,7 +1458,7 @@ class Dataset:
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in sampleAbsentMetadata.columns if c[-2:] != '_y']
 			sampleAbsentMetadata = sampleAbsentMetadata[cols]
-			sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
+			sampleAbsentMetadata = sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''))
 
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
@@ -1498,13 +1499,13 @@ class Dataset:
 												converters={'Subject ID': str, 'Sampling ID': str})
 		cols = [c for c in self.samplingEvents.columns if c[:7] != 'Unnamed']
 		self.samplingEvents = self.samplingEvents[cols]
-		self.samplingEvents.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
+		self.samplingEvents = self.samplingEvents.rename(columns={'Sampling ID': 'Sample ID'})
 
 		# Create one overall samplingInfo sheet - combine subjectInfo and samplingEvents for samples present in samplingEvents
 		self.samplingInfo = pandas.merge(self.samplingEvents, self.subjectInfo, left_on='Subject ID',
 										 right_on='Subject ID', how='left', sort=False)
 
-		self.samplingInfo.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
+		self.samplingInfo = self.samplingInfo.rename(columns={'Sampling ID': 'Sample ID'})
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
@@ -1513,7 +1514,7 @@ class Dataset:
 
 		# Rename 'Sample Type' to 'Biofluid'
 		if hasattr(self.samplingInfo, 'Sample Type'):
-			self.samplingInfo.rename(columns={'Sample Type': 'Biofluid'}, inplace=True)
+			self.samplingInfo = self.samplingInfo.rename(columns={'Sample Type': 'Biofluid'})
 
 		# Check no duplicates in sampleInfo
 		u_ids, u_counts = numpy.unique(self.samplingInfo['Sample ID'], return_counts=True)
@@ -1529,7 +1530,7 @@ class Dataset:
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in self.sampleAbsentMetadata.columns if c[-2:] != '_y']
 			self.sampleAbsentMetadata = self.sampleAbsentMetadata[cols]
-			self.sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
+			self.sampleAbsentMetadata = self.sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''))
 
 			self.sampleAbsentMetadata['SubjectInfoData'] = False
 			self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
@@ -1541,7 +1542,7 @@ class Dataset:
 		# Remove duplicate columns (these will be appended with _x or _y)
 		cols = [c for c in self.sampleMetadata.columns if c[-2:] != '_y']
 		self.sampleMetadata = self.sampleMetadata[cols]
-		self.sampleMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
+		self.sampleMetadata = self.sampleMetadata.rename(columns=lambda x: x.replace('_x', ''))
 
 		self.sampleMetadata['SubjectInfoData'] = False
 		self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
@@ -1753,11 +1754,11 @@ class Dataset:
 			# sampleMetadata not exported
 			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['sampleMetadataNotExported']))
-			exportDataset.sampleMetadata.drop(sampleMetaColToRemove, axis=1, inplace=True)
+			exportDataset = exportDataset.sampleMetadata.drop(sampleMetaColToRemove, axis=1)
 			# sampleMetadata not exported
 			featureMetaColToRemove = list(set(exportDataset.featureMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['featureMetadataNotExported']))
-			exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1, inplace=True)
+			exportDataset = exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1)
 
 		if saveFormat == 'CSV':
 			destinationPath = os.path.join(destinationPath, exportDataset.name)
