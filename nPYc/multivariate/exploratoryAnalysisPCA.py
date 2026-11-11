@@ -26,6 +26,8 @@ def exploratoryAnalysisPCA(npycDataset,
     :rtype: PCAmodel
     """
 
+    # TODO - try out other options for setting n_components, also minR2 is not implemented yet!! Caro 2026-11-04
+
     # Some initial checks
 
     if not isinstance(npycDataset, Dataset):

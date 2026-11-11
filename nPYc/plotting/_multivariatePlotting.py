@@ -171,7 +171,6 @@ def plotScores(pcaModel,
             j = i + 1
 
         if plotAssociation is None:
-            print('code reached')
             fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
         else:
             fig = plt.figure(figsize=figureSize, dpi=dpi)
@@ -298,9 +297,9 @@ def plotScores(pcaModel,
 
         # Annotate
         ylabel = 'PC' + str(components[j] + 1) + ' (' + '{0:.2f}'.format(
-            pcaModel.modelParameters['VarExpRatio'][components[j]] * 100) + '%)'
+            pcaModel.outputstats['VarExpRatio'][components[j]] * 100) + '%)'
         xlabel = 'PC' + str(components[i] + 1) + ' (' + '{0:.2f}'.format(
-            pcaModel.modelParameters['VarExpRatio'][components[i]] * 100) + '%)'
+            pcaModel.outputstats['VarExpRatio'][components[i]] * 100) + '%)'
         if plotAssociation is not None:
             ylabel = ylabel + ' significance: ' + '{0:.2f}'.format(plotAssociation[components[j]])
             xlabel = xlabel + ' significance: ' + '{0:.2f}'.format(plotAssociation[components[i]])
@@ -786,11 +785,11 @@ def plotScoresInteractive(dataset,
         ],
         'xaxis': dict(
             title='PC' + str(components[0] + 1) + ' (' + '{0:.2f}'.format(
-                pcaModel.modelParameters['VarExpRatio'][components[0]] * 100) + '%)'
+                pcaModel.outputstats['VarExpRatio'][components[0]] * 100) + '%)'
         ),
         'yaxis': dict(
             title='PC' + str(components[1] + 1) + ' (' + '{0:.2f}'.format(
-                pcaModel.modelParameters['VarExpRatio'][components[1]] * 100) + '%)'
+                pcaModel.outputstats['VarExpRatio'][components[1]] * 100) + '%)'
         ),
         'title': 'Coloured by ' + colourBy,
         'legend': dict(

@@ -253,14 +253,14 @@ def multivariateReport(dataTrue, pcaModel, reportType='analytical', withExclusio
     if destinationPath:
         item['PCA_screePlot'] = os.path.join(saveDir, item['Name'] + '_scree.' + data.Attributes['figureFormat'])
         saveAs = item['PCA_screePlot']
-        item['PCA_var_exp'] = pcaModel.modelParameters['VarExpRatio']
+        item['PCA_var_exp'] = pcaModel.outputstats['VarExpRatio']
     else:
         print('\nFigure 1: PCA scree plot of variance explained by each component (cumulative)')
 
-    plotScree(pcaModel.outputstats['R2X_Scree'],
+    plotScree(pcaModel.outputstats['VarExpCumulative'],
               #Q2=pcaModel.cvParameters['Q2X_Scree'],
               xlabel='Component',
-              ylabel='Percentage variance (cumulative)',
+              ylabel='Percentage variance explained (cumulative)',
               savePath=saveAs,
               figureFormat=data.Attributes['figureFormat'],
               dpi=data.Attributes['dpi'],

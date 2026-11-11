@@ -12,7 +12,7 @@ import shutil
 from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
-from ..plotting import plotIntensity, histogram, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution, plotAbundanceBySampleType
+from ..plotting import plotIntensity, histogram, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotAbundanceBySampleType
 from ._generateSampleReport import _generateSampleReport
 from ..utilities import generateLRmask, rsd, sampleClassMasks, publishReport
 from ..utilities._internal import _vcorrcoef
@@ -23,6 +23,7 @@ from ..utilities._filters import blankFilter
 from ..batchAndROCorrection import correctMSdataset
 from ..utilities._errorHandling import npycToolboxError
 from jinja2 import Environment, FileSystemLoader
+import random
 
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
@@ -248,9 +249,8 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
     if destinationPath:
         item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_intensityHist.' +
                                                          dataset.Attributes['figureFormat'])
-        saveAs = item['finalFeatureIntensityHist']
 
-        print(saveAs)
+        saveAs = item['finalFeatureIntensityHist']
 
     else:
         print('Figure 1: Feature intensity histogram for all samples and all features in final dataset (by sample type)')
@@ -266,9 +266,6 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
             item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampletype.' +
                                                               dataset.Attributes['figureFormat'])
             saveAs = item['finalRSDdistributionFigure']
-
-            print(saveAs)
-
             item['orderFeaturesBy'] = orderFeaturesBy
         else:
             print(
@@ -297,7 +294,6 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
                                                           item['Name'] + '_rsdVc2d.' + dataset.Attributes['figureFormat'])
             saveAs = item['RsdVsCorrelationFigure']
 
-            print(saveAs)
         else:
             print('Figure 3: Scatterplot of RSD in SR samples vs. correlation to dilution.')
 
@@ -318,8 +314,6 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
         if destinationPath:
             item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
             saveAs = item['finalIonMap']
-
-            print(saveAs)
 
         else:
             print('Figure 4: Ion map of all features (coloured by log median intensity).')
@@ -378,7 +372,6 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
                                                           'figureFormat'])
         saveAs = item['FeatureIntensityFigure']
 
-        print(saveAs)
     else:
         print('Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type).')
 
@@ -1249,33 +1242,15 @@ def _localLRPlots(dataset, LRmask, corToLR, saveName, figures=None, savePath=Non
 
 
 def batchCorrectionTest(dataset, nFeatures=10, window=11):
-    import copy
-    import numpy
-    import random
-    from ..batchAndROCorrection._batchAndROCorrection import _batchCorrection
-
-    # Samplemask
-    #    SSmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
-    #                dataset.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-    #    SPmask = (dataset.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-    #                dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    #    ERmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-    #                dataset.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-    #    LRmask = (dataset.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-    #                dataset.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
-    #    sampleMask = (SSmask | SPmask | ERmask | LRmask) & (dataset.sampleMask == True).astype(bool)
-
-    # Exclude features with zero values
-    #    zeroMask = sum(dataset.intensityData[sampleMask, :] == 0)
-    #    zeroMask = sum(dataset.intensityData == 0)
-    #    zeroMask = zeroMask == 0
+    """
+    Local function to do batch correction for `noFeatures` randomly selected features for assessment by user via the
+    `Batch Correction Assessment` report
+    """
 
     # Exclude features which fail correlation to dilution
     try:
-        #passMask = numpy.logical_and(zeroMask, dataset.correlationToDilution >= dataset.Attributes['corrThreshold'])
         passMask = dataset.correlationToDilution >= dataset.Attributes['corrThreshold']
     except:
-        #passMask = zeroMask
         passMask = numpy.squeeze(numpy.ones([dataset.noFeatures, 1], dtype=bool), axis=1)
 
     # Select subset of features on which to perform batch correction
@@ -1291,7 +1266,7 @@ def batchCorrectionTest(dataset, nFeatures=10, window=11):
     preData.applyMasks()
 
     # Do batch correction
-    postData = correctMSdataset(preData)
+    postData = correctMSdataset(preData, window=window)
 
     # Return results
-    return preData, postData, maskNum #featureList
+    return preData, postData, maskNum

@@ -22,7 +22,6 @@ class PCAmodel:
         self.loadings = None
         self.inputparams = dict()
         self.outputstats = dict()
-        self.modelParameters = dict() # Tidy this up in due course
         self._isfitted = False
 
     def doPCA(self, msData,
@@ -67,18 +66,16 @@ class PCAmodel:
         n_components_fitted = self.scores.shape[1]
         [data_shape0, data_shape1] = msData.intensityData.shape
 
-        # Can we determine R2 and Q2??
-        self.outputstats['R2X_Scree'] = pca.explained_variance_ratio_
-        self.modelParameters['VarExpRatio'] = pca.explained_variance_ratio_ # Caro tidy this up
+        # Save variance explained ratio and cumulative
+        self.outputstats['VarExpRatio'] = pca.explained_variance_ratio_
+        self.outputstats['VarExpCumulative'] = np.cumsum(pca.explained_variance_ratio_) # formally R2X_Scree
 
         # Calculate DmodX
-        #x_reconstructed = scaler.inverse_transform(pca.inverse_transform(self.scores))
         x_reconstructed = pca.inverse_transform(self.scores) # reconstruct data from scores
         resid_ssx = np.sum((x_scaled - x_reconstructed) ** 2, axis=1) # calculate residual sum of squares
         s = np.sqrt(resid_ssx / (data_shape1 - n_components_fitted))
         s0 = np.sqrt(resid_ssx.sum() / ((data_shape0 - n_components_fitted - 1) * (data_shape1 - n_components_fitted)))
         self.outputstats['DmodX'] = np.sqrt((s / s0) ** 2)
-
 
         # Calculate Fcrit
         # Degrees of freedom for the PCA model (denominator in F-stat) calculated as suggested in
@@ -117,15 +114,6 @@ class PCAmodel:
         # Initial checks
         if self._isfitted is False:
             raise AttributeError("Model is not fitted")
-
-        # Add other checks
-
-        #except AttributeError as atre:
-        #    raise atre
-        #except ValueError as valerr:
-        #    raise valerr
-        #except TypeError as typerr:
-        #    raise typerr
 
         nsamples = self._npyc_dataset_shape['NumberSamples']
 
