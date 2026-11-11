@@ -2379,7 +2379,7 @@ class MSDataset(Dataset):
 												raiseWarning, exception=LookupError(failure))
 				if condition:
 					# sampleMetadata['Subject ID'] is str
-					condition = (self.sampleMetadata['Subject ID'].dtype == numpy.dtype('O'))
+					condition = (isinstance(self.sampleMetadata['Subject ID'].dtype, pandas.StringDtype))
 					success = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tOK'
 					failure = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tFailure, \'self.sampleMetadata[\'Subject ID\']\' is ' + str(
 						type(self.sampleMetadata['Subject ID'][0]))
@@ -2387,7 +2387,7 @@ class MSDataset(Dataset):
 													raiseWarning, exception=TypeError(failure))
 				# end self.sampleMetadata['Subject ID']
 				# sampleMetadata['Sample ID'] is str
-				condition = (self.sampleMetadata['Sample ID'].dtype == numpy.dtype('O'))
+				condition = (isinstance(self.sampleMetadata['Sample ID'].dtype, pandas.StringDtype))
 				success = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tOK'
 				failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sample ID\']\' is ' + str(
 					type(self.sampleMetadata['Sample ID'][0]))

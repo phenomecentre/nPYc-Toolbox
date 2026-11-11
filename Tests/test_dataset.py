@@ -1206,6 +1206,9 @@ class test_dataset_loadsop(unittest.TestCase):
 			with open(os.path.join(toolboxPath(), 'StudyDesigns', 'SOP', 'Generic.json')) as data_file:
 				attributes = json.load(data_file)
 			attributes['Log'] = self.data.Attributes['Log']
+			attributes['sampleTypeColours'] = self.data.Attributes['sampleTypeColours']
+			attributes['sampleTypeMarkers'] = self.data.Attributes['sampleTypeMarkers']
+			attributes['sampleTypeAbbr'] = self.data.Attributes['sampleTypeAbbr']
 			self.assertEqual(self.data.Attributes, attributes)
 
 
@@ -1218,6 +1221,9 @@ class test_dataset_loadsop(unittest.TestCase):
 			attributes = json.load(data_file)
 
 		attributes['Log'] = data.Attributes['Log']
+		attributes['sampleTypeColours'] = self.data.Attributes['sampleTypeColours']
+		attributes['sampleTypeMarkers'] = self.data.Attributes['sampleTypeMarkers']
+		attributes['sampleTypeAbbr'] = self.data.Attributes['sampleTypeAbbr']
 		attributes['figureFormat'] = 'svg'
 		attributes['squids'] = True
 
