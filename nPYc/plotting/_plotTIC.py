@@ -23,7 +23,7 @@ import datetime
 
 def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 			colourBy='SampleClass', colourType='categorical',
-			colourDict=None, markerDict=None, abbrDict=None,
+			colourDict={}, markerDict={}, abbrDict={},
 			logy=False, title='',
 			withExclusions=True, savePath=None,
 			opacity=.6):
@@ -72,7 +72,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	if colourType == 'categorical':
 
 		# If colourDict check colour defined for every unique entry in class
-		if colourDict is not None:
+		if colourDict:
 			if not all(k in colourDict.keys() for k in uniq):
 				raise ValueError('If colourDict is specified every unique entry in ' + colourBy + ' must be a key in colourDict')
 		# Otherwise create colour dict
@@ -83,7 +83,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 				colourDict[u] = rgb2hex(next(colors))
 
 		# If markerDict check colour defined for every unique entry in class
-		if markerDict is not None:
+		if markerDict:
 			if not all(k in markerDict.keys() for k in uniq):
 				raise ValueError('If markerDict is specified every unique entry in ' + colourBy + ' must be a key in markerDict')
 		else:
@@ -92,7 +92,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 				markerDict[u] = 'o'
 
 		# If abbrDict check abbr defined for every unique entry in class
-		if abbrDict is not None:
+		if abbrDict:
 			if not all(k in abbrDict.keys() for k in uniq):
 				raise ValueError('If abbrDict is specified every unique entry in ' + colourBy + ' must be a key in abbrDict')
 		else:
@@ -119,11 +119,11 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	if ('Acquired Time' in msData.sampleMetadata.columns):
 		formatter = DateFormatter('%d/%m/%y')
 		# X axis limits for formatting
-		minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'])].values
-		maxX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'])].values
+		minX = min(msData.sampleMetadata['Acquired Time'])
+		maxX = max(msData.sampleMetadata['Acquired Time'])
 		delta = maxX - minX
-		days = delta.astype('timedelta64[D]')
-		days = days / numpy.timedelta64(1, 'D')
+		#delta = delta.astype('timedelta64[D]')
+		days = delta / numpy.timedelta64(1, 'D')
 		if days < 1:
 			loc = HourLocator() # byhour=range(0, 24, 2)
 		elif days < 7:
