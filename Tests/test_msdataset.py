@@ -1382,10 +1382,6 @@ class test_msdataset_import_QI(unittest.TestCase):
 	def setUp(self):
 
 		self.msData = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
-		#self.msData.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
-		#self.msData.applyMasks()
-		#self.msData.addSampleInfo(descriptionFormat='Filenames') # Caroline
-
 
 	def test_dimensions(self):
 
@@ -1524,7 +1520,9 @@ class test_msdataset_import_QI(unittest.TestCase):
 		assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
 
 	def test_feature_correlation(self):
-
+		self.msData.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+		self.msData.applyMasks()
+		self.msData.addSampleInfo(descriptionFormat='Filenames')
 		self.msData.addSampleInfo(descriptionFormat='Raw Data', filePath=os.path.join('..','..','npc-standard-project','Raw_Data'))
 		self.msData.addSampleInfo(descriptionFormat='Infer Batches')
 

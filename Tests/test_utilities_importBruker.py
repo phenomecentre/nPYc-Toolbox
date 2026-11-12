@@ -179,7 +179,7 @@ class test_utilities_importBruker(unittest.TestCase):
 			warnings.simplefilter("ignore")
 			intensityData, ppm, metadata = importBrukerSpectra(os.path.join('..', '..', 'npc-standard-project',
 																			'Raw_Data', 'nmr', 'UnitTest1'),
-																			'noesygppr1d', 2, Attributes)
+																			'noesypr1d', 1, Attributes)
 
 		# Sort to account for filesystem ordering
 		metadata.sort_values('Sample File Name', inplace=True)

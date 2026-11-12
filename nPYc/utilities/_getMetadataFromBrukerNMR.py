@@ -1,6 +1,5 @@
 import os
 import re
-import codecs
 import logging
 from ._conditionalJoin import conditionalJoin
 import warnings
@@ -35,7 +34,7 @@ def extractBrukerparams(path, queryItems, acqTimeRE):
 	for inputFile in queryItems.keys():
 		localPath = os.path.normpath(os.path.join(path, inputFile))
 		try:
-			f = codecs.open(localPath, 'r', encoding='latin-1')
+			f = open(localPath, 'r', encoding='latin-1')
 			contents = f.read()
 
 			logging.debug('Searching file: ' + os.path.join(localPath))

@@ -86,7 +86,7 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
         elif filetype == '.mzML':
             extractedmzML = extractmzMLParamsRegex(filename, queryItems)
             try:
-                extractedmzML['Acquired Time'] = pandas.to_datetime(extractedmzML['startTimeStamp'], infer_datetime_format=True)
+                extractedmzML['Acquired Time'] = pandas.to_datetime(extractedmzML['startTimeStamp'], format='%d-%b-%Y %H:%M:%S')
             except KeyError:
                 extractedmzML['Acquired Time'] = numpy.nan
             results.append(extractedmzML)
@@ -104,8 +104,6 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
             warnings.warn('Duplicate raw data loaded, discarding duplicates.', UserWarning)
             # Drop duplicate files
             resultsDF = resultsDF.loc[~resultsDF['Sample File Name'].duplicated(keep='first')]
-
-        resultsDF = resultsDF.apply(lambda x: pandas.to_numeric(x, errors='coerce'))
         resultsDF['Acquired Time'] = pandas.to_datetime(resultsDF['Acquired Time'])
     if filetype == '.mzML':
         resultsDF.drop(columns=['startTimeStamp'], inplace=True)
