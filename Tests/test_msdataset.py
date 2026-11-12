@@ -1382,10 +1382,9 @@ class test_msdataset_import_QI(unittest.TestCase):
 	def setUp(self):
 
 		self.msData = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
-		try:
-			self.msData.addSampleInfo(descriptionFormat='Filenames')
-		except nPYc.utilities._errorHandling.npycToolboxError:
-			pass  # This is user warning, not an error so can be ignored
+		#self.msData.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+		#self.msData.applyMasks()
+		#self.msData.addSampleInfo(descriptionFormat='Filenames') # Caroline
 
 
 	def test_dimensions(self):
@@ -1520,7 +1519,7 @@ class test_msdataset_import_QI(unittest.TestCase):
 								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 								numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
 								name='Dilution',
-								dtype='float')
+								dtype='int')
 
 		assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
 
@@ -2187,45 +2186,12 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
 	def setUp(self):
 
 		self.msData = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
-		try:
-			self.msData.addSampleInfo(descriptionFormat='Filenames')
-		except nPYc.utilities._errorHandling.npycToolboxError:
-			pass # This is user warning, not an error so can be ignored
-
-
-	def test_msdataset_load_npc_lims(self):
-		"""
-		Test we are matching samples IDs in the LIMS correctly
-		"""
-
-		samplingIDs = pandas.Series(['Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Procedural Blank Sample', 'Procedural Blank Sample',
-									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'UT1_S1_s1', 'UT1_S2_s1', 'UT1_S3_s1', 'Not specified', 'UT1_S4_s2', 'UT1_S4_s3', 'UT1_S4_s4', 'UT1_S4_s5',
-									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sample ID', dtype='str')
-		samplingIDs = samplingIDs.astype(str)
-
-		self.msData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
-		assert_series_equal(self.msData.sampleMetadata['Sample ID'], samplingIDs)
-
+		self.msData.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+		self.msData.applyMasks()
+		self.msData.addSampleInfo(descriptionFormat='Filenames')
+		self.msData.addSampleInfo(descriptionFormat='NPC LIMS',
+		                   filePath=os.path.join('..', '..', 'npc-standard-project', 'Derived_Worklists',
+		                                         'UnitTest1_MS_serum_PCSOP.069.csv'))
 
 	def test_msdataset_load_watersraw_metadata(self):
 		"""

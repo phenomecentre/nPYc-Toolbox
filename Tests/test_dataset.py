@@ -1268,10 +1268,9 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 	def setUp(self):
 		self.Data = nPYc.MSDataset(os.path.join('..','..','npc-standard-project','Derived_Data','UnitTest1_PCSOP.069_QI.csv'), fileType='QI')
-		try:
-			self.Data.addSampleInfo(descriptionFormat='Filenames')
-		except nPYc.utilities._errorHandling.npycToolboxError:
-			pass # This is user warning, not an error so can be ignored
+		self.Data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+		self.Data.applyMasks()
+		self.Data.addSampleInfo(descriptionFormat='Filenames')
 
 
 	def test_dataset_load_npc_lims(self):
@@ -1284,9 +1283,6 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 		                         'UT1_S4_s4', 'UT1_S4_s5', numpy.nan, numpy.nan]
 
 		data = copy.deepcopy(self.Data)
-		data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
-		data.applyMasks()
-		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
 		pandas.testing.assert_series_equal(data.sampleMetadata['Sample ID'], samplingIDs)
 
@@ -1295,11 +1291,8 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 		columns = ['Person responsible', 'Sampling Protocol', 'Creatinine (mM)', 'Glucose (mM)', 'Class', 'Date of Birth', 'Gender', 'Further Subject info?', 'Environmental measures', 'SubjectInfoData']
 
-		#data = copy.deepcopy(self.Data)
-		#data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
-		#data.applyMasks()
-		#data.addSampleInfo(descriptionFormat='Filenames')
-		#data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
+		data = copy.deepcopy(self.Data)
+		data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
 		data.addSampleInfo(descriptionFormat='NPC Subject Info', filePath=os.path.join('..','..','npc-standard-project','Project_Description','UnitTest1_metadata_PCDOC.014.xlsx'))
 
 		for column in columns:

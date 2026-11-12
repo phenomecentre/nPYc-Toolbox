@@ -41,10 +41,9 @@ class test_reports_ms_feature_id(unittest.TestCase):
         self.msData = nPYc.MSDataset(
             os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
             fileType='QI')
-        try:
-            self.msData.addSampleInfo(descriptionFormat='Filenames')
-        except nPYc.utilities._errorHandling.npycToolboxError:
-            pass  # This is user warning, not an error so can be ignored
+        self.msData.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+        self.msData.applyMasks()
+        self.msData.addSampleInfo(descriptionFormat='Filenames')
 
         self.msData.sampleMetadata['Correction Batch'] = 1
         self.msData.sampleMetadata['Run Order'] = [i for i in range(1, self.msData.noSamples + 1)]
@@ -82,10 +81,10 @@ class test_reports_generateSamplereport(unittest.TestCase):
         self.data = nPYc.MSDataset(
             os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
             fileType='QI')
-        try:
-            self.data.addSampleInfo(descriptionFormat='Filenames')
-        except nPYc.utilities._errorHandling.npycToolboxError:
-            pass  # This is user warning, not an error so can be ignored
+        self.data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+        self.data.applyMasks()
+        self.data.addSampleInfo(descriptionFormat='Filenames')
+
         self.data.addSampleInfo(descriptionFormat='Raw Data',
                                 filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                       'parameters_data'))
@@ -877,10 +876,9 @@ class test_reports_modules(unittest.TestCase):
         data = nPYc.MSDataset(
             os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
             fileType='QI')
-        try:
-            data.addSampleInfo(descriptionFormat='Filenames')
-        except nPYc.utilities._errorHandling.npycToolboxError:
-            pass  # This is user warning, not an error so can be ignored
+        self.data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+        self.data.applyMasks()
+        self.data.addSampleInfo(descriptionFormat='Filenames')
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))
