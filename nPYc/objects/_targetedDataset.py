@@ -332,6 +332,12 @@ class TargetedDataset(Dataset):
         else:
             self._filterTargetLynxIS(**kwargs)
 
+        # Apply limits of quantification
+        if noiseFilled:
+            self._targetLynxApplyLimitsOfQuantificationNoiseFilled(**kwargs)
+        else:
+            self._applyLimitsOfQuantification(**kwargs)
+
         # Remove peakInfo (default remove)
         if keepPeakInfo:
             self.Attributes['Log'].append([datetime.now(), 'TargetLynx peakInfo kept.'])
@@ -361,16 +367,6 @@ class TargetedDataset(Dataset):
             except:
                 pass
 
-    def replaceLimitsOfQuantification(self, noiseFilled=False, **kwargs):
-        """
-        Replace limits of quantification
-        """
-
-        # Apply limits of quantification
-        if noiseFilled:
-            self._targetLynxApplyLimitsOfQuantificationNoiseFilled(**kwargs)
-        else:
-            self._applyLimitsOfQuantification(**kwargs)
 
     def _readTargetLynxDataset(self, datapath, calibrationReportPath, **kwargs):
         """
@@ -387,35 +383,36 @@ class TargetedDataset(Dataset):
 
         # Read XML (dumb, no checks, no metadata alteration)
         sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT = self.__getDatasetFromXML(datapath)
-
         # Read calibration information from .csv (dumb, no metadata alteration, only checks for required columns)
         calibReport = self.__getCalibrationFromReport(calibrationReportPath)
-
         # Match XML, Calibration Report & SOP
-        sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT = self.__matchDatasetToCalibrationReport(sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT, calibReport)
+        sampleMetadata, featureMetadata, intensityData, expectedConcentration, excludedImportSampleMetadata, excludedImportFeatureMetadata, excludedImportIntensityData, excludedImportExpectedConcentration, excludedImportFlag, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT = self.__matchDatasetToCalibrationReport(sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT, calibReport)
 
         self.sampleMetadata        = sampleMetadata
         self.featureMetadata       = featureMetadata
         self._intensityData        = intensityData
         self.expectedConcentration = expectedConcentration
-        self.peakInfo = {'peakResponse': peakResponse,
-                         'peakArea': peakArea,
-                         'peakConcentrationDeviation': peakConcentrationDeviation,
-                         'peakIntegrationFlag': peakIntegrationFlag,
-                         'peakRT': peakRT}
+        self.sampleMetadataExcluded        = excludedImportSampleMetadata
+        self.featureMetadataExcluded       = excludedImportFeatureMetadata
+        self.intensityDataExcluded         = excludedImportIntensityData
+        self.expectedConcentrationExcluded = excludedImportExpectedConcentration
+        self.excludedFlag                  = excludedImportFlag
+        self.peakInfo = {'peakResponse': peakResponse, 'peakArea': peakArea, 'peakConcentrationDeviation': peakConcentrationDeviation, 'peakIntegrationFlag': peakIntegrationFlag, 'peakRT': peakRT}
 
         # add Dataset mandatory columns
-        self.sampleMetadata['AssayRole']         = AssayRole.UnknownRole
-        self.sampleMetadata['SampleType']        = SampleType.UnknownType
+        self.sampleMetadata['AssayRole']         = numpy.nan
+        self.sampleMetadata['SampleType']        = numpy.nan
         self.sampleMetadata['Dilution']          = numpy.nan
         self.sampleMetadata['Correction Batch']  = numpy.nan
         self.sampleMetadata['Sample ID']       = numpy.nan
         self.sampleMetadata['Exclusion Details'] = numpy.nan
-        self.sampleMetadataExcluded        = []
-        self.featureMetadataExcluded       = []
-        self.intensityDataExcluded         = []
-        self.expectedConcentrationExcluded = []
-        self.excludedFlag                  = []
+        #self.sampleMetadata['Batch']             = numpy.nan #already created
+
+        # clear SOP parameters not needed after __matchDatasetToCalibrationReport
+        AttributesToRemove = ['compoundID', 'compoundName', 'IS', 'unitFinal', 'unitCorrectionFactor', 'calibrationMethod', 'calibrationEquation', 'quantificationType']
+        AttributesToRemove.extend(self.Attributes['externalID'])
+        for k in AttributesToRemove:
+            del self.Attributes[k]
 
         self.Attributes['Log'].append([datetime.now(),'TargetLynx data file with %d samples, %d features, loaded from \%s, calibration report read from \%s\'' % (self.noSamples, self.noFeatures, datapath, calibrationReportPath)])
 
@@ -578,25 +575,39 @@ class TargetedDataset(Dataset):
         
         The following columns are required (leave an empty value to reject a compound):
         
-        * Compound: The compound name.
-        * TargetLynx ID: The compound TargetLynx ID.
-        * Unit: Units of quantification.
-        * LLOQ: Lowest limit of quantification concentration, in the same unit as indicated in TargetLynx.
-        * ULOQ: Upper limit of quantification concentration, in the same unit as indicated in TargetLynx.
+        * Compound
+            The compound name, identical to the one employed in the SOP `json` file.
+        
+        * TargetLynx ID
+            The compound TargetLynx ID, identical to the one employed in the SOP `json` file.
 
-        The following columns are expected by :py:meth:`~TargetedDataset._targetLynxApplyLimitsOfQuantificationNoiseFilled`, if any are left empty noise concentration calculation cannot take place.:
+        * LLOQ
+            Lowest limit of quantification concentration, in the same unit as indicated in TargetLynx.
+        
+        * ULOQ
+            Upper limit of quantification concentration, in the same unit as indicated in TargetLynx.
 
-        * Noise (area): Area integrated in a blank sample at the same retention time as the compound of interest
-        * Calibration Equation: Calibration equation.
-        * a: :math:`a` coefficient in the calibration equation.
-        * b: :math:`b` coefficient in the calibration equation.
+        The following columns are expected by :py:meth:`~TargetedDataset._targetLynxApplyLimitsOfQuantificationNoiseFilled`:
 
-        The following columns are optional:
+        * Noise (area)
+            Area integrated in a blank sample at the same retention time as the compound of interest (if left empty noise concentration calculation cannot take place).
+        
+        * a
+            :math:`a` coefficient in the calibration equation (if left empty noise concentration calculation cannot take place).
+        
+        * b
+            :math:`b` coefficient in the calibration equation (if left empty noise concentration calculation cannot take place).
 
-        * Cpd Info: Additional information relating to the compoun.
-        * r: :math:`r` goodness of fit measure for the calibration equation.
-        * r2: :math:`r^2` goodness of fit measure for the calibration equation.
-        * Unit Correction Factor: If required to correct the data.
+        The following columns are recommended:
+
+        * Cpd Info
+            Additional information relating to the compound (can be left empty).
+        
+        * r
+            :math:`r` goodness of fit measure for the calibration equation (can be left empty).
+        
+        * r2
+            :math:`r^2` goodness of fit measure for the calibration equation (can be left empty).
         
         :param path: Path to the calibration report csv file.
         :type path: str
@@ -608,7 +619,7 @@ class TargetedDataset(Dataset):
         calibReport = pandas.read_csv(path)
 
         # check minimum number of columns
-        expectedCol = ['Compound', 'TargetLynx ID', 'Unit', 'LLOQ', 'ULOQ']
+        expectedCol = ['Compound', 'TargetLynx ID', 'LLOQ', 'ULOQ']
         foundCol = calibReport.columns.values.tolist()
 
         # if the set is not empty, some columns are missing from the csv
@@ -620,11 +631,17 @@ class TargetedDataset(Dataset):
 
     def __matchDatasetToCalibrationReport(self, sampleMetadata, featureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT, calibReport):
         """
-        Check the agreement of Feature IDs and Feature Names across TargetLynx export `xml` and calibration report `csv`.
+        Check the agreement of Feature IDs and Feature Names across all inputs (TargetLynx export `xml`, calibration report `csv` and SOP `json`).
+        
+        First map the calibration report and SOP information, which raise errors in case of disagreement.
+        
+        This block is then mapped to the TargetLynx `featureMetadata` (on compound ID) and overrides the TargetLynx information (raise warnings).
+        
+        Features not matched are appended to an `excludedSampleMetadata`, `excludedFeatureMetadata` and `excludedIntensityData` (excluded `peakResponse`, `peakArea`, `peakConcentrationDeviation`, `peakIntegrationFlag` and `peakRT` are discarded).
         
         Additional information is added to the `sampleMetadata` (chromatography, ionisation, acquired time, run order).
         
-        If required, apply the unitCorrectionFactor to the `intensityData`, `LLOQ` and `ULOQ` concentrations and `expectedConcentration`.
+        Apply the unitCorrectionFactor to the `intensityData`, `LLOQ` and `ULOQ` concentrations and `expectedConcentration`.
         
         :param sampleMetadata: dataframe of sample identifiers and metadata.
         :type sampleMetadata: pandas.DataFrame, :math:`n` × :math:`p`
@@ -655,6 +672,16 @@ class TargetedDataset(Dataset):
         :rtype: numpy.ndarray, :math:`n` × :math:`m`
         :return finalExpectedConcentration: pandas dataframe of expected concentration for each sample/feature
         :rtype: pandas.DataFrame, :math:`n` × :math:`m`
+        :return excludedSampleMetadata: list of pandas dataframe of excluded sample measurements for excluded features.
+        :rtype: list
+        :return excludedFeatureMetadata: list of pandas dataframe of excluded feature identifiers and metadata.
+        :rtype: list
+        :return excludedIntensityData: list of matrix of intensity measurements for excluded features.
+        :rtype: list
+        :return excludedExpectedConcentration: list of pandas dataframe of excluded expected concentration.
+        :rtype: list
+        :return excludedFlag: list of str of exclusion type ('Samples' or 'Features').
+        :rtype: list
         :return finalPeakResponse: pandas dataframe of analytical peak response.
         :rtype: pandas.DataFrame, :math:`n` × :math:`m`
         :return finalPeakArea: pandas dataframe of analytical peak area.
@@ -667,6 +694,8 @@ class TargetedDataset(Dataset):
         :rtype: pandas.DataFrame, :math:`n` × :math:`m`
         
         :raises ValueError: if the shape of sampleMetadata, featureMetadata or intensityData shape do not match.
+        :raises ValueError: if features in the calibration report and in the SOP differ (number of compounds, compound ID or compound names).
+        :raises ValueError: if in the SOP 'quantificationType', 'calibrationMethod' or 'IS' are mismatched.
         """
 
         import warnings
@@ -690,26 +719,112 @@ class TargetedDataset(Dataset):
         if intensityData.shape != peakRT.shape:
             raise ValueError('intensityData and peakRT number of compounds/samples differ')
 
-        # Merge data with calibration report
-        finalFeatureMetadata = pandas.merge(left=featureMetadata,
-                                            right=calibReport,
-                                            how='left',
-                                            left_on='Feature Name',
-                                            right_on='Compound',
-                                            sort=False
-                                            )
+        # initialise excluded import data
+        excludedSampleMetadata        = []
+        excludedFeatureMetadata       = []
+        excludedIntensityData         = []
+        excludedExpectedConcentration = []
+        excludedFlag                  = []
 
-        finalFeatureMetadata['IS'] = finalFeatureMetadata['Cpd Info'] == 'Internal Standard'
-        finalFeatureMetadata['quantificationType'] = QuantificationType.UnknownQuantification
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Internal Standard', 'quantificationType'] = QuantificationType.IS
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with own labelled analogue', 'quantificationType'] = QuantificationType.QuantOwnLabeledAnalogue
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with alternative labelled analogue', 'quantificationType'] = QuantificationType.QuantAltLabeledAnalogue
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified without an internal standard', 'quantificationType'] = QuantificationType.QuantWithoutIS
-        finalFeatureMetadata['calibrationMethod'] = CalibrationMethod.unknownCalibration # We can remove this, everything is captured in quantification type
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Internal Standard', 'calibrationMethod'] = CalibrationMethod.noCalibration
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with own labelled analogue', 'calibrationMethod'] = CalibrationMethod.backcalculatedIS
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified with alternative labelled analogue', 'calibrationMethod'] = CalibrationMethod.backcalculatedIS
-        finalFeatureMetadata.loc[finalFeatureMetadata['Cpd Info'] == 'Quantified without an internal standard', 'calibrationMethod'] = CalibrationMethod.noIS
+        ## SOP is used as 'Truth', if calibReport does not match, it's a problem (Error)
+        ## Then if featureMetadata does not match SOP/calibReport, use SOP as reference (message conflict)
+        ## Match SOP & calibReport
+        # Load SOP
+        # calibrationMethod is 'backcalculatedIS' (use response), 'noIS' (use area), or 'noCalibration' (no corrections at all)
+        # quantificationType is:
+        #   'IS' (expects calibrationMethod=noIS)
+        #   'QuantOwnLabeledAnalogue' (would expect 'backcalculatedIS' but could use 'noIS')
+        #   'QuantAltLabeledAnalogue' (would expect 'backcalculatedIS' but could use 'noIS')
+        #   'Monitored' (which expects 'noCalibration')
+        SOPColumnsToLoad = ['compoundID', 'compoundName', 'IS', 'unitFinal', 'unitCorrectionFactor', 'calibrationMethod', 'calibrationEquation', 'quantificationType']
+        SOPColumnsToLoad.extend(self.Attributes['externalID'])
+        SOPFeatureMetadata = pandas.DataFrame.from_dict(dict((k, self.Attributes[k]) for k in SOPColumnsToLoad), orient='columns')
+        SOPFeatureMetadata['compoundID'] = pandas.to_numeric(SOPFeatureMetadata['compoundID'])
+        SOPFeatureMetadata['unitCorrectionFactor'] = pandas.to_numeric(SOPFeatureMetadata['unitCorrectionFactor'])
+        SOPFeatureMetadata['IS'] = SOPFeatureMetadata['IS'].map({'True': True, 'False': False})
+        SOPFeatureMetadata['Unit'] = SOPFeatureMetadata['unitFinal']
+        SOPFeatureMetadata.drop('unitFinal', inplace=True, axis=1)
+
+        # convert quantificationType from str to enum
+        if 'quantificationType' in SOPFeatureMetadata.columns:
+            for qType in QuantificationType:
+                SOPFeatureMetadata.loc[SOPFeatureMetadata['quantificationType'].values == qType.name, 'quantificationType'] = qType
+        # convert calibrationMethod from str to enum
+        if 'calibrationMethod' in SOPFeatureMetadata.columns:
+            for cMethod in CalibrationMethod:
+                SOPFeatureMetadata.loc[SOPFeatureMetadata['calibrationMethod'].values == cMethod.name, 'calibrationMethod'] = cMethod
+
+        # check that all quantificationType='IS' are also flagged as IS
+        # (both have same number of feature + intersection has same number of feature as one of them)
+        if (sum((SOPFeatureMetadata['quantificationType'] == QuantificationType.IS)) != sum(SOPFeatureMetadata['IS'])) | (sum((SOPFeatureMetadata['quantificationType'] == QuantificationType.IS) & SOPFeatureMetadata['IS']) != sum(SOPFeatureMetadata['IS'])):
+            raise ValueError('Check SOP file, features with quantificationType=\'IS\' must have been flagged as IS=\'True\'')
+
+        # check that all quantificationType='Monitored' have a calibrationMethod='noCalibration'
+        # (both have same number of feature + intersection has same number of feature as one of them)
+        if (sum((SOPFeatureMetadata['quantificationType'] == QuantificationType.Monitored)) != (sum(SOPFeatureMetadata['calibrationMethod'] == CalibrationMethod.noCalibration))) | (sum((SOPFeatureMetadata['quantificationType'] == QuantificationType.Monitored) & (SOPFeatureMetadata['calibrationMethod'] == CalibrationMethod.noCalibration)) != sum(SOPFeatureMetadata['quantificationType'] == QuantificationType.Monitored)):
+            raise ValueError('Check SOP file, features with quantificationType=\'Monitored\' must have a calibrationMethod=\'noCalibration\'\n quantificationType are:\n\'IS\' (expects calibrationMethod=noIS)\n\'QuantOwnLabeledAnalogue\' (would expect \'backcalculatedIS\' but could use \'noIS\' or \'otherCalibration\')\n\'QuantAltLabeledAnalogue\' (would expect \'backcalculatedIS\' but could use \'noIS\' or \'otherCalibration\')\n\'QuantOther\' (can take any CalibrationMethod)\n\'Monitored\' (which expects \'noCalibration\')')
+
+        # check number of compounds in SOP & calibReport
+        if SOPFeatureMetadata.shape[0] != calibReport.shape[0]:
+            raise ValueError('SOP and Calibration Report number of compounds differ')
+        featureCalibSOP = pandas.merge(left=SOPFeatureMetadata, right=calibReport, how='inner', left_on='compoundName', right_on='Compound', sort=False)
+        featureCalibSOP.drop('TargetLynx ID', inplace=True, axis=1)
+
+        # check we still have the same number of features (inner join)
+        if featureCalibSOP.shape[0] != SOPFeatureMetadata.shape[0]:
+            raise ValueError('SOP and Calibration Report compounds differ')
+
+        # check compound names match in SOP and calibReport after join
+        if sum(featureCalibSOP['compoundName'] != featureCalibSOP['Compound']) != 0:
+            raise ValueError('SOP and Calibration Report compounds names differ: ' + str(featureCalibSOP.loc[(featureCalibSOP['compoundName'] != featureCalibSOP['Compound']), ['compoundName', 'Compound']].values.tolist()))
+        featureCalibSOP.drop('Compound', inplace=True, axis=1)
+
+        ## Match calibSOP & featureMetadata
+        # left join to keep feature order and limit to features in XML
+        finalFeatureMetadata = pandas.merge(left=featureMetadata, right=featureCalibSOP, how='left', left_on='TargetLynx Feature ID', right_on='compoundID', sort=False)
+
+        # limit to compounds present in the SOP (no report of SOP compounds not in XML)
+        if finalFeatureMetadata['compoundID'].isnull().sum() != 0:
+            warnings.warn("Warning: Only " + str(finalFeatureMetadata['compoundID'].notnull().sum()) + " features shared across the SOP/Calibration report (" + str(featureCalibSOP.shape[0]) + " total) and the TargetLynx output file (" + str(featureMetadata.shape[0]) + " total). " + str(finalFeatureMetadata['compoundID'].isnull().sum()) + " features discarded from the TargetLynx output file.")
+            # filter out unavailable features
+            unavailableFeatVect = finalFeatureMetadata['compoundID'].isnull().values
+            excludedSampleMetadata.append(sampleMetadata)
+            excludedFeatureMetadata.append(finalFeatureMetadata.iloc[unavailableFeatVect, :])
+            excludedIntensityData.append(intensityData[:, unavailableFeatVect])
+            excludedExpectedConcentration.append(expectedConcentration.iloc[:, unavailableFeatVect])
+            excludedFlag.append('Features')
+            finalFeatureMetadata = finalFeatureMetadata.iloc[~unavailableFeatVect, :]
+            finalIntensityData = intensityData[:, ~unavailableFeatVect]
+            finalExpectedConcentration = expectedConcentration.iloc[:, ~unavailableFeatVect]
+            finalPeakResponse = peakResponse.iloc[:, ~unavailableFeatVect]
+            finalPeakArea = peakArea.iloc[:, ~unavailableFeatVect]
+            finalPeakConcentrationDeviation = peakConcentrationDeviation.iloc[:, ~unavailableFeatVect]
+            finalPeakIntegrationFlag = peakIntegrationFlag.iloc[:, ~unavailableFeatVect]
+            finalPeakRT = peakRT.iloc[:, ~unavailableFeatVect]
+            # remove duplicate col
+            finalFeatureMetadata.drop('compoundID', inplace=True, axis=1)
+        else:
+            finalIntensityData = intensityData
+            finalExpectedConcentration = expectedConcentration
+            finalPeakResponse = peakResponse
+            finalPeakArea = peakArea
+            finalPeakConcentrationDeviation = peakConcentrationDeviation
+            finalPeakIntegrationFlag = peakIntegrationFlag
+            finalPeakRT = peakRT
+            # remove duplicate col
+            finalFeatureMetadata.drop('compoundID', inplace=True, axis=1)
+
+        # check names, keep SOP value, report differences
+        if sum(finalFeatureMetadata['Feature Name'] != finalFeatureMetadata['compoundName']) != 0:
+            warnings.warn('TargetLynx feature names & SOP/Calibration Report compounds names differ; SOP names will be used: ' + str(finalFeatureMetadata.loc[(finalFeatureMetadata['Feature Name'] != finalFeatureMetadata['compoundName']), ['Feature Name','compoundName']].values.tolist()))
+            finalFeatureMetadata['Feature Name'] = finalFeatureMetadata['compoundName']
+            finalExpectedConcentration.columns      = finalFeatureMetadata['Feature Name'].values.tolist()
+            finalPeakResponse.columns               = finalFeatureMetadata['Feature Name'].values.tolist()
+            finalPeakArea.columns                   = finalFeatureMetadata['Feature Name'].values.tolist()
+            finalPeakConcentrationDeviation.columns = finalFeatureMetadata['Feature Name'].values.tolist()
+            finalPeakIntegrationFlag.columns        = finalFeatureMetadata['Feature Name'].values.tolist()
+            finalPeakRT.columns                     = finalFeatureMetadata['Feature Name'].values.tolist()
+        finalFeatureMetadata.drop('compoundName', inplace=True, axis=1)
 
         ## Add information to the sampleMetada
         finalSampleMetadata = copy.deepcopy(sampleMetadata)
@@ -724,6 +839,11 @@ class TargetedDataset(Dataset):
         finalSampleMetadata['Study Sample'] = finalSampleMetadata['Sample Type'] == 'Analyte'
         finalSampleMetadata['Blank'] = finalSampleMetadata['Sample Type'] == 'Blank'
         finalSampleMetadata['QC'] = finalSampleMetadata['Sample Type'] == 'QC'
+        # unused Sample Types
+        # sampleMetadata['Solvent'] = sampleMetadata['Sample Type'] == 'Solvent'
+        # sampleMetadata['Recovery'] = sampleMetadata['Sample Type'] == 'Recovery'
+        # sampleMetadata['Donor'] = sampleMetadata['Sample Type'] == 'Donor'
+        # sampleMetadata['Receptor'] = sampleMetadata['Sample Type'] == 'Receptor'
         finalSampleMetadata['Other'] = (~finalSampleMetadata['Calibrant'] & ~finalSampleMetadata['Study Sample'] & ~finalSampleMetadata['Blank'] & ~finalSampleMetadata['QC'])  # & ~sampleMetadata['Solvent'] & ~sampleMetadata['Recovery'] & ~sampleMetadata['Donor'] & ~sampleMetadata['Receptor']
         # Add Acquired Time
         finalSampleMetadata['Acquired Time'] = numpy.nan
@@ -740,22 +860,23 @@ class TargetedDataset(Dataset):
         # Initialise the Batch to 1
         finalSampleMetadata['Batch'] = [1]*finalSampleMetadata.shape[0]
 
-        ## If necessary - apply unitCorrectionFactor
-        if 'unitCorrectionFactor' in finalFeatureMetadata.columns:
-            finalFeatureMetadata['LLOQ'] = finalFeatureMetadata['LLOQ'] * finalFeatureMetadata['unitCorrectionFactor']  # NaN will be kept
-            finalFeatureMetadata['ULOQ'] = finalFeatureMetadata['ULOQ'] * finalFeatureMetadata['unitCorrectionFactor']
-            intensityData = intensityData * finalFeatureMetadata['unitCorrectionFactor'].values
-            expectedConcentration = expectedConcentration * finalFeatureMetadata['unitCorrectionFactor'].values
+        ## Apply unitCorrectionFactor
+        finalFeatureMetadata['LLOQ'] = finalFeatureMetadata['LLOQ'] * finalFeatureMetadata['unitCorrectionFactor']  # NaN will be kept
+        finalFeatureMetadata['ULOQ'] = finalFeatureMetadata['ULOQ'] * finalFeatureMetadata['unitCorrectionFactor']
+        finalIntensityData         = finalIntensityData * finalFeatureMetadata['unitCorrectionFactor'].values
+        finalExpectedConcentration = finalExpectedConcentration * finalFeatureMetadata['unitCorrectionFactor'].values
 
         ## Summary
         print('TagetLynx output, Calibration report and SOP information matched:')
         print('Targeted Method: ' + self.Attributes['methodName'])
         print(str(finalSampleMetadata.shape[0]) + ' samples (' + str(sum(finalSampleMetadata['Calibrant'])) + ' calibration points, ' + str(sum(finalSampleMetadata['Study Sample'])) + ' study samples)')
         print(str(finalFeatureMetadata.shape[0]) + ' features (' + str(sum(finalFeatureMetadata['IS'])) + ' IS, ' + str(sum(finalFeatureMetadata['quantificationType'] == QuantificationType.QuantOwnLabeledAnalogue)) + ' quantified and validated with own labeled analogue, ' + str(sum(finalFeatureMetadata['quantificationType'] == QuantificationType.QuantAltLabeledAnalogue)) + ' quantified and validated with alternative labeled analogue, ' + str(sum(finalFeatureMetadata['quantificationType'] == QuantificationType.QuantOther)) + ' other quantification, ' + str(sum(finalFeatureMetadata['quantificationType'] == QuantificationType.Monitored)) + ' monitored for relative information)')
+        if len(excludedFeatureMetadata) != 0:
+            print(str(excludedFeatureMetadata[0].shape[0]) + ' features excluded as missing from the SOP')
         print('All concentrations converted to final units')
         print('-----')
 
-        return finalSampleMetadata, finalFeatureMetadata, intensityData, expectedConcentration, peakResponse, peakArea, peakConcentrationDeviation, peakIntegrationFlag, peakRT
+        return finalSampleMetadata, finalFeatureMetadata, finalIntensityData, finalExpectedConcentration, excludedSampleMetadata, excludedFeatureMetadata, excludedIntensityData, excludedExpectedConcentration, excludedFlag, finalPeakResponse, finalPeakArea, finalPeakConcentrationDeviation, finalPeakIntegrationFlag, finalPeakRT
 
 
     def _filterTargetLynxSamples(self, sampleTypeToProcess=['Study Sample', 'QC'], **kwargs):
@@ -775,6 +896,9 @@ class TargetedDataset(Dataset):
         if set(sampleTypeToProcess) - set(['Study Sample', 'Blank', 'QC', 'Other']) != set():
             raise ValueError('sampleTypeToProcess ' + str(
                 set(sampleTypeToProcess) - set(['Study Sample', 'Blank', 'QC', 'Other'])) + ' is not recognised')
+        # check excluded exist
+        if((not hasattr(self,'sampleMetadataExcluded'))|(not hasattr(self,'featureMetadataExcluded'))|(not hasattr(self,'intensityDataExcluded'))|(not hasattr(self,'expectedConcentrationExcluded'))|(not hasattr(self,'excludedFlag'))):
+            raise AttributeError('sampleMetadataExcluded, featureMetadataExcluded, intensityDataExcluded, expectedConcentrationExcluded or excludedFlag have not bee previously initialised')
 
         sampleMetadata        = copy.deepcopy(self.sampleMetadata)
         featureMetadata       = copy.deepcopy(self.featureMetadata)
@@ -1063,7 +1187,7 @@ class TargetedDataset(Dataset):
                 pass
 
 
-    def _applyLimitsOfQuantification(self, replaceLLOQ=True, replaceULOQ=True, replaceNaN=True, replaceNaNwith=-numpy.inf, **kwargs):
+    def _applyLimitsOfQuantification(self, onlyLLOQ=False, **kwargs):
         """
         For each feature, replace intensity values inferior to the lowest limit of quantification or superior to the upper limit of quantification, by a fixed value.
 
@@ -1085,64 +1209,138 @@ class TargetedDataset(Dataset):
         :raises AttributeError: if :py:attr:`featureMetadata['ULOQ']` is missing and onlyLLOQ==False
         """
 
-        ## Check input columns and set up counters for log
-        monitoredcount = 0
+        sampleMetadata        = copy.deepcopy(self.sampleMetadata)
+        featureMetadata       = copy.deepcopy(self.featureMetadata)
+        intensityData         = copy.deepcopy(self._intensityData)
+        expectedConcentration = copy.deepcopy(self.expectedConcentration)
+        calibration           = copy.deepcopy(self.calibration)
+        if ((not hasattr(self, 'sampleMetadataExcluded')) | (not hasattr(self, 'featureMetadataExcluded')) | (not hasattr(self, 'intensityDataExcluded')) | (not hasattr(self, 'expectedConcentrationExcluded')) | (not hasattr(self, 'excludedFlag'))):
+            sampleMetadataExcluded        = []
+            featureMetadataExcluded       = []
+            intensityDataExcluded         = []
+            expectedConcentrationExcluded = []
+            excludedFlag                  = []
+        else:
+            sampleMetadataExcluded        = copy.deepcopy(self.sampleMetadataExcluded)
+            featureMetadataExcluded       = copy.deepcopy(self.featureMetadataExcluded)
+            intensityDataExcluded         = copy.deepcopy(self.intensityDataExcluded)
+            expectedConcentrationExcluded = copy.deepcopy(self.expectedConcentrationExcluded)
+            excludedFlag                  = copy.deepcopy(self.excludedFlag)
 
-        if replaceLLOQ:
-            if 'LLOQ' not in self.featureMetadata.columns:
-                raise AttributeError('the featureMetadata[\'LLOQ\'] column is absent')
-            lloqcount = 0
-
-        if replaceULOQ:
-            if 'ULOQ' not in self.featureMetadata.columns:
+        ## Check input columns
+        if 'LLOQ' not in featureMetadata.columns:
+            raise AttributeError('the featureMetadata[\'LLOQ\'] column is absent')
+        if onlyLLOQ==False:
+            if 'ULOQ' not in featureMetadata.columns:
                 raise AttributeError('featureMetadata[\'ULOQ\'] column is absent')
-            uloqcount = 0
 
-        if replaceNaN:
-            nancount = 0
+        ## Features only Monitored are not processed and passed untouched (concatenated back at the end)
+        untouched = (featureMetadata['quantificationType'] == QuantificationType.Monitored).values
+        if sum(untouched) != 0:
+            print('The following features are only monitored and therefore not processed for LOQs: ' + str(featureMetadata.loc[untouched, 'Feature Name'].values.tolist()))
+            untouchedFeatureMetadata = featureMetadata.loc[untouched, :]
+            featureMetadata = featureMetadata.loc[~untouched, :]
+            untouchedIntensityData = intensityData[:, untouched]
+            intensityData = intensityData[:, ~untouched]
+            untouchedExpectedConcentration = expectedConcentration.loc[:, untouched]
+            expectedConcentration = expectedConcentration.loc[:, ~untouched]
+            # same reordering of the calibration
+            if isinstance(calibration, dict):
+                untouchedCalibFeatureMetadata = calibration['calibFeatureMetadata'].loc[untouched, :]
+                calibration['calibFeatureMetadata'] = calibration['calibFeatureMetadata'].loc[~untouched, :]
+                untouchedCalibIntensityData = calibration['calibIntensityData'][:, untouched]
+                calibration['calibIntensityData'] = calibration['calibIntensityData'][:, ~untouched]
+                untouchedCalibExpectedConcentration = calibration['calibExpectedConcentration'].loc[:, untouched]
+                calibration['calibExpectedConcentration'] = calibration['calibExpectedConcentration'].loc[:, ~untouched]
 
-        ## Iterate over the features, replacing LLOQ/ULOQ/NaN as required
-        for i in range(0, self.featureMetadata.shape[0]):
 
-            nanmask = numpy.isnan(self._intensityData[:, i].astype(float))
-            lloqmask = self._intensityData[:, i] < self.featureMetadata.loc[i, 'LLOQ']
-            uloqmask = self._intensityData[:, i] > self.featureMetadata.loc[i, 'ULOQ']
+        ## Exclude features without required information
+        unusableFeat = featureMetadata['LLOQ'].isnull().values & (featureMetadata['quantificationType'] != QuantificationType.QuantOther).values
+        if not onlyLLOQ:
+            unusableFeat = unusableFeat | (featureMetadata['ULOQ'].isnull().values & (featureMetadata['quantificationType'] != QuantificationType.QuantOther).values)
+        if sum(unusableFeat) != 0:
+            print(str(sum(unusableFeat)) + ' features cannot be pre-processed:')
+            print('\t' + str(sum(unusableFeat)) + ' features lack the required information to apply limits of quantification')
+            # store
+            sampleMetadataExcluded.append(sampleMetadata)
+            featureMetadataExcluded.append(featureMetadata.loc[unusableFeat, :])
+            intensityDataExcluded.append(intensityData[:, unusableFeat])
+            expectedConcentrationExcluded.append(expectedConcentration.loc[:, unusableFeat])
+            excludedFlag.append('Features')
+            #remove
+            featureMetadata = featureMetadata.loc[~unusableFeat, :]
+            intensityData = intensityData[:, ~unusableFeat]
+            expectedConcentration = expectedConcentration.loc[:, ~unusableFeat]
+            if isinstance(calibration, dict):
+                calibration['calibFeatureMetadata'] = calibration['calibFeatureMetadata'].loc[~unusableFeat, :]
+                calibration['calibIntensityData'] = calibration['calibIntensityData'][:, ~unusableFeat]
+                calibration['calibExpectedConcentration'] = calibration['calibExpectedConcentration'].loc[:, ~unusableFeat]
 
-            # Do not replace features which are only monitored
-            if self.featureMetadata.loc[i, 'quantificationType'] == QuantificationType.Monitored:
-                print(str(self.featureMetadata.loc[i, 'Feature Name']) + ' monitored for relative information and therefore not processed for LOQs')
-                monitoredcount = monitoredcount + 1
-                continue
 
-            try:
-                if replaceNaN:
-                    self._intensityData[nanmask, i] = replaceNaNwith
-                    nancount = nancount + 1
+        ## Values replacement (-inf / +inf)
+        # iterate over the features
+        for i in range(0, featureMetadata.shape[0]):
+            # LLOQ
+            if not numpy.isnan(featureMetadata['LLOQ'].values[i]):
+                toReplaceLLOQ = intensityData[:, i] < featureMetadata['LLOQ'].values[i]
+                intensityData[toReplaceLLOQ, i] = -numpy.inf
 
-                if replaceLLOQ:
-                    self._intensityData[lloqmask, i] = -numpy.inf
-                    lloqcount = lloqcount + 1
+            # ULOQ
+            if not onlyLLOQ:
+                if not numpy.isnan(featureMetadata['ULOQ'].values[i]):
+                    toReplaceULOQ = intensityData[:, i] > featureMetadata['ULOQ'].values[i]
+                    intensityData[toReplaceULOQ, i] = numpy.inf
 
-                if replaceULOQ:
-                    self._intensityData[uloqmask, i] = numpy.inf
-                    uloqcount = uloqcount + 1
 
-            except:
-                print(str(self.featureMetadata.loc[i, 'Feature Name']) + ': unable to replace LOQs')
-                print('LLOQ: ' + str(self.featureMetadata.loc[i, 'LLOQ']))
-                print('ULOQ: ' + str(self.featureMetadata.loc[i, 'ULOQ']))
+        ## Add back the untouched monitored features
+        if sum(untouched) != 0:
+            featureMetadata = pandas.concat([featureMetadata, untouchedFeatureMetadata], axis=0, sort=False)
+            intensityData = numpy.concatenate((intensityData, untouchedIntensityData), axis=1)
+            expectedConcentration = pandas.concat([expectedConcentration, untouchedExpectedConcentration], axis=1, sort=False)
+            # reorder the calib
+            if isinstance(calibration, dict):
+                calibration['calibFeatureMetadata'] = pandas.concat([calibration['calibFeatureMetadata'], untouchedCalibFeatureMetadata], axis=0, sort=False)
+                calibration['calibIntensityData'] = numpy.concatenate((calibration['calibIntensityData'], untouchedCalibIntensityData), axis=1)
+                calibration['calibExpectedConcentration'] = pandas.concat([calibration['calibExpectedConcentration'], untouchedCalibExpectedConcentration], axis=1, sort=False)
 
-        # Log
-        logtext = 'Limits of quantification applied to: '
-        if replaceLLOQ:
-            logtext = logtext + 'LLOQ (' + str(lloqcount) + ' features, replaced with -numpy.inf); '
-        if replaceULOQ:
-            logtext = logtext + 'ULOQ (' + str(uloqcount) + ' features, replaced with numpy.inf); '
-        if replaceNaN:
-            logtext = logtext + 'NaN (' + str(nancount) + ' features, replaced with ' + str(replaceNaNwith) + '); '
-        logtext = logtext + 'monitored only so no loq applied (' + str(monitoredcount) + ')'
+        # Remove excess info
+        featureMetadata.reset_index(drop=True, inplace=True)
+        expectedConcentration.reset_index(drop=True, inplace=True)
+        if isinstance(calibration, dict):
+            calibration['calibFeatureMetadata'].reset_index(drop=True, inplace=True)
+            calibration['calibExpectedConcentration'].reset_index(drop=True, inplace=True)
 
-        self.Attributes['Log'].append([datetime.now(), logtext])
+        ## return dataset with limits of quantification applied
+        self.featureMetadata       = featureMetadata
+        self._intensityData        = intensityData
+        self.expectedConcentration = expectedConcentration
+        self.calibration           = calibration
+        self.sampleMetadataExcluded        = sampleMetadataExcluded
+        self.featureMetadataExcluded       = featureMetadataExcluded
+        self.intensityDataExcluded         = intensityDataExcluded
+        self.expectedConcentrationExcluded = expectedConcentrationExcluded
+        self.excludedFlag                  = excludedFlag
+        if sum(unusableFeat) != 0:
+            # featureMask size will be wrong, requires a reinitialisation
+            self.initialiseMasks()
+
+        ## Output and Log
+        print('Values <LLOQ replaced by -inf')
+        if not onlyLLOQ:
+            print('Values >ULOQ replaced by +inf')
+        if isinstance(calibration, dict):
+            print('\n')
+
+        # log the modifications
+        if onlyLLOQ:
+            logLimits = 'Limits of quantification applied to LLOQ'
+        else:
+            logLimits = 'Limits of quantification applied to LLOQ and ULOQ'
+        if sum(untouched) != 0:
+            logUntouchedFeatures = ' ' + str(sum(untouched)) + ' features only monitored and not processed: ' + str(untouchedFeatureMetadata.loc[:, 'Feature Name'].values.tolist()) + '.'
+        else:
+            logUntouchedFeatures = ''
+        self.Attributes['Log'].append([datetime.now(), '%s (%i samples, %i features). LLOQ are replaced by -inf.%s' % (logLimits, self.noSamples, self.noFeatures, logUntouchedFeatures)])
 
 
     def _targetLynxApplyLimitsOfQuantificationNoiseFilled(self, onlyLLOQ=False, responseReference=None, **kwargs):
@@ -1866,16 +2064,17 @@ class TargetedDataset(Dataset):
             print('Limits of quantification merged to the highest LLOQ and lowest ULOQ across batch')
 
 
-#    def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False, filterMetadata=True):
-#        """
-#        Calls :py:meth:`~Dataset.exportDataset` and raises a warning if normalisation is employed as :py:class:`TargetedDataset` :py:attr:`intensityData` can be left-censored.
-#        """
-#        # handle the dilution due to method... These lines are left here commented - as hopefully this will be handled more
-#        # elegantly through the intensityData getter
-#        # Export dataset...
-#        tmpData = copy.deepcopy(self)
-#        tmpData._intensityData = tmpData._intensityData * (100/tmpData.sampleMetadata['Dilution']).values[:, numpy.newaxis]
-#        super(TargetedDataset, tmpData).exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
+    def exportDataset(self, destinationPath='.', saveFormat='CSV', withExclusions=True, escapeDelimiters=False, filterMetadata=True):
+        """
+        Calls :py:meth:`~Dataset.exportDataset` and raises a warning if normalisation is employed as :py:class:`TargetedDataset` :py:attr:`intensityData` can be left-censored.
+        """
+        # handle the dilution due to method... These lines are left here commented - as hopefully this will be handled more
+        # elegantly through the intensityData getter
+        # Export dataset...
+        tmpData = copy.deepcopy(self)
+        tmpData._intensityData = tmpData._intensityData * (100/tmpData.sampleMetadata['Dilution']).values[:, numpy.newaxis]
+        super(TargetedDataset, tmpData).exportDataset(destinationPath=destinationPath, saveFormat=saveFormat, withExclusions=withExclusions, escapeDelimiters=escapeDelimiters, filterMetadata=filterMetadata)
+
 
     def _exportCSV(self, destinationPath, escapeDelimiters=False):
         """
@@ -2984,10 +3183,8 @@ class TargetedDataset(Dataset):
 
         if descriptionFormat == 'Filenames':
             filenameSpec = kwargs.get('filenameSpec', None) # default to None if not provided
-            if filenameSpec is None:  # Use spec from SOP
-                filenameSpec = self.Attributes['filenameSpec']
-        #   if filenameSpec is None:
-        #        raise AttributeError('A \'filenameSpec\' must be provided with \'descriptionFormat==\'Filenames\'\'')
+            if filenameSpec is None:
+                raise AttributeError('A \'filenameSpec\' must be provided with \'descriptionFormat==\'Filenames\'\'')
             self._getSampleMetadataFromFilename(filenameSpec)
         elif descriptionFormat == 'Batches':
             self._fillBatches()
