@@ -739,8 +739,8 @@ class TargetedDataset(Dataset):
         SOPColumnsToLoad = ['compoundID', 'compoundName', 'IS', 'unitFinal', 'unitCorrectionFactor', 'calibrationMethod', 'calibrationEquation', 'quantificationType']
         SOPColumnsToLoad.extend(self.Attributes['externalID'])
         SOPFeatureMetadata = pandas.DataFrame.from_dict(dict((k, self.Attributes[k]) for k in SOPColumnsToLoad), orient='columns')
-        SOPFeatureMetadata['compoundID'] = pandas.to_numeric(SOPFeatureMetadata['compoundID'])
-        SOPFeatureMetadata['unitCorrectionFactor'] = pandas.to_numeric(SOPFeatureMetadata['unitCorrectionFactor'])
+        SOPFeatureMetadata['compoundID'] = pandas.to_numeric(SOPFeatureMetadata['compoundID'], errors='coerce')
+        SOPFeatureMetadata['unitCorrectionFactor'] = pandas.to_numeric(SOPFeatureMetadata['unitCorrectionFactor'], errors='coerce')
         SOPFeatureMetadata['IS'] = SOPFeatureMetadata['IS'].map({'True': True, 'False': False})
         SOPFeatureMetadata['Unit'] = SOPFeatureMetadata['unitFinal']
         SOPFeatureMetadata.drop('unitFinal', inplace=True, axis=1)
@@ -3274,13 +3274,13 @@ class TargetedDataset(Dataset):
         # Get well numbers
         fileNameParts.loc[
             fileNameParts['groupingKind'].str.match('Blank|E?IC', na=False).astype(bool), 'injectionNo'] = -1
-        fileNameParts['Well'] = pandas.to_numeric(fileNameParts['injectionNo'])
+        fileNameParts['Well'] = pandas.to_numeric(fileNameParts['injectionNo'], errors='coerce')
 
         # Plate / grouping no
-        fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'])
+        fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'], errors='coerce')
 
         # Get batch where it is explicit in file name
-        fileNameParts['Batch'] = pandas.to_numeric(fileNameParts['baseName'].str.extract('B(\d+?)[SE]', expand=False))
+        fileNameParts['Batch'] = pandas.to_numeric(fileNameParts['baseName'].str.extract('B(\d+?)[SE]', expand=False), errors='coerce')
         fileNameParts['Correction Batch'] = numpy.nan
 
         # Map dilution series names to dilution level

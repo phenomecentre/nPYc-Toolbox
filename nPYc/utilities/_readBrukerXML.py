@@ -69,6 +69,10 @@ def importBrukerXML(filelist):
     runOrder = sampleMetadata.sort_values(by='Acquired Time').index.values
     sampleMetadata['Run Order'] = numpy.argsort(runOrder)
 
+    # Set type of string columns
+    sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
+    sampleMetadata['Sample Base Name'] = sampleMetadata['Sample Base Name'].astype(str)
+
     ##
     # Drop failed imports
     ##

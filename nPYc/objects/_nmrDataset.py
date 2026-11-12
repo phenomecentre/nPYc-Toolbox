@@ -207,7 +207,7 @@ class NMRDataset(Dataset):
 		baseNameParser = re.compile(filenameSpec, re.VERBOSE)
 		fileNameParts = self.sampleMetadata['Sample File Name'].str.extract(baseNameParser, expand=False)
 
-		self.sampleMetadata['Rack'] = fileNameParts['rack'].astype(int, errors='ignore')
+		self.sampleMetadata['Rack'] = pandas.to_numeric(fileNameParts['rack'], errors='coerce')
 		self.sampleMetadata['Study'] = fileNameParts['study']
 
 		##

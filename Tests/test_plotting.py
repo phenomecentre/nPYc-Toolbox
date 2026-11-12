@@ -1256,7 +1256,9 @@ class test_plotting_helpers(unittest.TestCase):
 			numpy.testing.assert_array_equal(numpy.sort(dataset.rsdSP)[::-1],rsdTable[SampleType.StudyPool].values)
 
 		with self.subTest(msg='Check columns'):
+			print(rsdTable.columns)
 			for sampleType in dataset.sampleMetadata['SampleType'].unique():
+				print(sampleType)
 				self.assertTrue(sampleType in rsdTable.columns)
 
 		with self.subTest(msg='With a feature mask'):

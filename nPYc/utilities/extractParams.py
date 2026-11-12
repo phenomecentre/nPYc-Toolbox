@@ -105,7 +105,7 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
             # Drop duplicate files
             resultsDF = resultsDF.loc[~resultsDF['Sample File Name'].duplicated(keep='first')]
 
-        resultsDF = resultsDF.apply(lambda x: pandas.to_numeric(x, errors='ignore'))
+        resultsDF = resultsDF.apply(lambda x: pandas.to_numeric(x, errors='coerce'))
         resultsDF['Acquired Time'] = pandas.to_datetime(resultsDF['Acquired Time'])
     if filetype == '.mzML':
         resultsDF.drop(columns=['startTimeStamp'], inplace=True)

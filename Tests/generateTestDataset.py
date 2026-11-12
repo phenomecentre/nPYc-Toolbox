@@ -67,11 +67,11 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata['Acquired Time'] = [datetime.strptime(d.strftime("%Y-%m-%d %H:%M"), "%Y-%m-%d %H:%M") for d in data.sampleMetadata['Acquired Time']]
 	data.sampleMetadata['Acquired Time'] = data.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 
-	data.sampleMetadata.iloc[::10, 1] = nPYc.enumerations.SampleType.StudyPool
-	data.sampleMetadata.iloc[::10, 2] = nPYc.enumerations.AssayRole.PrecisionReference
+	data.sampleMetadata.iloc[::10, 'SampleType'] = nPYc.enumerations.SampleType.StudyPool
+	data.sampleMetadata.iloc[::10, 'AssayRole'] = nPYc.enumerations.AssayRole.PrecisionReference
 
-	data.sampleMetadata.iloc[5::10, 1] = nPYc.enumerations.SampleType.ExternalReference
-	data.sampleMetadata.iloc[5::10, 2] = nPYc.enumerations.AssayRole.PrecisionReference
+	data.sampleMetadata.iloc[5::10, 'SampleType'] = nPYc.enumerations.SampleType.ExternalReference
+	data.sampleMetadata.iloc[5::10, 'AssayRole'] = nPYc.enumerations.AssayRole.PrecisionReference
 
 	if dtype == 'MSDataset':
 		data.featureMetadata = pandas.DataFrame(0, index=numpy.arange(noFeat), columns=['m/z'])

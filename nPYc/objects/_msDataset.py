@@ -150,10 +150,10 @@ class MSDataset(Dataset):
 			(self.name, self.intensityData, self.featureMetadata, self.sampleMetadata) = self._initialiseFromCSV(
 				datapath)
 			if 'm/z' in self.featureMetadata.columns:
-				self.featureMetadata['m/z'] = self.featureMetadata['m/z'].apply(pandas.to_numeric, errors='ignore')
+				self.featureMetadata['m/z'] = self.featureMetadata['m/z'].apply(pandas.to_numeric, errors='coerce')
 			if 'Retention Time' in self.featureMetadata.columns:
 				self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].apply(pandas.to_numeric,
-																									  errors='ignore')
+																									  errors='coerce')
 			self.VariableType = VariableType.Discrete
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
@@ -1003,7 +1003,7 @@ class MSDataset(Dataset):
 
 		self.featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T,
 												columns=featureMetadata.keys())
-		self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'])
+		self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'], errors='coerce')
 		##
 		# Sample info
 		##
@@ -1017,7 +1017,7 @@ class MSDataset(Dataset):
 		newLOD = numpy.amax(self._intensityData[sampleMask, :], axis=0)
 		self.featureMetadata.loc[self.featureMetadata['LOD (μM)'].values < newLOD, 'LOD (μM)'] = newLOD[
 			self.featureMetadata['LOD (μM)'].values < newLOD]
-		self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'])
+		self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'], errors='coerce')
 		# Delete data
 		self._intensityData = self._intensityData[sampleMask == False, :]
 

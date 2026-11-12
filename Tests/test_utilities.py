@@ -159,8 +159,8 @@ class test_utilities_ms(unittest.TestCase):
 		msData.addSampleInfo(descriptionFormat='Filenames')
 		msData.sampleMetadata['Dilution Series'] = [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, numpy.nan, numpy.nan,
 													numpy.nan, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6]
-		msData.corrExclusions = msData.sampleMask
-		# I think batches are inferred from the sample file names?
+		msData.sampleMetadata['Batch'] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, numpy.nan, numpy.nan,
+										  numpy.nan, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
 		srdMask = nPYc.utilities.ms.generateLRmask(msData)
 
 		canonicalMask = {'Batch 1.0, series 1.0': numpy.array([True,  True,  True,  True,  True,  True,
