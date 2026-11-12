@@ -1279,32 +1279,14 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 		Test we are matching samples IDs in the LIMS correctly
 		"""
 
-		samplingIDs = pandas.Series(['Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample', 'Study Pool Sample', 'Procedural Blank Sample', 'Procedural Blank Sample',
-									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'Study Pool Sample','Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample', 'Study Pool Sample',
-									 'UT1_S1_s1', 'UT1_S2_s1', 'UT1_S3_s1', 'Not specified', 'UT1_S4_s2', 'UT1_S4_s3', 'UT1_S4_s4', 'UT1_S4_s5',
-									 'External Reference Sample', 'Study Pool Sample', 'Not specified'], name='Sample ID', dtype='str')
-		samplingIDs = samplingIDs.astype(str)
+		samplingIDs = pandas.Series(numpy.empty((114)) * numpy.nan, dtype=str, name='Sample ID')
+		samplingIDs.loc[104:] = ['UT1_S1_s1', 'UT1_S2_s1', 'UT1_S3_s1', numpy.nan, 'UT1_S4_s2', 'UT1_S4_s3',
+		                         'UT1_S4_s4', 'UT1_S4_s5', numpy.nan, numpy.nan]
 
 		data = copy.deepcopy(self.Data)
+		data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+		data.applyMasks()
+		data.addSampleInfo(descriptionFormat='Filenames')
 		data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
 		pandas.testing.assert_series_equal(data.sampleMetadata['Sample ID'], samplingIDs)
 
@@ -1313,9 +1295,11 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 
 		columns = ['Person responsible', 'Sampling Protocol', 'Creatinine (mM)', 'Glucose (mM)', 'Class', 'Date of Birth', 'Gender', 'Further Subject info?', 'Environmental measures', 'SubjectInfoData']
 
-		data = copy.deepcopy(self.Data)
-		data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
-		data.addSampleInfo(descriptionFormat='NPC Subject Info', filePath=os.path.join('..','..','npc-standard-project','Project_Description','UnitTest1_metadata_PCDOC.014.xlsx'))
+		#data = copy.deepcopy(self.Data)
+		#data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+		#data.applyMasks()
+		#data.addSampleInfo(descriptionFormat='Filenames')
+		#data.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_MS_serum_PCSOP.069.csv'))
 		data.addSampleInfo(descriptionFormat='NPC Subject Info', filePath=os.path.join('..','..','npc-standard-project','Project_Description','UnitTest1_metadata_PCDOC.014.xlsx'))
 
 		for column in columns:
@@ -1374,90 +1358,11 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 		expectedSampleMetadata['Sample Base Name'] = expectedSampleMetadata['Sample File Name']
 		expectedSampleMetadata['Metadata Available'] = True
 		expectedSampleMetadata['Batch'] = numpy.nan
-
-		expectedSampleMetadata['Correction Batch'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													  numpy.nan]
-
-		expectedSampleMetadata['Acquired Time'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-												   numpy.nan]
-
-		expectedSampleMetadata['Run Order'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-											   numpy.nan]
-
-		expectedSampleMetadata['Exclusion Details'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-													   numpy.nan]
+		expectedSampleMetadata['Correction Batch'] = numpy.nan
+		expectedSampleMetadata['Acquired Time'] = numpy.nan
+		expectedSampleMetadata['Run Order'] = numpy.nan
+		expectedSampleMetadata['Exclusion Details'] = ''
+		expectedSampleMetadata['Biofluid'] = 'Serum'
 
 		expectedSampleMetadata['Sample ID'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
 												 numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
@@ -1567,24 +1472,6 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 												 'Study Reference', 'Study Sample', 'Study Sample', 'Study Sample',
 												 'Study Sample', 'Study Sample', 'Study Sample', 'Study Sample',
 												 'Study Sample', 'Long-Term Reference', 'Study Reference', numpy.nan]
-
-		expectedSampleMetadata['Biofluid'] = ['Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum', 'Serum', 'Serum', 'Serum',
-											  'Serum', 'Serum', 'Serum']
 
 		expectedSampleMetadata['Dilution'] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20,
 											  20, 20, 20, 20, 40, 40, 40, 60, 60, 60, 80, 80, 80, 80, 80,

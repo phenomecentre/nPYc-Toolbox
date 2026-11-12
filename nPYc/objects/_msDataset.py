@@ -161,7 +161,7 @@ class MSDataset(Dataset):
 
 
 		self._intensityData = self._intensityData.astype(float)
-		self.featureMetadata['Exclusion Details'] = None
+		self.featureMetadata['Exclusion Details'] = ''
 		self.featureMetadata['User Excluded'] = False
 		self.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
 							  'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
@@ -594,11 +594,11 @@ class MSDataset(Dataset):
 
 		# self.initialiseMasks()
 
-		self.sampleMetadata['AssayRole'] = None  # AssayRole.Assay
-		self.sampleMetadata['SampleType'] = None  # SampleType.StudySample
+		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
+		self.sampleMetadata['SampleType'] = SampleType.UnknownType
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = ''
 
 		self.Attributes['Log'].append([datetime.now(), 'Progenesis QI dataset loaded from %s' % (path)])
 
@@ -658,11 +658,11 @@ class MSDataset(Dataset):
 
 		# self.initialiseMasks()
 
-		self.sampleMetadata['AssayRole'] = None  # AssayRole.Assay
-		self.sampleMetadata['SampleType'] = None  # SampleType.StudySample
+		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
+		self.sampleMetadata['SampleType'] = SampleType.UnknownType
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = ''
 
 		self.Attributes['Log'].append([datetime.now(), 'MZmine dataset loaded from %s' % (path)])
 
@@ -750,7 +750,7 @@ class MSDataset(Dataset):
 		self.sampleMetadata['Correction Batch'] = batch_id
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = True
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = ''
 
 		self.Attributes['Log'].append([datetime.now(), 'MS-DIAL dataset loaded from %s' % (path)])
 
@@ -811,12 +811,11 @@ class MSDataset(Dataset):
 		self.featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
 		self.featureMetadata.insert(0, 'Feature Name', name)
 
-		self.sampleMetadata['AssayRole'] = None  # AssayRole.Assay
-		self.sampleMetadata['SampleType'] = None  # SampleType.StudySample
+		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
+		self.sampleMetadata['SampleType'] = SampleType.UnknownType
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
-
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -889,7 +888,7 @@ class MSDataset(Dataset):
 		self.sampleMetadata['SampleType'] = SampleType.UnknownType
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -966,11 +965,11 @@ class MSDataset(Dataset):
 		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float)
 		self.featureMetadata['m/z'] = self.featureMetadata['m/z'].astype(float)
 
-		self.sampleMetadata['AssayRole'] = None  # AssayRole.Assay
-		self.sampleMetadata['SampleType'] = None  # SampleType.StudySample
+		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
+		self.sampleMetadata['SampleType'] = SampleType.UnknownType
 		self.sampleMetadata['Dilution'] = 100
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -1043,7 +1042,7 @@ class MSDataset(Dataset):
 		self.featureMetadata.insert(0, 'Feature Name', names)
 
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = ''
 		# self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'Biocrates dataset loaded from %s' % (path)])
@@ -1222,7 +1221,7 @@ class MSDataset(Dataset):
 		self.sampleMetadata['Dilution'] = 100 # Dilution is not stored to nPYc export
 		self.sampleMetadata['Metadata Available'] = True # No new import of metadata needed
 
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -1279,7 +1278,7 @@ class MSDataset(Dataset):
 
 		# Flag samples for exclusion:
 		if 'Exclusion Details' not in self.sampleMetadata:
-			self.sampleMetadata['Exclusion Details'] = None
+			self.sampleMetadata['Exclusion Details'] = ''
 
 		# Print warning that samples are missing info, raw files should be located or samples should be excluded from dataset
 		missingSampleInfo = ~self.sampleMetadata['Sample File Name'].isin(instrumentParams['Sample File Name'])
