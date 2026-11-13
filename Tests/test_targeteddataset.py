@@ -358,15 +358,18 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='validateObject successful on basic dataset'):
 			goodDataset = copy.deepcopy(self.targetedData3)
-			self.assertEqual(goodDataset.validateObject(verbose=False, raiseError=False, raiseWarning=True),{'Dataset': True, 'BasicTargetedDataset': True, 'QC': True, 'sampleMetadata': True})
+			self.assertEqual(goodDataset.validateObject(verbose=False, raiseError=False, raiseWarning=True),
+							 {'Dataset': True, 'BasicTargetedDataset': True, 'QC': True, 'sampleMetadata': True})
 
 		with self.subTest(msg='validateObject successful on merged dataset'):
 			goodDataset = copy.deepcopy(self.targetedData1)
-			self.assertEqual(goodDataset.validateObject(verbose=False, raiseError=False, raiseWarning=True),{'Dataset': True, 'BasicTargetedDataset': True, 'QC': True, 'sampleMetadata': True})
+			self.assertEqual(goodDataset.validateObject(verbose=False, raiseError=False, raiseWarning=True),
+							 {'Dataset': True, 'BasicTargetedDataset': True, 'QC': True, 'sampleMetadata': True})
 
 		with self.subTest(msg='BasicTargetedDataset fails on empty TargetedDataset'):
 			badDataset = nPYc.TargetedDataset('', fileType='empty')
-			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False), {'Dataset': True, 'BasicTargetedDataset':False ,'QC':False, 'sampleMetadata':False})
+			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False),
+							 {'Dataset': True, 'BasicTargetedDataset':False ,'QC':False, 'sampleMetadata':False})
 
 		with self.subTest(msg='check raise no warnings with raiseWarning=False'):
 			badDataset = copy.deepcopy(self.targetedData3)
@@ -1510,163 +1513,67 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Instrument'], instrument)
 
 		with self.subTest(msg='Rerun'):
-			reRun = pandas.Series(['',
-								'',
-								'',
-								'',
-								'',
-								'',
-								'',
-								'b',
-								'',
-								'q',
-								'',
-								'',
-								'',
-								'',
-								''],
-								name='Re-Run',
-								dtype='str')
+			reRun = pandas.Series([numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+								   numpy.nan, numpy.nan, 'b', numpy.nan, 'q',
+								   numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
+								  name='Re-Run',
+								  dtype='str')
 			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Re-Run'], reRun)
 
-		with self.subTest(msg='Suplemental Injections'):
-			suplemental = pandas.Series(['',
-										'',
-										'',
-										'',
-										'',
-										'',
-										'',
-										'',
-										'2',
-										'',
-										'',
-										'9',
-										'',
-										'',
-										''],
-										name='Suplemental Injections',
+		with self.subTest(msg='Supplemental Injections'):
+			supplemental = pandas.Series([numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+										 numpy.nan, numpy.nan, numpy.nan, '2', numpy.nan,
+										 numpy.nan, '9', numpy.nan, numpy.nan, numpy.nan],
+										 name='Supplemental Injections',
 										dtype='str')
-			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Suplemental Injections'], suplemental)
+			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Supplemental Injections'], supplemental)
 
 		with self.subTest(msg='Skipped'):
-			skipped = pandas.Series([False,
-									False,
-									False,
-									False,
-									False,
-									False,
-									True,
-									False,
-									False,
-									False,
-									False,
-									False,
-									False,
-									False,
-									False],
+			skipped = pandas.Series([False, False, False, False, False,
+									False, True, False, False, False,
+									False, False, False, False, False],
 									name='Skipped',
 									dtype='bool')
 			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Skipped'], skipped)
 
 		with self.subTest(msg='Matrix'):
-			matrix = pandas.Series(['P',
-									'U',
-									'S',
-									'P',
-									'U',
-									'S',
-									'P',
-									'U',
-									'S',
-									'',
-									'',
-									'',
-									'',
-									'',
-									''],
-									name='Matrix',
-									dtype='str')
+			matrix = pandas.Series(['P', 'U', 'S', 'P', 'U',
+									'S', 'P', 'U', 'S', numpy.nan,
+									numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan],
+								   name='Matrix',
+								   dtype='str')
 			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Matrix'], matrix)
 
 		with self.subTest(msg='Well'):
-			well = pandas.Series([2,
-								3,
-								4,
-								5,
-								6,
-								5,
-								2,
-								3,
-								4,
-								1,
-								2,
-								1,
-								-1,
-								-1,
-								-1],
+			well = pandas.Series([2, 3, 4, 5, 6,
+								  5, 2, 3, 4, 1,
+								  2, 1, -1, -1, -1],
 								name='Well',
-								dtype='int')
+								dtype='float')
 			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Well'], well, check_dtype=False)
 			self.assertEqual(self.targetedData5.sampleMetadata['Well'].dtype.kind, well.dtype.kind)
 
 		with self.subTest(msg='Plate'):
-			plate = pandas.Series([1,
-									2,
-									3,
-									4,
-									5,
-									4,
-									1,
-									2,
-									3,
-									1,
-									2,
-									3,
-									1,
-									2,
-									21],
-									name='Plate',
-									dtype='int')
+			plate = pandas.Series([1, 2, 3, 4, 5,
+								   4, 1, 2, 3, 1,
+								   2, 3, 1, 2, 21],
+								  name='Plate',
+								  dtype='int')
 			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Plate'], plate, check_dtype=False)
-			self.assertEqual(self.targetedData5.sampleMetadata['Plate'].dtype.kind, well.dtype.kind)
+			self.assertEqual(self.targetedData5.sampleMetadata['Plate'].dtype.kind, plate.dtype.kind)
 
 		with self.subTest(msg='Batch'):
-			batch = pandas.Series([numpy.nan,
-								numpy.nan,
-								numpy.nan,
-								numpy.nan,
-								numpy.nan,
-								numpy.nan,
-								numpy.nan,
-								numpy.nan,
-								numpy.nan,
-								1.0,
-								2.0,
-								3.0,
-								numpy.nan,
-								numpy.nan,
-								numpy.nan],
-								name='Batch',
-								dtype=float)
+			batch = pandas.Series([numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+								   numpy.nan, numpy.nan, numpy.nan, numpy.nan, 1.0,
+								   2.0, 3.0, numpy.nan, numpy.nan, numpy.nan],
+								  name='Batch',
+								  dtype=float)
 			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Batch'], batch)
 
 		with self.subTest(msg='Dilution'):
-			dilution = pandas.Series([numpy.nan,
-									numpy.nan,
-									numpy.nan,
-									numpy.nan,
-									numpy.nan,
-									numpy.nan,
-									numpy.nan,
-									numpy.nan,
-									numpy.nan,
-									numpy.nan,
-									numpy.nan,
-									1.0,
-									numpy.nan,
-									numpy.nan,
-									numpy.nan],
+			dilution = pandas.Series([numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+									  numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+									  numpy.nan, 1.0, numpy.nan, numpy.nan, numpy.nan],
 									name='Dilution',
 									dtype='float')
 			pandas.testing.assert_series_equal(self.targetedData5.sampleMetadata['Dilution'], dilution)
@@ -4776,9 +4683,9 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 																	   'Lower Reference Value',
 																	   'Upper Reference Percentile',
 																	   'Upper Reference Value'],
-										"sampleTypeColours": generic_attributes["sampleTypeColours"],
-									   	"sampleTypeMarkers" : generic_attributes["sampleTypeMarkers"],
-										"sampleTypeAbbr": generic_attributes["sampleTypeAbbr"]
+										"sampleTypeColours": tmpDataset.Attributes["sampleTypeColours"],
+									   	"sampleTypeMarkers" : tmpDataset.Attributes["sampleTypeMarkers"],
+										"sampleTypeAbbr": tmpDataset.Attributes["sampleTypeAbbr"]
 											  }
 
 		# 112 features, 10 samples, BrukerBI-LISA

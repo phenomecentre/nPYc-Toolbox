@@ -747,10 +747,12 @@ class TargetedDataset(Dataset):
 
         # convert quantificationType from str to enum
         if 'quantificationType' in SOPFeatureMetadata.columns:
+            SOPFeatureMetadata['quantificationType'] = SOPFeatureMetadata['quantificationType'].astype('O')
             for qType in QuantificationType:
                 SOPFeatureMetadata.loc[SOPFeatureMetadata['quantificationType'].values == qType.name, 'quantificationType'] = qType
         # convert calibrationMethod from str to enum
         if 'calibrationMethod' in SOPFeatureMetadata.columns:
+            SOPFeatureMetadata['calibrationMethod'] = SOPFeatureMetadata['calibrationMethod'].astype('O')
             for cMethod in CalibrationMethod:
                 SOPFeatureMetadata.loc[SOPFeatureMetadata['calibrationMethod'].values == cMethod.name, 'calibrationMethod'] = cMethod
 
@@ -1839,8 +1841,23 @@ class TargetedDataset(Dataset):
         tmpFeatureMetadata2 = copy.deepcopy(other.featureMetadata)
         updatedCol2 = batchListReNumber(tmpFeatureMetadata2.columns.tolist(), batchChangeOther, mergeCol)
         tmpFeatureMetadata2.columns = updatedCol2
+
+        # Set all types to strings for merging
+        for col in mergeCol:
+            tmpFeatureMetadata1[col] = tmpFeatureMetadata1[col].astype(str)
+            tmpFeatureMetadata2[col] = tmpFeatureMetadata2[col].astype(str)
+
         # Merge featureMetadata on the mergeCol, no columns with identical name exist
         tmpFeatureMetadata = tmpFeatureMetadata1.merge(tmpFeatureMetadata2, how='outer', on=mergeCol, left_on=None,right_on=None,left_index=False,right_index=False,sort=False,copy=True,indicator=False)
+
+        # Set 'calibrationMethod' and 'quantificationType' back to enums
+        tmpFeatureMetadata['calibrationMethod'] = tmpFeatureMetadata['calibrationMethod'].astype('O')
+        tmpFeatureMetadata['quantificationType'] = tmpFeatureMetadata['quantificationType'].astype('O')
+        for cmethod in CalibrationMethod:
+            tmpFeatureMetadata.loc[tmpFeatureMetadata['calibrationMethod'] == str(cmethod), 'calibrationMethod'] = cmethod
+        for qtype in QuantificationType:
+            tmpFeatureMetadata.loc[tmpFeatureMetadata['quantificationType'] == str(qtype), 'quantificationType'] = qtype
+
         targetedData.featureMetadata = copy.deepcopy(tmpFeatureMetadata)
 
         ## featureMetadataNotExported
@@ -1879,9 +1896,9 @@ class TargetedDataset(Dataset):
         # iterate over the merged features
         for colname in targetedData.featureMetadata['Feature Name'].tolist():
             if colname in self.expectedConcentration.columns:
-                expectedConc1.loc[:,colname] = self.expectedConcentration[colname].ravel()
+                expectedConc1.loc[:,colname] = self.expectedConcentration[colname].values #ravel() - series object has no attribute ravel
             if colname in other.expectedConcentration.columns:
-                expectedConc2.loc[:,colname] = other.expectedConcentration[colname].ravel()
+                expectedConc2.loc[:,colname] = other.expectedConcentration[colname].values #ravel() - series object has no attribute ravel
         expectedConcentration = pandas.concat([expectedConc1, expectedConc2], axis=0, ignore_index=True, sort=False)
         expectedConcentration.reset_index(drop=True, inplace=True)
         targetedData.expectedConcentration = copy.deepcopy(expectedConcentration)
@@ -2465,13 +2482,13 @@ class TargetedDataset(Dataset):
                 failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=LookupError(failure))
                 if condition:
                     # sampleMetadata['Subject ID'] is str
-                    condition = (self.sampleMetadata['Subject ID'].dtype == numpy.dtype('O'))
+                    condition = (isinstance(self.sampleMetadata['Subject ID'].dtype, pandas.StringDtype))
                     success = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tOK'
                     failure = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tFailure, \'self.sampleMetadata[\'Subject ID\']\' is ' + str(type(self.sampleMetadata['Subject ID'][0]))
                     failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
                 # end self.sampleMetadata['Subject ID']
                 # sampleMetadata['Sample ID'] is str
-                condition = (self.sampleMetadata['Sample ID'].dtype == numpy.dtype('O'))
+                condition = (isinstance(self.sampleMetadata['Sample ID'].dtype, pandas.StringDtype))
                 success = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tOK'
                 failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sample ID\']\' is ' + str(type(self.sampleMetadata['Sample ID'][0]))
                 failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
@@ -3272,9 +3289,10 @@ class TargetedDataset(Dataset):
         fileNameParts['Matrix'].fillna('', inplace=True)
 
         # Get well numbers
+        fileNameParts['injectionNo'] = pandas.to_numeric(fileNameParts['injectionNo'], errors='coerce')
         fileNameParts.loc[
             fileNameParts['groupingKind'].str.match('Blank|E?IC', na=False).astype(bool), 'injectionNo'] = -1
-        fileNameParts['Well'] = pandas.to_numeric(fileNameParts['injectionNo'], errors='coerce')
+        fileNameParts['Well'] = fileNameParts['injectionNo']
 
         # Plate / grouping no
         fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'], errors='coerce')
@@ -3299,9 +3317,9 @@ class TargetedDataset(Dataset):
         fileNameParts.rename(columns={'study': 'Study'}, inplace=True)
         fileNameParts.rename(columns={'baseName': 'Sample Base Name'}, inplace=True)
         fileNameParts.rename(columns={'fileName': 'Sample File Name'}, inplace=True)
-        fileNameParts.rename(columns={'suplementalInfo': 'Suplemental Info'}, inplace=True)
+        fileNameParts.rename(columns={'suplementalInfo': 'Supplemental Info'}, inplace=True)
         fileNameParts.rename(columns={'ionisation': 'Ionisation'}, inplace=True)
-        fileNameParts.rename(columns={'extraInjections': 'Suplemental Injections'}, inplace=True)
+        fileNameParts.rename(columns={'extraInjections': 'Supplemental Injections'}, inplace=True)
         fileNameParts.rename(columns={'reruns': 'Re-Run'}, inplace=True)
 
         # Merge metadata back into the sampleInfo table.

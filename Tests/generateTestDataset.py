@@ -39,7 +39,8 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 
 	data.intensityData = numpy.random.lognormal(size=(noSamp, noFeat)) + 1
 
-	data.sampleMetadata = pandas.DataFrame(0, index=numpy.arange(noSamp), columns=['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order', 'Dilution', 'Detector', 'Correction Batch'])
+	data.sampleMetadata = pandas.DataFrame(0, index=numpy.arange(noSamp),
+										   columns=['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order', 'Dilution', 'Detector', 'Correction Batch'])
 
 	data.sampleMetadata['SampleType'] = nPYc.enumerations.SampleType.StudySample
 	data.sampleMetadata['AssayRole'] = nPYc.enumerations.AssayRole.Assay
@@ -67,11 +68,11 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata['Acquired Time'] = [datetime.strptime(d.strftime("%Y-%m-%d %H:%M"), "%Y-%m-%d %H:%M") for d in data.sampleMetadata['Acquired Time']]
 	data.sampleMetadata['Acquired Time'] = data.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 
-	data.sampleMetadata.iloc[::10, 'SampleType'] = nPYc.enumerations.SampleType.StudyPool
-	data.sampleMetadata.iloc[::10, 'AssayRole'] = nPYc.enumerations.AssayRole.PrecisionReference
+	data.sampleMetadata.loc[::10, 'SampleType'] = nPYc.enumerations.SampleType.StudyPool
+	data.sampleMetadata.loc[::10, 'AssayRole'] = nPYc.enumerations.AssayRole.PrecisionReference
 
-	data.sampleMetadata.iloc[5::10, 'SampleType'] = nPYc.enumerations.SampleType.ExternalReference
-	data.sampleMetadata.iloc[5::10, 'AssayRole'] = nPYc.enumerations.AssayRole.PrecisionReference
+	data.sampleMetadata.loc[5::10, 'SampleType'] = nPYc.enumerations.SampleType.ExternalReference
+	data.sampleMetadata.loc[5::10, 'AssayRole'] = nPYc.enumerations.AssayRole.PrecisionReference
 
 	if dtype == 'MSDataset':
 		data.featureMetadata = pandas.DataFrame(0, index=numpy.arange(noFeat), columns=['m/z'])
