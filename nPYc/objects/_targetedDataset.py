@@ -552,7 +552,7 @@ class TargetedDataset(Dataset):
         peakArea = pandas.DataFrame(peak_area)
         peakConcentrationDeviation = pandas.DataFrame(peak_concdev)
         peakIntegrationFlag = peak_integrationFlag # already dataframe
-        peakIntegrationFlag.reset_index(drop=True, inplace=True)
+        peakIntegrationFlag = peakIntegrationFlag.reset_index(drop=True)
         peakRT = pandas.DataFrame(peak_RT)
 
         # Convert to DataFrames
@@ -743,7 +743,7 @@ class TargetedDataset(Dataset):
         SOPFeatureMetadata['unitCorrectionFactor'] = pandas.to_numeric(SOPFeatureMetadata['unitCorrectionFactor'], errors='coerce')
         SOPFeatureMetadata['IS'] = SOPFeatureMetadata['IS'].map({'True': True, 'False': False})
         SOPFeatureMetadata['Unit'] = SOPFeatureMetadata['unitFinal']
-        SOPFeatureMetadata.drop('unitFinal', inplace=True, axis=1)
+        SOPFeatureMetadata = SOPFeatureMetadata.drop('unitFinal', axis=1)
 
         # convert quantificationType from str to enum
         if 'quantificationType' in SOPFeatureMetadata.columns:
@@ -770,7 +770,7 @@ class TargetedDataset(Dataset):
         if SOPFeatureMetadata.shape[0] != calibReport.shape[0]:
             raise ValueError('SOP and Calibration Report number of compounds differ')
         featureCalibSOP = pandas.merge(left=SOPFeatureMetadata, right=calibReport, how='inner', left_on='compoundName', right_on='Compound', sort=False)
-        featureCalibSOP.drop('TargetLynx ID', inplace=True, axis=1)
+        featureCalibSOP = featureCalibSOP.drop('TargetLynx ID', axis=1)
 
         # check we still have the same number of features (inner join)
         if featureCalibSOP.shape[0] != SOPFeatureMetadata.shape[0]:
@@ -779,7 +779,7 @@ class TargetedDataset(Dataset):
         # check compound names match in SOP and calibReport after join
         if sum(featureCalibSOP['compoundName'] != featureCalibSOP['Compound']) != 0:
             raise ValueError('SOP and Calibration Report compounds names differ: ' + str(featureCalibSOP.loc[(featureCalibSOP['compoundName'] != featureCalibSOP['Compound']), ['compoundName', 'Compound']].values.tolist()))
-        featureCalibSOP.drop('Compound', inplace=True, axis=1)
+        featureCalibSOP = featureCalibSOP.drop('Compound', axis=1)
 
         ## Match calibSOP & featureMetadata
         # left join to keep feature order and limit to features in XML
@@ -804,7 +804,7 @@ class TargetedDataset(Dataset):
             finalPeakIntegrationFlag = peakIntegrationFlag.iloc[:, ~unavailableFeatVect]
             finalPeakRT = peakRT.iloc[:, ~unavailableFeatVect]
             # remove duplicate col
-            finalFeatureMetadata.drop('compoundID', inplace=True, axis=1)
+            finalFeatureMetadata = finalFeatureMetadata.drop('compoundID', axis=1)
         else:
             finalIntensityData = intensityData
             finalExpectedConcentration = expectedConcentration
@@ -814,7 +814,7 @@ class TargetedDataset(Dataset):
             finalPeakIntegrationFlag = peakIntegrationFlag
             finalPeakRT = peakRT
             # remove duplicate col
-            finalFeatureMetadata.drop('compoundID', inplace=True, axis=1)
+            finalFeatureMetadata = finalFeatureMetadata.drop('compoundID', axis=1)
 
         # check names, keep SOP value, report differences
         if sum(finalFeatureMetadata['Feature Name'] != finalFeatureMetadata['compoundName']) != 0:
@@ -826,7 +826,7 @@ class TargetedDataset(Dataset):
             finalPeakConcentrationDeviation.columns = finalFeatureMetadata['Feature Name'].values.tolist()
             finalPeakIntegrationFlag.columns        = finalFeatureMetadata['Feature Name'].values.tolist()
             finalPeakRT.columns                     = finalFeatureMetadata['Feature Name'].values.tolist()
-        finalFeatureMetadata.drop('compoundName', inplace=True, axis=1)
+        finalFeatureMetadata = finalFeatureMetadata.drop('compoundName', axis=1)
 
         ## Add information to the sampleMetada
         finalSampleMetadata = copy.deepcopy(sampleMetadata)
@@ -858,7 +858,7 @@ class TargetedDataset(Dataset):
         # Add Run Order
         finalSampleMetadata['Order'] = finalSampleMetadata.sort_values(by='Acquired Time').index
         finalSampleMetadata['Run Order'] = finalSampleMetadata.sort_values(by='Order').index
-        finalSampleMetadata.drop('Order', axis=1, inplace=True)
+        finalSampleMetadata = finalSampleMetadata.drop('Order', axis=1)
         # Initialise the Batch to 1
         finalSampleMetadata['Batch'] = [1]*finalSampleMetadata.shape[0]
 
@@ -951,9 +951,9 @@ class TargetedDataset(Dataset):
             excludedImportFlag.append('Samples')
 
         # Clean columns
-        tmpSampleMetadata.reset_index(drop=True, inplace=True)
+        tmpSampleMetadata = tmpSampleMetadata.reset_index(drop=True)
         tmpSampleMetadata = tmpSampleMetadata.drop(['Calibrant', 'Study Sample', 'Blank', 'QC', 'Other'], axis=1)
-        tmpExpectedConcentration.reset_index(drop=True, inplace=True)
+        tmpExpectedConcentration = tmpExpectedConcentration.reset_index(drop=True)
 
         # Output
         self.sampleMetadata        = tmpSampleMetadata
@@ -1035,8 +1035,8 @@ class TargetedDataset(Dataset):
             excludedImportFlag.append('Features')
 
         # Clean columns
-        tmpFeatureMetadata.reset_index(drop=True, inplace=True)
-        tmpCalibration['calibFeatureMetadata'].reset_index(drop=True, inplace=True)
+        tmpFeatureMetadata = tmpFeatureMetadata.reset_index(drop=True)
+        tmpCalibration['calibFeatureMetadata'] = tmpCalibration['calibFeatureMetadata'].reset_index(drop=True)
         tmpFeatureMetadata = tmpFeatureMetadata.drop(['IS', 'TargetLynx IS ID'], axis=1)
 
         # Output
@@ -1105,7 +1105,7 @@ class TargetedDataset(Dataset):
                 raise ValueError('The unit \'' + str(unit) + '\' is not present in the input data, available units: ' + str(avUnit))
             keepMask = (self.featureMetadata['Unit'] == unit).values
             self.featureMetadata = self.featureMetadata.loc[keepMask, :]
-            self.featureMetadata.reset_index(drop=True, inplace=True)
+            self.featureMetadata = self.featureMetadata.reset_index(drop=True)
             self.intensityData = self.intensityData[:, keepMask]
 
         ## Check all features are unique, and
@@ -1118,7 +1118,7 @@ class TargetedDataset(Dataset):
             keepFirstVal = [(self.featureMetadata['Feature Name'] == Feat).idxmax() for Feat in dupFeat]
             keepMask[keepFirstVal] = True
             self.featureMetadata = self.featureMetadata.loc[keepMask, :]
-            self.featureMetadata.reset_index(drop=True, inplace=True)
+            self.featureMetadata = self.featureMetadata.reset_index(drop=True)
             self.intensityData = self.intensityData[:, keepMask]
 
         ## Reformat featureMetadata
@@ -1126,13 +1126,13 @@ class TargetedDataset(Dataset):
         self.featureMetadata['quantificationType'] = numpy.nan
         self.featureMetadata.loc[self.featureMetadata['type'] == 'quantification', 'quantificationType'] = QuantificationType.QuantOther
         self.featureMetadata.loc[self.featureMetadata['type'] != 'quantification', 'quantificationType'] = QuantificationType.Monitored
-        self.featureMetadata.drop('type', inplace=True, axis=1)
+        self.featureMetadata = self.featureMetadata.drop('type', axis=1)
         # calibrationMethod
         self.featureMetadata['calibrationMethod'] = numpy.nan
         self.featureMetadata.loc[self.featureMetadata['quantificationType'] == QuantificationType.QuantOther, 'calibrationMethod'] = CalibrationMethod.otherCalibration
         self.featureMetadata.loc[self.featureMetadata['quantificationType'] == QuantificationType.Monitored, 'calibrationMethod'] = CalibrationMethod.noCalibration
         # rename columns
-        self.featureMetadata.rename(columns={'loq': 'LLOQ', 'lod': 'LOD', 'Lower Reference Bound': 'Lower Reference Percentile', 'Upper Reference Bound': 'Upper Reference Percentile'}, inplace=True)
+        self.featureMetadata = self.featureMetadata.rename(columns={'loq': 'LLOQ', 'lod': 'LOD', 'Lower Reference Bound': 'Lower Reference Percentile', 'Upper Reference Bound': 'Upper Reference Percentile'})
         # replace '-' with nan
         self.featureMetadata['LLOQ'].replace('-', numpy.nan, inplace=True)
         self.featureMetadata['LLOQ'] = [float(x) for x in self.featureMetadata['LLOQ'].tolist()]
@@ -1151,7 +1151,7 @@ class TargetedDataset(Dataset):
         # add Run Order
         self.sampleMetadata['Order'] = self.sampleMetadata.sort_values(by='Acquired Time').index
         self.sampleMetadata['Run Order'] = self.sampleMetadata.sort_values(by='Order').index
-        self.sampleMetadata.drop('Order', axis=1, inplace=True)
+        self.sampleMetadata = self.sampleMetadata.drop('Order', axis=1)
         # initialise the Batch to 1
         self.sampleMetadata['Batch'] = [1] * self.sampleMetadata.shape[0]
         self.sampleMetadata['Metadata Available'] = False
@@ -1306,11 +1306,11 @@ class TargetedDataset(Dataset):
                 calibration['calibExpectedConcentration'] = pandas.concat([calibration['calibExpectedConcentration'], untouchedCalibExpectedConcentration], axis=1, sort=False)
 
         # Remove excess info
-        featureMetadata.reset_index(drop=True, inplace=True)
-        expectedConcentration.reset_index(drop=True, inplace=True)
+        featureMetadata = featureMetadata.reset_index(drop=True)
+        expectedConcentration = expectedConcentration.reset_index(drop=True)
         if isinstance(calibration, dict):
-            calibration['calibFeatureMetadata'].reset_index(drop=True, inplace=True)
-            calibration['calibExpectedConcentration'].reset_index(drop=True, inplace=True)
+            calibration['calibFeatureMetadata'] = calibration['calibFeatureMetadata'].reset_index(drop=True)
+            calibration['calibExpectedConcentration'] = calibration['calibExpectedConcentration'].reset_index(drop=True)
 
         ## return dataset with limits of quantification applied
         self.featureMetadata       = featureMetadata
@@ -1589,15 +1589,15 @@ class TargetedDataset(Dataset):
             calibration['calibPeakInfo']['peakRT'] = pandas.concat([calibration['calibPeakInfo']['peakRT'], untouchedCalibPeakRT], axis=1, sort=False)
 
         # Remove excess info
-        featureMetadata.reset_index(drop=True, inplace=True)
-        calibration['calibFeatureMetadata'].reset_index(drop=True, inplace=True)
-        expectedConcentration.reset_index(drop=True, inplace=True)
-        calibration['calibExpectedConcentration'].reset_index(drop=True, inplace=True)
-        calibration['calibPeakInfo']['peakArea'] .reset_index(drop=True, inplace=True)
-        calibration['calibPeakInfo']['peakResponse'].reset_index(drop=True, inplace=True)
-        calibration['calibPeakInfo']['peakConcentrationDeviation'].reset_index(drop=True, inplace=True)
-        calibration['calibPeakInfo']['peakIntegrationFlag'].reset_index(drop=True, inplace=True)
-        calibration['calibPeakInfo']['peakRT'].reset_index(drop=True, inplace=True)
+        featureMetadata = featureMetadata.reset_index(drop=True)
+        calibration['calibFeatureMetadata'] = calibration['calibFeatureMetadata'].reset_index(drop=True)
+        expectedConcentration = expectedConcentration.reset_index(drop=True)
+        calibration['calibExpectedConcentration'] = calibration['calibExpectedConcentration'].reset_index(drop=True)
+        calibration['calibPeakInfo']['peakArea'] = calibration['calibPeakInfo']['peakArea'].reset_index(drop=True)
+        calibration['calibPeakInfo']['peakResponse'] = calibration['calibPeakInfo']['peakResponse'].reset_index(drop=True)
+        calibration['calibPeakInfo']['peakConcentrationDeviation'] = calibration['calibPeakInfo']['peakConcentrationDeviation'].reset_index(drop=True)
+        calibration['calibPeakInfo']['peakIntegrationFlag'] = calibration['calibPeakInfo']['peakIntegrationFlag'].reset_index(drop=True)
+        calibration['calibPeakInfo']['peakRT'] = calibration['calibPeakInfo']['peakRT'].reset_index(drop=True)
 
         ## return dataset with limits of quantification applied
         self.featureMetadata       = featureMetadata
@@ -1817,7 +1817,7 @@ class TargetedDataset(Dataset):
         # Update Run Order
         sampleMetadata['Order'] = sampleMetadata.sort_values(by='Acquired Time').index
         sampleMetadata['Run Order'] = sampleMetadata.sort_values(by='Order').index
-        sampleMetadata.drop('Order', axis=1, inplace=True)
+        sampleMetadata = sampleMetadata.drop('Order', axis=1)
         # new sampleMetadata
         targetedData.sampleMetadata = copy.deepcopy(sampleMetadata)
 
@@ -1900,7 +1900,7 @@ class TargetedDataset(Dataset):
             if colname in other.expectedConcentration.columns:
                 expectedConc2.loc[:,colname] = other.expectedConcentration[colname].values #ravel() - series object has no attribute ravel
         expectedConcentration = pandas.concat([expectedConc1, expectedConc2], axis=0, ignore_index=True, sort=False)
-        expectedConcentration.reset_index(drop=True, inplace=True)
+        expectedConcentration = expectedConcentration.reset_index(drop=True)
         targetedData.expectedConcentration = copy.deepcopy(expectedConcentration)
 
 
@@ -2061,8 +2061,7 @@ class TargetedDataset(Dataset):
 
         # Remove old batch LOQ columns
         if not keepBatchLOQ:
-            self.featureMetadata.drop(col_LLOQ, inplace=True, axis=1)
-            self.featureMetadata.drop(col_ULOQ, inplace=True, axis=1)
+            self.featureMetadata = self.featureMetadata.drop(col_LLOQ, axis=1)
 
         # _applyLimitsOfQuantification
         self._applyLimitsOfQuantification(onlyLLOQ=onlyLLOQ)
@@ -2112,8 +2111,8 @@ class TargetedDataset(Dataset):
 
         intensityData = copy.deepcopy(self._intensityData)
         intensityData = pandas.DataFrame(intensityData)
-        intensityData.replace(to_replace=-numpy.inf, value='<LLOQ', inplace=True)
-        intensityData.replace(to_replace= numpy.inf, value='>ULOQ', inplace=True)
+        intensityData = intensityData.replace(to_replace=-numpy.inf, value='<LLOQ')
+        intensityData = intensityData.replace(to_replace= numpy.inf, value='>ULOQ')
 
         if escapeDelimiters:
             # Remove any commas from metadata/feature tables - for subsequent import of resulting csv files to other software packages
@@ -2159,8 +2158,8 @@ class TargetedDataset(Dataset):
 
         intensityData = copy.deepcopy(self._intensityData)
         intensityData = pandas.DataFrame(intensityData)
-        intensityData.replace(to_replace=-numpy.inf, value='<LLOQ', inplace=True)
-        intensityData.replace(to_replace=numpy.inf, value='>ULOQ', inplace=True)
+        intensityData = intensityData.replace(to_replace=-numpy.inf, value='<LLOQ')
+        intensityData = intensityData.replace(to_replace=numpy.inf, value='>ULOQ')
 
         if escapeDelimiters:
             # Remove any commas from metadata/feature tables - for subsequent import of resulting csv files to other software packages
@@ -3041,7 +3040,7 @@ class TargetedDataset(Dataset):
 
             # calibFeatureMetadata
             newCalibDict['calibFeatureMetadata'] = calibDict['calibFeatureMetadata'].loc[~toRemoveFeatMask, :]
-            newCalibDict['calibFeatureMetadata'].reset_index(drop=True, inplace=True)
+            newCalibDict['calibFeatureMetadata'] = newCalibDict['calibFeatureMetadata'].reset_index(drop=True)
 
             return newCalibDict
 
@@ -3064,7 +3063,7 @@ class TargetedDataset(Dataset):
                 self.expectedConcentrationExcluded.append(self.expectedConcentration.loc[~self.sampleMask, :])
                 # Delete excluded samples
                 self.expectedConcentration = self.expectedConcentration.loc[self.sampleMask]
-                self.expectedConcentration.reset_index(drop=True, inplace=True)
+                self.expectedConcentration = self.expectedConcentration.reset_index(drop=True)
 
             # Features
             if sum(self.featureMask) != len(self.featureMask):
@@ -3088,7 +3087,7 @@ class TargetedDataset(Dataset):
                 self.expectedConcentrationExcluded.append(self.expectedConcentration.loc[:, ~self.featureMask])
                 # Delete excluded features
                 self.expectedConcentration = self.expectedConcentration.loc[:, self.featureMask]
-                self.expectedConcentration.reset_index(drop=True, inplace=True)
+                self.expectedConcentration = self.expectedConcentration.reset_index(drop=True)
 
         # applyMasks to the rest of TargetedDataset
         super().applyMasks()
@@ -3244,7 +3243,7 @@ class TargetedDataset(Dataset):
 
         # Deal with badly ordered exclusions
         fileNameParts['exclusion'].loc[fileNameParts['exclusion2'].isnull() == False] = fileNameParts['exclusion2'].loc[fileNameParts['exclusion2'].isnull() == False]
-        fileNameParts.drop('exclusion2', axis=1, inplace=True)
+        fileNameParts = fileNameParts.drop('exclusion2', axis=1)
 
         # Pass masks into enum fields
         fileNameParts.loc[:, 'AssayRole'] = AssayRole.Assay
@@ -3286,7 +3285,7 @@ class TargetedDataset(Dataset):
 
         # Get matrix
         fileNameParts['Matrix'] = fileNameParts['groupingKind'].str.extract('^([AC-Z]{1,2})(?<!IC)$', expand=False)
-        fileNameParts['Matrix'].fillna('', inplace=True)
+        fileNameParts['Matrix'] = fileNameParts['Matrix'].fillna('')
 
         # Get well numbers
         fileNameParts['injectionNo'] = pandas.to_numeric(fileNameParts['injectionNo'], errors='coerce')
@@ -3305,31 +3304,29 @@ class TargetedDataset(Dataset):
         fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract('(?:.+_?)(SRD\d\d)(?:_?.*)', expand=False).replace(self.Attributes['dilutionMap'])
         fileNameParts['Dilution'] = fileNameParts['Dilution'].astype(float)
         # Blank out NAs for neatness
-        fileNameParts['reruns'].fillna('', inplace=True)
-        fileNameParts['extraInjections'].fillna('', inplace=True)
+        fileNameParts['reruns'] = fileNameParts['reruns'].fillna('')
+        fileNameParts['extraInjections'] = fileNameParts['extraInjections'].fillna('')
 
         # Drop unwanted columns
-        fileNameParts.drop(['exclusion', 'reference', 'groupingKind', 'injectionNo', 'injectionKind', 'groupingNo'], axis=1, inplace=True)
+        fileNameParts = fileNameParts.drop(['exclusion', 'reference', 'groupingKind', 'injectionNo', 'injectionKind', 'groupingNo'],
+                                           axis=1)
 
         # Swap in user freindly file names
-        fileNameParts.rename(columns={'chromatography': 'Chromatography'}, inplace=True)
-        fileNameParts.rename(columns={'instrument': 'Instrument'}, inplace=True)
-        fileNameParts.rename(columns={'study': 'Study'}, inplace=True)
-        fileNameParts.rename(columns={'baseName': 'Sample Base Name'}, inplace=True)
-        fileNameParts.rename(columns={'fileName': 'Sample File Name'}, inplace=True)
-        fileNameParts.rename(columns={'suplementalInfo': 'Supplemental Info'}, inplace=True)
-        fileNameParts.rename(columns={'ionisation': 'Ionisation'}, inplace=True)
-        fileNameParts.rename(columns={'extraInjections': 'Supplemental Injections'}, inplace=True)
-        fileNameParts.rename(columns={'reruns': 'Re-Run'}, inplace=True)
+        fileNameParts = fileNameParts.rename(columns={'chromatography': 'Chromatography',
+                                                      'instrument': 'Instrument',
+                                                      'study': 'Study',
+                                                      'baseName': 'Sample Base Name',
+                                                      'fileName': 'Sample File Name',
+                                                      'suplementalInfo': 'Supplemental Info',
+                                                      'ionisation': 'Ionisation',
+                                                      'extraInjections': 'Supplemental Injections',
+                                                      'reruns': 'Re-Run'})
 
         # Merge metadata back into the sampleInfo table.
         # first remove duplicate columns (from _dataset _init_)
-        if 'AssayRole' in self.sampleMetadata.columns: self.sampleMetadata.drop(['AssayRole'], axis=1, inplace=True)
-        if 'SampleType' in self.sampleMetadata.columns: self.sampleMetadata.drop(['SampleType'], axis=1, inplace=True)
-        if 'Sample Base Name' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sample Base Name'], axis=1, inplace=True)
-        if 'Dilution' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
-        if 'Batch' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Batch'], axis=1, inplace=True)
-        if 'Correction Batch' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Correction Batch'], axis=1, inplace=True)
+        for col in ['AssayRole', 'SampleType', 'Sample Base Name', 'Dilution', 'Batch', 'Correction Batch']:
+            if col in self.sampleMetadata.columns:
+                self.sampleMetadata = self.sampleMetadata.drop(col, axis=1)
         # merge
         self.sampleMetadata = pandas.merge(self.sampleMetadata, fileNameParts, left_on='Sample File Name', right_on='Sample File Name', how='left', sort=False)
 
