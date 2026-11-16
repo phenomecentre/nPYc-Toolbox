@@ -1253,12 +1253,10 @@ class test_plotting_helpers(unittest.TestCase):
 
 		with self.subTest(msg='Check sorting'):
 			rsdTable = _plotRSDsHelper(dataset, withExclusions=True)
-			numpy.testing.assert_array_equal(numpy.sort(dataset.rsdSP)[::-1],rsdTable[SampleType.StudyPool].values)
+			numpy.testing.assert_array_equal(numpy.sort(dataset.rsdSP),rsdTable['Study Reference'].values)
 
 		with self.subTest(msg='Check columns'):
-			print(rsdTable.columns)
-			for sampleType in dataset.sampleMetadata['SampleType'].unique():
-				print(sampleType)
+			for sampleType in dataset.sampleMetadata['SampleClass'].unique():
 				self.assertTrue(sampleType in rsdTable.columns)
 
 		with self.subTest(msg='With a feature mask'):
