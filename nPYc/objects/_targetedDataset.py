@@ -848,7 +848,7 @@ class TargetedDataset(Dataset):
         # sampleMetadata['Receptor'] = sampleMetadata['Sample Type'] == 'Receptor'
         finalSampleMetadata['Other'] = (~finalSampleMetadata['Calibrant'] & ~finalSampleMetadata['Study Sample'] & ~finalSampleMetadata['Blank'] & ~finalSampleMetadata['QC'])  # & ~sampleMetadata['Solvent'] & ~sampleMetadata['Recovery'] & ~sampleMetadata['Donor'] & ~sampleMetadata['Receptor']
         # Add Acquired Time
-        finalSampleMetadata['Acquired Time'] = numpy.nan
+        finalSampleMetadata['Acquired Time'] = ''
         for i in range(finalSampleMetadata.shape[0]):
             try:
                 finalSampleMetadata.loc[i, 'Acquired Time'] = datetime.strptime(str(finalSampleMetadata.loc[i, 'Acqu Date']) + " " + str(finalSampleMetadata.loc[i, 'Acqu Time']),'%d-%b-%y %H:%M:%S')
@@ -928,8 +928,10 @@ class TargetedDataset(Dataset):
 
         # Samples to keep
         samplesToProcess = [False] * sampleMetadata.shape[0]
-        for i in sampleTypeToProcess:
-            samplesToProcess = (samplesToProcess | sampleMetadata[i]).values
+        for i in numpy.arange(len(samplesToProcess)):
+            if any(sampleMetadata.loc[i, sampleTypeToProcess]):
+                samplesToProcess[i] = True
+
         # Filter
         tmpSampleMetadata        = sampleMetadata.loc[samplesToProcess, :]
         tmpIntensityData         = intensityData[samplesToProcess, :]
@@ -942,7 +944,11 @@ class TargetedDataset(Dataset):
         tmpPeakInfo = {'peakResponse': tmpPeakResponse, 'peakArea': tmpPeakArea, 'peakConcentrationDeviation': tmpPeakConcentrationDeviation, 'peakIntegrationFlag': tmpPeakIntegrationFlag, 'peakRT': tmpPeakRT}
 
         # Samples to exclude
-        samplesToExclude = ~samplesToProcess & ~sampleMetadata['Calibrant'].values  # no need to exclude calibrant
+        samplesToExclude = [not elem for elem in samplesToProcess]
+        # no need to exclude calibrant
+        for i in numpy.arange(len(samplesToExclude)):
+            if sampleMetadata.loc[i, 'Calibrant'] == True:
+                samplesToExclude[i] = False
         if sum(samplesToExclude) != 0:
             excludedImportSampleMetadata.append(sampleMetadata.loc[samplesToExclude, :])
             excludedImportFeatureMetadata.append(featureMetadata)

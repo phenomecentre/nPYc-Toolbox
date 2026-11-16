@@ -1967,7 +1967,7 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 		featureMetadataExcluded['compoundName'] = numpy.array([numpy.nan], dtype=object)
 		featureMetadataExcluded['quantificationType'] = numpy.array([numpy.nan], dtype=object)
 		featureMetadataExcluded['Unit'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['Cpd Info'] = numpy.array([numpy.nan], dtype=object)
+		featureMetadataExcluded['Cpd Info'] = numpy.array([numpy.nan], dtype=str)
 		featureMetadataExcluded['another column'] = numpy.array([numpy.nan], dtype=object)
 		featureMetadataExcluded['extID1'] = numpy.array([numpy.nan], dtype=object)
 		featureMetadataExcluded['extID2'] = numpy.array([numpy.nan], dtype=object)
@@ -2801,7 +2801,7 @@ class test_targeteddataset_read_data_from_targetlynx(unittest.TestCase):
 		featureMetadataExcluded['compoundName'] = numpy.array([numpy.nan], dtype=object)
 		featureMetadataExcluded['quantificationType'] = numpy.array([numpy.nan], dtype=object)
 		featureMetadataExcluded['Unit'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['Cpd Info'] = numpy.array([numpy.nan], dtype=object)
+		featureMetadataExcluded['Cpd Info'] = numpy.array([numpy.nan], dtype=str)
 		featureMetadataExcluded['another column'] = numpy.array([numpy.nan], dtype=object)
 		self.expected['featureMetadataExcluded'] = [featureMetadataExcluded]
 		self.expected['intensityDataExcluded'] = [numpy.array([[48.76854933], [359.219531]])]

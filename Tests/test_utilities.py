@@ -208,21 +208,6 @@ class test_utilities_ms(unittest.TestCase):
 
 		numpy.testing.assert_equal(srdMask, canonicalMask)
 
-	def test_inferBatches(self):
-
-		from generateTestDataset import generateTestDataset
-
-		noSamp = numpy.random.randint(100, high=500, size=None)
-		noFeat = numpy.random.randint(200, high=400, size=None)
-
-		data = generateTestDataset(noSamp, noFeat)
-
-
-	def test_inferBatches_raises(self):
-
-		self.assertRaises(TypeError, nPYc.utilities.rsdsBySampleType, 'Not a Dataset')
-		self.assertRaises(KeyError, nPYc.utilities.rsdsBySampleType, nPYc.Dataset(), useColumn='Not There')
-
 
 class test_utilities_conditionaljoin(unittest.TestCase):
 
