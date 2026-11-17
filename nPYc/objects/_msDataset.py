@@ -1360,7 +1360,7 @@ class MSDataset(Dataset):
 		# Get well numbers
 		fileNameParts.loc[
 			fileNameParts['groupingKind'].str.match('Blank|E?IC', na=False).astype(bool), 'injectionNo'] = -1
-		fileNameParts['Well'] = pandas.to_numeric(fileNameParts['injectionNo'], errors='coerce')
+		fileNameParts['Well'] = pandas.to_numeric(fileNameParts['injectionNo'], downcast='integer', errors='coerce')
 
 		# Plate / grouping no
 		fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'], errors='coerce')
