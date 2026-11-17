@@ -22,7 +22,7 @@ class test_dataset_synthetic(unittest.TestCase):
 	"""
 
 	def setUp(self):
-		# Load empty object and populate with sythetic data.
+		# Load empty object and populate with synthetic data.
 
 		# Empty object
 		self.data = nPYc.Dataset()

@@ -1599,16 +1599,25 @@ class Dataset:
 		sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
 
 		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].apply(pandas.to_datetime)
-		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time']
-
+		# Jazz changing the next few lines to fix fails on mismatched data types
+		#sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time']
+		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].dt.to_pydatetime()
 		# If AssayRole or SampleType columns are present parse strings into enums
-		if 'AssayRole' in sampleMetadata.columns:
-			for role in AssayRole:
-				sampleMetadata.loc[sampleMetadata['AssayRole'].values == str(role), 'AssayRole'] = role
-		if 'SampleType' in sampleMetadata.columns:
-			for stype in SampleType:
-				sampleMetadata.loc[sampleMetadata['SampleType'].values == str(stype), 'SampleType'] = stype
 
+		if 'AssayRole' in sampleMetadata.columns:
+			role_map = {str(role): role for role in AssayRole}
+			sampleMetadata['AssayRole'] = (
+				sampleMetadata['AssayRole'].map(role_map)
+			)
+			#for role in AssayRole:
+				#sampleMetadata.loc[sampleMetadata['AssayRole'].values == str(role), 'AssayRole'] = role
+		if 'SampleType' in sampleMetadata.columns:
+			role_map = {str(stype): stype for stype in SampleType}
+			#for stype in SampleType:
+				#sampleMetadata.loc[sampleMetadata['SampleType'].values == str(stype), 'SampleType'] = stype
+			sampleMetadata['SampleType'] = (
+				sampleMetadata['SampleType'].map(role_map)
+			)
 		return (objectName, intensityData, featureMetadata, sampleMetadata)
 
 
@@ -1750,11 +1759,11 @@ class Dataset:
 			# sampleMetadata not exported
 			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['sampleMetadataNotExported']))
-			exportDataset = exportDataset.sampleMetadata.drop(sampleMetaColToRemove, axis=1)
+			exportDataset.sampleMetadata = exportDataset.sampleMetadata.drop(sampleMetaColToRemove, axis=1)
 			# sampleMetadata not exported
 			featureMetaColToRemove = list(set(exportDataset.featureMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['featureMetadataNotExported']))
-			exportDataset = exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1)
+			exportDataset.featureMetadata = exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1)
 
 		if saveFormat == 'CSV':
 			destinationPath = os.path.join(destinationPath, exportDataset.name)
