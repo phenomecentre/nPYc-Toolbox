@@ -1633,7 +1633,7 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 	def test_targeteddataset_fillbatch_runorder_warns(self):
 		targetedData6 = copy.deepcopy(self.targetedData6)
 		targetedData6.sampleMetadata.drop('Run Order', axis=1, inplace=True)
-		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without run order, skipping\.', targetedData6._fillBatches)
+		self.assertWarnsRegex(UserWarning, 'Unable to infer batches without run order, skipping', targetedData6._fillBatches)
 
 
 	def test_targeteddataset_addsampleinfo_batches(self):
@@ -4978,7 +4978,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 			expected = copy.deepcopy(self.expectedQuantUR)
 
 			# Generate
-			result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea')
+			result = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern=r'.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea')
 			# Remove path from sampleMetadata
 			result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
 			result.calibration['calibSampleMetadata'].drop(['Path'], axis=1, inplace=True)
@@ -5047,7 +5047,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 
 		with self.subTest(msg='Basic import BrukerQuant-PS with matching fileNamePattern'):
 
-			result = nPYc.TargetedDataset(self.datapathQuantPS, fileType='Bruker Quantification', sop='BrukerBI-QUANT-PS', fileNamePattern='.*?plasma_quant_report\.xml$')
+			result = nPYc.TargetedDataset(self.datapathQuantPS, fileType='Bruker Quantification', sop='BrukerBI-QUANT-PS', fileNamePattern=r'.*?plasma_quant_report\.xml$')
 
 			result.sampleMetadata.drop(['Path'], axis=1, inplace=True)
 			result.calibration['calibSampleMetadata'].drop(['Path'], axis=1, inplace=True)
@@ -5097,7 +5097,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 				# Cause all warnings to always be triggered.
 
 				warnings.simplefilter("always")
-				result = nPYc.TargetedDataset(self.datapathBILISA, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
+				result = nPYc.TargetedDataset(self.datapathBILISA, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern=r'.*?results\.xml$')
 				# check each warning
 				self.assertEqual(len(w), 1)
 				assert issubclass(w[0].category, UserWarning)
@@ -5137,14 +5137,14 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 			self.assertRaises(TypeError, lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern=5, unit='mmol/mol Crea'))
 
 		with self.subTest(msg='Raises TypeError if `pdata` is not am int'):
-			self.assertRaises(TypeError, lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', pdata='notAnInt', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea'))
-			self.assertRaises(TypeError, lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', pdata=1.0, fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea'))
+			self.assertRaises(TypeError, lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', pdata='notAnInt', fileNamePattern=r'.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea'))
+			self.assertRaises(TypeError, lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', pdata=1.0, fileNamePattern=r'.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea'))
 
 		with self.subTest(msg='Raises TypeError if `unit` is not None or a str'):
-			self.assertRaises(TypeError, lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', unit=5, fileNamePattern='.*?urine_quant_report_b\.xml$'))
+			self.assertRaises(TypeError, lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', unit=5, fileNamePattern=r'.*?urine_quant_report_b\.xml$'))
 
 		with self.subTest(msg='Raises ValueError if `unit` is not one of the unit in the input data'):
-			self.assertRaises(ValueError, lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', unit='notAnExistingUnit', fileNamePattern='.*?urine_quant_report_b\.xml$'))
+			self.assertRaises(ValueError, lambda: nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', unit='notAnExistingUnit', fileNamePattern=r'.*?urine_quant_report_b\.xml$'))
 
 
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
@@ -5152,7 +5152,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 
 		with self.subTest(msg='UnitTest1'):
 
-			dataset = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea')
+			dataset = nPYc.TargetedDataset(self.datapathQuantUR, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern=r'.*?urine_quant_report_b\.xml$', unit='mmol/mol Crea')
 
 			limspath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Worklists', 'UnitTest1_NMR_urine_PCSOP.011.csv')
 			dataset.addSampleInfo(filePath=limspath, descriptionFormat='NPC LIMS')
@@ -5179,7 +5179,7 @@ class test_targeteddataset_full_brukerxml_load(unittest.TestCase):
 
 			with warnings.catch_warnings():
 				warnings.simplefilter('ignore', UserWarning)
-				dataset = nPYc.TargetedDataset(self.datapathBILISA, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
+				dataset = nPYc.TargetedDataset(self.datapathBILISA, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern=r'.*?results\.xml$')
 
 			limspath = os.path.join('..', '..', 'npc-standard-project', 'Derived_Worklists', 'UnitTest3_NMR_serum_PCSOP.012.csv')
 			dataset.addSampleInfo(filePath=limspath, descriptionFormat='NPC LIMS')

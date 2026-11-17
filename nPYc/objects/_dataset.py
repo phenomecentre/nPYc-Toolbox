@@ -80,7 +80,7 @@ class Dataset:
 		""":math:`p` element vector, with ``True`` representing samples to be included in analysis, and ``False`` those to be excluded"""
 
 		self.Attributes = dict()
-		"""
+		r"""
 		Dictionary of object configuration attributes, including those loaded from :doc:`SOP files<configuration/builtinSOPs>`.
 
 		Defined attributes are as follows\:
@@ -1012,7 +1012,7 @@ class Dataset:
 		def splitext(path):
 			return {os.path.splitext(os.path.basename(path))[0]: path}
 
-		pattern = re.compile('.+?\.json$')
+		pattern = re.compile(r'.+?\.json$')
 
 		builtinSOPS = os.path.join(toolboxPath(), 'StudyDesigns', 'SOP')
 		sopPaths = buildFileList(builtinSOPS, pattern)
@@ -1861,7 +1861,7 @@ class Dataset:
 
 
 	def getFeatures(self, featureIDs, by=None, useMasks=True):
-		"""
+		r"""
 		Get a feature or list of features by name or ranges.
 
 		If :py:attr:`VariableType` is :py:attr:`~nPYc.enumerations.VariableType.Discrete`, :py:meth:`getFeature` expects either a single or list of values, and matching features are returned.

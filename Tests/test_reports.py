@@ -17,7 +17,6 @@ from nPYc.enumerations import VariableType, AssayRole, SampleType, Quantificatio
     AnalyticalPlatform
 from nPYc.reports._generateReportTargeted import _generateReportTargeted, _postMergeLOQDataset, \
     _prePostMergeLOQSummaryTable, _getAccuracyPrecisionTable, _getRSDTable
-from pyChemometrics import ChemometricsPCA
 from datetime import datetime, timedelta
 
 from generateTestDataset import generateTestDataset, randomword
