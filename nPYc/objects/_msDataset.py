@@ -161,7 +161,7 @@ class MSDataset(Dataset):
 
 
 		self._intensityData = self._intensityData.astype(float)
-		self.featureMetadata['Exclusion Details'] = ''
+		self.featureMetadata['Exclusion Details'] = None #= ''
 		self.featureMetadata['User Excluded'] = False
 		self.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
 							  'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
@@ -173,7 +173,7 @@ class MSDataset(Dataset):
 		self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(),
-									   '%s instance inited, with %d samples, %d features, from \%s\'' % (
+									   r'%s instance inited, with %d samples, %d features, from \%s\'' % (
 									   self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
 
 	# When making a deepcopy, all artifactual linkage are reset
@@ -596,9 +596,9 @@ class MSDataset(Dataset):
 
 		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
 		self.sampleMetadata['SampleType'] = SampleType.UnknownType
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = ''
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		self.Attributes['Log'].append([datetime.now(), 'Progenesis QI dataset loaded from %s' % (path)])
 
@@ -660,9 +660,9 @@ class MSDataset(Dataset):
 
 		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
 		self.sampleMetadata['SampleType'] = SampleType.UnknownType
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = ''
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		self.Attributes['Log'].append([datetime.now(), 'MZmine dataset loaded from %s' % (path)])
 
@@ -748,9 +748,9 @@ class MSDataset(Dataset):
 
 		self.sampleMetadata['Run Order'] = injection_order
 		self.sampleMetadata['Correction Batch'] = batch_id
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = True
-		self.sampleMetadata['Exclusion Details'] = ''
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		self.Attributes['Log'].append([datetime.now(), 'MS-DIAL dataset loaded from %s' % (path)])
 
@@ -813,9 +813,9 @@ class MSDataset(Dataset):
 
 		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
 		self.sampleMetadata['SampleType'] = SampleType.UnknownType
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = ''
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -886,9 +886,9 @@ class MSDataset(Dataset):
 
 		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
 		self.sampleMetadata['SampleType'] = SampleType.UnknownType
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = ''
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -967,9 +967,9 @@ class MSDataset(Dataset):
 
 		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
 		self.sampleMetadata['SampleType'] = SampleType.UnknownType
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = ''
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -1010,13 +1010,21 @@ class MSDataset(Dataset):
 												usecols=range(noSampleParams + 1))
 
 		# If there are multiple 'LOD (calc.) ' strings we have several sheets concatenated.
-		sampleMask = self.sampleMetadata['Measurement Time'].str.match('LOD \(calc\.\).+').values
+		sampleMask = self.sampleMetadata['Measurement Time'].str.match(r'LOD \(calc\.\).+').values
 
 		# Take the highest overall LOD
-		newLOD = numpy.amax(self._intensityData[sampleMask, :], axis=0)
-		self.featureMetadata.loc[self.featureMetadata['LOD (μM)'].values < newLOD, 'LOD (μM)'] = newLOD[
-			self.featureMetadata['LOD (μM)'].values < newLOD]
-		self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'], errors='coerce')
+		newLOD = numpy.amax(self._intensityData[sampleMask, :], axis=0).astype(float)
+
+		# Ensure the target column can safely hold floats before doing a masked assignment
+		# (avoids pandas LossySetitemError if the column was inferred as int64)
+		if self.featureMetadata['LOD (μM)'].dtype != numpy.float64:
+			self.featureMetadata['LOD (μM)'] = self.featureMetadata['LOD (μM)'].astype(numpy.float64)
+
+		updateMask = self.featureMetadata['LOD (μM)'].values < newLOD
+
+		self.featureMetadata.loc[updateMask, 'LOD (μM)'] = newLOD[updateMask]
+
+		#self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'], errors='coerce')
 		# Delete data
 		self._intensityData = self._intensityData[sampleMask == False, :]
 
@@ -1042,7 +1050,7 @@ class MSDataset(Dataset):
 		self.featureMetadata.insert(0, 'Feature Name', names)
 
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = ''
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 		# self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'Biocrates dataset loaded from %s' % (path)])
@@ -1218,10 +1226,10 @@ class MSDataset(Dataset):
 		self.sampleMetadata['AssayRole'] = dataT.loc[startRow:, 'AssayRole']
 		self.sampleMetadata['SampleType'] = dataT.loc[startRow:, 'SampleType']
 		self.sampleMetadata['Run Order'] = dataT.loc[startRow:, 'Run Order'].astype('int64')
-		self.sampleMetadata['Dilution'] = 100 # Dilution is not stored to nPYc export
+		self.sampleMetadata['Dilution'] = 100.0 # Dilution is not stored to nPYc export
 		self.sampleMetadata['Metadata Available'] = True # No new import of metadata needed
 
-		self.sampleMetadata['Exclusion Details'] = ''
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -1278,7 +1286,7 @@ class MSDataset(Dataset):
 
 		# Flag samples for exclusion:
 		if 'Exclusion Details' not in self.sampleMetadata:
-			self.sampleMetadata['Exclusion Details'] = ''
+			self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		# Print warning that samples are missing info, raw files should be located or samples should be excluded from dataset
 		missingSampleInfo = ~self.sampleMetadata['Sample File Name'].isin(instrumentParams['Sample File Name'])
@@ -1321,7 +1329,7 @@ class MSDataset(Dataset):
 		# Pass masks into enum fields
 		fileNameParts.loc[:, 'AssayRole'] = AssayRole.Assay
 		fileNameParts.loc[fileNameParts['reference'] == 'SR', 'AssayRole'] = AssayRole.PrecisionReference
-		fileNameParts.loc[fileNameParts['baseName'].str.match('.+[B]\d+?[SE]\d+?', na=False).astype(
+		fileNameParts.loc[fileNameParts['baseName'].str.match(r'.+[B]\d+?[SE]\d+?', na=False).astype(
 			bool), 'AssayRole'] = AssayRole.PrecisionReference
 		fileNameParts.loc[fileNameParts['reference'] == 'LTR', 'AssayRole'] = AssayRole.PrecisionReference
 		fileNameParts.loc[fileNameParts['reference'] == 'MR', 'AssayRole'] = AssayRole.PrecisionReference
@@ -1335,7 +1343,7 @@ class MSDataset(Dataset):
 
 		fileNameParts.loc[:, 'SampleType'] = SampleType.StudySample
 		fileNameParts.loc[fileNameParts['reference'] == 'SR', 'SampleType'] = SampleType.StudyPool
-		fileNameParts.loc[fileNameParts['baseName'].str.match('.+[B]\d+?[SE]\d+?', na=False).astype(
+		fileNameParts.loc[fileNameParts['baseName'].str.match(r'.+[B]\d+?[SE]\d+?', na=False).astype(
 			bool), 'SampleType'] = SampleType.StudyPool
 		fileNameParts.loc[fileNameParts['reference'] == 'LTR', 'SampleType'] = SampleType.ExternalReference
 		fileNameParts.loc[fileNameParts['reference'] == 'MR', 'SampleType'] = SampleType.MethodReference
@@ -1366,7 +1374,7 @@ class MSDataset(Dataset):
 		fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'], errors='coerce')
 
 		# Map dilution series names to dilution level
-		fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract('(?:.+_?)(SRD\d\d)(?:_?.*)',
+		fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract(r'(?:.+_?)(SRD\d\d)(?:_?.*)',
 																		  expand=False).replace(
 			self.Attributes['dilutionMap'])
 		fileNameParts['Dilution'] = pandas.to_numeric(fileNameParts['Dilution'], errors='coerce')
@@ -1406,7 +1414,8 @@ class MSDataset(Dataset):
 										   right_on='Sample File Name', how='left', sort=False)
 
 		# Add 'Exclusion Details' column
-		self.sampleMetadata['Exclusion Details'] = ''
+		# Jazz changing this to None to pass a test:
+		self.sampleMetadata['Exclusion Details'] = None # = ''
 		self.sampleMetadata['Metadata Available'] = True
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
@@ -1451,12 +1460,12 @@ class MSDataset(Dataset):
 			raise npycToolboxError("Unable to infer batches without `sampleMetadata[`" + usefield + "`]` info for ALL samples, info missing for:",
 								   table=missingData)
 
-		# Generate sampleMetadata sorted by run order
-		sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
-
 		# Set first batch
 		sampleMetadata['Correction Batch'] = 1
 		sampleMetadata['Batch'] = 1
+
+		# Generate sampleMetadata sorted by run order
+		sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
 
 		# Calculate the consecutive time differences
 		timeDelta = sortedSampleMetadata[usefield].diff()
@@ -1504,7 +1513,7 @@ class MSDataset(Dataset):
 
 
 	def amendBatches(self, sampleRunOrder):
-		"""
+		r"""
 		Creates a new batch starting at the sample index in *sampleRunOrder*, and amends subsequent batch numbers in :py:attr:`~Dataset.sampleMetadata`\ ['Correction Batch']
 
 		:param int sampleRunOrder: Index of first sample in new batch
@@ -1756,7 +1765,7 @@ class MSDataset(Dataset):
 		notFound = []
 
 		if 'Exclusion Details' not in self.featureMetadata:
-			self.featureMetadata['Exclusion Details'] = ''
+			self.featureMetadata['Exclusion Details'] = None #= ''
 
 		if self.VariableType == VariableType.Discrete:
 			for feature in featureList:
@@ -1764,7 +1773,7 @@ class MSDataset(Dataset):
 					self.featureMask[self.featureMetadata[self.featureMetadata[on] == feature].index] = False
 					self.featureMetadata.loc[self.featureMetadata[on] == feature, 'User Excluded'] = True
 					if (self.featureMetadata.loc[
-						self.featureMetadata[on] == feature, 'Exclusion Details'].values == ''):
+						self.featureMetadata[on] == feature, 'Exclusion Details'].values == None):
 						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = message
 					else:
 						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = \

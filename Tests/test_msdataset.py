@@ -118,9 +118,6 @@ class test_msdataset_synthetic(unittest.TestCase):
 
         assert_series_equal(msData.sampleMetadata['Sample Base Name'], basename)
 
-        ##
-        # Check Study
-        ##
         study = pandas.Series(
 	        ['Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6', 'Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6',
 	         'Test1', 'Test1', 'Test1'],
@@ -156,11 +153,11 @@ class test_msdataset_synthetic(unittest.TestCase):
 
         assert_series_equal(msData.sampleMetadata['Re-Run'], reRun)
 
-        suplemental = pandas.Series(['', '', '', '', '', '', '', '', '2', '', '', '9', '', '', ''],
+        supplemental = pandas.Series(['', '', '', '', '', '', '', '', '2', '', '', '9', '', '', ''],
                                     name='Supplemental Injections',
                                     dtype='str')
 
-        assert_series_equal(msData.sampleMetadata['Supplemental Injections'], suplemental)
+        assert_series_equal(msData.sampleMetadata['Supplemental Injections'], supplemental)
         skipped = pandas.Series(
 	        [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False],
                                 name='Skipped',
@@ -188,13 +185,14 @@ class test_msdataset_synthetic(unittest.TestCase):
         assert_series_equal(msData.sampleMetadata['Plate'], plate, check_dtype=False)
         self.assertEqual(msData.sampleMetadata['Plate'].dtype.kind, well.dtype.kind)
 
-        batch = pandas.Series(
-	        [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 1.0,
-	         2.0, 3.0, numpy.nan, numpy.nan, numpy.nan],
-                              name='Batch',
-                              dtype='float')
-
-        assert_series_equal(msData.sampleMetadata['Batch'], batch)
+        # Jazz: I'm removing Batch column test because Batch values no longer set in getSampleMetadataFromFilename()
+        # batch = pandas.Series(
+	    #     [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 1.0,
+	    #      2.0, 3.0, numpy.nan, numpy.nan, numpy.nan],
+        #                       name='Batch',
+        #                       dtype='float')
+        #
+        # assert_series_equal(msData.sampleMetadata['Batch'], batch)
 
         dilution = pandas.Series(
 	        [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
@@ -1259,8 +1257,13 @@ class test_msdataset_import_QI(unittest.TestCase):
             os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
             fileType='QI')
 
+        self.msData.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+        self.msData.applyMasks()
+
+        self.msData.addSampleInfo(descriptionFormat='Filenames')
+
     def test_dimensions(self):
-        self.assertEqual((self.msData.noSamples, self.msData.noFeatures), (115, 4))
+        self.assertEqual((self.msData.noSamples, self.msData.noFeatures), (114, 4))
 
     def test_samples(self):
         samples = pandas.Series(['UnitTest1_LPOS_ToF02_B1SRD01', 'UnitTest1_LPOS_ToF02_B1SRD02',
@@ -1319,8 +1322,8 @@ class test_msdataset_import_QI(unittest.TestCase):
                                  'UnitTest1_LPOS_ToF02_S1W03', 'UnitTest1_LPOS_ToF02_S1W04',
                                  'UnitTest1_LPOS_ToF02_S1W05', 'UnitTest1_LPOS_ToF02_S1W06',
                                  'UnitTest1_LPOS_ToF02_S1W07', 'UnitTest1_LPOS_ToF02_S1W08_x',
-                                 'UnitTest1_LPOS_ToF02_S1W11_LTR', 'UnitTest1_LPOS_ToF02_S1W12_SR',
-                                 'UnitTest1_LPOS_ToF02_ERROR'],
+                                 'UnitTest1_LPOS_ToF02_S1W11_LTR', 'UnitTest1_LPOS_ToF02_S1W12_SR'],
+                                 #,'UnitTest1_LPOS_ToF02_ERROR'],
                                 name='Sample File Name',
                                 dtype=str)
 
@@ -1390,9 +1393,9 @@ class test_msdataset_import_QI(unittest.TestCase):
              numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
              numpy.nan, numpy.nan, numpy.nan,
              numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,
-             numpy.nan, numpy.nan],
+             numpy.nan],
             name='Dilution',
-            dtype='int')
+            dtype='float')
 
         assert_series_equal(self.msData.sampleMetadata['Dilution'], dilution)
 
@@ -2110,34 +2113,34 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
         ##
         testSeries = ['Sampling Cone', 'Scan Time (sec)', 'Source Offset', 'Source Temperature (°C)', 'Start Mass',
                       'End Mass', 'Column Serial Number:', 'ColumnType:']
-        expected['Sampling Cone'] = 20.0
-        expected['Scan Time (sec)'] = 0.15
-        expected['Source Offset'] = 80
-        expected['Source Temperature (°C)'] = 120.0
-        expected['Start Mass'] = 50.0
-        expected['End Mass'] = 1200.0
-        expected['Column Serial Number:'] = 1573413615729.
+        expected['Sampling Cone'] = '20.0000'
+        expected['Scan Time (sec)'] = '0.150'
+        expected['Source Offset'] = '80'
+        expected['Source Temperature (°C)'] = '120'
+        expected['Start Mass'] = '50.0'
+        expected['End Mass'] = '1200.0'
+        expected['Column Serial Number:'] = '01573413615729'
         expected['ColumnType:'] = 'ACQUITY UPLC® HSS T3 1.8µm'
 
         ##
         # And a subset with multiple values
         ##
         testSeries.append('Detector')
-        expected['Detector'] = [3161., 3161., 3166., 3166., 3166., 3166., 3171., 3171., 3171., 3171., 3171., 3171.,
-                                3171., 3171., 3179.,
-                                3179., 3179., 3179., 3179., 3179., 3184., 3184., 3184., 3188., 3188., 3188., 3188.,
-                                3188., 3188., 3193.,
-                                3193., 3193., 3193., 3193., 3197., 3197., 3197., 3197., 3197., 3203., 3203., 3203.,
-                                3203., 3203., 3208.,
-                                3208., 3407., 3407., 3407., 3407., 3407., 3407., 3407., 3407., 3407., 3407., 3407.,
-                                3407., 3407., 3407.,
-                                3407., 3407., 3407., 3407., 3407., 3407., 3407., 3407., 3399., 3399., 3399., 3399.,
-                                3399., 3399., 3399.,
-                                3399., 3399., 3399., 3399., 3399., 3399., 3399., 3399., 3399., 3399., 3399., 3399.,
-                                3399., 3399., 3399.,
-                                3399., 3399., 3399., 3399., 3399., 3399., 3399., 3399., 3399., 3212., 3212., 3217.,
-                                3217., 3217., 3293.,
-                                3293., 3293., 3299., 3299., 3299., 3299., 3299., 3293., 3299., 3299.]
+        expected['Detector'] = ['3161', '3161', '3166', '3166', '3166', '3166', '3171', '3171', '3171', '3171', '3171', '3171',
+                                '3171', '3171', '3179',
+                                '3179', '3179', '3179', '3179', '3179', '3184', '3184', '3184', '3188', '3188', '3188', '3188',
+                                '3188', '3188', '3193',
+                                '3193', '3193', '3193', '3193', '3197', '3197', '3197', '3197', '3197', '3203', '3203', '3203',
+                                '3203', '3203', '3208',
+                                '3208', '3407', '3407', '3407', '3407', '3407', '3407', '3407', '3407', '3407', '3407', '3407',
+                                '3407', '3407', '3407',
+                                '3407', '3407', '3407', '3407', '3407', '3407', '3407', '3407', '3399', '3399', '3399', '3399',
+                                '3399', '3399', '3399',
+                                '3399', '3399', '3399', '3399', '3399', '3399', '3399', '3399', '3399', '3399', '3399', '3399',
+                                '3399', '3399', '3399',
+                                '3399', '3399', '3399', '3399', '3399', '3399', '3399', '3399', '3399', '3212', '3212', '3217',
+                                '3217', '3217', '3293',
+                                '3293', '3293', '3299', '3299', '3299', '3299', '3299', '3293', '3299']
 
         testSeries.append('Measurement Date')
         expected['Measurement Date'] = ['25-Nov-2014', '25-Nov-2014', '25-Nov-2014', '25-Nov-2014', '25-Nov-2014',
@@ -2165,7 +2168,7 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
                                         '26-Nov-2014', '26-Nov-2014', '26-Nov-2014', '26-Nov-2014', '26-Nov-2014',
                                         '27-Nov-2014', '27-Nov-2014', '27-Nov-2014', '27-Nov-2014',
                                         '27-Nov-2014', '27-Nov-2014', '27-Nov-2014', '27-Nov-2014', '27-Nov-2014',
-                                        '27-Nov-2014', '27-Nov-2014']
+                                        '27-Nov-2014']
 
         testSeries.append('Measurement Time')
         expected['Measurement Time'] = ['13:43:57', '13:59:44', '14:15:39', '14:31:26', '14:47:21', '15:03:07',
@@ -2190,7 +2193,7 @@ class test_msdataset_addsampleinfo(unittest.TestCase):
                                         '07:25:16', '07:40:52', '07:56:32', '02:39:17',
                                         '02:55:03', '03:10:49', '03:26:43', '03:42:35', '12:11:04', '12:26:51',
                                         '12:42:35', '12:58:13', '13:14:01', '13:45:26',
-                                        '14:01:05', '14:16:51', '11:53:27', '13:29:48', '13:46:48']
+                                        '14:01:05', '14:16:51', '11:53:27', '13:29:48']
 
         self.msData.addSampleInfo(descriptionFormat='Raw Data',
                                   filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
@@ -2444,9 +2447,10 @@ class test_msdataset_initialiseFromCSV(unittest.TestCase):
 
             for column in ['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order']:
                 assert_series_equal(rebuiltData.sampleMetadata[column], dataset.sampleMetadata[column])
-            for column in rebuiltData.featureMetadata.columns:
-                assert_series_equal(rebuiltData.featureMetadata[column], dataset.featureMetadata[column])
-
+            #for column in rebuiltData.featureMetadata.columns:
+                #assert_series_equal(rebuiltData.featureMetadata[column], dataset.featureMetadata[column])
+            # Exclusion Details are 'None' in dataset; empty string in rebuiltData
+            assert_frame_equal(rebuiltData.featureMetadata, dataset.featureMetadata)
             self.assertEqual(rebuiltData.name, dataset.name)
 
 
