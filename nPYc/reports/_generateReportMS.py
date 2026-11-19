@@ -405,7 +405,7 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
 
             if destinationPath:
                 item['AcquisitionStructureFigure'] = os.path.join(graphicsPath,
-                                                                  item['Name'] + colourSamplesBy + '.' + dataset.Attributes['figureFormat'])
+                                                                  item['Name'] + '_' + colourSamplesBy + '.' + dataset.Attributes['figureFormat'])
                 item['colourSamplesBy'] = colourSamplesBy
                 saveAs = item['AcquisitionStructureFigure']
             else:

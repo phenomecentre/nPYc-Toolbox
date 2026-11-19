@@ -240,6 +240,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
 
         data.sampleMetadata.loc[:10, 'SampleType'] = SampleType.StudyPool
         data.sampleMetadata.loc[:10, 'AssayRole'] = AssayRole.LinearityReference
+        data.sampleMetadata.loc[:10, 'SampleClass'] = 'Linearity Reference'
         data.sampleMetadata.loc[:10, 'Dilution'] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -251,11 +252,13 @@ class test_reports_ms_generatereport(unittest.TestCase):
             testFiles = ['test_c2dHist.png',
                          'test_intensityHist.png',
                          'test_ionMap.png',
-                         #'test_rsdHist.png',
-                         #'test_rsdSampletype.png',
-                         #'test_rsdVc2d.png',
+                         'test_rsdHist.png',
+                         'test_rsdSampletype.png',
+                         'test_rsdVc2d.png',
+                         'test_peakWidth.png',
                          'test_tic.png',
-                         'test_ticSRD.png']
+                         'test_ticSRD.png',
+                         'test_Dilution.png']
 
             for testFile in testFiles:
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'feature_summary', testFile)
@@ -378,7 +381,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
             testFiles = ['UnitTest1_PCSOP.069_xcms_peakTable_noFeatures.png']
 
             for testFile in testFiles:
-                expectedPath = os.path.join(tmpdirname, 'graphics', 'report_feature_selection', testFile)
+                expectedPath = os.path.join(tmpdirname, 'graphics', 'feature_selection', testFile)
                 self.assertTrue(os.path.exists(expectedPath))
 
         with self.subTest(msg='Test raise ValueError when no dilution series or QC available'):
