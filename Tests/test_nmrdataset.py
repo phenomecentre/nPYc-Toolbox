@@ -244,7 +244,7 @@ class test_nmrdataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='Range low == high'):
 			self.dataset.Attributes['exclusionRegions'] = None
-			self.assertWarnsRegex(UserWarning, 'Low \(1\.10\) and high \(1\.10\) bounds are identical, skipping region', self.dataset.updateMasks, filterFeatures=True, filterSamples=False, exclusionRegions=(1.1,1.1))
+			self.assertWarnsRegex(UserWarning, r'Low \(1\.10\) and high \(1\.10\) bounds are identical, skipping region', self.dataset.updateMasks, filterFeatures=True, filterSamples=False, exclusionRegions=(1.1,1.1))
 
 
 	def test_nmrQCchecks(self):
@@ -386,6 +386,7 @@ class test_nmrdataset_bruker(unittest.TestCase):
 			expected['Sample ID'] = ['UT1_S2_u1', 'UT1_S3_u1', 'UT1_S4_u1', 'UT1_S4_u2', 'UT1_S4_u3',
 									   'UT1_S4_u4', 'External Reference Sample', 'Study Pool Sample']
 
+
 			expected['Status'] = ['Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Long Term Reference', 'Study Reference']
 
 			expected['AssayRole'] = [AssayRole.Assay, AssayRole.Assay, AssayRole.Assay, AssayRole.Assay,
@@ -419,19 +420,19 @@ class test_nmrdataset_bruker(unittest.TestCase):
 
 			testSeries = ['Sample ID', 'Status', 'AssayRole', 'SampleType']
 
-			expected['Sample ID'] = ['UT3_S7', 'UT3_S8', 'UT3_S6', 'UT3_S5', 'UT3_S4', 'UT3_S3', 'UT3_S2', 'External Reference Sample', 'Study Pool Sample', 'UT3_S1']
+			expected[testSeries[0]] = ['UT3_S7', 'UT3_S8', 'UT3_S6', 'UT3_S5', 'UT3_S4', 'UT3_S3', 'UT3_S2', 'External Reference Sample', 'Study Pool Sample', 'UT3_S1']
+			pandas.testing.assert_series_equal(dataset.sampleMetadata[testSeries[0]], expected[testSeries[0]])
 
-			expected['Status'] = ['Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Long Term Reference', 'Study Reference', 'nan']
+			expected[testSeries[1]] = ['Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Sample', 'Long Term Reference', 'Study Reference', None]
+			pandas.testing.assert_series_equal(dataset.sampleMetadata[testSeries[1]], expected[testSeries[1]])
 
-			expected['AssayRole'] = [AssayRole.Assay, AssayRole.Assay, AssayRole.Assay, AssayRole.Assay, AssayRole.Assay, AssayRole.Assay,
+			expected[testSeries[2]] = [AssayRole.Assay, AssayRole.Assay, AssayRole.Assay, AssayRole.Assay, AssayRole.Assay, AssayRole.Assay,
 									 AssayRole.Assay, AssayRole.PrecisionReference, AssayRole.PrecisionReference, AssayRole.Assay]
+			pandas.testing.assert_series_equal(dataset.sampleMetadata[testSeries[2]], expected[testSeries[2]])
 
-			expected['SampleType'] = [SampleType.StudySample, SampleType.StudySample, SampleType.StudySample, SampleType.StudySample, SampleType.StudySample,
+			expected[testSeries[3]] = [SampleType.StudySample, SampleType.StudySample, SampleType.StudySample, SampleType.StudySample, SampleType.StudySample,
 									  SampleType.StudySample, SampleType.StudySample, SampleType.ExternalReference, SampleType.StudyPool, SampleType.StudySample]
-
-			for series in testSeries:
-				with self.subTest(msg='Testing %s' % series):
-					pandas.testing.assert_series_equal(dataset.sampleMetadata[series], expected[series])
+			pandas.testing.assert_series_equal(dataset.sampleMetadata[testSeries[3]], expected[testSeries[3]])
 
 
 

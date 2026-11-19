@@ -1015,7 +1015,7 @@ class MSDataset(Dataset):
 		# Take the highest overall LOD
 		newLOD = numpy.amax(self._intensityData[sampleMask, :], axis=0).astype(float)
 
-		# Ensure the target column can safely hold floats before doing a masked assignment
+		# Jazz: ensure the target column can safely hold floats before doing a masked assignment
 		# (avoids pandas LossySetitemError if the column was inferred as int64)
 		if self.featureMetadata['LOD (μM)'].dtype != numpy.float64:
 			self.featureMetadata['LOD (μM)'] = self.featureMetadata['LOD (μM)'].astype(numpy.float64)

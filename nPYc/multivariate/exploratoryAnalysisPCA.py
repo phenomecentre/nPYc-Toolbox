@@ -36,6 +36,12 @@ def exploratoryAnalysisPCA(npycDataset,
     if not isinstance(withExclusions, bool):
         raise TypeError('withExclusions must be a bool')
 
+    if not isinstance(n_components, int):
+        raise TypeError('n_components must be a integer')
+
+    if n_components <=0:
+        raise ValueError('n_components must be a positive integer')
+
     if not isinstance(scaling, str) & (scaling in {'uv', 'mc'}):
         raise ValueError('reportType must be either `uv` (univariate) or `mc` (mean-centered only)')
 

@@ -181,6 +181,7 @@ class NMRDataset(Dataset):
 		self.sampleMetadata.loc[:, 'AssayRole'] = AssayRole.Assay
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Study Reference', na=False).astype(bool), 'AssayRole'] = AssayRole.PrecisionReference
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'AssayRole'] = AssayRole.PrecisionReference
+
 		self.sampleMetadata.loc[:, 'SampleType'] = SampleType.StudySample
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Study Reference', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'SampleType'] = SampleType.ExternalReference
@@ -191,9 +192,13 @@ class NMRDataset(Dataset):
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'SampleClass'] = 'Long-Term Reference'
 
 		# Update Sampling ID values using new 'SampleType', special case for Study Pool, External Reference and Procedural Blank
-		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.StudyPool)).tolist(), 'Sample ID'] = 'Study Pool Sample'
-		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ExternalReference)).tolist(), 'Sample ID'] = 'External Reference Sample'
-		self.sampleMetadata.loc[(((self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')) & (self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank)).tolist(), 'Sample ID'] = 'Procedural Blank Sample'
+		# Jazz: I have removed this mask condition from the .loc[] because it wasn't setting the sample ids for these types correctly:
+		# I hope it hasn't broken anything else...
+		mask = (self.sampleMetadata['Sample ID'] == 'Not specified') | (self.sampleMetadata['Sample ID'] == 'Present but undefined in the LIMS file')
+
+		self.sampleMetadata.loc[self.sampleMetadata['SampleType'] == SampleType.StudyPool, 'Sample ID'] = 'Study Pool Sample'
+		self.sampleMetadata.loc[self.sampleMetadata['SampleType'] == SampleType.ExternalReference, 'Sample ID'] = 'External Reference Sample'
+		self.sampleMetadata.loc[self.sampleMetadata['SampleType'] == SampleType.ProceduralBlank, 'Sample ID'] = 'Procedural Blank Sample'
 		# Neater output
 		#self.sampleMetadata.loc[self.sampleMetadata['Sample position'] == 'nan', 'Sample position'] = ''
 
@@ -228,7 +233,7 @@ class NMRDataset(Dataset):
 					assayRoles=list(AssayRole),#[AssayRole.Assay, AssayRole.PrecisionReference],
 					exclusionRegions=None,
 					sampleQCChecks=[],**kwargs):
-		"""
+		r"""
 		Update :py:attr:`~Dataset.sampleMask` and :py:attr:`~Dataset.featureMask` according to parameters.
 
 		:py:meth:`updateMasks` sets :py:attr:`~Dataset.sampleMask` or :py:attr:`~Dataset.featureMask` to ``False`` for those items failing analytical criteria.

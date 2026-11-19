@@ -729,8 +729,8 @@ class test_utilities_nmr(unittest.TestCase):
 
 		obtainedBN, obtainedExpno = generateBaseName(sampleMetadata)
 
-		numpy.testing.assert_equal(obtainedBN, expectedBN)
-		numpy.testing.assert_equal(obtainedExpno, expectedExpno)
+		numpy.testing.assert_array_equal(obtainedBN, expectedBN)
+		numpy.testing.assert_array_equal(obtainedExpno, expectedExpno)
 
 
 	def test_generateBaseName_definedexpno(self):
@@ -749,8 +749,8 @@ class test_utilities_nmr(unittest.TestCase):
 					  'UnitTest3_Serum_Rack01_RCM_190116/80']
 
 		obtainedBN, obtainedExpno = generateBaseName(sampleMetadata)
-
-		numpy.testing.assert_equal(obtainedBN, expectedBN)
+		# Jazz: assert_array_equal not just assert_equal
+		numpy.testing.assert_array_equal(obtainedBN, expectedBN)
 
 
 class test_utilities_linewidth(unittest.TestCase):

@@ -1375,9 +1375,12 @@ class Dataset:
 		# Create normalised columns
 		self.sampleMetadata.loc[:, 'Sample Base Name Normalised'] = self.sampleMetadata['Sample Base Name'].str.lower()
 		# if is float, make it a string with 'Assay data location'
+
 		if isinstance(self.limsFile.loc[0, 'Assay data name'], (int, float, numpy.integer, numpy.floating)):
-			self.limsFile.loc[:, 'Assay data name'] = self.limsFile.loc[:, 'Assay data location'].str.cat(
-				self.limsFile['Assay data name'].astype(str), sep='/')
+			self.limsFile['Assay data name'] = self.limsFile['Assay data name'].astype(str)
+			#self.limsFile.loc[:, 'Assay data name'] = self.limsFile.loc[:, 'Assay data location'].cat(self.limsFile['Assay data name'], sep='/')
+			self.limsFile["Assay data name"] = self.limsFile[["Assay data location", "Assay data name"]].agg("/".join, axis=1)
+
 		self.limsFile.loc[:, 'Assay data name Normalised'] = self.limsFile['Assay data name'].str.lower()
 
 		# Match limsFile to sampleMetdata for samples with data PRESENT

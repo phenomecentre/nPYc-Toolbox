@@ -1354,7 +1354,7 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 		expectedSampleMetadata['Correction Batch'] = numpy.nan
 		expectedSampleMetadata['Acquired Time'] = numpy.nan
 		expectedSampleMetadata['Run Order'] = numpy.nan
-		expectedSampleMetadata['Exclusion Details'] = ''
+		expectedSampleMetadata['Exclusion Details'] = None
 		expectedSampleMetadata['Biofluid'] = 'Serum'
 
 		expectedSampleMetadata['Sample ID'] = [numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan, numpy.nan,

@@ -77,14 +77,15 @@ def generateMSIDrequests(msData, features, outputDir='', rawData=None, database=
 			logging.warning('Feature \'%s\' not found.' % feature)
 			continue
 
+
 		for i in range(returnFiles):
 			line = pandas.DataFrame([[feature, compoundList['mz'], compoundList['rt'], compoundList['files'][i]['id']]], columns=['feature', 'mz', 'rt', 'sample'])
-			rOutput = rOutput.append(line, ignore_index=True)
+			rOutput = pandas.concat([rOutput, line], ignore_index=True)
 
 		noAssociatedFeatures = len(compoundList['associatedFeatures'])
 		for i in range(noAssociatedFeatures):
 			line = pandas.DataFrame([[feature, compoundList['mz'], compoundList['rt'], compoundList['associatedFeatures'][i]['id'], compoundList['associatedFeatures'][i]['mz'], compoundList['associatedFeatures'][i]['rt'], compoundList['associatedFeatures'][i]['correlation'], abs(compoundList['mz']-compoundList['associatedFeatures'][i]['mz'])]], columns=['feature', 'mz', 'rt', 'associated feature', 'mz', 'rt', 'correlation', 'mass difference'])
-			aOutput = aOutput.append(line, ignore_index=True)
+			aOutput = pandas.concat([aOutput, line], ignore_index=True)
 			
 	if database is not None:
 		conn.close()

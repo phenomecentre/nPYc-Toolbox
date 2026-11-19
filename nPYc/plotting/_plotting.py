@@ -282,14 +282,14 @@ def plotCorrelationToLRbyFeature(msData, featureMask=None, title='', maxNo=5, sa
         # Add headmap of correlation to dilution for each batch subset and the mean
 
         # Generate correlation to dilution for each batch subset and mean overall
+        LRcorVals = pandas.DataFrame(columns=['Feature','LR subset','Correlation'])
+
+
         for key in sorted(LRbatchmask):
-            if 'LRcorVals' not in locals():
-                LRcorVals = pandas.DataFrame(
-                    {'Feature': [feature], 'LR subset': [key], 'Correlation': [corLRbyBatch[key][feature]]})
-            else:
-                LRcorVals = LRcorVals.append(
-                    {'Feature': feature, 'LR subset': key, 'Correlation': corLRbyBatch[key][feature]},
-                    ignore_index=True)
+            new_row = pandas.DataFrame({'Feature': [feature], 'LR subset': [key], 'Correlation': [corLRbyBatch[key][feature]]})
+            LRcorVals = pandas.concat([LRcorVals, new_row], ignore_index=True)
+
+
 
         # Plot heatmap of correlation to dilution value
         LRcorVals = LRcorVals.pivot(index='LR subset', columns='Feature', values='Correlation')
