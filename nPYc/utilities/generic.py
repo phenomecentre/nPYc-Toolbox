@@ -30,7 +30,7 @@ def removeTrailingColumnNumbering(column_list):
 	import re
 	tmp = []
 	for s in column_list:
-		x = re.search('\.{1}\d+',s)
+		x = re.search(r'\.{1}\d+',s)
 		if x != None:
 			i = x.span()[0] #index of the .
 			tmp.append(s[:i])

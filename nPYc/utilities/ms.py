@@ -5,7 +5,7 @@ import numpy
 import pandas
 
 def rsd(data):
-	"""
+	r"""
 	Calculate percentage :term:`relative standard deviation` for each column in *data*.
 
 	:math:`\mathit{{rsd(x)}} = \\frac{\mathit{\sigma_{x}}}{\mathit{\mu_{x}}} \\times 100`

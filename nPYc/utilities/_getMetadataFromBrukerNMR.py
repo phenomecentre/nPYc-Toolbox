@@ -43,7 +43,7 @@ def extractBrukerparams(path, queryItems, acqTimeRE):
 			for findthis in queryItems[inputFile]:
 				logging.debug('Looking for: ' + findthis)
 
-				query = r'^' + re.escape(findthis) + '\W(.+?)\r?\n?^#'
+				query = r'^' + re.escape(findthis) + r'\W(.+?)\r?\n?^#'
 
 				m = re.search(query, contents, re.MULTILINE|re.DOTALL)
 
