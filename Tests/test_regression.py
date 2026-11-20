@@ -67,37 +67,23 @@ class TestSampleSummaryRegression(unittest.TestCase):
         sample_summary = nPYc.reports._generateSampleReport(self.data, returnOutput=True)
 
         # Acquired - Totals
-        self.assertEqual(sample_summary["Acquired"].loc["All", "Total"], 214)
-        self.assertEqual(sample_summary["Acquired"].loc["Study Sample", "Total"], 78)
-        self.assertEqual(sample_summary["Acquired"].loc["Study Reference", "Total"], 23)
-        self.assertEqual(sample_summary["Acquired"].loc["Long-Term Reference", "Total"], 8)
-        self.assertEqual(sample_summary["Acquired"].loc["Serial Dilution", "Total"], 92)
-        self.assertEqual(sample_summary["Acquired"].loc["Blank", "Total"], 12)
-        self.assertEqual(sample_summary["Acquired"].loc["Unknown", "Total"], 1)
+        self.assertEqual(sample_summary["Dataset"].loc["All Samples", "Present"], 213)
+        self.assertEqual(sample_summary["Dataset"].loc["Study Sample", "Present"], 78)
+        self.assertEqual(sample_summary["Dataset"].loc["Study Reference", "Present"], 23)
+        self.assertEqual(sample_summary["Dataset"].loc["Long-Term Reference", "Present"], 8)
+        self.assertEqual(sample_summary["Dataset"].loc["Linearity Reference", "Present"], 92)
+        self.assertEqual(sample_summary["Dataset"].loc["Procedural Blank", "Present"], 12)
 
         # Acquired - Marked for exclusion
-        self.assertEqual(sample_summary["Acquired"].loc["All", "Marked for Exclusion"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Study Sample", "Marked for Exclusion"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Study Reference", "Marked for Exclusion"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Long-Term Reference", "Marked for Exclusion"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Serial Dilution", "Marked for Exclusion"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Blank", "Marked for Exclusion"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Unknown", "Marked for Exclusion"], 0)
+        self.assertEqual(sample_summary["Dataset"].loc["All Samples", "Missing/Excluded"], 1)
+        self.assertEqual(sample_summary["Dataset"].loc["Study Sample", "Missing/Excluded"], 1)
+        self.assertEqual(sample_summary["Dataset"].loc["Study Reference", "Missing/Excluded"], 0)
+        self.assertEqual(sample_summary["Dataset"].loc["Long-Term Reference", "Missing/Excluded"], 0)
+        self.assertEqual(sample_summary["Dataset"].loc["Linearity Reference", "Missing/Excluded"], 0)
+        self.assertEqual(sample_summary["Dataset"].loc["Procedural Blank", "Missing/Excluded"], 0)
 
-        # Acquired - Missing/Excluded
-        self.assertEqual(sample_summary["Acquired"].loc["All", "Missing/Excluded"], 1)
-        self.assertEqual(sample_summary["Acquired"].loc["Study Sample", "Missing/Excluded"], 1)
-        self.assertEqual(sample_summary["Acquired"].loc["Study Reference", "Missing/Excluded"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Long-Term Reference", "Missing/Excluded"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Serial Dilution", "Missing/Excluded"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Blank", "Missing/Excluded"], 0)
-        self.assertEqual(sample_summary["Acquired"].loc["Unknown", "Missing/Excluded"], 0)
-
-        #self.assertEqual(sample_summary["NoMetadata Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W98")
-        self.assertEqual(sample_summary["UnknownType Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W98")
-        self.assertEqual(sample_summary["NotAcquired"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W97")
-        self.assertEqual(sample_summary["Excluded Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W97")
-        self.assertEqual(sample_summary["StudySamples Exclusion Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W97")
+        self.assertEqual(sample_summary["Missing Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W97")
+        self.assertEqual(sample_summary["Missing/excluded SS Details"].loc[0, "Sample File Name"], "PipelineTesting_RPOS_ToF10_U1W97")
 
 if __name__ == "__main__":
     unittest.main()
