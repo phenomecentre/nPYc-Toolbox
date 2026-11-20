@@ -50,13 +50,16 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 	# Sample type masks
 	sampleMasks = sampleClassMasks(data.sampleMetadata)
 
-	# Masks for any study samples with missing metadata (this can be from basic CSV, LIMS, or Sample Manifest)
-	NoMetadata = data.sampleMetadata['Metadata Available'] == False
-	if 'LIMS Present' in data.sampleMetadata.columns:
-		NoMetadata = (NoMetadata == True) | (data.sampleMetadata['LIMS Present'] == False)
-	if 'SubjectInfoData' in data.sampleMetadata.columns:
-		NoMetadata = (NoMetadata == True) | (data.sampleMetadata['SubjectInfoData'] == False)
-	NoMetadata[data.sampleMetadata['SampleClass'] != 'Study Sample'] = False
+	# Masks for any study samples with missing metadata if available (this can be from basic CSV, LIMS, or Sample Manifest)
+	if 'Metadata Available' in data.sampleMetadata:
+		NoMetadata = data.sampleMetadata['Metadata Available'] == False
+		if 'LIMS Present' in data.sampleMetadata.columns:
+			NoMetadata = (NoMetadata == True) | (data.sampleMetadata['LIMS Present'] == False)
+		if 'SubjectInfoData' in data.sampleMetadata.columns:
+			NoMetadata = (NoMetadata == True) | (data.sampleMetadata['SubjectInfoData'] == False)
+		NoMetadata[data.sampleMetadata['SampleClass'] != 'Study Sample'] = False
+	else:
+		NoMetadata = 0
 
 	# Samples marked for exclusion (either as marked as skipped or as False in sampleMask)
 	try:
@@ -80,12 +83,12 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 		sampleSummary['Dataset'].loc[key, 'Marked for Exclusion'] = sum(markedToExclude & sampleMasks[key])
 
 	# Marked for exclusion - details
-	if sum(markedToExclude) != 0:
+	if np.sum(markedToExclude) != 0:
 		sampleSummary['MarkedToExclude Details'] = data.sampleMetadata[cols][markedToExclude]
 		sampleSummary['MarkedToExclude Details'].reset_index(drop=True, inplace=True)
 
 	# Save details of samples with no associated metadata
-	if sum(NoMetadata) != 0:
+	if np.sum(NoMetadata) != 0:
 		sampleSummary['NoMetadata Details'] = data.sampleMetadata[cols][NoMetadata]
 		sampleSummary['NoMetadata Details'].reset_index(drop=True, inplace=True)
 

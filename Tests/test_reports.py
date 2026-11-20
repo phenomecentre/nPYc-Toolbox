@@ -11,6 +11,7 @@ import io
 import copy
 import warnings
 from nPYc.utilities._errorHandling import npycToolboxError
+from nPYc.multivariate import PCAmodel
 
 sys.path.append("..")
 import nPYc
@@ -862,6 +863,7 @@ class test_reports_modules(unittest.TestCase):
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))
+        data.addSampleInfo(descriptionFormat='Infer Batches')
         data.sampleMetadata['Correction Batch'] = data.sampleMetadata['Batch']
         data.sampleMetadata['Metadata Available'] = True
 
@@ -966,7 +968,7 @@ class test_reports_multivariate(unittest.TestCase):
             pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(self.dataset)
 
             with self.subTest(msg='PCA object generation'):
-                self.assertIsInstance(pcaModel, ChemometricsPCA)
+                self.assertIsInstance(pcaModel, PCAmodel)
 
                 numpy.testing.assert_equal(pcaModel._npyc_dataset_shape['NumberSamples'],
                                            self.dataset.intensityData.shape[0])
