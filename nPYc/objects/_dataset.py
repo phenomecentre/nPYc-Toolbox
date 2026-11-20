@@ -113,7 +113,9 @@ class Dataset:
 			SampleType.LinearityReference: "red", "SRD": "red", "LinearityReference": "red", "Linearity Reference": "red",
 			SampleType.MethodReference: "blue", "MR": "blue", "MethodReference": "blue", "Method Reference": "blue",
 			SampleType.ProceduralBlank: "aquamarine", "ProceduralBlank": "aquamarine", "Procedural Blank": "aquamarine", "Blank": "aquamarine",
-			SampleType.UnknownType: "grey", "Other": "grey", "UnknownRole": "grey", "Unknown Role": "grey", "Unknown Type": "grey", "Unknown": "grey", "UnknownType": "grey", "nan": "grey", "NaN": "grey", "NA": "grey", "Unspecified SampleType or AssayRole": "grey"}
+			SampleType.UnknownType: "grey", "Other": "grey", "UnknownRole": "grey", "Unknown Role": "grey",
+			"Unknown Type": "grey", "Unknown": "grey", "UnknownType": "grey", "nan": "grey", "NaN": "grey",
+			"NA": "grey", "Unspecified SampleType or AssayRole": "grey", numpy.float64(numpy.nan): "grey"}
 		self.Attributes["sampleTypeMarkers"] = {
 			SampleType.StudySample: "8", "SS": "8", "StudySample": "8", "Assay": "8", "Study Sample": "8", "Sample": "8",
 			SampleType.StudyPool: "1", "SR": "8", "StudyPool": "1", "Study Pool": "1", "Study Reference": "1",
@@ -121,7 +123,9 @@ class Dataset:
 			SampleType.LinearityReference: "4", "SRD": "4", "LinearityReference": "4", "Linearity Reference": "4",
 			SampleType.MethodReference: "3", "MR": "3", "MethodReference": "3", "Method Reference": "3",
 			SampleType.ProceduralBlank: "x", "ProceduralBlank": "x", "Procedural Blank": "x", "Blank": "x",
-			SampleType.UnknownType: "d", "Other": "d", "UnknownRole": "d", "Unknown Role": "d", "Unknown Type": "d", "Unknown": "d", "UnknownType": "d", "nan": "d", "NaN": "d", "NA": "d", "Unspecified SampleType or AssayRole": "d"}
+			SampleType.UnknownType: "d", "Other": "d", "UnknownRole": "d", "Unknown Role": "d",
+			"Unknown Type": "d", "Unknown": "d", "UnknownType": "d", "nan": "d", "NaN": "d",
+			"NA": "d", "Unspecified SampleType or AssayRole": "d", numpy.float64(numpy.nan): "grey"}
 		self.Attributes["sampleTypeAbbr"] = {
 			SampleType.StudySample: "SS", "StudySample": "SS", "Assay": "Assay", "Study Sample": "SS", "Sample": "Sample",
 			SampleType.StudyPool: "SR", "StudyPool": "SR", "Study Pool": "SR", "Study Reference": "SR",
@@ -129,7 +133,9 @@ class Dataset:
 			SampleType.LinearityReference: "red", "LinearityReference": "SRD", "Linearity Reference": "SRD",
 			SampleType.MethodReference: "MR", "MethodReference": "MR", "Method Reference": "MR",
 			SampleType.ProceduralBlank: "Blank", "ProceduralBlank": "Blank", "Procedural Blank": "Blank", "Blank": "Blank",
-			SampleType.UnknownType: "NA", "Other": "NA", "UnknownRole": "NA", "Unknown Role": "NA", "Unknown Type": "NA", "Unknown": "NA", "UnknownType": "NA", "nan": "NA", "NaN": "NA", "NA": "NA", "Unspecified SampleType or AssayRole": "NA"}
+			SampleType.UnknownType: "NA", "Other": "NA", "UnknownRole": "NA", "Unknown Role": "NA",
+			"Unknown Type": "NA", "Unknown": "NA", "UnknownType": "NA", "nan": "NA", "NaN": "NA",
+			"NA": "NA", "Unspecified SampleType or AssayRole": "NA", numpy.float64(numpy.nan): "grey"}
 
 		# Allow SOP-loaded attributes to be overriden by kwargs
 		self.Attributes = {**self.Attributes, **kwargs}
