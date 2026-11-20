@@ -62,7 +62,7 @@ def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath
 	if reportType.lower() == 'feature summary':
 		_featureReport(nmrData, destinationPath=destinationPath)
 	elif reportType.lower() == 'final report':
-		_finalReport(nmrData, destinationPath=destinationPath, pcaModel=pcaModel)
+		_finalReport(nmrData, destinationPath=destinationPath)
 
 
 def _featureReport(dataset, destinationPath=None):
@@ -224,7 +224,7 @@ def _featureReport(dataset, destinationPath=None):
 		copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
 
 
-def _finalReport(dataset, destinationPath=None, pcaModel=None):
+def _finalReport(dataset, destinationPath=None):
 	"""
 	Report on final dataset
 	"""
@@ -338,8 +338,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 		f.write(template.render(item=item,
 								version=version,
 								sampleSummary=sampleSummary,
-								graphicsPath=graphicsPath,
-								pcaPlots=pcaModel)
+								graphicsPath=graphicsPath)
 								)
 		f.close()
 

@@ -10,6 +10,7 @@ import os
 import io
 import copy
 import warnings
+from nPYc.utilities._errorHandling import npycToolboxError
 
 sys.path.append("..")
 import nPYc
@@ -107,7 +108,6 @@ class test_reports_generateSamplereport(unittest.TestCase):
         assert sampleSummary['Dataset'].loc['Long-Term Reference', 'Present'] == 1
         assert sampleSummary['Dataset'].loc['Linearity Reference', 'Present'] == 92
         assert sampleSummary['Dataset'].loc['Blank', 'Present'] == 2
-        assert sampleSummary['Dataset'].loc['Unknown', 'Present'] == 1
 
         # Acquired - Marked for exclusion
         assert sampleSummary['Dataset'].loc['Study Sample', 'Marked for Exclusion'] == 1
@@ -115,20 +115,25 @@ class test_reports_generateSamplereport(unittest.TestCase):
         assert sampleSummary['Dataset'].loc['Long-Term Reference', 'Marked for Exclusion'] == 0
         assert sampleSummary['Dataset'].loc['Linearity Reference', 'Marked for Exclusion'] == 0
         assert sampleSummary['Dataset'].loc['Blank', 'Marked for Exclusion'] == 0
-        assert sampleSummary['Dataset'].loc['Unknown', 'Marked for Exclusion'] == 0
+
+        # Acquired - Marked for exclusion
+        assert sampleSummary['Dataset'].loc['Study Sample', 'Missing/Excluded'] == 3
+        assert sampleSummary['Dataset'].loc['Study Reference', 'Missing/Excluded'] == 0
+        assert sampleSummary['Dataset'].loc['Long-Term Reference', 'Missing/Excluded'] == 0
+        assert sampleSummary['Dataset'].loc['Linearity Reference', 'Missing/Excluded'] == 0
+        assert sampleSummary['Dataset'].loc['Blank', 'Missing/Excluded'] == 0
 
         # Check details tables
-        assert sampleSummary['MarkedToExclude Details'].shape == (1, 2)
-        assert sampleSummary['UnknownType Details'].shape == (1, 1)
+        assert sampleSummary['MarkedToExclude Details'].shape == (1, 6)
+        assert sampleSummary['NoMetadata Details'].shape == (2, 6)
+        assert sampleSummary['Excluded Details'].shape == (1, 6)
+        assert sampleSummary['Missing Details'].shape == (3, 6)
 
     def test_report_samplesummary_postexclusion(self):
-        # Remove samples marked for exclusion (_x) or of unknown type
+        # Remove samples marked for exclusion (_x)
         self.data.excludeSamples(
             self.data.sampleMetadata.iloc[self.data.sampleMetadata['Skipped'].values == True]['Sample File Name'],
             on='Sample File Name', message='Skipped (_x)')
-        self.data.excludeSamples(
-            self.data.sampleMetadata[pandas.isnull(self.data.sampleMetadata['Sample Base Name'])]['Sample File Name'],
-            on='Sample File Name', message='Unknown type')
         self.data.applyMasks()
 
         # Generate destinationPath from sampleSummary
@@ -142,15 +147,6 @@ class test_reports_generateSamplereport(unittest.TestCase):
         assert sampleSummary['Dataset'].loc['Long-Term Reference', 'Present'] == 1
         assert sampleSummary['Dataset'].loc['Linearity Reference', 'Present'] == 92
         assert sampleSummary['Dataset'].loc['Blank', 'Present'] == 2
-        assert sampleSummary['Dataset'].loc['Unknown', 'Present'] == 0
-
-        # Acquired - Marked for exclusion
-        assert sampleSummary['Dataset'].loc['Study Sample', 'Marked for Exclusion'] == 0
-        assert sampleSummary['Dataset'].loc['Study Reference', 'Marked for Exclusion'] == 0
-        assert sampleSummary['Dataset'].loc['Long-Term Reference', 'Marked for Exclusion'] == 0
-        assert sampleSummary['Dataset'].loc['Linearity Reference', 'Marked for Exclusion'] == 0
-        assert sampleSummary['Dataset'].loc['Blank', 'Marked for Exclusion'] == 0
-        assert sampleSummary['Dataset'].loc['Unknown', 'Marked for Exclusion'] == 0
 
         # Acquired - Already Excluded
         assert sampleSummary['Dataset'].loc['Study Sample', 'Missing/Excluded'] == 4
@@ -158,8 +154,6 @@ class test_reports_generateSamplereport(unittest.TestCase):
         assert sampleSummary['Dataset'].loc['Long-Term Reference', 'Missing/Excluded'] == 0
         assert sampleSummary['Dataset'].loc['Linearity Reference', 'Missing/Excluded'] == 0
         assert sampleSummary['Dataset'].loc['Blank', 'Missing/Excluded'] == 0
-        assert sampleSummary['Dataset'].loc['Unknown', 'Missing/Excluded'] == 1
-
 
 class test_reports_nmr_generatereport(unittest.TestCase):
 
@@ -384,10 +378,10 @@ class test_reports_ms_generatereport(unittest.TestCase):
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'feature_selection', testFile)
                 self.assertTrue(os.path.exists(expectedPath))
 
-        with self.subTest(msg='Test raise ValueError when no dilution series or QC available'):
+        with self.subTest(msg='Test raise npycToolboxError when no dilution series or QC available'):
             data.updateMasks(sampleTypes=[SampleType.StudySample], assayRoles=[AssayRole.Assay])
             data.applyMasks()
-            self.assertRaises(ValueError, nPYc.reports.generateReport, data, 'feature selection')
+            self.assertRaises(npycToolboxError, nPYc.reports.generateReport, data, 'feature selection')
 
     def test_reports_ms_finalreport(self):
 
@@ -646,7 +640,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
              'Sample Type': ['Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference',
                              'All Samples', 'Study Pool', 'External Reference', 'All Samples']})
         self.resAcc = self.resAcc.set_index(['Feature', 'Sample Type'])
-        self.resAcc.fillna(value='', inplace=True)
+        self.resAcc = self.resAcc.fillna(numpy.nan).astype(str)
         self.resAcc.columns.name = 'Accuracy'
 
         self.resPre = pandas.DataFrame(
@@ -658,7 +652,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
              'Sample Type': ['Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference',
                              'All Samples', 'Study Pool', 'External Reference', 'All Samples']})
         self.resPre = self.resPre.set_index(['Feature', 'Sample Type'])
-        self.resPre.fillna(value='', inplace=True)
+        self.resPre = self.resPre.fillna(numpy.nan).astype(str)
         self.resPre.columns.name = 'Precision'
 
         self.resAccPre = pandas.DataFrame(
@@ -681,15 +675,15 @@ class test_reports_targeted_generatereport(unittest.TestCase):
                      ('Feature3', 'All Samples')]
         rowIdx = pandas.MultiIndex.from_tuples(tuplesRow, names=['Feature', 'Sample Type'])
         self.resAccPre.index = rowIdx
-        self.resAccPre.fillna(value='', inplace=True)
+        self.resAccPre = self.resAccPre.fillna(numpy.nan).astype(str)
         self.tDataAccPrec.AnalyticalPlatform = AnalyticalPlatform.MS
+
 
     def test_generateReportTargeted_raises(self):
 
         self.assertRaises(ValueError, nPYc.reports._generateReportTargeted, self.targetedDataset, 'nonsense')
         self.assertRaises(TypeError, nPYc.reports._generateReportTargeted, self.targetedDataset, "feature summary", destinationPath=3)
         self.assertRaises(TypeError, nPYc.reports._generateReportTargeted, self.targetedDataset, "feature summary", percentRange="string")
-
 
 
     def test_report_postMergeLOQDataset(self):
@@ -808,20 +802,13 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 
         inputDataset = copy.deepcopy(self.tDataAccPrec)
 
-        with tempfile.TemporaryDirectory() as tmpdirPCA:
-
-            pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(inputDataset, withExclusions=True, scaling=1.0,
-                                                                maxComponents=2)
-
         with tempfile.TemporaryDirectory() as tmpdirname:
 
-            nPYc.reports.multivariateReport(inputDataset, pcaModel=pcaModel, reportType='analytical',
-                                            withExclusions=True, destinationPath=tmpdirPCA)
             inputDataset.sampleMetadata['Metadata Available'] = True
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', UserWarning)
                 warnings.simplefilter('ignore', RuntimeWarning)
-                nPYc.reports.generateReport(inputDataset, 'final report', destinationPath=tmpdirname, pcaModel=pcaModel)
+                nPYc.reports.generateReport(inputDataset, 'final report', destinationPath=tmpdirname)
 
             expectedPath = os.path.join(tmpdirname, 'unittest_report_finalSummary.html')
             self.assertTrue(os.path.exists(expectedPath))
@@ -833,16 +820,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
                          'unittest_FeaturePrecision-A.png',
                          'unittest_FeaturePrecision-B.png']
 
-            multivariateTestFiles = ['unittest_PCAloadingsPlot_PCAloadings.png',
-                                     'unittest_PCAscoresPlot_SampleClassPC1vsPC2.png']
-
             for testFile in testFiles:
-                expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
-                # print("expected path = %s" % expectedPath)
-                self.assertTrue(os.path.exists(expectedPath))
-            # Separete here in case a future refactor splits different folders for PCA as _basicPCAReport is only being used in
-            # final summary reports
-            for testFile in multivariateTestFiles:
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'report_finalSummary', testFile)
                 # print("expected path = %s" % expectedPath)
                 self.assertTrue(os.path.exists(expectedPath))
@@ -878,9 +856,9 @@ class test_reports_modules(unittest.TestCase):
         data = nPYc.MSDataset(
             os.path.join('..', '..', 'npc-standard-project', 'Derived_Data', 'UnitTest1_PCSOP.069_QI.csv'),
             fileType='QI')
-        self.data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
-        self.data.applyMasks()
-        self.data.addSampleInfo(descriptionFormat='Filenames')
+        data.excludeSamples(['UnitTest1_LPOS_ToF02_ERROR'], on='Sample File Name')
+        data.applyMasks()
+        data.addSampleInfo(descriptionFormat='Filenames')
         data.addSampleInfo(descriptionFormat='Raw Data',
                            filePath=os.path.join('..', '..', 'npc-standard-project', 'Raw_Data', 'ms',
                                                  'parameters_data'))

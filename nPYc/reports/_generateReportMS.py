@@ -624,6 +624,11 @@ def _featureSelectionReport(dataset, withArtifactualFiltering=False, destination
     # Define sample masks
     sampleMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
 
+    # Check and raise error if no QC samples available
+    if ('Linearity Reference' not in sampleMasks) & ('Study Reference' not in sampleMasks):
+        raise npycToolboxError(
+            "Unable to generate feature selection report with no QC samples batch present in dataset.")
+
     # Define passmask as current featureMask
     passMask = dataset.featureMask
 

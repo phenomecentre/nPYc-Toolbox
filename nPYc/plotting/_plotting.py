@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import seaborn as sns
 import numpy
 import pandas
@@ -293,7 +294,7 @@ def plotCorrelationToLRbyFeature(msData, featureMask=None, title='', maxNo=5, sa
 
         # Plot heatmap of correlation to dilution value
         LRcorVals = LRcorVals.pivot(index='LR subset', columns='Feature', values='Correlation')
-        ax2 = sns.heatmap(LRcorVals, annot=True, fmt='.3g', vmin=-1, vmax=1, cmap='seismic', cbar=False)
+        ax2 = sns.heatmap(LRcorVals, annot=True, fmt='.3g', vmin=-1, vmax=1, cmap=mpl.colormaps.get_cmap('seismic'), cbar=False)
 
         # Save or show
         if savePath != None:
