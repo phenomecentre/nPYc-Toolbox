@@ -980,7 +980,7 @@ class test_reports_multivariate(unittest.TestCase):
                 nPYc.reports.multivariateReport(self.dataset, pcaModel=pcaModel, reportType='all',
                                                 destinationPath=tmpdirname)
 
-                expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariate_all')
+                expectedPath = os.path.join(tmpdirname, 'graphics', 'multivariate_all')
                 self.assertTrue(os.path.exists(expectedPath))
                 testFiles = ['Dataset_loadings_PC1.png',
                              'Dataset_loadings_PC2.png',
@@ -995,7 +995,7 @@ class test_reports_multivariate(unittest.TestCase):
                              'Dataset_dOriginX.png']
 
                 for testFile in testFiles:
-                    expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariate_all', testFile)
+                    expectedPath = os.path.join(tmpdirname, 'graphics', 'multivariate_all', testFile)
                     self.assertTrue(os.path.exists(expectedPath))
 
     def test_multivariateqcreport_analytical(self):
@@ -1011,7 +1011,7 @@ class test_reports_multivariate(unittest.TestCase):
             pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(self.dataset)
 
             with self.subTest(msg='PCA object generation'):
-                self.assertIsInstance(pcaModel, ChemometricsPCA)
+                self.assertIsInstance(pcaModel, PCAmodel)
 
                 numpy.testing.assert_equal(pcaModel._npyc_dataset_shape['NumberSamples'],
                                            self.dataset.intensityData.shape[0])
@@ -1022,7 +1022,7 @@ class test_reports_multivariate(unittest.TestCase):
                 nPYc.reports.multivariateReport(self.dataset, pcaModel=pcaModel, reportType='analytical',
                                                 destinationPath=tmpdirname)
 
-                expectedPath = os.path.join(tmpdirname, 'Dataset_report_multivariate_analytical.html')
+                expectedPath = os.path.join(tmpdirname, 'Dataset_multivariate_analytical.html')
                 self.assertTrue(os.path.exists(expectedPath))
 
                 testFiles = ['Dataset_loadings_PC1.png',
@@ -1038,7 +1038,7 @@ class test_reports_multivariate(unittest.TestCase):
                              'Dataset_dOriginX.png']
 
                 for testFile in testFiles:
-                    expectedPath = os.path.join(tmpdirname, 'graphics', 'report_multivariate_analytical', testFile)
+                    expectedPath = os.path.join(tmpdirname, 'graphics', 'multivariate_analytical', testFile)
                     # print(expectedPath)
                     self.assertTrue(os.path.exists(expectedPath))
 
@@ -1060,20 +1060,9 @@ class test_reports_multivariate(unittest.TestCase):
 
         self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, reportType=1)
 
-        self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=0.05,
-                          dModX_criticalVal_type=None)
+        self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=-1)
 
-        self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=-1,
-                          dModX_criticalVal_type='Fcrit')
-
-        self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=101,
-                          dModX_criticalVal_type='Fcrit')
-
-        self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel,
-                          dModX_criticalVal_type=-1)
-
-        self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel,
-                          dModX_criticalVal_type='wrong threshold')
+        self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=101)
 
         self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, scores_criticalVal=-1)
 
@@ -1083,15 +1072,10 @@ class test_reports_multivariate(unittest.TestCase):
 
         self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, r_threshold=-1.5)
 
-        self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, hotellings_alpha=-1.5)
-
         self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel,
                           excludeFields='not a list')
 
         self.assertRaises(TypeError, nPYc.reports.multivariateReport, self.dataset, pcaModel, destinationPath=1)
-
-        self.assertRaises(ValueError, nPYc.reports.multivariateReport, self.dataset, pcaModel, dModX_criticalVal=0.05)
-
 
 if __name__ == '__main__':
     unittest.main()
