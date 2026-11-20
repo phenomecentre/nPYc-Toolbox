@@ -115,8 +115,8 @@ def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='',
         allVal.extend(data[wcol])
 
     # Plot a marker for -inf/+inf
-    minX = min(allVal)
-    maxX = max(allVal)
+    minX = numpy.nanmin(allVal) # Caro
+    maxX = numpy.nanmax(allVal)
 
     # Vertical lines
     if vLines is not None:

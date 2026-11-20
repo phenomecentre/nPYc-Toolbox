@@ -640,19 +640,19 @@ class test_reports_targeted_generatereport(unittest.TestCase):
              'Sample Type': ['Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference',
                              'All Samples', 'Study Pool', 'External Reference', 'All Samples']})
         self.resAcc = self.resAcc.set_index(['Feature', 'Sample Type'])
-        self.resAcc = self.resAcc.fillna(numpy.nan).astype(str)
+        self.resAcc = self.resAcc.fillna(numpy.nan).astype(float)
         self.resAcc.columns.name = 'Accuracy'
 
         self.resPre = pandas.DataFrame(
             {10.0: [40.8248, numpy.nan, 40.8248, numpy.nan, numpy.nan, numpy.nan, 40.8248, numpy.nan, 40.8248],
              50.0: [numpy.nan, numpy.nan, numpy.nan, 65.3197, 25.7129, 57.5639, numpy.nan, numpy.nan, numpy.nan],
-             100.0: ['', 4.08248, 4.08248, numpy.nan, numpy.nan, numpy.nan, '', 4.08248, 4.08248],
+             100.0: [numpy.nan, 4.08248, 4.08248, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 4.08248, 4.08248],
              'Feature': ['Feature1', 'Feature1', 'Feature1', 'Feature2', 'Feature2', 'Feature2', 'Feature3', 'Feature3',
                          'Feature3'],
              'Sample Type': ['Study Pool', 'External Reference', 'All Samples', 'Study Pool', 'External Reference',
                              'All Samples', 'Study Pool', 'External Reference', 'All Samples']})
         self.resPre = self.resPre.set_index(['Feature', 'Sample Type'])
-        self.resPre = self.resPre.fillna(numpy.nan).astype(str)
+        self.resPre = self.resPre.fillna(numpy.nan).astype(float)
         self.resPre.columns.name = 'Precision'
 
         self.resAccPre = pandas.DataFrame(
@@ -660,7 +660,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
              '2': [40.8248, numpy.nan, 40.8248, numpy.nan, numpy.nan, numpy.nan, 40.8248, numpy.nan, 40.8248],
              '3': [numpy.nan, numpy.nan, numpy.nan, 100, 73.3333, 86.6667, numpy.nan, numpy.nan, numpy.nan],
              '4': [numpy.nan, numpy.nan, numpy.nan, 65.3197, 25.7129, 57.5639, numpy.nan, numpy.nan, numpy.nan],
-             '5': ['', 100.0, 100.0, numpy.nan, numpy.nan, numpy.nan, '', 100.0, 100.0],
+             '5': [numpy.nan, 100.0, 100.0, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 100.0, 100.0],
              '6': [numpy.nan, 4.08248, 4.08248, numpy.nan, numpy.nan, numpy.nan, numpy.nan, 4.08248, 4.08248]})
         self.resAccPre = self.resAccPre.transpose()
         tuplesCol = [(10.0, 'Acc.'), (10.0, 'Prec.'), (50.0, 'Acc.'), (50.0, 'Prec.'), (100.0, 'Acc.'),
@@ -675,7 +675,7 @@ class test_reports_targeted_generatereport(unittest.TestCase):
                      ('Feature3', 'All Samples')]
         rowIdx = pandas.MultiIndex.from_tuples(tuplesRow, names=['Feature', 'Sample Type'])
         self.resAccPre.index = rowIdx
-        self.resAccPre = self.resAccPre.fillna(numpy.nan).astype(str)
+        self.resAccPre = self.resAccPre.fillna(numpy.nan).astype(float)
         self.tDataAccPrec.AnalyticalPlatform = AnalyticalPlatform.MS
 
 
@@ -815,8 +815,8 @@ class test_reports_targeted_generatereport(unittest.TestCase):
 
             testFiles = ['unittest_FeatureAccuracy-A.png',
                          'unittest_FeatureAccuracy-B.png',
-                         'unittest_FeatureConcentrationDistribution_Quantified and validated with own labeled analogue_featureDistribution_0.png',
-                         'unittest_FeatureConcentrationDistribution_Quantified and validated with alternative labeled analogue_featureDistribution_0.png',
+                         'unittest_FeatureConcentrationDistribution_Quantified and validated with own labeled analogue__0.png',
+                         'unittest_FeatureConcentrationDistribution_Quantified and validated with alternative labeled analogue__0.png',
                          'unittest_FeaturePrecision-A.png',
                          'unittest_FeaturePrecision-B.png']
 

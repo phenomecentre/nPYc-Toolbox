@@ -1145,7 +1145,9 @@ def _getAccuracyPrecisionTable(tData, table='both'):
 			statTable = pandas.concat([statTable, tmpStatTable], ignore_index=True)
 
 		statTable['Sample Type'] = [str(x) for x in statTable['Sample Type'].tolist()]
-		statTable.fillna(value='', inplace=True)
+
+		for col in Conc:
+			statTable[col] = statTable[col].fillna(numpy.nan).astype(float)
 
 		return statTable
 
