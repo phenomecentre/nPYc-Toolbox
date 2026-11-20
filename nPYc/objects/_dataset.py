@@ -1317,8 +1317,8 @@ class Dataset:
 			self.sampleMask[which_to_drop] = False
 			joinedTable = joinedTable.drop('Include Sample', axis=1)
 
-		# Add 'Sample Base Name' if not available or empty (note - just setting to 'Sample File Name')
-		if ('Sample Base Name' not in joinedTable.columns) | all(pandas.isna(joinedTable['Sample Base Name'])):
+		# Add 'Sample Base Name' if not available (note - just setting to 'Sample File Name')
+		if 'Sample Base Name' not in joinedTable.columns:
 			joinedTable['Sample Base Name'] = joinedTable['Sample File Name']
 
 		# Reset index and save to self
