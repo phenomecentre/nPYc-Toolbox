@@ -1261,7 +1261,7 @@ class Dataset:
 			dateparse = lambda x: datetime.strptime(x, '%d/%m/%Y %H:%M')
 			csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str,
 													   'AssayRole': object, 'SampleType': object},
-									  parse_dates=['Acquired Time'], date_parser=dateparse)
+									  parse_dates=['Acquired Time'], date_format=dateparse)
 		except:
 			csvData = pandas.read_csv(filePath, dtype={'Sample File Name': str, 'Sample ID': str,
 													   'AssayRole': object, 'SampleType': object})

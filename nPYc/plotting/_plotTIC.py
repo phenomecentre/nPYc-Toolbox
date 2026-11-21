@@ -71,6 +71,10 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 
 	if colourType == 'categorical':
 
+		# Ensure colourBy is string
+		msData.sampleMetadata[colourBy] = msData.sampleMetadata[colourBy].astype(str)
+		uniq = msData.sampleMetadata[colourBy].unique()
+
 		# If colourDict check colour defined for every unique entry in class
 		if colourDict:
 			if not all(k in colourDict.keys() for k in uniq):
@@ -99,6 +103,9 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 			abbrDict = {}
 			for u in uniq:
 				abbrDict[u] = u
+
+	else:
+		addViolin=False # No point adding violin plot for continuous data
 
 	#sns.set_color_codes(palette='deep')
 	fig = plt.figure(figsize=dataset.Attributes['figureSize'], dpi=dataset.Attributes['dpi'])
