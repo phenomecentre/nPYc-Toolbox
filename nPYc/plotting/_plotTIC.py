@@ -172,7 +172,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 
 		if addViolin:
 			limits = ax.get_ylim()
-			_violinPlotHelper(ax2, tic, sampleMasks, None, 'Sample Type',
+			_violinPlotHelper(ax2, tic, sampleMasks, None, colourBy,
 							  palette=palette, ylimits=limits, logy=logy)
 
 	# Colour by continuous class

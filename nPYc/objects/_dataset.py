@@ -1257,14 +1257,15 @@ class Dataset:
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
 
-		try:
-			dateparse = lambda x: datetime.strptime(x, '%d/%m/%Y %H:%M')
-			csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str,
-													   'AssayRole': object, 'SampleType': object},
-									  parse_dates=['Acquired Time'], date_format=dateparse)
-		except:
-			csvData = pandas.read_csv(filePath, dtype={'Sample File Name': str, 'Sample ID': str,
-													   'AssayRole': object, 'SampleType': object})
+		#try:
+		#	dateparse = lambda x: datetime.strptime(x, '%d/%m/%Y %H:%M')
+		#	csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str,
+		#											   'AssayRole': object, 'SampleType': object},
+		#							  parse_dates=['Acquired Time'], date_format=dateparse)
+		#except:
+		# Avoid using date parser
+		csvData = pandas.read_csv(filePath, dtype={'Sample File Name': str, 'Sample ID': str,
+												   'AssayRole': object, 'SampleType': object})
 		currentMetadata = self.sampleMetadata.copy()
 
 		# Check for essential columns
@@ -1308,11 +1309,13 @@ class Dataset:
 			joinedTable.loc[joinedTable['SampleType'] == str(stype), 'SampleType'] = stype
 
 		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
-		# which are used in some plotting functions
+		# which are used in some plotting functions - note using mixed format and dayfirst here, this must be the format
+		# in the basicCSV file or will result in an error
 		if 'Acquired Time' in csvData:
-			csv_datetime = pandas.to_datetime(joinedTable['Acquired Time'], errors='coerce') # errors='ignore'
-			csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-			joinedTable['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S') if isinstance(x, str) else None).astype('O')
+			joinedTable['Acquired Time'] = pandas.to_datetime(csvData['Acquired Time'], format='mixed', dayfirst=True)
+			#csv_datetime = pandas.to_datetime(joinedTable['Acquired Time'], errors='coerce') # errors='ignore'
+			#csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
+			#joinedTable['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S') if isinstance(x, str) else None).astype('O')
 
 		# By default, everything in the CSV has metadata available
 		joinedTable['Metadata Available'] = True

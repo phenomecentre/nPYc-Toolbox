@@ -33,7 +33,8 @@ from ..__init__ import __version__ as version
 def _generateReportMS(dataset, reportType, withExclusions=False,
                       labelFeaturesBy=None, orderFeaturesBy='rsdSP', withArtifactualFiltering=None,
                       destinationPath=None, autoOpen=False,
-                      msDataCorrected=None, batch_correction_window=11, logy=False, colourSamplesBy='Dilution', colourSamplesByType='categorical'):
+                      msDataCorrected=None, batch_correction_window=11, logy=False,
+                      colourSamplesBy='Dilution', colourSamplesByType='categorical'):
     """
     Summarise different aspects of an MS dataset
 
@@ -413,7 +414,7 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
 
             # TIC all samples
             plotIntensity(dataset,
-                          addViolin=False,
+                          addViolin=True,
                           addBatchShading=True,
                           colourBy=colourSamplesBy,
                           colourType=colourSamplesByType,
@@ -518,10 +519,10 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
                                 filterFeatures=False)
 
             plotIntensity(dataset,
-                          addViolin=False,
+                          addViolin=True,
                           addBatchShading=True,
                           colourBy='Dilution',
-                          colourType='continuous',
+                          colourType='categorical',
                           withExclusions=True,
                           savePath=saveAs)
 
