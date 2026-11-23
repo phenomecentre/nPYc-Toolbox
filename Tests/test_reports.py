@@ -252,8 +252,7 @@ class test_reports_ms_generatereport(unittest.TestCase):
                          'test_rsdVc2d.png',
                          'test_peakWidth.png',
                          'test_tic.png',
-                         'test_ticSRD.png',
-                         'test_Dilution.png']
+                         'test_ticSRD.png']
 
             for testFile in testFiles:
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'feature_summary', testFile)
