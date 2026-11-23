@@ -34,7 +34,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False,
                       labelFeaturesBy=None, orderFeaturesBy='rsdSP', withArtifactualFiltering=None,
                       destinationPath=None, autoOpen=False,
                       msDataCorrected=None, batch_correction_window=11, logy=False,
-                      colourSamplesBy='Dilution', colourSamplesByType='categorical'):
+                      colourSamplesBy='Skipped', colourSamplesByType='categorical'):
     """
     Summarise different aspects of an MS dataset
 
