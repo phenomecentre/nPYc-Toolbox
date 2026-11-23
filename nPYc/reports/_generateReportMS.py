@@ -784,6 +784,12 @@ def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=T
     # Initial set up
     saveAs = None
 
+    # Print window size
+    if destinationPath:
+        item['Window'] = batch_correction_window
+    else:
+        print('Batch correction window size: ' + str(batch_correction_window) + '\n')
+
     # Pre-correction report (report is example of results when batch correction applied)
 
     # Figure 1: TIC for all samples by sample type and detector voltage change
