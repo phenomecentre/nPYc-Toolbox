@@ -472,7 +472,6 @@ class MSDataset(Dataset):
 				# Only replace self.featureMetadata['correlationToDilution'] if self.correlationToDilution is not empty
 				# This is for the case when we want to plot C2D but have excluded SRD samples
 				if (numpy.all(self._correlationToDilution != numpy.ones(shape=self.featureMask.shape))):
-					print('changing c2d values')
 					self.featureMetadata['correlationToDilution'] = copy.deepcopy(self.correlationToDilution)
 
 			# Save for reporting

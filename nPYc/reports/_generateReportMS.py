@@ -238,7 +238,7 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
         print('\nSamples acquired in ' + item['batchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
 
         if 'batchesCorrect' in item:
-            print('\nRun-order and batch correction applied (LOWESS regression fitted to SR samples in ' + item['batchesCorrect'])
+            print('\nRun-order and batch correction applied (LOWESS regression fitted to SR samples in ' + item['batchesCorrect'] + ')')
         else:
             print('\nRun-order and batch correction not applied')
 

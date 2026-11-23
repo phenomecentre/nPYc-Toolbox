@@ -8,14 +8,15 @@
 <h2>Dataset</h2>
 
 <div class='content'>
-	<p>Original data consists of {{ item['Nsamples'] }} samples and {{ item['Nfeatures'] }} features<p>
-	<ul>
-		<li>{{ item['SScount'] }} Study Samples</li>
-		<li>{{ item['SPcount'] }} Study Reference Samples</li>
-		<li>{{ item['ERcount'] }} Long-Term Reference Samples</li>
-		<li>{{ item['OTHERcount'] }} Other Samples</li>
-	</ul>
-	</p>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	<p></p>
+</div>
+
+<!--Summary of samples in final dataset-->
+<div class='content'>
+	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
+	{{ item.sampleSummary['Dataset'].to_html() }}
 </div>
 
 <!-- Summary of PCA Parameters- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
