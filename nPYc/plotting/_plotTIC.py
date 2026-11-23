@@ -25,7 +25,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 			colourBy='SampleClass', colourType='categorical',
 			colourDict={}, markerDict={}, abbrDict={},
 			logy=False, title='',
-			withExclusions=True, savePath=None,
+			withExclusions=False, savePath=None,
 			opacity=.6):
 	"""
 	Visualise TIC for all or a subset of features coloured by either dilution value or detector voltage.

@@ -392,6 +392,7 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
 
         # TIC all samples
         plotIntensity(dataset,
+                      withExclusions=False, # exclusions already applied if specified
                       addViolin=True,
                       title='',
                       colourBy='SampleClass',
@@ -414,6 +415,7 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
 
             # TIC all samples
             plotIntensity(dataset,
+                          withExclusions=False, # exclusions already applied if required
                           addViolin=True,
                           addBatchShading=True,
                           colourBy=colourSamplesBy,
@@ -519,11 +521,11 @@ def _featureReport(dataset, labelFeaturesBy=None, colourSamplesBy='Dilution', co
                                 filterFeatures=False)
 
             plotIntensity(dataset,
+                          withExclusions=False, # exclusions already applied if specified
                           addViolin=True,
                           addBatchShading=True,
                           colourBy='Dilution',
                           colourType='categorical',
-                          withExclusions=True,
                           savePath=saveAs)
 
             dataset.sampleMask = maskSample
@@ -793,6 +795,7 @@ def _batchCorrectionAssessmentReport(dataset, batch_correction_window=11, logy=T
         print('Overall Total Ion Count (TIC) for all samples and features, coloured by batch.')
 
     plotIntensity(dataset,
+                  withExclusions=False,  # exclusions already applied if specified
                   addViolin=True,
                   addBatchShading=True,
                   logy=logy,
@@ -908,6 +911,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, labelFeaturesBy=Non
             print('Pre-correction.')
 
         plotIntensity(dataset,
+                      withExclusions=False,  # exclusions already applied if specified
                       addViolin=True,
                       title='TIC Pre Batch-Correction',
                       addBatchShading=False,
@@ -926,6 +930,7 @@ def _batchCorrectionSummaryReport(dataset, correctedDataset, labelFeaturesBy=Non
             print('Post-correction.')
 
         plotIntensity(correctedDataset,
+                      withExclusions=False,  # exclusions already applied if specified
                       addViolin=True,
                       title='TIC Post Batch-Correction',
                       addBatchShading=False,
@@ -1216,11 +1221,11 @@ def _localLRPlots(dataset, LRmask, corToLR, saveName, figures=None, savePath=Non
     dataset.sampleMask = LRmask
 
     plotIntensity(dataset,
+                  withExclusions=False,  # exclusions already applied if specified
                   addViolin=False,
                   addBatchShading=True,
                   colourBy='Dilution',
                   colourType='continuous',
-                  withExclusions=True,
                   savePath=saveAs)
 
     dataset.sampleMask = maskSample
