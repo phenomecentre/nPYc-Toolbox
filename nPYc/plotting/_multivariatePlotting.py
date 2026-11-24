@@ -25,6 +25,7 @@ from ..utilities.generic import createDestinationPath
 import copy
 import datetime
 from ..enumerations import AssayRole, SampleType
+from ..multivariate import PCAmodel
 
 
 def plotScree(R2, Q2=None, title='', xlabel='', ylabel='', savePath=None, figureFormat='png', dpi=72,
@@ -601,8 +602,8 @@ def plotScoresInteractive(dataset,
     if not isinstance(dataset, Dataset):
         raise TypeError('dataset must be an instance of nPYc.Dataset')
 
-    #if not isinstance(pcaModel, ChemometricsPCA):
-    #    raise TypeError('PCAmodel must be a ChemometricsPCA object')
+    if not isinstance(pcaModel, PCAmodel):
+        raise TypeError('PCA model must be an instance of nPYc.multivariate.PCAmodel')
 
     values = pcaModel.scores
     ns, nc = values.shape

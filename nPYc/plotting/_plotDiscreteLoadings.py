@@ -2,6 +2,7 @@ import numpy
 import matplotlib
 import matplotlib.pyplot as plt
 from nPYc.objects import Dataset
+from nPYc.multivariate import PCAmodel
 
 def plotDiscreteLoadings(npycDataset, pcaModel, nbComponentPerRow=3, firstComponent=1, metadataColumn='Feature Name', sort=True, savePath=None, figureFormat='png', dpi=72, figureSize=(11, 7)):
 	"""
@@ -18,7 +19,10 @@ def plotDiscreteLoadings(npycDataset, pcaModel, nbComponentPerRow=3, firstCompon
 	if not isinstance(npycDataset, Dataset):
 		raise TypeError('npycDataset must be a Dataset object')
 
-	if (firstComponent >= pcaModel.ncomps) or (firstComponent <= 0):
+	if not isinstance(pcaModel, PCAmodel):
+		raise TypeError('PCA model must be an instance of nPYc.multivariate.PCAmodel')
+
+	if (firstComponent >= pcaModel.outputstats['n_components_fitted']) or (firstComponent <= 0):
 		raise ValueError(
 			'firstComponent must be greater than zero and less than or equal to the number of components in the model.')
 
@@ -29,7 +33,7 @@ def plotDiscreteLoadings(npycDataset, pcaModel, nbComponentPerRow=3, firstCompon
 
 	# Define how many components to plot and how many rows
 	firstComponent = firstComponent - 1
-	lastComponent = pcaModel.ncomps - 1
+	lastComponent = pcaModel.outputstats['n_components_fitted'] - 1
 	numberComponent = lastComponent - firstComponent + 1
 	numberRows = int(numpy.ceil(numberComponent / nbComponentPerRow))
 
@@ -66,7 +70,7 @@ def plotDiscreteLoadings(npycDataset, pcaModel, nbComponentPerRow=3, firstCompon
 
 		currentAxes.axvline(x=0, zorder=1)
 		currentAxes.set_title('PC %i' % (i + 1))
-		currentAxes.set_xlabel('%.2f%%' % (pcaModel.modelParameters['VarExpRatio'][i] * 100))
+		currentAxes.set_xlabel('%.2f%%' % (pcaModel.outputstats['VarExpRatio'][i] * 100))
 
 		# Add y-label to first plot of row
 		if rowPos == 0:

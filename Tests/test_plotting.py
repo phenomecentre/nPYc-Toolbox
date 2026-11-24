@@ -370,7 +370,7 @@ class test_plotting(unittest.TestCase):
 
 		data = generateTestDataset(noSamp, noFeat)
 
-		pcaModel = exploratoryAnalysisPCA(data, maxComponents=5)
+		pcaModel = exploratoryAnalysisPCA(data, n_components=5)
 
 		self.assertRaises(TypeError, nPYc.plotting.plotDiscreteLoadings, 'Not a Dataset object', pcaModel)
 		self.assertRaises(TypeError, nPYc.plotting.plotDiscreteLoadings, data, 'Not a PCA object')
@@ -387,7 +387,7 @@ class test_plotting(unittest.TestCase):
 
 		data = generateTestDataset(noSamp, noFeat)
 
-		pcaModel = exploratoryAnalysisPCA(data, maxComponents=5)
+		pcaModel = exploratoryAnalysisPCA(data, n_components=5)
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
@@ -400,7 +400,7 @@ class test_plotting(unittest.TestCase):
 			self.assertTrue(os.path.exists(outputPath))
 
 			outputPath = os.path.join(tmpdirname, 'runningOverTotalComponents')
-			nPYc.plotting.plotDiscreteLoadings(data, pcaModel, firstComponent=pcaModel.ncomps-1, savePath=outputPath)
+			nPYc.plotting.plotDiscreteLoadings(data, pcaModel, firstComponent=pcaModel.outputstats['n_components_fitted']-1, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
 
@@ -1025,7 +1025,7 @@ class test_plotting_interactive(unittest.TestCase):
 
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 
-			for i in range(pcaModel.ncomps):
+			for i in range(pcaModel.outputstats['n_components_fitted']):
 
 				if i == 0:
 					self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=i)
@@ -1044,13 +1044,13 @@ class test_plotting_interactive(unittest.TestCase):
 
 		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component='not an int')
 
-		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=pcaModel.ncomps + 1)
+		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=pcaModel.outputstats['n_components_fitted'] + 1)
 
-		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=['not an int', pcaModel.ncomps])
+		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=['not an int', pcaModel.outputstats['n_components_fitted']])
 
-		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.ncomps, pcaModel.ncomps, pcaModel.ncomps])
+		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.outputstats['n_components_fitted'], pcaModel.outputstats['n_components_fitted'], pcaModel.outputstats['n_components_fitted']])
 
-		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.ncomps, pcaModel.ncomps + 1])
+		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.outputstats['n_components_fitted'], pcaModel.outputstats['n_components_fitted'] + 1])
 
 
 	def test_plotScoresInteractive(self):
@@ -1076,7 +1076,7 @@ class test_plotting_interactive(unittest.TestCase):
 
 		self.assertRaises(TypeError, nPYc.plotting.plotScoresInteractive, self.dataset, pcaModel, 'Classes', components=['a', 1.2])
 
-		self.assertRaises(ValueError, nPYc.plotting.plotScoresInteractive, self.dataset, pcaModel, 'Classes', components=[1, pcaModel.ncomps + 1])
+		self.assertRaises(ValueError, nPYc.plotting.plotScoresInteractive, self.dataset, pcaModel, 'Classes', components=[1, pcaModel.outputstats['n_components_fitted'] + 1])
 
 
 	def test_plotRSDsInteractive(self):
