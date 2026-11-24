@@ -217,6 +217,7 @@ class TargetedDataset(Dataset):
         if fileType != 'empty':
             validDataset = self.validateObject(verbose=False, raiseError=False, raiseWarning=False)
             if not validDataset['BasicTargetedDataset']:
+
                 raise ValueError('Import Error: The imported dataset does not satisfy the BasicTargetedDataset definition')
         self.Attributes['Log'].append([datetime.now(),
                                        '%s instance initiated, with %d samples, %d features, from %s'
@@ -400,13 +401,12 @@ class TargetedDataset(Dataset):
         self.peakInfo = {'peakResponse': peakResponse, 'peakArea': peakArea, 'peakConcentrationDeviation': peakConcentrationDeviation, 'peakIntegrationFlag': peakIntegrationFlag, 'peakRT': peakRT}
 
         # add Dataset mandatory columns
-        self.sampleMetadata['AssayRole']         = numpy.nan
-        self.sampleMetadata['SampleType']        = numpy.nan
+        self.sampleMetadata['AssayRole']         = AssayRole.Assay
+        self.sampleMetadata['SampleType']        = SampleType.StudySample
         self.sampleMetadata['Dilution']          = numpy.nan
         self.sampleMetadata['Correction Batch']  = numpy.nan
-        self.sampleMetadata['Sample ID']       = numpy.nan
+        self.sampleMetadata['Sample ID']       =  numpy.nan
         self.sampleMetadata['Exclusion Details'] = numpy.nan
-        #self.sampleMetadata['Batch']             = numpy.nan #already created
 
         # clear SOP parameters not needed after __matchDatasetToCalibrationReport
         AttributesToRemove = ['compoundID', 'compoundName', 'IS', 'unitFinal', 'unitCorrectionFactor', 'calibrationMethod', 'calibrationEquation', 'quantificationType']
@@ -841,14 +841,9 @@ class TargetedDataset(Dataset):
         finalSampleMetadata['Study Sample'] = finalSampleMetadata['Sample Type'] == 'Analyte'
         finalSampleMetadata['Blank'] = finalSampleMetadata['Sample Type'] == 'Blank'
         finalSampleMetadata['QC'] = finalSampleMetadata['Sample Type'] == 'QC'
-        # unused Sample Types
-        # sampleMetadata['Solvent'] = sampleMetadata['Sample Type'] == 'Solvent'
-        # sampleMetadata['Recovery'] = sampleMetadata['Sample Type'] == 'Recovery'
-        # sampleMetadata['Donor'] = sampleMetadata['Sample Type'] == 'Donor'
-        # sampleMetadata['Receptor'] = sampleMetadata['Sample Type'] == 'Receptor'
         finalSampleMetadata['Other'] = (~finalSampleMetadata['Calibrant'] & ~finalSampleMetadata['Study Sample'] & ~finalSampleMetadata['Blank'] & ~finalSampleMetadata['QC'])  # & ~sampleMetadata['Solvent'] & ~sampleMetadata['Recovery'] & ~sampleMetadata['Donor'] & ~sampleMetadata['Receptor']
         # Add Acquired Time
-        finalSampleMetadata['Acquired Time'] = ''
+        finalSampleMetadata['Acquired Time'] = None
         for i in range(finalSampleMetadata.shape[0]):
             try:
                 finalSampleMetadata.loc[i, 'Acquired Time'] = datetime.strptime(str(finalSampleMetadata.loc[i, 'Acqu Date']) + " " + str(finalSampleMetadata.loc[i, 'Acqu Time']),'%d-%b-%y %H:%M:%S')
@@ -1152,12 +1147,13 @@ class TargetedDataset(Dataset):
         self.featureMetadata['ULOQ'] = numpy.nan
 
         ## Initialise sampleMetadata
-        self.sampleMetadata['AssayRole'] = numpy.nan
-        self.sampleMetadata['SampleType'] = numpy.nan
-        self.sampleMetadata['Dilution'] = 100
+        self.sampleMetadata['AssayRole'] = AssayRole.Assay
+        self.sampleMetadata['SampleType'] = SampleType.StudySample
+        self.sampleMetadata['Dilution'] = 100.0
         self.sampleMetadata['Correction Batch'] = numpy.nan
-        self.sampleMetadata['Sample ID'] = numpy.nan
-        self.sampleMetadata['Exclusion Details'] = None
+        self.sampleMetadata['Sample ID'] = ""
+        self.sampleMetadata['Subject ID'] = ""
+        self.sampleMetadata['Exclusion Details'] = ""
         # add Run Order
         self.sampleMetadata['Order'] = self.sampleMetadata.sort_values(by='Acquired Time').index
         self.sampleMetadata['Run Order'] = self.sampleMetadata.sort_values(by='Order').index
@@ -2421,8 +2417,8 @@ class TargetedDataset(Dataset):
 
             ## self._intensityData
             # Use _intensityData as size reference for all future tables
-            #if self._intensityData.all() != numpy.array(None).all():
-            if self._intensityData is not None and self._intensityData.size > 0:
+            if self._intensityData.all() != numpy.array(None).all():
+            #if self._intensityData is not None and self._intensityData.size > 0:
                 refNumSamples = self._intensityData.shape[0]
                 refNumFeatures = self._intensityData.shape[1]
                 if verbose:
