@@ -1219,11 +1219,10 @@ class test_dataset_loadsop(unittest.TestCase):
 		attributes = {}
 		with open(os.path.join(toolboxPath(), 'StudyDesigns', 'SOP', 'Generic.json')) as data_file:
 			attributes = json.load(data_file)
-
 		attributes['Log'] = data.Attributes['Log']
-		attributes['sampleTypeColours'] = self.data.Attributes['sampleTypeColours']
-		attributes['sampleTypeMarkers'] = self.data.Attributes['sampleTypeMarkers']
-		attributes['sampleTypeAbbr'] = self.data.Attributes['sampleTypeAbbr']
+		attributes['sampleTypeColours'] = data.Attributes['sampleTypeColours']
+		attributes['sampleTypeMarkers'] = data.Attributes['sampleTypeMarkers']
+		attributes['sampleTypeAbbr'] = data.Attributes['sampleTypeAbbr']
 		attributes['figureFormat'] = 'svg'
 		attributes['squids'] = True
 
@@ -1428,37 +1427,37 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 												SampleType.StudySample, SampleType.StudySample, SampleType.StudySample, SampleType.StudySample, SampleType.StudySample,
 												SampleType.ExternalReference, SampleType.StudyPool, numpy.nan]
 
-		expectedSampleMetadata['SampleClass'] = ['Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Long-Term Reference',
-												 'Long-Term Reference', 'Long-Term Reference', 'Blank', 'Blank',
+		expectedSampleMetadata['SampleClass'] = ['Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Linearity Reference',
+												 'Linearity Reference', 'Linearity Reference', 'Blank', 'Blank',
 												 'Study Reference', 'Study Reference', 'Study Reference',
 												 'Study Reference', 'Study Reference', 'Study Reference',
 												 'Study Reference', 'Study Reference', 'Study Reference',
@@ -1473,6 +1472,9 @@ class test_dataset_addsampleinfo(unittest.TestCase):
 											  20, 40, 40, 40, 60, 60, 60, 80, 80, 80, 80, 80, 100, 100, 100, 100, 100,
 											  100, 100, 100, 100, 100, 0, 0, 100, 100, 100, 100, 100, 100,
 											  100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+
+		expectedSampleMetadata['Include Sample'] = True
+		expectedSampleMetadata.loc[expectedSampleMetadata['Sample File Name']=='UnitTest1_LPOS_ToF02_ERROR', 'Include Sample'] = False
 
 		pandas.testing.assert_frame_equal(expectedSampleMetadata, data.sampleMetadata, check_dtype=False)
 		numpy.testing.assert_array_equal(expectedSampleMask, data.sampleMask)

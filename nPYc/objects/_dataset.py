@@ -1320,6 +1320,8 @@ class Dataset:
 		# Add 'Sample Base Name' if not available (note - just setting to 'Sample File Name')
 		if 'Sample Base Name' not in joinedTable.columns:
 			joinedTable['Sample Base Name'] = joinedTable['Sample File Name']
+		if joinedTable['Sample Base Name'].dropna().empty:
+			joinedTable['Sample Base Name'] = joinedTable['Sample File Name']
 
 		# Save to self
 		self.sampleMetadata = joinedTable
