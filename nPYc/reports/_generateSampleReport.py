@@ -233,7 +233,7 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 		template = env.get_template('generateSampleReport.html')
-		filename = os.path.join(destinationPath, data.name + '_report_sampleSummary.html')
+		filename = os.path.join(destinationPath, data.name + '_sample_summary.html')
 		# the jinja template expects item with sample summary inside so just create a field with everything inside
 		sampleSummary['sampleSummary'] = sampleSummary
 		f = open(filename, 'w')
