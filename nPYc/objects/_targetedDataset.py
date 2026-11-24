@@ -16,7 +16,7 @@ from ..enumerations import VariableType, AssayRole, SampleType, QuantificationTy
 
 
 class TargetedDataset(Dataset):
-    """
+    r"""
     TargetedDataset(dataPath, fileType='TargetLynx', sop='Generic', \*\*kwargs)
 
     :py:class:`~TargetedDataset` extends :py:class:`Dataset` to represent quantitative datasets, where compounds are already identified, the exactitude of the quantification can be established, units are known and calibration curve or internal standards are employed.
@@ -217,7 +217,7 @@ class TargetedDataset(Dataset):
         if fileType != 'empty':
             validDataset = self.validateObject(verbose=False, raiseError=False, raiseWarning=False)
             if not validDataset['BasicTargetedDataset']:
-                raise ValueError('Import Error: The imported dataset does not satisfy to the Basic TargetedDataset definition')
+                raise ValueError('Import Error: The imported dataset does not satisfy the BasicTargetedDataset definition')
         self.Attributes['Log'].append([datetime.now(),
                                        '%s instance initiated, with %d samples, %d features, from %s'
                                        % (self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
@@ -414,7 +414,7 @@ class TargetedDataset(Dataset):
         for k in AttributesToRemove:
             del self.Attributes[k]
 
-        self.Attributes['Log'].append([datetime.now(),'TargetLynx data file with %d samples, %d features, loaded from \%s, calibration report read from \%s\'' % (self.noSamples, self.noFeatures, datapath, calibrationReportPath)])
+        self.Attributes['Log'].append([datetime.now(),r'TargetLynx data file with %d samples, %d features, loaded from \%s, calibration report read from \%s\'' % (self.noSamples, self.noFeatures, datapath, calibrationReportPath)])
 
 
     def __getDatasetFromXML(self, path):
@@ -1129,21 +1129,25 @@ class TargetedDataset(Dataset):
 
         ## Reformat featureMetadata
         # quantificationType
-        self.featureMetadata['quantificationType'] = numpy.nan
+        self.featureMetadata['quantificationType'] = None
         self.featureMetadata.loc[self.featureMetadata['type'] == 'quantification', 'quantificationType'] = QuantificationType.QuantOther
-        self.featureMetadata.loc[self.featureMetadata['type'] != 'quantification', 'quantificationType'] = QuantificationType.Monitored
+        self.featureMetadata.loc[self.featureMetadata['type'] != 'quantification', 'quantificationType'] = QuantificationType.Monitored.value
         self.featureMetadata = self.featureMetadata.drop(columns='type')
         # calibrationMethod
-        self.featureMetadata['calibrationMethod'] = numpy.nan
+        self.featureMetadata['calibrationMethod'] = None
         self.featureMetadata.loc[self.featureMetadata['quantificationType'] == QuantificationType.QuantOther, 'calibrationMethod'] = CalibrationMethod.otherCalibration
         self.featureMetadata.loc[self.featureMetadata['quantificationType'] == QuantificationType.Monitored, 'calibrationMethod'] = CalibrationMethod.noCalibration
         # rename columns
         self.featureMetadata = self.featureMetadata.rename(columns={'loq': 'LLOQ', 'lod': 'LOD', 'Lower Reference Bound': 'Lower Reference Percentile', 'Upper Reference Bound': 'Upper Reference Percentile'})
         # replace '-' with nan
-        self.featureMetadata['LLOQ'].replace('-', numpy.nan, inplace=True)
-        self.featureMetadata['LLOQ'] = [float(x) for x in self.featureMetadata['LLOQ'].tolist()]
-        self.featureMetadata['LOD'].replace('-', numpy.nan, inplace=True)
-        self.featureMetadata['LOD'] = [float(x) for x in self.featureMetadata['LOD'].tolist()]
+
+        self.featureMetadata["LLOQ"] = pandas.to_numeric(self.featureMetadata["LLOQ"],errors="coerce")
+
+        #self.featureMetadata['LLOQ'].replace('-', numpy.nan, inplace=True)
+        #self.featureMetadata['LLOQ'] = [float(x) for x in self.featureMetadata['LLOQ'].tolist()]
+        self.featureMetadata["LOD"] = pandas.to_numeric(self.featureMetadata["LOD"], errors="coerce")
+        #self.featureMetadata['LOD'].replace('-', numpy.nan, inplace=True)
+        #self.featureMetadata['LOD'] = [float(x) for x in self.featureMetadata['LOD'].tolist()]
         # ULOQ
         self.featureMetadata['ULOQ'] = numpy.nan
 
@@ -2417,7 +2421,8 @@ class TargetedDataset(Dataset):
 
             ## self._intensityData
             # Use _intensityData as size reference for all future tables
-            if (self._intensityData.all() != numpy.array(None).all()):
+            #if self._intensityData.all() != numpy.array(None).all():
+            if self._intensityData is not None and self._intensityData.size > 0:
                 refNumSamples = self._intensityData.shape[0]
                 refNumFeatures = self._intensityData.shape[1]
                 if verbose:
@@ -2429,7 +2434,7 @@ class TargetedDataset(Dataset):
             # number of samples
             condition = (self.sampleMetadata.shape[0] == refNumSamples)
             success = 'Check self.sampleMetadata number of samples (rows):\tOK'
-            failure = 'Check self.sampleMetadata number of samples (rows):\tFailure, \'self.sampleMetadata\' has ' + str(self.sampleMetadata.shape[0]) + ' samples, ' + str(refNumSamples) + 'expected'
+            failure = 'Check self.sampleMetadata number of samples (rows):\tFailure, \'self.sampleMetadata\' has ' + str(self.sampleMetadata.shape[0]) + ' samples, ' + str(refNumSamples) + ' expected'
             failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=ValueError(failure))
             if condition:
                 # sampleMetadata['Sample File Name'] is str
@@ -3255,7 +3260,7 @@ class TargetedDataset(Dataset):
         # Pass masks into enum fields
         fileNameParts.loc[:, 'AssayRole'] = AssayRole.Assay
         fileNameParts.loc[fileNameParts['reference'] == 'SR', 'AssayRole'] = AssayRole.PrecisionReference
-        fileNameParts.loc[fileNameParts['baseName'].str.match('.+[B]\d+?[SE]\d+?', na=False).astype(bool), 'AssayRole'] = AssayRole.PrecisionReference
+        fileNameParts.loc[fileNameParts['baseName'].str.match(r'.+[B]\d+?[SE]\d+?', na=False).astype(bool), 'AssayRole'] = AssayRole.PrecisionReference
         fileNameParts.loc[fileNameParts['reference'] == 'LTR', 'AssayRole'] = AssayRole.PrecisionReference
         fileNameParts.loc[fileNameParts['reference'] == 'MR', 'AssayRole'] = AssayRole.PrecisionReference
         fileNameParts.loc[fileNameParts['injectionKind'] == 'SRD', 'AssayRole'] = AssayRole.LinearityReference
@@ -3264,7 +3269,7 @@ class TargetedDataset(Dataset):
 
         fileNameParts.loc[:, 'SampleType'] = SampleType.StudySample
         fileNameParts.loc[fileNameParts['reference'] == 'SR', 'SampleType'] = SampleType.StudyPool
-        fileNameParts.loc[fileNameParts['baseName'].str.match('.+[B]\d+?[SE]\d+?', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
+        fileNameParts.loc[fileNameParts['baseName'].str.match(r'.+[B]\d+?[SE]\d+?', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
         fileNameParts.loc[fileNameParts['reference'] == 'LTR', 'SampleType'] = SampleType.ExternalReference
         fileNameParts.loc[fileNameParts['reference'] == 'MR', 'SampleType'] = SampleType.MethodReference
         fileNameParts.loc[fileNameParts['injectionKind'] == 'SRD', 'SampleType'] = SampleType.StudyPool
@@ -3304,11 +3309,11 @@ class TargetedDataset(Dataset):
         fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'], errors='coerce')
 
         # Get batch where it is explicit in file name
-        fileNameParts['Batch'] = pandas.to_numeric(fileNameParts['baseName'].str.extract('B(\d+?)[SE]', expand=False), errors='coerce')
+        fileNameParts['Batch'] = pandas.to_numeric(fileNameParts['baseName'].str.extract(r'B(\d+?)[SE]', expand=False), errors='coerce')
         fileNameParts['Correction Batch'] = numpy.nan
 
         # Map dilution series names to dilution level
-        fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract('(?:.+_?)(SRD\d\d)(?:_?.*)', expand=False).replace(self.Attributes['dilutionMap'])
+        fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract(r'(?:.+_?)(SRD\d\d)(?:_?.*)', expand=False).replace(self.Attributes['dilutionMap'])
         fileNameParts['Dilution'] = fileNameParts['Dilution'].astype(float)
         # Blank out NAs for neatness
         fileNameParts['reruns'] = fileNameParts['reruns'].fillna(numpy.nan).astype(str)

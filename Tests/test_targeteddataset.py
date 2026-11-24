@@ -5322,7 +5322,11 @@ class test_targeteddataset_accuracy_precision(unittest.TestCase):
 		data.sampleMetadata = tmpData.sampleMetadata
 		data.featureMetadata = tmpData.featureMetadata
 		# expectedConcentration values between 1 and 10
-		data.expectedConcentration = pandas.DataFrame(numpy.reshape(numpy.random.choice(numpy.arange(1, 11), noSamp * noFeat), newshape=(noSamp, noFeat)), index=data.sampleMetadata.index, columns=data.featureMetadata['Feature Name'])
+		data.expectedConcentration = pandas.DataFrame(
+			numpy.reshape(numpy.random.choice(numpy.arange(1, 11), noSamp * noFeat),
+						  (noSamp, noFeat)),
+			index=data.sampleMetadata.index,
+			columns=data.featureMetadata['Feature Name'])
 
 		with self.subTest(msg="Default, all samples"):
 			result = data.accuracyPrecision(onlyPrecisionReferences=False)

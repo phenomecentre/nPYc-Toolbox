@@ -178,16 +178,19 @@ class NMRDataset(Dataset):
 			self.Attributes['Log'].append([datetime.now(), 'Reacquistions detected, previous acquisition marked for exclusion.'])
 
 		# Set SampleType and AssayRole
-		self.sampleMetadata.loc[:, 'AssayRole'] = AssayRole.Assay
+		self.sampleMetadata['AssayRole'] = AssayRole.Assay
+		#self.sampleMetadata.loc[:, 'AssayRole'] = AssayRole.Assay
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Study Reference', na=False).astype(bool), 'AssayRole'] = AssayRole.PrecisionReference
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'AssayRole'] = AssayRole.PrecisionReference
 
-		self.sampleMetadata.loc[:, 'SampleType'] = SampleType.StudySample
+		#self.sampleMetadata.loc[:, 'SampleType'] = SampleType.StudySample
+		self.sampleMetadata['SampleType'] = SampleType.StudySample
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Study Reference', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'SampleType'] = SampleType.ExternalReference
 
 		# Define `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
-		self.sampleMetadata.loc[:,'SampleClass'] = 'Study Sample'
+		#self.sampleMetadata.loc[:, 'SampleClass'] = 'Study Sample'
+		self.sampleMetadata['SampleClass'] = SampleType.StudySample
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Study Reference', na=False).astype(bool), 'SampleClass'] = 'Study Reference'
 		self.sampleMetadata.loc[self.sampleMetadata.loc[:, 'Status'].str.match('Long Term Reference', na=False).astype(bool), 'SampleClass'] = 'Long-Term Reference'
 

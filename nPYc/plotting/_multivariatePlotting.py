@@ -110,8 +110,8 @@ def plotScores(pcaModel,
 #    if classes is not None and colourType is None:
 #        raise ValueError('If classes is specified, colourType must be')
 
-    if colourType not in {'categorical', 'continuous', 'continuousCentered'}:
-        raise ValueError('colourType must be == ' + str({'categorical', 'continuous','continuousCentered'}))
+    if colourType is not None and colourType not in {'categorical', 'continuous', 'continuousCentered'}:
+        raise ValueError('colourType must be None or == ' + str({'categorical', 'continuous','continuousCentered'}))
 
     # If colourDict check colour defined for every unique entry in class
     if colourDict:
@@ -137,7 +137,7 @@ def plotScores(pcaModel,
     nc = len(components)
 
     if title != '':
-        title = title.translate({ord(c): " " for c in "!@#$%^&*()[]{};:,./<>?\|`~-=_+"})
+        title = title.translate({ord(c): " " for c in "!@#$%^&*()[]{};:,./<>?\\|`~-=_+"})
         plotTitle = title + ' '
         title = ''.join(title.split())
     else:

@@ -198,7 +198,8 @@ class test_plotting(unittest.TestCase):
 			# Matching report colours
 			##
 			outputPath = os.path.join(tmpdirname, 'matchReport')
-			nPYc.plotting.plotRSDs(msData, color='matchReport', savePath=outputPath)
+			#nPYc.plotting.plotRSDs(msData, color='matchReport', savePath=outputPath)
+			nPYc.plotting.plotRSDs(msData, savePath=outputPath)
 
 			self.assertTrue(os.path.exists(outputPath))
 
@@ -218,7 +219,7 @@ class test_plotting(unittest.TestCase):
 
 		with self.subTest(msg='No m/z column'):
 			dataset = generateTestDataset(10, 10, dtype='MSDataset')
-			dataset.featureMetadata.drop('m/z', 1, inplace=True)
+			dataset.featureMetadata = dataset.featureMetadata.drop('m/z', axis=1)
 
 			self.assertRaises(KeyError, nPYc.plotting.plotIonMap, dataset)
 
@@ -412,7 +413,7 @@ class test_plotting(unittest.TestCase):
 				# Cause all warnings to always be triggered.
 				warnings.simplefilter("ignore")
 				datapath = os.path.join("..", "..", "npc-standard-project", "Raw_Data", "nmr", "UnitTest3")
-				testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
+				testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern=r'.*?results\.xml$')
 
 			testData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest3_NMR_serum_PCSOP.012.csv'))
 
@@ -443,7 +444,7 @@ class test_plotting(unittest.TestCase):
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			datapath = os.path.join("..", "..", "npc-standard-project", "Raw_Data", "nmr", "UnitTest1")
-			testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/L')
+			testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern=r'.*?urine_quant_report_b\.xml$', unit='mmol/L')
 			testData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_NMR_urine_PCSOP.011.csv'))
 
 			outputPath = os.path.join(tmpdirname, 'basic')
@@ -786,9 +787,12 @@ class test_plotting(unittest.TestCase):
 			dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=VariableType.Continuum, sop='Generic')
 
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
-			sample_dmodx_values = pcaModel.dmodx(dataset.intensityData)
-			Fcrit = pcaModel._dmodx_fcrit(dataset.intensityData, alpha = 0.05)
-			
+			sample_dmodx_values = pcaModel.outputstats["DmodX"]
+			Fcrit = pcaModel.outputstats["DmodX_Fcrit"]
+			#Jazz: the above replaces these lines I assume; Caroline may disagree!
+			#sample_dmodx_values = pcaModel.dmodx(dataset.intensityData)
+			#Fcrit = pcaModel._dmodx_fcrit(dataset.intensityData, alpha = 0.05)
+
 			with tempfile.TemporaryDirectory() as tmpdirname:
 				outputPath = os.path.join(tmpdirname, 'plot')
 
@@ -830,15 +834,15 @@ class test_plotting(unittest.TestCase):
 
 			with self.subTest(msg='Association plot'):
 				outputPath = os.path.join(tmpdirname, 'categoricalAssociation')
-
-				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], colourType='categorical', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+				# Jazz: what is plotAssociation all about??
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], colourType='categorical', plotAssociation=[0,1,2,3,4,5], figureFormat='png', savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
 
 			with self.subTest(msg='Continuous Association'):
 				outputPath = os.path.join(tmpdirname, 'continuousAssociation')
 
-				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], colourType='continuous', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], colourType='continuous', plotAssociation=[0,1,2,3,4,5], figureFormat='png', savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
 
