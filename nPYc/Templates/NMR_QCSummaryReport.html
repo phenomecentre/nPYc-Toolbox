@@ -4,6 +4,14 @@
 
 {% block content %}
 
+<!--Brief summary of dataset-->
+<div class='content'>
+	<span class="heading">Dataset summary.</span>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	<p></p>
+</div>
+
 <!--BL *& PW plots______________________________________________________________________________________________________________-->
 
 <div class='figure1'>
@@ -33,9 +41,10 @@
 	<img src="{{ item['finalFeatureBLWPplots3']}}" alt="Distribution of all samples at region surrounding solvent suppresion peak (5-95% with outliers flagged).">
 </div>
 
-<!--Summary of samples acquired________________________________________________________________________________________________________________-->
-{% if failSummary is not none %}
-	<h3>Samples Failing QC Checks</h3>
-	{{ failSummary.to_html() }}
+<!--Details of any samples failing QC-->
+{% if 'failSummary' in item %}
+	<h2>Samples flagged during QC checks</h2>
+	{{ item['failSummary'].to_html() }}
 {% endif %}
+
 {% endblock %}

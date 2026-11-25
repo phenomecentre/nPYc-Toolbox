@@ -2,21 +2,25 @@ import os
 import nPYc
 import copy
 import pandas
-import re
 import shutil
 import seaborn as sns
 from plotly.offline import iplot
-from IPython.display import display, HTML
-
+from IPython.display import display
+from jinja2 import Environment, FileSystemLoader
+from ..utilities import publishReport
 from ..objects import NMRDataset
 from .._toolboxPath import toolboxPath
-from ..utilities._internal import _copyBackingFiles as copyBackingFiles
 from ._generateSampleReport import _generateSampleReport
 from ..plotting import plotSolventResonance, plotSolventResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive
 
 from ..__init__ import __version__ as version
 
-def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath=None):
+def _generateReportNMR(nmrData,
+					   reportType,
+					   withExclusions=True,
+					   coveragePDF=False,
+					   autoOpen=False,
+					   destinationPath=None):
 	"""
 	Generate reports on NMRdataset objects, possible options are: ``feature summary`` or ``final report``
 	
@@ -47,25 +51,57 @@ def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath
 
 	sns.set_style("whitegrid")
 
-	# Create directory to save destinationPath 
+	# Apply sample/feature masks if exclusions to be applied
+	nmrData = copy.deepcopy(nmrData)
+	if withExclusions:
+		nmrData.applyMasks()
+
+	# Create dictionary to save required info
+	item = dict()
+	item['Name'] = nmrData.name
+	item['ReportType'] = reportType.capitalize()
+	item['Nfeatures'] = nmrData.intensityData.shape[1]
+	item['Nsamples'] = nmrData.intensityData.shape[0]
+
+	# Create directory to save destinationPath
 	if destinationPath:
 		if not os.path.exists(destinationPath):
 			os.makedirs(destinationPath)
 		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
 			os.makedirs(os.path.join(destinationPath, 'graphics'))
 
-	# Apply sample/feature masks if exclusions to be applied
-	nmrData = copy.deepcopy(nmrData)
-	if withExclusions:
-		nmrData.applyMasks()
+		# Create specific directory to save outputs
+		graphicsPath = os.path.join(destinationPath, 'graphics', reportType.lower().replace(' ', '_'))
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
+
+	else:
+		graphicsPath = None
+
+		# Print initial summary info
+		print(item['ReportType'] + ' for ' + item['Name'] + '\n')
+		print(str(item['Nsamples']) + ' samples')
+		print(str(item['Nfeatures']) + ' features\n')
+
+	# Load env to get templates
+	env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 
 	if reportType.lower() == 'feature summary':
-		_featureReport(nmrData, destinationPath=destinationPath)
+		template = env.get_template('NMR_QCSummaryReport.html')
+		_featureReport(nmrData, destinationPath=destinationPath, graphicsPath=graphicsPath,
+					   autoOpen=autoOpen, item=item, template=template)
 	elif reportType.lower() == 'final report':
-		_finalReport(nmrData, destinationPath=destinationPath)
+		template = env.get_template('NMR_FinalSummaryReport.html')
+		_finalReport(nmrData, coveragePDF=coveragePDF, destinationPath=destinationPath, graphicsPath=graphicsPath,
+					 autoOpen=autoOpen, item=item, template=template)
 
 
-def _featureReport(dataset, destinationPath=None):
+def _featureReport(dataset,
+				   destinationPath=None,
+				   autoOpen=False,
+				   graphicsPath=None,
+				   item=None,
+				   template=None):
 	"""
 	Report on feature quality
 	"""
@@ -73,20 +109,8 @@ def _featureReport(dataset, destinationPath=None):
 	# Do NMR QC checks based on dataset
 	dataset._nmrQCChecks()
 
-	item = dict()
-	item['Name'] = dataset.name
-	item['Nsamples'] = dataset.noSamples
-
 	item['toA_from'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
 	item['toA_to'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
-	
-	##
-	# Report stats
-	##
-	if destinationPath is not None:
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'feature_summary')
-		if not os.path.exists(graphicsPath):
-			os.makedirs(graphicsPath)
 
 	##
 	# Chemical shift registration plot
@@ -107,6 +131,7 @@ def _featureReport(dataset, destinationPath=None):
 	else:
 		figure = plotCalibrationInteractive(dataset)
 		iplot(figure)
+
 	##
 	# LW box plot
 	##
@@ -141,7 +166,6 @@ def _featureReport(dataset, destinationPath=None):
 			figureFormat=dataset.Attributes['figureFormat'],
 			dpi=dataset.Attributes['dpi'],
 			figureSize=dataset.Attributes['figureSize'])
-
 
 	##
 	# Baseline plot
@@ -186,6 +210,7 @@ def _featureReport(dataset, destinationPath=None):
 	else:
 		figure = plotSolventResonanceInteractive(dataset)
 		iplot(figure)
+
 	##
 	# exclusion summary
 	##
@@ -194,64 +219,36 @@ def _featureReport(dataset, destinationPath=None):
 												  'CalibrationFail', 'BaselineFail', 'SolventPeakFail']]
 	fail_summary = fail_summary[(fail_summary.iloc[:, 1::] == 1).any(axis=1, bool_only=True)]
 
-	if not destinationPath:
-		print('Table 1: Summary of samples considered for exclusion')
-		display(fail_summary)
+	if fail_summary.shape[0] > 0:
+		if not destinationPath:
+			print('Table 1: Summary of samples considered for exclusion')
+			display(fail_summary)
+		else:
+			item['failSummary'] = fail_summary
+
 	##
 	# Write HTML if saving
 	##
 	if destinationPath:
-		# Make paths for graphics local not absolute for use in the HTML.
-		for key in item:
-			if os.path.join(destinationPath, 'graphics') in str(item[key]):
-				item[key] = re.sub('.*graphics', 'graphics', item[key])
 
-		# Generate report
-		from jinja2 import Environment, FileSystemLoader
-
-		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-		template = env.get_template('NMR_QCSummaryReport.html')
 		filename = os.path.join(destinationPath, dataset.name + '_feature_summary.html')
-
-		f = open(filename,'w')
-		f.write(template.render(item=item,
-								attributes=dataset.Attributes,
-								version=version,
-								failSummary=fail_summary,
-								graphicsPath=graphicsPath))
-		f.close()
-
-		copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+		publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
 
-def _finalReport(dataset, destinationPath=None):
+def _finalReport(dataset,
+				 destinationPath=None,
+				 coveragePDF=False,
+				 autoOpen=False,
+				 graphicsPath=None,
+				 item=None,
+				 template=None):
 	"""
 	Report on final dataset
 	"""
-    
-    # Create save directory if required
-	if destinationPath is not None:
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'final_report')
-		if not os.path.exists(graphicsPath):
-			os.makedirs(graphicsPath)
-
-		# Copy required file for final report
-		print(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'))
-		shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
-					 os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
-	else:
-		saveAs = None
-
-    
-	item = dict()
-	item['Name'] = dataset.name
-	item['Nsamples'] = dataset.noSamples
-	item['Nfeatures'] = dataset.noFeatures
 
 	item['start'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
 	item['end'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
 
-    
     # Table 1: Sample summary
 
     # Generate sample summary
@@ -323,24 +320,11 @@ def _finalReport(dataset, destinationPath=None):
 	# Write HTML if saving
 	##
 	if destinationPath:
-		# Make paths for graphics local not absolute for use in the HTML.
-		for key in item:
-			if os.path.join(destinationPath, 'graphics') in str(item[key]):
-				item[key] = re.sub('.*graphics', 'graphics', item[key])
 
-		# Generate report
-		from jinja2 import Environment, FileSystemLoader
+		if coveragePDF:  # Copy NPC coverage pdf file for final report
+			shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
+							os.path.join(graphicsPath, 'NPC_assay_coverage.pdf'))
+			item['coveragePDF'] = os.path.join(graphicsPath, 'NPC_assay_coverage.pdf')
 
-		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-		template = env.get_template('NMR_FinalSummaryReport.html')
 		filename = os.path.join(destinationPath, dataset.name + '_final_report.html')
-
-		f = open(filename,'w')
-		f.write(template.render(item=item,
-								version=version,
-								sampleSummary=sampleSummary,
-								graphicsPath=graphicsPath)
-								)
-		f.close()
-
-		copyBackingFiles(toolboxPath(),os.path.join(destinationPath, 'graphics'))
+		publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)

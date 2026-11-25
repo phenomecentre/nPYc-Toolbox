@@ -17,8 +17,15 @@ from ..reports._reportUtilities import _generateFeatureFilteringSummary
 from ..__init__ import __version__ as version
 
 
-def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeaturesBy='rsdSP',
-                            destinationPath=None, autoOpen=False, graphicsPath=None, item=None, template=None):
+def _finalReportPeakPantheR(dataset,
+                            labelFeaturesBy='Feature Name',
+                            orderFeaturesBy='rsdSP',
+                            destinationPath=None,
+                            coveragePDF=False,
+                            autoOpen=False,
+                            graphicsPath=None,
+                            item=None,
+                            template=None):
     """
     Summarise different aspects of an MS dataset
 
@@ -58,11 +65,6 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
     if not hasattr(dataset.featureMetadata, orderFeaturesBy):
         raise npycToolboxError(
             'Unable to order features by: ' + orderFeaturesBy + ' as column not present in `dataset.featureMetadata`')
-
-    # Copy required file for final report
-    if destinationPath is not None:
-        shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
-                     os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
 
     # Initial set up
     saveAs = None
@@ -269,7 +271,13 @@ def _finalReportPeakPantheR(dataset, labelFeaturesBy='Feature Name', orderFeatur
 
     # Write report to HTML if saving
     if destinationPath:
-        filename = os.path.join(destinationPath, dataset.name + '_feature_report_peakpanther.html')
+
+        if coveragePDF:  # Copy NPC coverage pdf file for final report
+            shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
+                             os.path.join(graphicsPath, 'NPC_assay_coverage.pdf'))
+            item['coveragePDF'] = os.path.join(graphicsPath, 'NPC_assay_coverage.pdf')
+
+        filename = os.path.join(destinationPath, dataset.name + '_final_report_peakpanther.html')
         publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     return None

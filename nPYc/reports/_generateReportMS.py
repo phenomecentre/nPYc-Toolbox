@@ -34,7 +34,7 @@ def _generateReportMS(dataset, reportType, withExclusions=False,
                       labelFeaturesBy=None, orderFeaturesBy='rsdSP', withArtifactualFiltering=None,
                       destinationPath=None, autoOpen=False,
                       msDataCorrected=None, batch_correction_window=11, logy=False,
-                      colourSamplesBy='Skipped', colourSamplesByType='categorical'):
+                      colourSamplesBy='Skipped', colourSamplesByType='categorical', coveragePDF=False):
     """
     Summarise different aspects of an MS dataset
 
@@ -153,23 +153,26 @@ def _generateReportMS(dataset, reportType, withExclusions=False,
         _batchCorrectionSummaryReport(msData, msDataCorrected, labelFeaturesBy=labelFeaturesBy, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template)
     elif reportType.lower() == 'final report':
         template = env.get_template('MS_FinalSummaryReport.html')
-        _finalReport(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template)
+        _finalReport(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template, coveragePDF=coveragePDF)
     elif (reportType.lower() == 'final report peakpanther'):
         template = env.get_template('MS_peakPantheR_FinalSummaryReport.html')
-        _finalReportPeakPantheR(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template)
+        _finalReportPeakPantheR(msData, labelFeaturesBy=labelFeaturesBy, orderFeaturesBy=orderFeaturesBy, destinationPath=destinationPath, autoOpen=autoOpen, graphicsPath=graphicsPath, item=item, template=template, coveragePDF=coveragePDF)
 
-def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destinationPath=None, autoOpen=False, graphicsPath=None, item=None, template=None):
+def _finalReport(dataset,
+                 labelFeaturesBy=None,
+                 orderFeaturesBy='rsdSP',
+                 destinationPath=None,
+                 coveragePDF=False,
+                 autoOpen=False,
+                 graphicsPath=None,
+                 item=None,
+                 template=None):
     """
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
 
     # Initial set up
     saveAs = None
-
-    # Copy required files for final report
-    if destinationPath is not None:
-        shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
-                     os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
 
     # Define sample masks
     sampleMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
@@ -337,6 +340,12 @@ def _finalReport(dataset, labelFeaturesBy=None, orderFeaturesBy='rsdSP', destina
 
     # Write report to HTML if saving
     if destinationPath:
+
+        if coveragePDF:  # Copy NPC coverage pdf file for final report
+            shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
+                             os.path.join(graphicsPath, 'NPC_assay_coverage.pdf'))
+            item['coveragePDF'] = os.path.join(graphicsPath, 'NPC_assay_coverage.pdf')
+
         filename = os.path.join(destinationPath, dataset.name + '_final_report.html')
         publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 

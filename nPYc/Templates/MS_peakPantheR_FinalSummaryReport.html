@@ -1,7 +1,5 @@
 {% extends "base_QC.html" %}
 
-{% import 'sampleReportChunk.html' as sampleReport %}
-
 {% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
 {% block content %}
@@ -151,12 +149,13 @@
 	</p>
 </div>
 
-<h2>Further Information: Assay Coverage</h2>
+{% if 'coveragePDF' in item %}
+	<h2>Further Information: Assay Coverage</h2>
 
-<div class='content'>
-	<p>Please scroll down for information on the theoretical coverage of NPC assays</p>
-	<embed src="graphics/NPC_assay_coverage.pdf" width="1100" height="700" type="application/pdf">
-</div>
-
+	<div class='content'>
+		<p>Please scroll down for information on the theoretical coverage of NPC assays</p>
+		<embed src="{{ item.coveragePDF }}" width="1100" height="700" type="application/pdf">
+	</div>
+{% endif %}
 
 {% endblock %}
