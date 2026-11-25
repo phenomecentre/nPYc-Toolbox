@@ -215,7 +215,7 @@ class TargetedDataset(Dataset):
 
         # Check the final object is valid and log
         if fileType != 'empty':
-            validDataset = self.validateObject(verbose=False, raiseError=False, raiseWarning=False)
+            validDataset = self.validateObject(verbose=False, raiseError=True, raiseWarning=False)
             if not validDataset['BasicTargetedDataset']:
 
                 raise ValueError('Import Error: The imported dataset does not satisfy the BasicTargetedDataset definition')
