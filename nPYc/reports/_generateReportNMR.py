@@ -112,6 +112,8 @@ def _featureReport(dataset,
 	item['toA_from'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
 	item['toA_to'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
 
+	saveAs = None
+
 	##
 	# Chemical shift registration plot
 	##
@@ -141,7 +143,6 @@ def _featureReport(dataset,
 		saveAs = item['peakWidthBoxplot']
 	else:
 		print('Figure 2: Boxplot of line width values (coloured by sample type)')
-		saveAs = None
 		
 	nPYc.plotting.plotPW(dataset,
 			savePath=saveAs,
@@ -177,8 +178,6 @@ def _featureReport(dataset,
 	else:
 		print('Figure 4: Distribution of all samples at baseline regions (5-95% with outliers flagged)')
 
-		saveAs = None
-
 	if destinationPath:
 		plotBaseline(dataset,
 					savePath=saveAs,
@@ -200,13 +199,13 @@ def _featureReport(dataset,
 		
 	else:
 		print('Figure 5: Distribution of all samples at region surrounding solvent suppresion peak (5-95% with outliers flagged)')
-		saveAs = None
 
 	if destinationPath:
-		plotSolventResonance(dataset,	savePath=saveAs,
-									figureFormat=dataset.Attributes['figureFormat'],
-									dpi=dataset.Attributes['dpi'],
-									figureSize=dataset.Attributes['figureSize'])
+		plotSolventResonance(dataset,
+							 savePath=saveAs,
+							 figureFormat=dataset.Attributes['figureFormat'],
+							 dpi=dataset.Attributes['dpi'],
+							 figureSize=dataset.Attributes['figureSize'])
 	else:
 		figure = plotSolventResonanceInteractive(dataset)
 		iplot(figure)
@@ -221,7 +220,7 @@ def _featureReport(dataset,
 
 	if fail_summary.shape[0] > 0:
 		if not destinationPath:
-			print('Table 1: Summary of samples considered for exclusion')
+			print('Table 1: Samples flagged during QC checks:')
 			display(fail_summary)
 		else:
 			item['failSummary'] = fail_summary
@@ -249,24 +248,18 @@ def _finalReport(dataset,
 	item['start'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
 	item['end'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
 
+	saveAs = None
+
     # Table 1: Sample summary
-
-    # Generate sample summary
-    
 	sampleSummary = _generateSampleReport(dataset, destinationPath=None, returnOutput=True)
-
 	sampleSummary['isFinalReport'] = True
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
-		print('Final Dataset')
-		print('\n' + str(item['Nsamples']) + ' samples')        
-		print(str(item['Nfeatures']) + ' features')     
 		print('\nSample Summary')      
 		print('\nTable 1: Summary of samples present.')
 		display(sampleSummary['Dataset'])
 		print('\nDetails of any missing/excluded study samples given at the end of the report\n')
-
 
 	# Table 2: data processed with these parameters
 	dataParametersTable = pandas.DataFrame(
