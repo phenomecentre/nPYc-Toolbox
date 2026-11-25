@@ -7,7 +7,6 @@ def _copyBackingFiles(toolboxPath, output):
 	import shutil
 
 	# And finaly copy the css over, we're not checking for existance,as we always want the latest moved over.
-	print(os.path.join(toolboxPath, 'Templates', 'npc-main.css'))
 	shutil.copy2(os.path.join(toolboxPath, 'Templates', 'npc-main.css'), os.path.join(output, 'npc-main.css'))
 	shutil.copy2(os.path.join(toolboxPath, 'Templates', 'toolbox_logo.png'), os.path.join(output, 'toolbox_logo.png'))
 

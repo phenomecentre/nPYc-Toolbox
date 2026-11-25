@@ -217,6 +217,8 @@ def _generateSampleReport(dataTrue, withExclusions=False, destinationPath=None, 
 
 	if len(sampleSummary['Missing/excluded SS Details']) == 0:
 		del sampleSummary['Missing/excluded SS Details']
+	else:
+		sampleSummary['Missing/excluded SS Details'] = sampleSummary['Missing/excluded SS Details'][cols]
 
 	# Add 'All Samples' sum to top row of sampleSummary['Dataset']
 	sampleSummary['Dataset'] = pandas.concat([pandas.DataFrame(sampleSummary['Dataset'].sum(axis=0), columns=['All Samples']).transpose(), sampleSummary['Dataset']])

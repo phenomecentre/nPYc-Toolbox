@@ -73,12 +73,6 @@
 		In a global profiling dataset, the a priori identity of these features is unknown, however please see the (assay specific) 'Further Information: Assay Coverage' section below for high level compound class information.</p>
 </div>
 
-
-<!--Multivariate -->
-{% if pcaPlots %}
-	{{ pca.basicPCAReport(pcaPlots) }}
-{% endif %}
-
 <!--Details of any missing/excluded samples-->
 {% if 'Missing/excluded SS Details' in item.sampleSummary %}
 	<h2>Missing/Excluded Study Samples</h2>

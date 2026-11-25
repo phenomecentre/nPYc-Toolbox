@@ -259,7 +259,7 @@ def _finalReport(dataset,
 		print('\nSample Summary')      
 		print('\nTable 1: Summary of samples present.')
 		display(sampleSummary['Dataset'])
-		print('\nDetails of any missing/excluded study samples given at the end of the report\n')
+		print('\nDetails of any missing/excluded study samples given at the end of the report\n\n')
 
 	# Table 2: data processed with these parameters
 	dataParametersTable = pandas.DataFrame(
@@ -277,7 +277,7 @@ def _finalReport(dataset,
 		print('Spectral Data')
 		print('\nTable 2: Data processed with the following criteria:')
 		display(dataParametersTable)
-		print('\nSamples acquired between ' + item['start'] + ' and ' + item['end'] + '\n')
+		print('\nSamples acquired between ' + item['start'] + ' and ' + item['end'] + '\n\n')
 
 	##
 	# Plot spectrum
@@ -304,7 +304,7 @@ def _finalReport(dataset,
 	#  Table 3: Summary of samples excluded
 	##
 	if not destinationPath:
-		if hasattr(sampleSummary, 'Missing/excluded SS Details'):
+		if 'Missing/excluded SS Details' in sampleSummary:
 			print('Missing/Excluded Study Samples')
 			print('\nTable 3: Details of missing/excluded study samples')
 			display(sampleSummary['Missing/excluded SS Details'])

@@ -332,7 +332,7 @@ def _finalReport(dataset,
 
     # Table 3: Summary of samples excluded
     if not destinationPath:
-        if hasattr(sampleSummary, 'Missing/excluded SS Details'):
+        if 'Missing/excluded SS Details' in sampleSummary:
             print('Missing/Excluded Study Samples')
             print('\nTable 3: Details of missing/excluded study samples')
             display(sampleSummary['Missing/excluded SS Details'])

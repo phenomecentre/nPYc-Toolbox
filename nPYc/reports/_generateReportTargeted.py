@@ -723,7 +723,7 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 	# Table: Summary of missing/excluded study samples
 	if not destinationPath:
-		if hasattr(sampleSummary, 'Missing/excluded SS Details'):
+		if 'Missing/excluded SS Details' in sampleSummary:
 			print('Missing/Excluded Study Samples')
 			display(sampleSummary['Missing/excluded SS Details'])
 
@@ -972,7 +972,7 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 	# Table 3: Summary of samples excluded
 	if not destinationPath:
-		if hasattr(sampleSummary, 'Missing/excluded SS Details'):
+		if 'Missing/excluded SS Details' in sampleSummary:
 			print('Missing/Excluded Study Samples')
 			print('\nTable 4: Details of missing/excluded study samples')
 			display(sampleSummary['Missing/excluded SS Details'])
