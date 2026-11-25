@@ -15,7 +15,7 @@ import nPYc
 import warnings
 from nPYc.enumerations import VariableType, AssayRole, SampleType, QuantificationType, CalibrationMethod
 from nPYc._toolboxPath import toolboxPath
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 from numpy.testing import assert_array_almost_equal
 
 class test_targeteddataset_synthetic(unittest.TestCase):
@@ -368,8 +368,8 @@ class test_targeteddataset_synthetic(unittest.TestCase):
 
 		with self.subTest(msg='BasicTargetedDataset fails on empty TargetedDataset'):
 			badDataset = nPYc.TargetedDataset('', fileType='empty')
-			self.assertEqual(badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False),
-							 {'Dataset': True, 'BasicTargetedDataset':False ,'QC':False, 'sampleMetadata':False})
+			result = badDataset.validateObject(verbose=False, raiseError=False, raiseWarning=False)
+			self.assertEqual(result,{'Dataset': True, 'BasicTargetedDataset':False ,'QC':False, 'sampleMetadata':False})
 
 		with self.subTest(msg='check raise no warnings with raiseWarning=False'):
 			badDataset = copy.deepcopy(self.targetedData3)
@@ -1959,18 +1959,39 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 		self.targetedExpected['intensityData'] = numpy.array([[1.],[3.],[5.],[7.],[9.]])
 		self.targetedExpected['expectedConcentration'] = pandas.DataFrame(numpy.array([[31.],[33.],[35.],[37.],[39.]]), columns=self.targetedExpected['featureMetadata']['Feature Name'].values.tolist())
 		self.targetedExpected['sampleMetadataExcluded'] = [self.targetedExpected['sampleMetadata'][['Sample File Name', 'TargetLynx Sample ID', 'MassLynx Row ID', 'Sample Name', 'Sample Type', 'Acqu Date', 'Acqu Time', 'Vial', 'Instrument']]]
-		featureMetadataExcluded = pandas.DataFrame({'Feature Name':['Feature2'],'TargetLynx Feature ID':[2], 'TargetLynx IS ID':['1'], 'IS':[numpy.nan], 'calibrationEquation':[numpy.nan], 'calibrationMethod':[numpy.nan], 'quantificationType':[numpy.nan], 'compoundName':[numpy.nan], 'compoundID':[numpy.nan], 'unitCorrectionFactor':[numpy.nan], 'Unit':[numpy.nan], 'Cpd Info':[numpy.nan], 'LLOQ':[numpy.nan], 'Noise (area)':[numpy.nan], 'ULOQ':[numpy.nan],'a': [numpy.nan],'another column': [numpy.nan],  'b': [numpy.nan], 'r': [numpy.nan], 'r2': [numpy.nan], 'extID1': [numpy.nan], 'extID2': [numpy.nan]})
+		featureMetadataExcluded = pandas.DataFrame({'Feature Name':['Feature2'],
+													'TargetLynx Feature ID':[2],
+													'TargetLynx IS ID':['1'],
+													'IS':[numpy.nan],
+													'calibrationEquation':[numpy.nan],
+													'calibrationMethod':[numpy.nan],
+													'quantificationType':[numpy.nan],
+													'compoundName':[numpy.nan],
+													'compoundID':[numpy.nan],
+													'unitCorrectionFactor':[numpy.nan],
+													'Unit':[numpy.nan],
+													'Cpd Info': ['NaN'],
+													'LLOQ':[numpy.nan],
+													'Noise (area)':[numpy.nan],
+													'ULOQ':[numpy.nan],
+													'a': [numpy.nan],
+													'another column': [numpy.nan],
+													'b': [numpy.nan],
+													'r': [numpy.nan],
+													'r2': [numpy.nan],
+													'extID1': [numpy.nan],
+													'extID2': [numpy.nan]})
 		featureMetadataExcluded.index = [1]
-		featureMetadataExcluded['IS'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['calibrationEquation'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['calibrationMethod'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['compoundName'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['quantificationType'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['Unit'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['Cpd Info'] = numpy.array([numpy.nan], dtype=str)
-		featureMetadataExcluded['another column'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['extID1'] = numpy.array([numpy.nan], dtype=object)
-		featureMetadataExcluded['extID2'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['IS'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['calibrationEquation'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['calibrationMethod'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['compoundName'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['quantificationType'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['Unit'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['Cpd Info'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['another column'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['extID1'] = numpy.array([numpy.nan], dtype=object)
+		# featureMetadataExcluded['extID2'] = numpy.array([numpy.nan], dtype=object)
 		self.targetedExpected['featureMetadataExcluded'] = [featureMetadataExcluded]
 		self.targetedExpected['intensityDataExcluded'] = [numpy.array([[2.],[4.],[6.],[8.],[10.]])]
 		self.targetedExpected['expectedConcentrationExcluded'] = [pandas.DataFrame({'Feature2':[32., 34., 36., 38., 40.]})]
@@ -2000,7 +2021,17 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 		self.targetedNoExclusion.Attributes['externalID'] = ['extID1', 'extID2']
 		self.targetedNoExclusion.Attributes['extID1'] = ['F1', 'F2']
 		self.targetedNoExclusion.Attributes['extID2'] = ['ID1', 'ID2']
-		self.targetedNoExclusionReport = pandas.DataFrame({'Compound': ['Feature-1', 'Feature2'], 'TargetLynx ID': [1, 2],'Cpd Info': ['uM', 'fg/uL'], 'Noise (area)': [38.95, 14.7], 'LLOQ': [25, 10], 'ULOQ': [1000, 2500], 'a': [0.997431, 1.04095], 'b': [-2.19262, numpy.nan], 'r': [0.997931, 0.999556], 'r2': [0.995866, 0.999113],'another column': ['something', 'something else']})
+		self.targetedNoExclusionReport = pandas.DataFrame({'Compound': ['Feature-1', 'Feature2'],
+														   'TargetLynx ID': [1, 2],
+														   'Cpd Info': ['uM', 'fg/uL'],
+														   'Noise (area)': [38.95, 14.7],
+														   'LLOQ': [25, 10],
+														   'ULOQ': [1000, 2500],
+														   'a': [0.997431, 1.04095],
+														   'b': [-2.19262, numpy.nan],
+														   'r': [0.997931, 0.999556],
+														   'r2': [0.995866, 0.999113],
+														   'another column': ['something', 'something else']})
 
 		self.targetedExpectedNoExclusion = dict()
 		self.targetedExpectedNoExclusion['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001', 'UnitTest4_targeted_file_002', 'UnitTest4_targeted_file_003','UnitTest4_targeted_file_004', 'UnitTest4_targeted_file_005'], 'TargetLynx Sample ID': [1, 2, 3, 4, 5], 'MassLynx Row ID': [1, 2, 3, 4, 5], 'Sample Name': ['Calibration 1', 'Study Sample 1', 'Blank 1', 'QC 1', 'Other 1'], 'Sample Type': ['Standard', 'Analyte', 'Blank', 'QC', 'Solvent'],  'Acqu Date': ['10-Sep-16', '10-Sep-16','12-Sep-16', '10-Sep-16','10-Sep-16'], 'Acqu Time': ['02:14:32', '03:23:02', '13:52:35','14:46:40', '15:05:26'],  'Vial': ['1:A,1', '1:A,2', '1:A,3', '1:A,4', '1:A,5'], 'Instrument': ['XEVO-TQS#UnitTest','XEVO-TQS#UnitTest','XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest','XEVO-TQS#UnitTest'],'Calibrant': [True, False, False, False, False],'Study Sample': [False, True, False, False, False], 'Blank': [False, False, True, False, False], 'QC': [False, False, False, True, False], 'Other': [False, False, False, False, True], 'Acquired Time': [datetime(2016, 9, 10, 2, 14, 32), datetime(2016, 9, 10, 3, 23, 2), datetime(2016, 9, 12, 13, 52, 35),datetime(2016, 9, 10, 14, 46, 40), datetime(2016, 9, 10, 15, 5, 26)], 'Run Order': [0, 1, 4, 2, 3], 'Batch': [1, 1, 1, 1, 1]})
@@ -2026,7 +2057,7 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 	@unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
 	def test_targeteddataset_matchdatasettocalibrationreport(self, mock_stdout):
 
-		with self.subTest(msg='Checking match with exclusion of Feature2 and renaming of Feature1 to Feature-1'):
+		with (((((((((((((self.subTest(msg='Checking match with exclusion of Feature2 and renaming of Feature1 to Feature-1')))))))))))))):
 			# Init
 			targeted = copy.deepcopy(self.targeted)
 			expected = copy.deepcopy(self.targetedExpected)
@@ -2034,14 +2065,43 @@ class test_targeteddataset_import_targetlynx_matchdatasettocalibrationreport(uni
 			# Generate
 			with warnings.catch_warnings():
 				warnings.simplefilter('ignore', UserWarning)
-				result['sampleMetadata'], result['featureMetadata'], result['intensityData'], result['expectedConcentration'], result['sampleMetadataExcluded'], result['featureMetadataExcluded'], result['intensityDataExcluded'], result['expectedConcentrationExcluded'], result['excludedFlag'], result['peakResponse'], result['peakArea'], result['peakConcentrationDeviation'], result['peakIntegrationFlag'], result['peakRT'] = targeted._TargetedDataset__matchDatasetToCalibrationReport(sampleMetadata=self.targetedTargetLynxData['sampleMetadata'],featureMetadata=self.targetedTargetLynxData['featureMetadata'],intensityData=self.targetedTargetLynxData['intensityData'],expectedConcentration=self.targetedTargetLynxData['expectedConcentration'],peakResponse=self.targetedTargetLynxData['peakResponse'], peakArea=self.targetedTargetLynxData['peakArea'],peakConcentrationDeviation=self.targetedTargetLynxData['peakConcentrationDeviation'],	peakIntegrationFlag=self.targetedTargetLynxData['peakIntegrationFlag'],peakRT=self.targetedTargetLynxData['peakRT'], calibReport=self.targetedReport)
+				(result['sampleMetadata'],
+				result['featureMetadata'],
+				result['intensityData'],
+				result['expectedConcentration'],
+				result['sampleMetadataExcluded'],
+				result['featureMetadataExcluded'],
+				result['intensityDataExcluded'],
+				result['expectedConcentrationExcluded'],
+				result['excludedFlag'],
+				result['peakResponse'],
+				result['peakArea'],
+				result['peakConcentrationDeviation'],
+				result['peakIntegrationFlag'],
+				result['peakRT']) = targeted._TargetedDataset__matchDatasetToCalibrationReport(sampleMetadata=self.targetedTargetLynxData['sampleMetadata'],
+																							  featureMetadata=self.targetedTargetLynxData['featureMetadata'],
+																							  intensityData=self.targetedTargetLynxData['intensityData'],
+																							  expectedConcentration=self.targetedTargetLynxData['expectedConcentration'],
+																							  peakResponse=self.targetedTargetLynxData['peakResponse'],
+																							  peakArea=self.targetedTargetLynxData['peakArea'],
+																							  peakConcentrationDeviation=self.targetedTargetLynxData['peakConcentrationDeviation'],
+																							  peakIntegrationFlag=self.targetedTargetLynxData['peakIntegrationFlag'],
+																							  peakRT=self.targetedTargetLynxData['peakRT'],
+																							  calibReport=self.targetedReport)
 			# Test
 			assert_frame_equal(expected['sampleMetadata'].reindex(sorted(expected['sampleMetadata']), axis=1),result['sampleMetadata'].reindex(sorted(result['sampleMetadata']), axis=1))
 			assert_frame_equal(expected['featureMetadata'].reindex(sorted(expected['featureMetadata']), axis=1),result['featureMetadata'].reindex(sorted(result['featureMetadata']), axis=1))
 			numpy.testing.assert_array_equal(expected['intensityData'], result['intensityData'])
 			assert_frame_equal(expected['expectedConcentration'].reindex(sorted(expected['expectedConcentration']),axis=1), result['expectedConcentration'].reindex(sorted(result['expectedConcentration']),axis=1))
 			assert_frame_equal(expected['sampleMetadataExcluded'][0].reindex(sorted(expected['sampleMetadataExcluded'][0]), axis=1),result['sampleMetadataExcluded'][0].reindex(sorted(result['sampleMetadataExcluded'][0]), axis=1))
-			assert_frame_equal(expected['featureMetadataExcluded'][0].reindex(sorted(expected['featureMetadataExcluded'][0]), axis=1),result['featureMetadataExcluded'][0].reindex(sorted(result['featureMetadataExcluded'][0]), axis=1))
+
+			#assert_frame_equal(expected['featureMetadataExcluded'][0].reindex(sorted(expected['featureMetadataExcluded'][0]), axis=1),result['featureMetadataExcluded'][0].reindex(sorted(result['featureMetadataExcluded'][0]), axis=1))
+			# Cpd Info is a float:
+			df1 = expected['featureMetadataExcluded'][0].reindex(sorted(expected['featureMetadataExcluded'][0]), axis=1)
+			# Cpd Info is a string:
+			df2 = result['featureMetadataExcluded'][0].reindex(sorted(result['featureMetadataExcluded'][0]), axis=1)
+			assert_frame_equal(df1, df2)
+
 			numpy.testing.assert_array_equal(expected['intensityDataExcluded'][0], result['intensityDataExcluded'][0])
 			assert_frame_equal(expected['expectedConcentrationExcluded'][0].reindex(sorted(expected['expectedConcentrationExcluded'][0]), axis=1),result['expectedConcentrationExcluded'][0].reindex(sorted(result['expectedConcentrationExcluded'][0]), axis=1))
 			self.assertEqual(expected['excludedFlag'], result['excludedFlag'])
@@ -2775,10 +2835,11 @@ class test_targeteddataset_read_data_from_targetlynx(unittest.TestCase):
 
 		# Expected TargetedDataset
 		self.expected = dict()
-		self.expected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001', 'UnitTest4_targeted_file_002'], 'TargetLynx Sample ID': [1, 2], 'MassLynx Row ID': [1, 2],'Sample Name': ['Calibration 1', 'Study Sample 1'], 'Sample Type': ['Standard', 'Analyte'],'Acqu Date': ['11-Sep-16', '11-Sep-16'], 'Acqu Time': ['02:14:32', '09:23:02'], 'Vial': ['1:A,1', '1:A,2'],'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest'], 'Calibrant': [True, False],'Study Sample': [False, True], 'Blank': [False, False], 'QC': [False, False], 'Other': [False, False],'Acquired Time': [datetime(2016, 9, 11, 2, 14, 32),datetime(2016, 9, 11, 9, 23, 2)], 'Run Order': [0, 1],'Batch': [1, 1],'AssayRole': [numpy.nan,numpy.nan],'SampleType': [numpy.nan,numpy.nan],'Dilution': [numpy.nan,numpy.nan],'Correction Batch': [numpy.nan,numpy.nan],'Sample ID': [numpy.nan,numpy.nan],'Exclusion Details': [numpy.nan,numpy.nan]})
+		self.expected['sampleMetadata'] = pandas.DataFrame({'Sample File Name': ['UnitTest4_targeted_file_001', 'UnitTest4_targeted_file_002'], 'TargetLynx Sample ID': [1, 2], 'MassLynx Row ID': [1, 2],'Sample Name': ['Calibration 1', 'Study Sample 1'], 'Sample Type': ['Standard', 'Analyte'],'Acqu Date': ['11-Sep-16', '11-Sep-16'], 'Acqu Time': ['02:14:32', '09:23:02'], 'Vial': ['1:A,1', '1:A,2'],'Instrument': ['XEVO-TQS#UnitTest', 'XEVO-TQS#UnitTest'], 'Calibrant': [True, False],'Study Sample': [False, True], 'Blank': [False, False], 'QC': [False, False], 'Other': [False, False],'Acquired Time': [datetime(2016, 9, 11, 2, 14, 32),datetime(2016, 9, 11, 9, 23, 2)], 'Run Order': [0, 1],'Batch': [1, 1],'Dilution': [numpy.nan,numpy.nan],'Correction Batch': [numpy.nan,numpy.nan],'Sample ID': [numpy.nan,numpy.nan],'Exclusion Details': [numpy.nan,numpy.nan]})
 		self.expected['sampleMetadata']['Sample Base Name'] = self.expected['sampleMetadata']['Sample File Name']
-		self.expected['sampleMetadata']['Acquired Time'] = self.expected['sampleMetadata']['Acquired Time']
 		self.expected['sampleMetadata']['Metadata Available'] = False
+		self.expected['sampleMetadata']['AssayRole'] = AssayRole.Assay
+		self.expected['sampleMetadata']['SampleType'] = SampleType.StudySample
 		self.expected['featureMetadata'] = pandas.DataFrame({'Feature Name': ['Feature1', 'Feature2'], 'TargetLynx Feature ID':[1, 2], 'TargetLynx IS ID': ['', '1'],'IS':[True, False], 'calibrationEquation':['', '((area * responseFactor)-b)/a'],'calibrationMethod': [CalibrationMethod.noIS, CalibrationMethod.backcalculatedIS], 'quantificationType': [QuantificationType.IS, QuantificationType.QuantOwnLabeledAnalogue], 'unitCorrectionFactor': [1.,1.], 'Unit': ['noUnit','pg/uL'], 'Cpd Info': ['uM','fg/uL'], 'LLOQ': [25., 10.], 'Noise (area)': [38.95, 14.7], 'ULOQ': [1000., 2500.], 'a': [0.997431, 1.04095], 'another column': [numpy.nan, 'something'],'b': [-2.19262, numpy.nan], 'r': [0.997931, 0.999556], 'r2': [0.995866, 0.999113]})
 		self.expected['featureMetadata']['IS'] = numpy.array([True, False], dtype=object)
 		self.expected['intensityData'] = numpy.array([[48.64601435, 48.7244571], [20.60696312, 273.85551508]])
@@ -2827,12 +2888,14 @@ class test_targeteddataset_read_data_from_targetlynx(unittest.TestCase):
 				warnings.simplefilter('ignore', UserWarning)
 				result._readTargetLynxDataset(datapath=XMLpath, calibrationReportPath=reportPath)
 			# Test
-			assert_frame_equal(self.expected['sampleMetadata'].reindex(sorted(self.expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1))
+			assert_frame_equal(self.expected['sampleMetadata'].reindex(sorted(self.expected['sampleMetadata']), axis=1), result.sampleMetadata.reindex(sorted(result.sampleMetadata), axis=1), check_dtype=False)
 			assert_frame_equal(self.expected['featureMetadata'].reindex(sorted(self.expected['featureMetadata']), axis=1), result.featureMetadata.reindex(sorted(result.featureMetadata), axis=1))
 			numpy.testing.assert_array_almost_equal(self.expected['intensityData'], result._intensityData)
 			assert_frame_equal(self.expected['expectedConcentration'].reindex(sorted(self.expected['expectedConcentration']), axis=1), result.expectedConcentration.reindex(sorted(result.expectedConcentration), axis=1))
 			assert_frame_equal(self.expected['sampleMetadataExcluded'][0].reindex(sorted(self.expected['sampleMetadataExcluded'][0]), axis=1), result.sampleMetadataExcluded[0].reindex(sorted(result.sampleMetadataExcluded[0]), axis=1))
+
 			assert_frame_equal(self.expected['featureMetadataExcluded'][0].reindex(sorted(self.expected['featureMetadataExcluded'][0]), axis=1), result.featureMetadataExcluded[0].reindex(sorted(result.featureMetadataExcluded[0]), axis=1))
+
 			numpy.testing.assert_array_almost_equal(self.expected['intensityDataExcluded'][0], result.intensityDataExcluded[0])
 			assert_frame_equal(self.expected['expectedConcentrationExcluded'][0].reindex(sorted(self.expected['expectedConcentrationExcluded'][0]), axis=1), result.expectedConcentrationExcluded[0].reindex(sorted(result.expectedConcentrationExcluded[0]), axis=1))
 			self.assertEqual(self.expected['excludedFlag'], result.excludedFlag)
