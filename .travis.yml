@@ -1,18 +1,16 @@
 language: python
 python:
-  - "3.6"
-  - "3.7"
-  - "3.8"
+  - "3.11"
+  - "3.13"
 
-matrix:
-  allow_failures:
-    - python: "3.6"
+#matrix:
+#  allow_failures:
+#    - python: "3.6"
 
 branches:
   only:
   - master
   - develop
-  - py3.8-bugfixes
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/ # Build releases tagged in the form `v1.2.3`
 
 # command to install dependencies
@@ -44,4 +42,4 @@ deploy:
   on:
     branch: master
     tags: true
-    python: 3.8
+    python: 3.13
