@@ -401,11 +401,13 @@ class TargetedDataset(Dataset):
         self.peakInfo = {'peakResponse': peakResponse, 'peakArea': peakArea, 'peakConcentrationDeviation': peakConcentrationDeviation, 'peakIntegrationFlag': peakIntegrationFlag, 'peakRT': peakRT}
 
         # add Dataset mandatory columns
-        self.sampleMetadata['AssayRole']         = AssayRole.Assay
-        self.sampleMetadata['SampleType']        = SampleType.StudySample
+        self.sampleMetadata['AssayRole']         = AssayRole.UnknownRole # Assay
+        self.sampleMetadata['SampleType']        = SampleType.UnknownType # StudySample
         self.sampleMetadata['Dilution']          = numpy.nan
         self.sampleMetadata['Correction Batch']  = numpy.nan
-        self.sampleMetadata['Sample ID']       =  numpy.nan
+        self.sampleMetadata['Sample ID']         =  numpy.nan #'' # was numpy.nan Caro?
+        self.sampleMetadata['Sample ID'] = self.sampleMetadata['Sample ID'].astype(str)
+        #self.sampleMetadata['Subject ID']        = ''  # added this Caro?
         self.sampleMetadata['Exclusion Details'] = numpy.nan
 
         # clear SOP parameters not needed after __matchDatasetToCalibrationReport
@@ -2415,16 +2417,15 @@ class TargetedDataset(Dataset):
                     # end self.filePath list
             # end self.filePath
 
-            ## self._intensityData
             # Use _intensityData as size reference for all future tables
-            if self._intensityData.all() != numpy.array(None).all():
-            #if self._intensityData is not None and self._intensityData.size > 0:
+            try:
                 refNumSamples = self._intensityData.shape[0]
                 refNumFeatures = self._intensityData.shape[1]
                 if verbose:
                     print('---- self._intensityData used as size reference ----')
                     print('\t' + str(refNumSamples) + ' samples, ' + str(refNumFeatures) + ' features')
-            # end self._intensityData
+            except IndexError:
+                refNumSamples = None
 
             ## self.sampleMetadata
             # number of samples
@@ -2482,6 +2483,8 @@ class TargetedDataset(Dataset):
                 failureListQC = conditionTest(condition, success, failure, failureListQC, verbose, raiseError, raiseWarning, exception=TypeError(failure))
 
                 ## Sample metadata fields
+                """
+                Caroline Nov 2026 - I don't think Subject ID should be a requirement?
                 # ['Subject ID']
                 condition = ('Subject ID' in self.sampleMetadata.columns)
                 success = 'Check self.sampleMetadata[\'Subject ID\'] exists:\tOK'
@@ -2494,11 +2497,18 @@ class TargetedDataset(Dataset):
                     failure = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tFailure, \'self.sampleMetadata[\'Subject ID\']\' is ' + str(type(self.sampleMetadata['Subject ID'][0]))
                     failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
                 # end self.sampleMetadata['Subject ID']
-                # sampleMetadata['Sample ID'] is str
-                condition = (isinstance(self.sampleMetadata['Sample ID'].dtype, pandas.StringDtype))
-                success = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tOK'
-                failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sample ID\']\' is ' + str(type(self.sampleMetadata['Sample ID'][0]))
-                failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
+                """
+                # ['Sample ID']
+                condition = ('Sample ID' in self.sampleMetadata.columns)
+                success = 'Check self.sampleMetadata[\'Sample ID\'] exists:\tOK'
+                failure = 'Check self.sampleMetadata[\'Sample ID\'] exists:\tFailure, \'self.sampleMetadata\' lacks a \'Sample ID\' column'
+                failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=LookupError(failure))
+                if condition:
+                    # sampleMetadata['Sample ID'] is str
+                    condition = (isinstance(self.sampleMetadata['Sample ID'].dtype, pandas.StringDtype))
+                    success = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tOK'
+                    failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sample ID\']\' is ' + str(type(self.sampleMetadata['Sample ID'][0]))
+                    failureListMeta = conditionTest(condition, success, failure, failureListMeta, verbose, raiseError, raiseWarning, exception=TypeError(failure))
             # end self.sampleMetadata number of samples
             # end self.sampleMetadata
 
