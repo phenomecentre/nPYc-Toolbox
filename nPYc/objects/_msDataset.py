@@ -10,19 +10,15 @@ import re
 import warnings
 import numbers
 from datetime import datetime, timedelta
-import logging
 import copy
 import networkx
 from .._toolboxPath import toolboxPath
 from ._dataset import Dataset
-from ..utilities import rsd
+from ..utilities import rsd, inferSampleClass
 from ..utilities._internal import _vcorrcoef
 from ..utilities.extractParams import extractParams
 from ..enumerations import VariableType, DatasetLevel, AssayRole, SampleType
-from ..utilities import removeTrailingColumnNumbering
 from ..utilities._filters import blankFilter
-from ..utilities.normalisation._normaliserABC import Normaliser
-from ..utilities.normalisation._nullNormaliser import NullNormaliser
 from ..utilities._errorHandling import npycToolboxError
 
 
@@ -82,7 +78,6 @@ class MSDataset(Dataset):
 		else:
 			raise NotImplementedError("Unfortunately '%s' is not yet recognised as an input format to nPYc.MSDataset." % fileType)
 
-		self.corrExclusions = None
 		self._correlationToDilution = numpy.array(None)
 		try:
 			self.Attributes['artifactualFilter'] = (self.Attributes['artifactualFilter'] == 'True')
@@ -155,10 +150,10 @@ class MSDataset(Dataset):
 			(self.name, self.intensityData, self.featureMetadata, self.sampleMetadata) = self._initialiseFromCSV(
 				datapath)
 			if 'm/z' in self.featureMetadata.columns:
-				self.featureMetadata['m/z'] = self.featureMetadata['m/z'].apply(pandas.to_numeric, errors='ignore')
+				self.featureMetadata['m/z'] = self.featureMetadata['m/z'].apply(pandas.to_numeric, errors='coerce')
 			if 'Retention Time' in self.featureMetadata.columns:
 				self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].apply(pandas.to_numeric,
-																									  errors='ignore')
+																									  errors='coerce')
 			self.VariableType = VariableType.Discrete
 		elif fileType == 'empty':
 			# Lets us build an empty object for testing &c
@@ -166,7 +161,7 @@ class MSDataset(Dataset):
 
 
 		self._intensityData = self._intensityData.astype(float)
-		self.featureMetadata['Exclusion Details'] = None
+		self.featureMetadata['Exclusion Details'] = None #= ''
 		self.featureMetadata['User Excluded'] = False
 		self.featureMetadata[['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
 							  'artifactualFilter']] = pandas.DataFrame([[True, True, True, True, True]],
@@ -178,7 +173,7 @@ class MSDataset(Dataset):
 		self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(),
-									   '%s instance inited, with %d samples, %d features, from \%s\'' % (
+									   r'%s instance inited, with %d samples, %d features, from \%s\'' % (
 									   self.__class__.__name__, self.noSamples, self.noFeatures, datapath)])
 
 	# When making a deepcopy, all artifactual linkage are reset
@@ -205,9 +200,6 @@ class MSDataset(Dataset):
 		:return: Vector of feature correlations to dilution
 		:rtype: numpy.ndarray
 		"""
-		if self.corrExclusions is None:
-			self.corrExclusions = copy.deepcopy(self.sampleMask)
-			self.__corrExclusions = copy.deepcopy(self.corrExclusions)
 
 		lrMask = numpy.logical_and(self.sampleMetadata['SampleType'] == SampleType.StudyPool,
 								   self.sampleMetadata['AssayRole'] == AssayRole.LinearityReference)
@@ -215,24 +207,27 @@ class MSDataset(Dataset):
 		if sum(lrMask) == 0:
 			self._correlationToDilution = numpy.ones(shape=self.featureMask.shape)
 			print('No StudyPool samples defined with AssayRole equal to LinearityReference')
+
 		else:
+			self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'])
+			self.__corrMethod = self.Attributes['corrMethod']
 
-			if not self._correlationToDilution.any():
-
-				self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'],
-																		 exclusions=self.corrExclusions)
-
-				self.__corrMethod = self.Attributes['corrMethod']
-				self.__corrExclusions = self.corrExclusions
-
-			elif (self.__corrMethod != self.Attributes['corrMethod']) | (
-					numpy.array_equal(self.__corrExclusions, self.corrExclusions) == False):
-
-				self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'],
-																		 exclusions=self.corrExclusions)
-
-				self.__corrMethod = self.Attributes['corrMethod']
-				self.__corrExclusions = copy.deepcopy(self.corrExclusions)
+			# if not self._correlationToDilution.any():
+			#
+			# 	self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'],
+			# 															 exclusions=self.corrExclusions)
+			#
+			# 	self.__corrMethod = self.Attributes['corrMethod']
+			# 	#self.__corrExclusions = self.corrExclusions
+			#
+			# elif (self.__corrMethod != self.Attributes['corrMethod']) | (
+			# 		numpy.array_equal(self.__corrExclusions, self.corrExclusions) == False):
+			#
+			# 	self._correlationToDilution = self.__correlateToDilution(method=self.Attributes['corrMethod'],
+			# 															 exclusions=self.corrExclusions)
+			#
+			# 	self.__corrMethod = self.Attributes['corrMethod']
+			# 	self.__corrExclusions = copy.deepcopy(self.corrExclusions)
 
 		return self._correlationToDilution
 
@@ -423,12 +418,6 @@ class MSDataset(Dataset):
 				raise TypeError(
 					'overlapThresholdArtifactual must be a number , %s provided' % (type(overlapThresholdArtifactual)))
 
-		# under development
-		# if aggregateRedundantFeatures is True:
-		# if self.VariableType != VariableType.Discrete:
-		#		raise TypeError('aggregateRedundantFeatures is only applicable to MSDataset objects containing data of type \'Discrete\'.')
-		#	self.Attributes['overlapThresholdArtifactual'] = overlapThresholdArtifactual
-
 		if filterFeatures:
 
 			self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False,
@@ -441,7 +430,11 @@ class MSDataset(Dataset):
 												   'deltaMzArtifactual': None}
 
 			# Keep all manual feature exclusions and regenerate the proper tests
-			featureMask = numpy.copy(~self.featureMetadata['User Excluded'].values)
+			#featureMask = numpy.copy(~self.featureMetadata['User Excluded'].values)
+
+			# I think that it should be using the self.featureMask as a starting point, the 'User Excluded' values are
+			# never set from what I can see!
+			featureMask = numpy.copy(self.featureMask)
 
 			if featureFilters['rsdFilter'] is True:
 				self.featureMetadata['rsdFilter'] = (self.rsdSP <= rsdThreshold)
@@ -473,13 +466,12 @@ class MSDataset(Dataset):
 				featureMask &= self.featureMetadata['correlationToDilutionFilter'].values
 
 				self.Attributes['featureFilters']['correlationToDilutionFilter'] = True
-				self.Attributes['filterParameters']['corThreshold'] = correlationThreshold
+				self.Attributes['filterParameters']['corrThreshold'] = correlationThreshold
 				self.Attributes['filterParameters']['corrMethod'] = self.Attributes['corrMethod']
 
 				# Only replace self.featureMetadata['correlationToDilution'] if self.correlationToDilution is not empty
 				# This is for the case when we want to plot C2D but have excluded SRD samples
 				if (numpy.all(self._correlationToDilution != numpy.ones(shape=self.featureMask.shape))):
-					print('changing c2d values')
 					self.featureMetadata['correlationToDilution'] = copy.deepcopy(self.correlationToDilution)
 
 			# Save for reporting
@@ -530,7 +522,7 @@ class MSDataset(Dataset):
 										   ', '.join("{!s}={!r}".format(key, val) for (key, val) in kwargs.items()))])
 
 
-	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, filetype='Waters .raw', **kwargs):
+	def addSampleInfo(self, descriptionFormat=None, filePath=None, filenameSpec=None, filetype='Waters .raw', dilutionProtocol='DilutionSeries', **kwargs):
 		"""
 		Load additional metadata and map it in to the :py:attr:`~Dataset.sampleMetadata` table.
 
@@ -554,7 +546,7 @@ class MSDataset(Dataset):
 		if descriptionFormat == 'Filenames':
 			if filenameSpec is None:  # Use spec from SOP
 				filenameSpec = self.Attributes['filenameSpec']
-			self._getSampleMetadataFromFilename(filenameSpec)
+			self._getSampleMetadataFromFilename(filenameSpec, dilutionProtocol=dilutionProtocol)
 		elif descriptionFormat == 'Infer Batches':
 			self._inferBatches()
 		else:
@@ -601,11 +593,11 @@ class MSDataset(Dataset):
 
 		# self.initialiseMasks()
 
-		self.sampleMetadata['AssayRole'] = None  # AssayRole.Assay
-		self.sampleMetadata['SampleType'] = None  # SampleType.StudySample
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
+		self.sampleMetadata['SampleType'] = SampleType.UnknownType
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		self.Attributes['Log'].append([datetime.now(), 'Progenesis QI dataset loaded from %s' % (path)])
 
@@ -665,11 +657,11 @@ class MSDataset(Dataset):
 
 		# self.initialiseMasks()
 
-		self.sampleMetadata['AssayRole'] = None  # AssayRole.Assay
-		self.sampleMetadata['SampleType'] = None  # SampleType.StudySample
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
+		self.sampleMetadata['SampleType'] = SampleType.UnknownType
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		self.Attributes['Log'].append([datetime.now(), 'MZmine dataset loaded from %s' % (path)])
 
@@ -755,9 +747,9 @@ class MSDataset(Dataset):
 
 		self.sampleMetadata['Run Order'] = injection_order
 		self.sampleMetadata['Correction Batch'] = batch_id
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = True
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		self.Attributes['Log'].append([datetime.now(), 'MS-DIAL dataset loaded from %s' % (path)])
 
@@ -818,12 +810,11 @@ class MSDataset(Dataset):
 		self.featureMetadata.drop(labels=['Feature Name'], axis=1, inplace=True)
 		self.featureMetadata.insert(0, 'Feature Name', name)
 
-		self.sampleMetadata['AssayRole'] = None  # AssayRole.Assay
-		self.sampleMetadata['SampleType'] = None  # SampleType.StudySample
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
+		self.sampleMetadata['SampleType'] = SampleType.UnknownType
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -894,9 +885,9 @@ class MSDataset(Dataset):
 
 		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
 		self.sampleMetadata['SampleType'] = SampleType.UnknownType
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -973,11 +964,11 @@ class MSDataset(Dataset):
 		self.featureMetadata['Retention Time'] = self.featureMetadata['Retention Time'].astype(float)
 		self.featureMetadata['m/z'] = self.featureMetadata['m/z'].astype(float)
 
-		self.sampleMetadata['AssayRole'] = None  # AssayRole.Assay
-		self.sampleMetadata['SampleType'] = None  # SampleType.StudySample
-		self.sampleMetadata['Dilution'] = 100
+		self.sampleMetadata['AssayRole'] = AssayRole.UnknownRole
+		self.sampleMetadata['SampleType'] = SampleType.UnknownType
+		self.sampleMetadata['Dilution'] = 100.0
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -1010,7 +1001,7 @@ class MSDataset(Dataset):
 
 		self.featureMetadata = pandas.DataFrame(numpy.vstack([featureMetadata[c] for c in featureMetadata.keys()]).T,
 												columns=featureMetadata.keys())
-		self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'])
+		self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'], errors='coerce')
 		##
 		# Sample info
 		##
@@ -1018,13 +1009,21 @@ class MSDataset(Dataset):
 												usecols=range(noSampleParams + 1))
 
 		# If there are multiple 'LOD (calc.) ' strings we have several sheets concatenated.
-		sampleMask = self.sampleMetadata['Measurement Time'].str.match('LOD \(calc\.\).+').values
+		sampleMask = self.sampleMetadata['Measurement Time'].str.match(r'LOD \(calc\.\).+').values
 
 		# Take the highest overall LOD
-		newLOD = numpy.amax(self._intensityData[sampleMask, :], axis=0)
-		self.featureMetadata.loc[self.featureMetadata['LOD (μM)'].values < newLOD, 'LOD (μM)'] = newLOD[
-			self.featureMetadata['LOD (μM)'].values < newLOD]
-		self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'])
+		newLOD = numpy.amax(self._intensityData[sampleMask, :], axis=0).astype(float)
+
+		# Jazz: ensure the target column can safely hold floats before doing a masked assignment
+		# (avoids pandas LossySetitemError if the column was inferred as int64)
+		if self.featureMetadata['LOD (μM)'].dtype != numpy.float64:
+			self.featureMetadata['LOD (μM)'] = self.featureMetadata['LOD (μM)'].astype(numpy.float64)
+
+		updateMask = self.featureMetadata['LOD (μM)'].values < newLOD
+
+		self.featureMetadata.loc[updateMask, 'LOD (μM)'] = newLOD[updateMask]
+
+		#self.featureMetadata['LOD (μM)'] = pandas.to_numeric(self.featureMetadata['LOD (μM)'], errors='coerce')
 		# Delete data
 		self._intensityData = self._intensityData[sampleMask == False, :]
 
@@ -1050,7 +1049,7 @@ class MSDataset(Dataset):
 		self.featureMetadata.insert(0, 'Feature Name', names)
 
 		self.sampleMetadata['Metadata Available'] = False
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 		# self.initialiseMasks()
 
 		self.Attributes['Log'].append([datetime.now(), 'Biocrates dataset loaded from %s' % (path)])
@@ -1226,10 +1225,10 @@ class MSDataset(Dataset):
 		self.sampleMetadata['AssayRole'] = dataT.loc[startRow:, 'AssayRole']
 		self.sampleMetadata['SampleType'] = dataT.loc[startRow:, 'SampleType']
 		self.sampleMetadata['Run Order'] = dataT.loc[startRow:, 'Run Order'].astype('int64')
-		self.sampleMetadata['Dilution'] = 100 # Dilution is not stored to nPYc export
+		self.sampleMetadata['Dilution'] = 100.0 # Dilution is not stored to nPYc export
 		self.sampleMetadata['Metadata Available'] = True # No new import of metadata needed
 
-		self.sampleMetadata['Exclusion Details'] = None
+		self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		fileNameAndExtension = self.sampleMetadata['Sample File Name'].apply(os.path.splitext)
 		self.sampleMetadata['Sample File Name'] = [x[0] for x in fileNameAndExtension]
@@ -1286,7 +1285,7 @@ class MSDataset(Dataset):
 
 		# Flag samples for exclusion:
 		if 'Exclusion Details' not in self.sampleMetadata:
-			self.sampleMetadata['Exclusion Details'] = None
+			self.sampleMetadata['Exclusion Details'] = None #= ''
 
 		# Print warning that samples are missing info, raw files should be located or samples should be excluded from dataset
 		missingSampleInfo = ~self.sampleMetadata['Sample File Name'].isin(instrumentParams['Sample File Name'])
@@ -1295,14 +1294,19 @@ class MSDataset(Dataset):
 			print('\x1b[31;1mRaw data for the following samples should be added to the raw data folder, or samples should be excluded from dataset else nPYc-Toolbox functionality may be compromised:\n\033[0;0m')
 			print(*self.sampleMetadata.loc[missingSampleInfo, 'Sample File Name'].values, sep='\n')
 
-	def _getSampleMetadataFromFilename(self, filenameSpec):
+	def _getSampleMetadataFromFilename(self, filenameSpec, dilutionProtocol='DilutionSeries'):
 		"""
 		Infer sample acquisition metadata from standardised filename template.
+		dilutionProtocol, either 'standard' for original 96 set series, or 'reduced' for new 30 set series
 		"""
+
+		if not isinstance(dilutionProtocol, str) & (dilutionProtocol in {'DilutionSeries', 'ReducedDilutionSeries'}):
+			raise ValueError('dilutionProtocol must be one of: ' + str({'DilutionSeries', 'ReducedDilutionSeries'}))
 
 		# If the dilution series design is not defined in the SOP, load the default.
 		if not 'dilutionMap' in self.Attributes.keys():
-			dilutionMap = pandas.read_csv(os.path.join(toolboxPath(), 'StudyDesigns', 'DilutionSeries.csv'),
+			print(os.path.join(toolboxPath(), 'StudyDesigns', dilutionProtocol + '.csv'))
+			dilutionMap = pandas.read_csv(os.path.join(toolboxPath(), 'StudyDesigns', dilutionProtocol + '.csv'),
 										  index_col='Sample Name')
 			self.Attributes['dilutionMap'] = dilutionMap['Dilution Factor (%)'].to_dict()
 
@@ -1313,6 +1317,9 @@ class MSDataset(Dataset):
 		baseNameParser = re.compile(filenameSpec, re.VERBOSE)
 		fileNameParts = self.sampleMetadata['Sample File Name'].str.extract(baseNameParser, expand=False)
 
+		# Set type for numeric columns
+		fileNameParts['injectionNo'] = pandas.to_numeric(fileNameParts['injectionNo'], errors='coerce')
+
 		# Deal with badly ordered exclusions
 		fileNameParts['exclusion'].loc[fileNameParts['exclusion2'].isnull() == False] = fileNameParts['exclusion2'].loc[
 			fileNameParts['exclusion2'].isnull() == False]
@@ -1321,7 +1328,7 @@ class MSDataset(Dataset):
 		# Pass masks into enum fields
 		fileNameParts.loc[:, 'AssayRole'] = AssayRole.Assay
 		fileNameParts.loc[fileNameParts['reference'] == 'SR', 'AssayRole'] = AssayRole.PrecisionReference
-		fileNameParts.loc[fileNameParts['baseName'].str.match('.+[B]\d+?[SE]\d+?', na=False).astype(
+		fileNameParts.loc[fileNameParts['baseName'].str.match(r'.+[B]\d+?[SE]\d+?', na=False).astype(
 			bool), 'AssayRole'] = AssayRole.PrecisionReference
 		fileNameParts.loc[fileNameParts['reference'] == 'LTR', 'AssayRole'] = AssayRole.PrecisionReference
 		fileNameParts.loc[fileNameParts['reference'] == 'MR', 'AssayRole'] = AssayRole.PrecisionReference
@@ -1335,7 +1342,7 @@ class MSDataset(Dataset):
 
 		fileNameParts.loc[:, 'SampleType'] = SampleType.StudySample
 		fileNameParts.loc[fileNameParts['reference'] == 'SR', 'SampleType'] = SampleType.StudyPool
-		fileNameParts.loc[fileNameParts['baseName'].str.match('.+[B]\d+?[SE]\d+?', na=False).astype(
+		fileNameParts.loc[fileNameParts['baseName'].str.match(r'.+[B]\d+?[SE]\d+?', na=False).astype(
 			bool), 'SampleType'] = SampleType.StudyPool
 		fileNameParts.loc[fileNameParts['reference'] == 'LTR', 'SampleType'] = SampleType.ExternalReference
 		fileNameParts.loc[fileNameParts['reference'] == 'MR', 'SampleType'] = SampleType.MethodReference
@@ -1348,92 +1355,66 @@ class MSDataset(Dataset):
 			fileNameParts['groupingKind'].str.match('E?IC', na=False).astype(bool), 'SampleType'] = SampleType.StudyPool
 
 		# Define `SampleClass` - standardised NPC types based on SampleType/AssayRole combinations
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudySample) & (
-					fileNameParts['AssayRole'] == AssayRole.Assay), 'SampleClass'] = 'Study Sample'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudyPool) & (
-					fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Study Reference'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.ExternalReference) & (
-					fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Long-Term Reference'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.StudyPool) & (
-					fileNameParts['AssayRole'] == AssayRole.LinearityReference), 'SampleClass'] = 'Linearity Reference'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.MethodReference) & (
-					fileNameParts['AssayRole'] == AssayRole.PrecisionReference), 'SampleClass'] = 'Method Reference'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.ProceduralBlank) & (
-					fileNameParts['AssayRole'] == AssayRole.Blank), 'SampleClass'] = 'Blank'
-		fileNameParts.loc[(fileNameParts['SampleType'] == SampleType.UnknownType) & (
-				fileNameParts['AssayRole'] == AssayRole.UnknownRole), 'SampleClass'] = 'Unknown'
+		fileNameParts = inferSampleClass(fileNameParts)
 
 		# Skipped runs
 		fileNameParts['Skipped'] = fileNameParts['exclusion'].str.match('[Xx]', na=False)
 
 		# Get matrix
 		fileNameParts['Matrix'] = fileNameParts['groupingKind'].str.extract('^([AC-Z]{1,2})(?<!IC)$', expand=False)
-		fileNameParts['Matrix'].fillna('', inplace=True)
+		fileNameParts['Matrix'] = fileNameParts['Matrix'].fillna('')
 
 		# Get well numbers
 		fileNameParts.loc[
 			fileNameParts['groupingKind'].str.match('Blank|E?IC', na=False).astype(bool), 'injectionNo'] = -1
-		fileNameParts['Well'] = pandas.to_numeric(fileNameParts['injectionNo'])
+		fileNameParts['Well'] = pandas.to_numeric(fileNameParts['injectionNo'], downcast='integer', errors='coerce')
 
 		# Plate / grouping no
-		fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'])
-
-		# Get batch where it is explicit in file name
-		fileNameParts['Batch'] = pandas.to_numeric(fileNameParts['baseName'].str.extract('B(\d+?)[SE]', expand=False))
-		fileNameParts['Correction Batch'] = numpy.nan
+		fileNameParts['Plate'] = pandas.to_numeric(fileNameParts['groupingNo'], errors='coerce')
 
 		# Map dilution series names to dilution level
-		fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract('(?:.+_?)(SRD\d\d)(?:_?.*)',
+		fileNameParts['Dilution'] = fileNameParts['baseName'].str.extract(r'(?:.+_?)(SRD\d\d)(?:_?.*)',
 																		  expand=False).replace(
 			self.Attributes['dilutionMap'])
-		fileNameParts['Dilution'] = fileNameParts['Dilution'].astype(float)
+		fileNameParts['Dilution'] = pandas.to_numeric(fileNameParts['Dilution'], errors='coerce')
 
-		# Blank out NAs for neatness
-		fileNameParts['reruns'].fillna('', inplace=True)
-		fileNameParts['extraInjections'].fillna('', inplace=True)
+		# Blank out NAs for neatness (note: inplace=True doesn't seem to work)
+		fileNameParts['reruns'] = fileNameParts['reruns'].fillna('')
+		fileNameParts['extraInjections'] = fileNameParts['extraInjections'].fillna('')
 
 		# Drop unwanted columns
 		fileNameParts.drop(['exclusion', 'reference', 'groupingKind', 'injectionNo', 'injectionKind', 'groupingNo'],
 						   axis=1, inplace=True)
 
 		# Swap in user friendly file names
-		fileNameParts.rename(columns={'chromatography': 'Chromatography'}, inplace=True)
-		fileNameParts.rename(columns={'instrument': 'Instrument'}, inplace=True)
-		fileNameParts.rename(columns={'study': 'Study'}, inplace=True)
-		fileNameParts.rename(columns={'baseName': 'Sample Base Name'}, inplace=True)
-		fileNameParts.rename(columns={'fileName': 'Sample File Name'}, inplace=True)
-		fileNameParts.rename(columns={'suplementalInfo': 'Suplemental Info'}, inplace=True)
-		fileNameParts.rename(columns={'ionisation': 'Ionisation'}, inplace=True)
-		fileNameParts.rename(columns={'extraInjections': 'Suplemental Injections'}, inplace=True)
-		fileNameParts.rename(columns={'reruns': 'Re-Run'}, inplace=True)
+		fileNameParts.rename(columns={'chromatography': 'Chromatography',
+									  'instrument': 'Instrument',
+									  'study': 'Study',
+									  'baseName': 'Sample Base Name',
+									  'fileName': 'Sample File Name',
+									  'suplementalInfo': 'Supplemental Info',
+									  'ionisation': 'Ionisation',
+									  'extraInjections': 'Supplemental Injections',
+									  'reruns': 'Re-Run'}, inplace=True)
 
 		# Merge metadata back into the sampleInfo table.
-		# first remove duplicate columns (from _dataset _init_)
-		if 'Study' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Study'], axis=1, inplace=True)
-		if 'Chromatography' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Chromatography'], axis=1, inplace=True)
-		if 'Ionisation' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Ionisation'], axis=1, inplace=True)
-		if 'Instrument' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Instrument'], axis=1, inplace=True)
-		if 'Re-Run' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Re-Run'], axis=1, inplace=True)
-		if 'Suplemental Injections' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Suplemental Injections'], axis=1, inplace=True)
-		if 'SampleClass' in self.sampleMetadata.columns: self.sampleMetadata.drop(['SampleClass'], axis=1, inplace=True)
-		if 'Skipped' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Skipped'], axis=1, inplace=True)
-		if 'Matrix' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Matrix'], axis=1, inplace=True)
-		if 'Well' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Well'], axis=1, inplace=True)
-		if 'Plate' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Plate'], axis=1, inplace=True)
-		if 'AssayRole' in self.sampleMetadata.columns: self.sampleMetadata.drop(['AssayRole'], axis=1, inplace=True)
-		if 'SampleType' in self.sampleMetadata.columns: self.sampleMetadata.drop(['SampleType'], axis=1, inplace=True)
-		if 'Sample Base Name' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sample Base Name'], axis=1,
-																					   inplace=True)
-		if 'Dilution' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Dilution'], axis=1, inplace=True)
-		if 'Batch' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Batch'], axis=1, inplace=True)
-		if 'Correction Batch' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Correction Batch'], axis=1,
-																					   inplace=True)
+
+		# Remove any pre-existing columns (created in _init_) from dataset.sampleMetadata
+		columnsToRemove = ['Study', 'Chromatography', 'Ionisation', 'Instrument', 'Re-Run', 'Supplemental Injections',
+						   'SampleClass', 'Skipped', 'Matrix', 'Well', 'Plate', 'AssayRole', 'SampleType',
+						   'Sample Base Name', 'Dilution']
+
+		for column in columnsToRemove:
+			if column in self.sampleMetadata.columns:
+				self.sampleMetadata.drop(column, axis=1, inplace=True)
+
 		# merge
 		self.sampleMetadata = pandas.merge(self.sampleMetadata, fileNameParts, left_on='Sample File Name',
 										   right_on='Sample File Name', how='left', sort=False)
 
 		# Add 'Exclusion Details' column
-		self.sampleMetadata['Exclusion Details'] = ''
+		# Jazz changing this to None to pass a test:
+		self.sampleMetadata['Exclusion Details'] = None # = ''
 		self.sampleMetadata['Metadata Available'] = True
 		self.Attributes['Log'].append([datetime.now(), 'Sample metadata parsed from filenames.'])
 
@@ -1478,12 +1459,12 @@ class MSDataset(Dataset):
 			raise npycToolboxError("Unable to infer batches without `sampleMetadata[`" + usefield + "`]` info for ALL samples, info missing for:",
 								   table=missingData)
 
-		# Generate sampleMetadata sorted by run order
-		sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
-
 		# Set first batch
 		sampleMetadata['Correction Batch'] = 1
 		sampleMetadata['Batch'] = 1
+
+		# Generate sampleMetadata sorted by run order
+		sortedSampleMetadata = sampleMetadata.sort_values(by='Run Order')
 
 		# Calculate the consecutive time differences
 		timeDelta = sortedSampleMetadata[usefield].diff()
@@ -1531,7 +1512,7 @@ class MSDataset(Dataset):
 
 
 	def amendBatches(self, sampleRunOrder):
-		"""
+		r"""
 		Creates a new batch starting at the sample index in *sampleRunOrder*, and amends subsequent batch numbers in :py:attr:`~Dataset.sampleMetadata`\ ['Correction Batch']
 
 		:param int sampleRunOrder: Index of first sample in new batch
@@ -1552,14 +1533,13 @@ class MSDataset(Dataset):
 		self.sampleMetadata.loc[:, 'Correction Batch'] = newBatch
 
 	def __correlateToDilution(self, method='pearson', sampleType=SampleType.StudyPool,
-							  assayRole=AssayRole.LinearityReference, exclusions=True):
+							  assayRole=AssayRole.LinearityReference):
 		"""
 		Calculates correlation of feature intesities to dilution.
 
-		If a 'Dilution Series' column is present in sampleMetadata, correlation are calcualted on each sub-series, then averaged, otherwise they are
+		If a 'Dilution Series' column is present in sampleMetadata, correlation are calculated on each sub-series, then averaged, otherwise they are
 
 		:params str method: 'pearson' or 'spearman'
-		:params list exclusion: list of Linarity Reference sample subsets to mask from correlation calculation
 		"""
 
 		# Check inputs
@@ -1568,14 +1548,10 @@ class MSDataset(Dataset):
 		if not isinstance(method, str) & (method in {'pearson', 'spearman'}):
 			raise ValueError('method must be == \'pearson\' or \'spearman\'')
 
+		# If individual dilution series are not defined, consider all LR samples together
 		if not 'Dilution Series' in self.sampleMetadata.columns:
-			##
-			# If indervidual dilution series are not defined, consider all LR samples together
-			##
 			lrMask = numpy.logical_and(self.sampleMetadata['SampleType'] == sampleType,
 									   self.sampleMetadata['AssayRole'] == assayRole)
-			lrMask = numpy.logical_and(lrMask,
-									   exclusions)
 
 			if sum(lrMask) == 0:
 				raise ValueError('No %s samples defined with an AssayRole of %s' % (sampleType, assayRole))
@@ -1585,10 +1561,9 @@ class MSDataset(Dataset):
 									  method=method,
 									  sampleMask=lrMask)
 
+		# If sub-series are defined, calculate correlations for each then average
 		else:
-			##
-			# If sub-series are defined, calcuate corrs for each then average
-			##
+
 			batches = self.sampleMetadata['Dilution Series'].unique()
 			mask = pandas.notnull(batches)
 			batches = batches[mask]
@@ -1597,8 +1572,6 @@ class MSDataset(Dataset):
 			index = 0
 			for batch in batches:
 				lrMask = self.sampleMetadata['Dilution Series'].values == batch
-				lrMask = numpy.logical_and(lrMask,
-										   exclusions)
 
 				correlations[index, :] = _vcorrcoef(self._intensityData,
 													self.sampleMetadata['Dilution'].values,
@@ -1612,8 +1585,8 @@ class MSDataset(Dataset):
 		returnValues[numpy.isnan(returnValues)] = 0
 
 		self.Attributes['Log'].append([datetime.now(),
-									   'Feature correlation to dilution calculated with : method(%s); exclusions(%s)' % (
-									   method, exclusions)])
+									   'Feature correlation to dilution calculated with : method(%s)' % (
+									   method)])
 
 		return returnValues
 
@@ -1791,7 +1764,7 @@ class MSDataset(Dataset):
 		notFound = []
 
 		if 'Exclusion Details' not in self.featureMetadata:
-			self.featureMetadata['Exclusion Details'] = ''
+			self.featureMetadata['Exclusion Details'] = None #= ''
 
 		if self.VariableType == VariableType.Discrete:
 			for feature in featureList:
@@ -1799,7 +1772,7 @@ class MSDataset(Dataset):
 					self.featureMask[self.featureMetadata[self.featureMetadata[on] == feature].index] = False
 					self.featureMetadata.loc[self.featureMetadata[on] == feature, 'User Excluded'] = True
 					if (self.featureMetadata.loc[
-						self.featureMetadata[on] == feature, 'Exclusion Details'].values == ''):
+						self.featureMetadata[on] == feature, 'Exclusion Details'].values == None):
 						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = message
 					else:
 						self.featureMetadata.loc[self.featureMetadata[on] == feature, 'Exclusion Details'] = \
@@ -1836,13 +1809,13 @@ class MSDataset(Dataset):
 		Re-initialise :py:attr:`featureMask` and :py:attr:`sampleMask` to match the current dimensions of :py:attr:`intensityData`, and include all samples.
 		"""
 		super().initialiseMasks()
-		self.corrExclusions = copy.deepcopy(self.sampleMask)
-		self.__corrExclusions = copy.deepcopy(self.corrExclusions)
+
+		# Caro 2026-07-21 commented this out but will it break everything?
 		# artifactual filter is a tricky one, and should only be modified by using applyMasks
-		self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False,
-											 'correlationToDilutionFilter': False,
-											 'artifactualFilter': self.Attributes['featureFilters'][
-												 'artifactualFilter'], 'blankFilter': False}
+		#self.Attributes['featureFilters'] = {'rsdFilter': False, 'varianceRatioFilter': False,
+		#										 'correlationToDilutionFilter': False,
+		#									 'artifactualFilter': self.Attributes['featureFilters'][
+		#										 'artifactualFilter'], 'blankFilter': False}
 
 		# Caro 2025-04-02 commented the rest out but will it break everything?
 		#self.featureMetadata.loc[:, ['rsdFilter', 'varianceRatioFilter', 'correlationToDilutionFilter', 'blankFilter',
@@ -1867,7 +1840,6 @@ class MSDataset(Dataset):
 		Column type() in pandas.DataFrame are established on the first sample when necessary
 		Does not check for uniqueness in :py:attr:`~sampleMetadata['Sample File Name']`
 		Does not currently check :py:attr:`~Attributes['Raw Data Path']` type
-		Does not currently check :py:attr:`~corrExclusions` type
 
 		:param verbose: if True the result of each check is printed (default True)
 		:type verbose: bool
@@ -1908,7 +1880,6 @@ class MSDataset(Dataset):
 		:raises AttributeError: if self.Attributes['Feature Names'] does not exist
 		:raises TypeError: if self.Attributes['Feature Names'] is not a str
 		:raises TypeError: if self.VariableType is not an enum 'VariableType'
-		:raises AttributeError: if self.corrExclusions does not exist
 		:raises AttributeError: if self._correlationToDilution does not exist
 		:raises TypeError: if self._correlationToDilution is not a numpy.ndarray
 		:raises AttributeError: if self._artifactualLinkageMatrix does not exist
@@ -2221,21 +2192,6 @@ class MSDataset(Dataset):
 											 raiseWarning, exception=TypeError(failure))
 			# end Variabletype
 
-			## self.corrExclusions
-			# exist
-			condition = hasattr(self, 'corrExclusions')
-			success = 'Check self.corrExclusions exists:\tOK'
-			failure = 'Check self.corrExclusions exists:\tFailure, no attribute \'self.corrExclusions\''
-			failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError,
-											 raiseWarning, exception=AttributeError(failure))
-			# if condition:
-			# 	 # which test here?
-			#	 condition = isinstance(self.corrExclusions, str)
-			#	 success = 'Check self.corrExclusions is a str:\tOK'
-			#	 failure = 'Check self.corrExclusions is a str:\tFailure, \'self.corrExclusions\' is ' + str(type(self.corrExclusions))
-			#	 failureListBasic = conditionTest(condition, success, failure, failureListBasic, verbose, raiseError, raiseWarning, exception=TypeError(failure))
-			# end self.corrExclusions
-
 			## self._correlationToDilution
 			# exist
 			condition = hasattr(self, '_correlationToDilution')
@@ -2430,7 +2386,7 @@ class MSDataset(Dataset):
 												raiseWarning, exception=LookupError(failure))
 				if condition:
 					# sampleMetadata['Subject ID'] is str
-					condition = (self.sampleMetadata['Subject ID'].dtype == numpy.dtype('O'))
+					condition = (isinstance(self.sampleMetadata['Subject ID'].dtype, pandas.StringDtype))
 					success = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tOK'
 					failure = 'Check self.sampleMetadata[\'Subject ID\'] is str:\tFailure, \'self.sampleMetadata[\'Subject ID\']\' is ' + str(
 						type(self.sampleMetadata['Subject ID'][0]))
@@ -2438,7 +2394,7 @@ class MSDataset(Dataset):
 													raiseWarning, exception=TypeError(failure))
 				# end self.sampleMetadata['Subject ID']
 				# sampleMetadata['Sample ID'] is str
-				condition = (self.sampleMetadata['Sample ID'].dtype == numpy.dtype('O'))
+				condition = (isinstance(self.sampleMetadata['Sample ID'].dtype, pandas.StringDtype))
 				success = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tOK'
 				failure = 'Check self.sampleMetadata[\'Sample ID\'] is str:\tFailure, \'self.sampleMetadata[\'Sample ID\']\' is ' + str(
 					type(self.sampleMetadata['Sample ID'][0]))
@@ -2546,8 +2502,7 @@ class MSDataset(Dataset):
 			expectedSet = set({'Attributes', 'VariableType', '_Normalisation', '_name', 'fileName', 'filePath',
 							   '_intensityData', 'sampleMetadata', 'featureMetadata', 'sampleMask', 'featureMask',
 							   'sampleMetadataExcluded', 'intensityDataExcluded', 'featureMetadataExcluded',
-							   'excludedFlag',
-							   'corrExclusions', '_correlationToDilution', '_artifactualLinkageMatrix',
+							   'excludedFlag', '_correlationToDilution', '_artifactualLinkageMatrix',
 							   '_tempArtifactualLinkageMatrix'})
 			objectSet = set(self.__dict__.keys())
 			additionalAttributes = objectSet - expectedSet

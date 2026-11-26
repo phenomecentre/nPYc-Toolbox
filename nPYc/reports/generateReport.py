@@ -6,7 +6,7 @@ from ..reports._generateReportNMR import _generateReportNMR
 from ..reports._generateReportTargeted import _generateReportTargeted
 from ..utilities.generic import createDestinationPath
 
-def generateReport(data, reportType, destinationPath=None, **kwargs):
+def generateReport(data, reportType, destinationPath=None, autoOpen=False, **kwargs):
 	"""
 	Generates one of a range of reports visualising different qualities of the dataset. Reports can be plotted interactively, or saved to disk.
 
@@ -40,7 +40,6 @@ def generateReport(data, reportType, destinationPath=None, **kwargs):
 	:type destinationPath: None or str
 	:param bool withExclusions: If ``True``, only report on features and samples not masked by the sample and feature masks
 	:param MSDataset msDataCorrected: Only if **'batch correction'**, if msDataCorrected included will generate report post correction
-	:param PCAmodel pcaModel: Only if **'final report'**, if PCAmodel object is available PCA scores plots coloured by sample type will be added to report
 	:param bool returnOutput: Only if **'sample summary'**, if ``True``, returns a dictionary of all tables generated during run
 	"""
 
@@ -49,7 +48,7 @@ def generateReport(data, reportType, destinationPath=None, **kwargs):
 		raise TypeError('data must be an instance of nPYc.Dataset')
 
 	if isinstance(data, MSDataset):
-		acceptAllOptions = {'sample summary', 'feature summary', 'correlation to dilution', 'batch correction assessment', 'batch correction summary', 'feature selection', 'final report', 'final report abridged', 'final report peakpanther'}
+		acceptAllOptions = {'sample summary', 'feature summary', 'correlation to dilution', 'batch correction assessment', 'batch correction summary', 'feature selection', 'final report', 'final report peakpanther'}
 	elif isinstance(data, NMRDataset):
 		acceptAllOptions = {'sample summary', 'feature summary', 'final report'}
 	elif isinstance(data, TargetedDataset):
@@ -68,7 +67,7 @@ def generateReport(data, reportType, destinationPath=None, **kwargs):
 	# Generate method specific summary report
 	else:
 		if isinstance(data, MSDataset):
-			_generateReportMS(data, reportType.lower(), destinationPath=destinationPath, **kwargs)
+			_generateReportMS(data, reportType.lower(), destinationPath=destinationPath, autoOpen=autoOpen, **kwargs)
 		if isinstance(data, NMRDataset):
 			_generateReportNMR(data, reportType.lower(), destinationPath=destinationPath, **kwargs)
 		if isinstance(data, TargetedDataset):

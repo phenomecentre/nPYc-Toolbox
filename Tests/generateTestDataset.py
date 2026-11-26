@@ -1,12 +1,6 @@
-import scipy
 import pandas
 import numpy
-import pickle
 import sys
-import unittest
-import tempfile
-import os
-import copy
 import random
 import string
 
@@ -39,10 +33,14 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 
 	data.intensityData = numpy.random.lognormal(size=(noSamp, noFeat)) + 1
 
-	data.sampleMetadata = pandas.DataFrame(0, index=numpy.arange(noSamp), columns=['Sample File Name', 'SampleType', 'AssayRole', 'Acquired Time', 'Run Order', 'Dilution', 'Detector', 'Correction Batch'])
+	data.sampleMetadata = pandas.DataFrame(0, index=numpy.arange(noSamp),
+										   columns=['Sample File Name', 'SampleType', 'AssayRole', 'SampleClass',
+													'Acquired Time', 'Run Order', 'Dilution', 'Detector',
+													'Correction Batch'])
 
 	data.sampleMetadata['SampleType'] = nPYc.enumerations.SampleType.StudySample
 	data.sampleMetadata['AssayRole'] = nPYc.enumerations.AssayRole.Assay
+	data.sampleMetadata['SampleClass'] = 'Study Sample'
 	data.sampleMetadata['Run Order'] = numpy.arange(noSamp, dtype='int64')
 	data.sampleMetadata['Detector'] = numpy.arange(noSamp) * 5
 	data.sampleMetadata['Batch'] = 1
@@ -67,11 +65,13 @@ def generateTestDataset(noSamp, noFeat, dtype='Dataset', variableType=VariableTy
 	data.sampleMetadata['Acquired Time'] = [datetime.strptime(d.strftime("%Y-%m-%d %H:%M"), "%Y-%m-%d %H:%M") for d in data.sampleMetadata['Acquired Time']]
 	data.sampleMetadata['Acquired Time'] = data.sampleMetadata['Acquired Time'].dt.to_pydatetime()
 
-	data.sampleMetadata.iloc[::10, 1] = nPYc.enumerations.SampleType.StudyPool
-	data.sampleMetadata.iloc[::10, 2] = nPYc.enumerations.AssayRole.PrecisionReference
+	data.sampleMetadata.loc[::10, 'SampleType'] = nPYc.enumerations.SampleType.StudyPool
+	data.sampleMetadata.loc[::10, 'AssayRole'] = nPYc.enumerations.AssayRole.PrecisionReference
+	data.sampleMetadata.loc[::10, 'SampleClass'] = 'Study Reference'
 
-	data.sampleMetadata.iloc[5::10, 1] = nPYc.enumerations.SampleType.ExternalReference
-	data.sampleMetadata.iloc[5::10, 2] = nPYc.enumerations.AssayRole.PrecisionReference
+	data.sampleMetadata.loc[5::10, 'SampleType'] = nPYc.enumerations.SampleType.ExternalReference
+	data.sampleMetadata.loc[5::10, 'AssayRole'] = nPYc.enumerations.AssayRole.PrecisionReference
+	data.sampleMetadata.loc[5::10, 'SampleClass'] = 'Long-Term Reference'
 
 	if dtype == 'MSDataset':
 		data.featureMetadata = pandas.DataFrame(0, index=numpy.arange(noFeat), columns=['m/z'])

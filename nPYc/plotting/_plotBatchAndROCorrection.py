@@ -1,12 +1,10 @@
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import seaborn as sns
 import numpy
-import pandas
 from ..objects._msDataset import MSDataset
-from ..enumerations import AssayRole, SampleType
 from ._violinPlot import _violinPlotHelper
-import matplotlib.dates as mdates
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 from matplotlib.dates import WeekdayLocator
 from matplotlib.dates import DateFormatter
@@ -140,7 +138,7 @@ def plotBatchAndROCorrection(dataset, datasetcorrected, featureList, addViolin=T
 	batches = (numpy.unique(localBatch[~numpy.isnan(localBatch)])).astype(int)
 
 	# define the colours (different for each batch) and get axis y-limits
-	cmap = plt.get_cmap('gnuplot')
+	cmap = matplotlib.colormaps.get_cmap('gnuplot')
 	colors = [cmap(i) for i in numpy.linspace(0, 1, len(batches) + 1)]
 
 	for feature in iterator:

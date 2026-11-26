@@ -2,7 +2,7 @@ import os
 import numpy
 import warnings
 from xml.etree import ElementTree
-
+import pandas
 from ..utilities._calibratePPMscale import calibratePPM
 from ..utilities._lineWidth import lineWidth
 from ..utilities._fitPeak import integrateResonance
@@ -47,6 +47,12 @@ def importBrukerSpectra(path, pulseProgram, pdata, Attributes):
 
 	if metadata.shape[0] == 0:
 		raise ValueError("No Bruker format spectra acquired with the '%s' pulse program found." % (pulseProgram))
+
+	# Format columns
+	numericcols = ['RG', 'SW', 'SFO1', 'TD', 'BF1', 'O1', 'P', 'AUNM', 'NS', 'OFFSET',
+				   'SW_p', 'NC_proc', 'SF', 'SI', 'BYTORDP', 'XDIM']
+	for col in numericcols:
+		metadata[col] = pandas.to_numeric(metadata[col], errors='coerce')
 
 	intensityData = numpy.zeros((metadata.shape[0], Attributes['variableSize']))
 	skipERETIC = False

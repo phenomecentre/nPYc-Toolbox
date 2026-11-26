@@ -1,29 +1,26 @@
 import os
-import numpy
-import pandas
 import nPYc
 import copy
 import pandas
-import re
-import warnings
 import shutil
 import seaborn as sns
 from plotly.offline import iplot
-from IPython.display import display, HTML
-
-
+from IPython.display import display
+from jinja2 import Environment, FileSystemLoader
+from ..utilities import publishReport
 from ..objects import NMRDataset
 from .._toolboxPath import toolboxPath
-from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..utilities._nmr import qcCheckBaseline, qcCheckSolventPeak
 from ._generateSampleReport import _generateSampleReport
-from ..plotting import plotSolventResonance, plotSolventResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive, plotLoadings
-from ._generateBasicPCAReport import generateBasicPCAReport
-from ..enumerations import AssayRole, SampleType
+from ..plotting import plotSolventResonance, plotSolventResonanceInteractive, plotBaseline, plotBaselineInteractive, plotCalibration, plotCalibrationInteractive, plotLineWidthInteractive
 
 from ..__init__ import __version__ as version
 
-def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath=None, pcaModel=None):
+def _generateReportNMR(nmrData,
+					   reportType,
+					   withExclusions=True,
+					   coveragePDF=False,
+					   autoOpen=False,
+					   destinationPath=None):
 	"""
 	Generate reports on NMRdataset objects, possible options are: ``feature summary`` or ``final report``
 	
@@ -54,25 +51,57 @@ def _generateReportNMR(nmrData, reportType, withExclusions=True, destinationPath
 
 	sns.set_style("whitegrid")
 
-	# Create directory to save destinationPath 
+	# Apply sample/feature masks if exclusions to be applied
+	nmrData = copy.deepcopy(nmrData)
+	if withExclusions:
+		nmrData.applyMasks()
+
+	# Create dictionary to save required info
+	item = dict()
+	item['Name'] = nmrData.name
+	item['ReportType'] = reportType.capitalize()
+	item['Nfeatures'] = nmrData.intensityData.shape[1]
+	item['Nsamples'] = nmrData.intensityData.shape[0]
+
+	# Create directory to save destinationPath
 	if destinationPath:
 		if not os.path.exists(destinationPath):
 			os.makedirs(destinationPath)
 		if not os.path.exists(os.path.join(destinationPath, 'graphics')):
 			os.makedirs(os.path.join(destinationPath, 'graphics'))
 
-	# Apply sample/feature masks if exclusions to be applied
-	nmrData = copy.deepcopy(nmrData)
-	if withExclusions:
-		nmrData.applyMasks()
+		# Create specific directory to save outputs
+		graphicsPath = os.path.join(destinationPath, 'graphics', reportType.lower().replace(' ', '_'))
+		if not os.path.exists(graphicsPath):
+			os.makedirs(graphicsPath)
+
+	else:
+		graphicsPath = None
+
+		# Print initial summary info
+		print(item['ReportType'] + ' for ' + item['Name'] + '\n')
+		print(str(item['Nsamples']) + ' samples')
+		print(str(item['Nfeatures']) + ' features\n')
+
+	# Load env to get templates
+	env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
 
 	if reportType.lower() == 'feature summary':
-		_featureReport(nmrData, destinationPath=destinationPath)
+		template = env.get_template('NMR_QCSummaryReport.html')
+		_featureReport(nmrData, destinationPath=destinationPath, graphicsPath=graphicsPath,
+					   autoOpen=autoOpen, item=item, template=template)
 	elif reportType.lower() == 'final report':
-		_finalReport(nmrData, destinationPath=destinationPath, pcaModel=pcaModel)
+		template = env.get_template('NMR_FinalSummaryReport.html')
+		_finalReport(nmrData, coveragePDF=coveragePDF, destinationPath=destinationPath, graphicsPath=graphicsPath,
+					 autoOpen=autoOpen, item=item, template=template)
 
 
-def _featureReport(dataset, destinationPath=None):
+def _featureReport(dataset,
+				   destinationPath=None,
+				   autoOpen=False,
+				   graphicsPath=None,
+				   item=None,
+				   template=None):
 	"""
 	Report on feature quality
 	"""
@@ -80,20 +109,10 @@ def _featureReport(dataset, destinationPath=None):
 	# Do NMR QC checks based on dataset
 	dataset._nmrQCChecks()
 
-	item = dict()
-	item['Name'] = dataset.name
-	item['Nsamples'] = dataset.noSamples
-
 	item['toA_from'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
 	item['toA_to'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
-	
-	##
-	# Report stats
-	##
-	if destinationPath is not None:
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_featureSummary')
-		if not os.path.exists(graphicsPath):
-			os.makedirs(graphicsPath)
+
+	saveAs = None
 
 	##
 	# Chemical shift registration plot
@@ -114,6 +133,7 @@ def _featureReport(dataset, destinationPath=None):
 	else:
 		figure = plotCalibrationInteractive(dataset)
 		iplot(figure)
+
 	##
 	# LW box plot
 	##
@@ -123,7 +143,6 @@ def _featureReport(dataset, destinationPath=None):
 		saveAs = item['peakWidthBoxplot']
 	else:
 		print('Figure 2: Boxplot of line width values (coloured by sample type)')
-		saveAs = None
 		
 	nPYc.plotting.plotPW(dataset,
 			savePath=saveAs,
@@ -149,7 +168,6 @@ def _featureReport(dataset, destinationPath=None):
 			dpi=dataset.Attributes['dpi'],
 			figureSize=dataset.Attributes['figureSize'])
 
-
 	##
 	# Baseline plot
 	##
@@ -159,8 +177,6 @@ def _featureReport(dataset, destinationPath=None):
 		saveAs = item['finalFeatureBLWPplots1']
 	else:
 		print('Figure 4: Distribution of all samples at baseline regions (5-95% with outliers flagged)')
-
-		saveAs = None
 
 	if destinationPath:
 		plotBaseline(dataset,
@@ -183,16 +199,17 @@ def _featureReport(dataset, destinationPath=None):
 		
 	else:
 		print('Figure 5: Distribution of all samples at region surrounding solvent suppresion peak (5-95% with outliers flagged)')
-		saveAs = None
 
 	if destinationPath:
-		plotSolventResonance(dataset,	savePath=saveAs,
-									figureFormat=dataset.Attributes['figureFormat'],
-									dpi=dataset.Attributes['dpi'],
-									figureSize=dataset.Attributes['figureSize'])
+		plotSolventResonance(dataset,
+							 savePath=saveAs,
+							 figureFormat=dataset.Attributes['figureFormat'],
+							 dpi=dataset.Attributes['dpi'],
+							 figureSize=dataset.Attributes['figureSize'])
 	else:
 		figure = plotSolventResonanceInteractive(dataset)
 		iplot(figure)
+
 	##
 	# exclusion summary
 	##
@@ -201,91 +218,48 @@ def _featureReport(dataset, destinationPath=None):
 												  'CalibrationFail', 'BaselineFail', 'SolventPeakFail']]
 	fail_summary = fail_summary[(fail_summary.iloc[:, 1::] == 1).any(axis=1, bool_only=True)]
 
-	if not destinationPath:
-		print('Table 1: Summary of samples considered for exclusion')
-		display(fail_summary)
+	if fail_summary.shape[0] > 0:
+		if not destinationPath:
+			print('Table 1: Samples flagged during QC checks:')
+			display(fail_summary)
+		else:
+			item['failSummary'] = fail_summary
+
 	##
 	# Write HTML if saving
 	##
 	if destinationPath:
-		# Make paths for graphics local not absolute for use in the HTML.
-		for key in item:
-			if os.path.join(destinationPath, 'graphics') in str(item[key]):
-				item[key] = re.sub('.*graphics', 'graphics', item[key])
 
-		# Generate report
-		from jinja2 import Environment, FileSystemLoader
-
-		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-		template = env.get_template('NMR_QCSummaryReport.html')
-		filename = os.path.join(destinationPath, dataset.name + '_report_featureSummary.html')
-
-		f = open(filename,'w')
-		f.write(template.render(item=item,
-								attributes=dataset.Attributes,
-								version=version,
-								failSummary=fail_summary,
-								graphicsPath=graphicsPath))
-		f.close()
-
-		copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+		filename = os.path.join(destinationPath, dataset.name + '_feature_summary.html')
+		publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
 
-def _finalReport(dataset, destinationPath=None, pcaModel=None):
+def _finalReport(dataset,
+				 destinationPath=None,
+				 coveragePDF=False,
+				 autoOpen=False,
+				 graphicsPath=None,
+				 item=None,
+				 template=None):
 	"""
 	Report on final dataset
 	"""
-    
-    # Create save directory if required
-	if destinationPath is not None:
-		graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
-		if not os.path.exists(graphicsPath):
-			os.makedirs(graphicsPath)
-
-		# Copy required file for final report
-		shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
-					 os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
-	else:
-		saveAs = None
-
-    
-	item = dict()
-	item['Name'] = dataset.name
-	item['Nsamples'] = dataset.noSamples
-	item['Nfeatures'] = dataset.noFeatures
 
 	item['start'] = dataset.sampleMetadata['Acquired Time'].min().strftime('%b %d %Y')
 	item['end'] = dataset.sampleMetadata['Acquired Time'].max().strftime('%b %d %Y')
 
-    
+	saveAs = None
+
     # Table 1: Sample summary
-
-    # Generate sample summary
-    
-	sampleSummary = _generateSampleReport(dataset, withExclusions=True, destinationPath=None, returnOutput=True)
-    
-    # Tidy table for final report format
-	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
-
-	# Drop rows where no samples present for that datatype
-	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
-
+	sampleSummary = _generateSampleReport(dataset, destinationPath=None, returnOutput=True)
 	sampleSummary['isFinalReport'] = True
-	if 'StudySamples Exclusion Details' in sampleSummary:
-		sampleSummary['studySamplesExcluded'] = True
-	else:
-		sampleSummary['studySamplesExcluded'] = False
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
-		print('Final Dataset')
-		print('\n' + str(item['Nsamples']) + ' samples')        
-		print(str(item['Nfeatures']) + ' features')     
 		print('\nSample Summary')      
 		print('\nTable 1: Summary of samples present.')
-		display(sampleSummary['Acquired'])
-		print('\nDetails of any missing/excluded study samples given at the end of the report\n')
-
+		display(sampleSummary['Dataset'])
+		print('\nDetails of any missing/excluded study samples given at the end of the report\n\n')
 
 	# Table 2: data processed with these parameters
 	dataParametersTable = pandas.DataFrame(
@@ -303,7 +277,7 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 		print('Spectral Data')
 		print('\nTable 2: Data processed with the following criteria:')
 		display(dataParametersTable)
-		print('\nSamples acquired between ' + item['start'] + ' and ' + item['end'] + '\n')
+		print('\nSamples acquired between ' + item['start'] + ' and ' + item['end'] + '\n\n')
 
 	##
 	# Plot spectrum
@@ -326,85 +300,24 @@ def _finalReport(dataset, destinationPath=None, pcaModel=None):
 									   dpi=dataset.Attributes['dpi'],
 									   figureSize=dataset.Attributes['figureSize'])
 
-
-
-	# ##
-	# # LW box plot
-	# ##
-	# if destinationPath:
-	# 	item['linewidthBoxplot'] = os.path.join(graphicsPath, item['Name'] + '_linewidthBoxplot.' + dataset.Attributes['figureFormat'])
-	# 	saveAs = item['linewidthBoxplot']
-	# else:
-	# 	print('Figure 1: Boxplot of line width distributions (by sample type).')
-	#
-	#
-	# nPYc.plotting.plotPW(dataset,
-	# 		savePath=saveAs,
-	# 		title='',
-	# 		figureFormat=dataset.Attributes['figureFormat'],
-	# 		dpi=dataset.Attributes['dpi'],
-	# 		figureSize=dataset.Attributes['figureSize'])
-
-	# ##
-	# # Solvent Peak plot
-	# ##
-	# if destinationPath:
-	# 	item['spectraSolventPeakRegion'] = os.path.join(graphicsPath, item['Name'] + '_spectraSolventPeakRegion.' + dataset.Attributes['figureFormat'])
-	# 	saveAs = item['spectraSolventPeakRegion']
-	#
-	# 	plotSolventResonance(dataset,
-	# 					 savePath=saveAs,
-	# 					 figureFormat=dataset.Attributes['figureFormat'],
-	# 					 dpi=dataset.Attributes['dpi'],
-	# 					 figureSize=dataset.Attributes['figureSize'])
-	#
-	# else:
-	# 	print('Figure 2: Distribution in intensity of spectral data around the removed solvent peak region.')
-	# 	figure = plotSolventResonanceInteractive(dataset, title='')
-	# 	iplot(figure)
-
-	##
-	# PCA plots
-	##
-	if pcaModel:
-		if destinationPath:
-			pcaPath = destinationPath
-		else:
-			pcaPath = None
-		pcaModel = generateBasicPCAReport(pcaModel, dataset, figureCounter=3, destinationPath=pcaPath, fileNamePrefix='')
-
 	##
 	#  Table 3: Summary of samples excluded
 	##
 	if not destinationPath:
-		if 'StudySamples Exclusion Details' in sampleSummary:
+		if 'Missing/excluded SS Details' in sampleSummary:
 			print('Missing/Excluded Study Samples')
 			print('\nTable 3: Details of missing/excluded study samples')
-			display(sampleSummary['StudySamples Exclusion Details'])
+			display(sampleSummary['Missing/excluded SS Details'])
 			
 	##
 	# Write HTML if saving
 	##
 	if destinationPath:
-		# Make paths for graphics local not absolute for use in the HTML.
-		for key in item:
-			if os.path.join(destinationPath, 'graphics') in str(item[key]):
-				item[key] = re.sub('.*graphics', 'graphics', item[key])
 
-		# Generate report
-		from jinja2 import Environment, FileSystemLoader
+		if coveragePDF:  # Copy NPC coverage pdf file for final report
+			shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
+							os.path.join(graphicsPath, 'NPC_assay_coverage.pdf'))
+			item['coveragePDF'] = os.path.join(graphicsPath, 'NPC_assay_coverage.pdf')
 
-		env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
-		template = env.get_template('NMR_FinalSummaryReport.html')
-		filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
-
-		f = open(filename,'w')
-		f.write(template.render(item=item,
-								version=version,
-								sampleSummary=sampleSummary,
-								graphicsPath=graphicsPath,
-								pcaPlots=pcaModel)
-								)
-		f.close()
-
-		copyBackingFiles(toolboxPath(),os.path.join(destinationPath, 'graphics'))
+		filename = os.path.join(destinationPath, dataset.name + '_final_report.html')
+		publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)

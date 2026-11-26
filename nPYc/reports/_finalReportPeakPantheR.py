@@ -1,33 +1,31 @@
-import sys
 import os
 import numpy
 import pandas
 from collections import OrderedDict
-import matplotlib.pyplot as plt
-import seaborn as sns
 import copy
 from IPython.display import display
-import warnings
 import re
 import shutil
-from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import MSDataset
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from ..plotting import plotIntensity, histogram, plotLRTIC, jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, plotScores, plotLoadings, plotTargetedFeatureDistribution
+from ..plotting import plotRSDs, plotIonMap, plotTargetedFeatureDistribution, plotAbundanceBySampleType
 from ._generateSampleReport import _generateSampleReport
-from ..utilities.ms import generateTypeRoleMasks
-from ..utilities import generateLRmask, rsd
-from ..utilities._internal import _vcorrcoef
-from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..enumerations import AssayRole, SampleType
-import operator
-
+from ..utilities._errorHandling import npycToolboxError
+from ..utilities import publishReport
+from ..reports._reportUtilities import _generateFeatureFilteringSummary
 
 from ..__init__ import __version__ as version
 
 
-def _finalReportPeakPantheR(dataset, destinationPath=None, labelFeaturesBy='Feature Name'):
+def _finalReportPeakPantheR(dataset,
+                            labelFeaturesBy='Feature Name',
+                            orderFeaturesBy='rsdSP',
+                            destinationPath=None,
+                            coveragePDF=False,
+                            autoOpen=False,
+                            graphicsPath=None,
+                            item=None,
+                            template=None):
     """
     Summarise different aspects of an MS dataset
 
@@ -56,347 +54,230 @@ def _finalReportPeakPantheR(dataset, destinationPath=None, labelFeaturesBy='Feat
     Generates a summary of the final dataset, lists sample numbers present, a selection of figures summarising dataset quality, and a final list of samples missing from acquisition.
     """
 
-	# Create save directory if required
-    if destinationPath is not None:
-        if not os.path.exists(destinationPath):
-            os.makedirs(destinationPath)
-        if not os.path.exists(os.path.join(destinationPath, 'graphics')):
-            os.makedirs(os.path.join(destinationPath, 'graphics'))
-        graphicsPath = os.path.join(destinationPath, 'graphics', 'report_finalSummary')
-        if not os.path.exists(graphicsPath):
-            os.makedirs(graphicsPath)
+    # Do some checks
+    if labelFeaturesBy is None:
+        labelFeaturesBy = 'Feature Name'
 
-        # Copy required file for final report
-        shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
-                     os.path.join(destinationPath, 'graphics', 'NPC_assay_coverage.pdf'))
-    else:
-        graphicsPath = None
-        saveAs = None
+    if not hasattr(dataset.featureMetadata, labelFeaturesBy):
+        raise npycToolboxError(
+            'Unable to label features by: ' + labelFeaturesBy + ' as column not present in `dataset.featureMetadata`')
 
-    # Ensure we have 'Passing Selection' column in dataset object
-    if not hasattr(dataset.featureMetadata, 'Passing Selection'):
-        dataset.featureMetadata['Passing Selection'] = dataset.featureMask
+    if not hasattr(dataset.featureMetadata, orderFeaturesBy):
+        raise npycToolboxError(
+            'Unable to order features by: ' + orderFeaturesBy + ' as column not present in `dataset.featureMetadata`')
 
-	# Define sample masks
-    acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
-
-    # Set up template item and save required info
-    item = dict()
-    item['Name'] = dataset.name
-    item['ReportType'] = 'feature summary' # TODO check what this means!
-    item['Nsamples'] = dataset.intensityData.shape[0]
-    item['Nfeatures'] = dataset.intensityData.shape[1]
-    item['NfeaturesPassing'] = sum(dataset.featureMetadata['Passing Selection'])
+    # Initial set up
+    saveAs = None
+    item['NfeaturesPassing'] = sum(dataset.featureMask)
     nfeaturesFailing = item['Nfeatures'] - item['NfeaturesPassing']
     if nfeaturesFailing != 0:
         item['NfeaturesFailing'] = nfeaturesFailing
         hLine = [item['NfeaturesFailing']]
     else:
         hLine = None
-    item['SScount'] = str(sum(acquiredMasks['SSmask']))
-    item['SPcount'] = str(sum(acquiredMasks['SPmask']))
-    item['ERcount'] = str(sum(acquiredMasks['ERmask']))
-    item['LRcount'] = str(sum(acquiredMasks['SRDmask']))
-    item['corrMethod'] = dataset.Attributes['corrMethod']
     figNo = 1
-
 
     # Final dataset summary
     if not destinationPath:
-        print('Final Dataset\n')
-        print(str(item['Nsamples']) + ' samples')
-        print(str(item['Nfeatures']) + ' features')
         if nfeaturesFailing != 0:
             print('\t' + str(item['NfeaturesPassing']) + ' detected and passing feature selection')
-            print('\t' + str(item['NfeaturesFailing']) + ' not detected or not present in sufficient concentration to be measured precisely')
+            print('\t' + str(item[
+                                 'NfeaturesFailing']) + ' not detected or not present in sufficient concentration to be measured precisely')
 
     # Table 1: Sample summary
 
     # Generate sample summary
-
     sampleSummary = _generateSampleReport(dataset, destinationPath=None, returnOutput=True)
 
-    # Tidy table for final report format
-    sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
+    # Remove all details of all samples missing/excluded (only interested in study samples here)
+    sampleSummary.pop('Excluded Details', None)
 
-    if hasattr(sampleSummary['Acquired'], 'Already Excluded'):
-        sampleSummary['Acquired'].rename(columns={'Already Excluded': 'Excluded'}, inplace=True)
-
-    # Drop rows where no samples present for that datatype
-    sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0],
-                                   axis=0, inplace=True)
-
-    sampleSummary['isFinalReport'] = True
-    if 'StudySamples Exclusion Details' in sampleSummary:
-        sampleSummary['studySamplesExcluded'] = True
-    else:
-        sampleSummary['studySamplesExcluded'] = False
     item['sampleSummary'] = sampleSummary
 
     if not destinationPath:
         print('\n\nSample Summary')
         print('\nTable 1: Sample summary table.')
-        display(sampleSummary['Acquired'])
+        display(sampleSummary['Dataset'])
         print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
-
     # Table 2: Feature Selection parameters
-    FeatureSelectionTable = pandas.DataFrame(
-        data=['yes', dataset.Attributes['corrMethod'], dataset.Attributes['corrThreshold']],
-        index=['Correlation to Dilution', 'Correlation to Dilution: Method', 'Correlation to Dilution: Threshold'],
-        columns=['Value Applied'])
-
-    if sum(dataset.corrExclusions) != dataset.noSamples:
-        temp = ', '.join(dataset.sampleMetadata.loc[dataset.corrExclusions == False, 'Sample File Name'].values)
-        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-            pandas.DataFrame(data=temp, index=['Correlation to Dilution: Sample Exclusions'], columns=['Value Applied'])])
-    else:
-        FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-            pandas.DataFrame(data=['none'], index=['Correlation To Dilution: Sample Exclusions'], columns=['Value Applied'])])
-    FeatureSelectionTable = pandas.concat([FeatureSelectionTable,
-        pandas.DataFrame(data=['yes', dataset.Attributes['rsdThreshold'], 'yes'],
-                         index=['Relative Standard Devation (RSD)', 'RSD of SR Samples: Threshold',
-                                'RSD of SS Samples > RSD of SR Samples'], columns=['Value Applied'])])
+    FeatureSelectionTable = _generateFeatureFilteringSummary(dataset)
 
     item['FeatureSelectionTable'] = FeatureSelectionTable
-    
-    
-    nBatchCollect = len((numpy.unique(dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
+
+    # Report on acquisition structure
+    nBatchCollect = len((numpy.unique(
+        dataset.sampleMetadata['Batch'].values[~numpy.isnan(dataset.sampleMetadata['Batch'].values)])).astype(int))
     if nBatchCollect == 1:
         item['batchesCollect'] = '1 batch'
     else:
         item['batchesCollect'] = str(nBatchCollect) + ' batches'
-    
-    if hasattr(dataset, 'fit'):
-        nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(int))
-        if nBatchCorrect == 1:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in 1 batch)'
-        else:
-            item['batchesCorrect'] = 'Run-order and batch correction applied (LOESS regression fitted to SR samples in ' + str(nBatchCorrect) + ' batches)'
-    else:
-        item['batchesCorrect'] =  'Run-order and batch correction not required' 
- 
-    start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == min(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
-    end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+
+    start = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[
+                                       dataset.sampleMetadata['Run Order'] == min(
+                                           dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
+    end = pandas.to_datetime(str(dataset.sampleMetadata['Acquired Time'].loc[dataset.sampleMetadata['Run Order'] == max(
+        dataset.sampleMetadata['Run Order'][dataset.sampleMask])].values[0]))
     item['start'] = start.strftime('%d/%m/%y')
     item['end'] = end.strftime('%d/%m/%y')
-    
+
+    # Report on whether batch/run order correction applied
+    if hasattr(dataset, 'fit'):
+        nBatchCorrect = len((numpy.unique(dataset.sampleMetadata['Correction Batch'].values[
+                                              ~numpy.isnan(dataset.sampleMetadata['Correction Batch'].values)])).astype(
+            int))
+        if nBatchCorrect == 1:
+            item['batchesCorrect'] = '1 batch'
+        else:
+            item['batchesCorrect'] = str(nBatchCorrect) + ' batches'
+
+    # Report on whether feature filtering applied
+    if any(dataset.Attributes['featureFilters'].values()):
+        item['featuresFiltered'] = True
+
     if not destinationPath:
         print('\nFeature Summary')
 
         print('\nSamples acquired in ' + item['batchesCollect'] + ' between ' + item['start'] + ' and ' + item['end'])
-        print(item['batchesCorrect']) 
-        
+
+        if 'batchesCorrect' in item:
+            print('\nRun-order and batch correction applied (LOWESS regression fitted to SR samples in ' + item['batchesCorrect'])
+        else:
+            print('\nRun-order and batch correction not applied')
+
         print('\nTable 2: Features selected based on the following criteria:')
         display(item['FeatureSelectionTable'])
         if nfeaturesFailing != 0:
-            print('\n*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured precisely, thus results should be interpreted accordingly')
-         
-    
+            print(
+                '\n*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured precisely, thus results should be interpreted accordingly')
+
     # Separate into features passing and failing feature selection for rest of report
 
-    # Sort features by featureMask
-    #dataset.featureMetadata.sort_values(by=['Passing Selection'], ascending=[False], inplace=True)
-    #orderNew = dataset.featureMetadata.index
-    #dataset._intensityData = dataset._intensityData[:,orderNew]
-    #dataset.featureMetadata.reset_index(drop=True, inplace=True)
-    
     # Figure: Distribution of RSDs in SP and SS
     if destinationPath:
-        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_finalRSDdistributionFigure.' +
+        item['finalRSDdistributionFigure'] = os.path.join(graphicsPath, item['Name'] + '_rsdSampletype.' +
                                                           dataset.Attributes['figureFormat'])
         saveAs = item['finalRSDdistributionFigure']
+        item['orderFeaturesBy'] = orderFeaturesBy
     else:
-        print('\n\nFigure ' + str(figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).')
-        figNo = figNo+1
+        print('\n\nFigure ' + str(
+            figNo) + ': Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type), ordered by ' + orderFeaturesBy)
+        figNo = figNo + 1
 
     plotRSDs(dataset,
-            featureName=labelFeaturesBy,
-            ratio=False,
-            logx=True,
-            sortOrder=True,
-            withExclusions=False,
-            featName=True,
-            hLines=hLine,
-            savePath=saveAs,
-            figureFormat=dataset.Attributes['figureFormat'],
-            dpi=dataset.Attributes['dpi'],
-            figureSize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1] * (dataset.noFeatures / 35)))
-    
+             featureName=labelFeaturesBy,
+             ratio=False,
+             logx=True,
+             sortOrder=orderFeaturesBy,
+             withExclusions=False,
+             hLines=hLine,
+             savePath=saveAs)
+
     if not destinationPath:
-          if nfeaturesFailing != 0:
-            print('\n*Features sorted by RSD in SR samples; with features passing selection (i.e., able to be precisely measured) above the line and those failing (i.e., not able to be precisely measured) below the line')
-      
+        if nfeaturesFailing != 0:
+            print(
+                '\n*Features passing selection (i.e., able to be precisely measured) plotted above the line and those failing (i.e., not able to be precisely measured) below the line')
 
     # Figure: Histogram of log mean abundance by sample type
     if destinationPath:
-        item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_finalFeatureIntensityHist.' +
+        item['finalFeatureIntensityHist'] = os.path.join(graphicsPath, item['Name'] + '_intensityHist.' +
                                                          dataset.Attributes['figureFormat'])
         saveAs = item['finalFeatureIntensityHist']
     else:
-        print('\n\nFigure ' + str(figNo) + ': Feature intensity histogram for all samples and all features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).')
-        figNo = figNo+1
+        print('\n\nFigure ' + str(
+            figNo) + ': Feature intensity histogram for all samples and all features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).')
+        figNo = figNo + 1
 
-    _plotAbundanceBySampleType(dataset,
-                               acquiredMasks['SSmask'],
-                               acquiredMasks['SPmask'],
-                               acquiredMasks['ERmask'],
-                               saveAs)
+    plotAbundanceBySampleType(dataset,
+                              saveAs)
 
     # Figure: Ion map
     if 'm/z' in dataset.featureMetadata.columns and 'Retention Time' in dataset.featureMetadata.columns:
         if destinationPath:
-            item['finalIonMap'] = os.path.join(graphicsPath, item['Name'] + '_finalIonMap.' + dataset.Attributes['figureFormat'])
+            item['finalIonMap'] = os.path.join(graphicsPath,
+                                               item['Name'] + '_ionMap.' + dataset.Attributes['figureFormat'])
             saveAs = item['finalIonMap']
         else:
             print('Figure ' + str(figNo) + ': Ion map of all features (coloured by log median intensity).')
-            figNo = figNo+1
+            figNo = figNo + 1
 
         plotIonMap(dataset,
-                   savePath=saveAs,
-                   figureFormat=dataset.Attributes['figureFormat'],
-                   dpi=dataset.Attributes['dpi'],
-                   figureSize=dataset.Attributes['figureSize'])
+                   savePath=saveAs)
 
     else:
         if not destinationPath:
             print('No Retention Time and m/z information, unable to plot the ion map.\n')
 
-    
     # Figures: Distributions for each feature PASSING SELECTION
     figuresFeatureDistributionPassing = OrderedDict()
     temp = dict()
     if destinationPath:
-        temp['FeatureConcentrationDistributionPassing'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistributionPassing_')
+        temp['FeatureConcentrationDistributionPassing'] = os.path.join(graphicsPath,
+                                                                       item['Name'] + '_featurePassViolin')
         saveAs = temp['FeatureConcentrationDistributionPassing']
     else:
-        print('Figure ' + str(figNo) + ': Relative concentration distributions, for features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).')
-        figNo = figNo+1
-
+        print('Figure ' + str(
+            figNo) + ': Relative concentration distributions, for features passing selection (i.e., able to be precisely measured) in final dataset (by sample type).')
+        figNo = figNo + 1
 
     figuresFeatureDistributionPassing = plotTargetedFeatureDistribution(
-               dataset,
-               featureMask=dataset.featureMetadata['Passing Selection'],
-               featureName=labelFeaturesBy,
-               logx=False,
-               figures=figuresFeatureDistributionPassing,
-               savePath=saveAs,
-               figureFormat=dataset.Attributes['figureFormat'],
-               dpi=dataset.Attributes['dpi'],
-               figureSize=dataset.Attributes['figureSize'])
+        dataset,
+        featureMask=dataset.featureMask,
+        labelFeaturesBy=labelFeaturesBy,
+        orderFeaturesBy=orderFeaturesBy,
+        figures=figuresFeatureDistributionPassing,
+        savePath=saveAs)
 
     for key in figuresFeatureDistributionPassing:
         if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistributionPassing[key]):
-            figuresFeatureDistributionPassing[key] = re.sub('.*graphics', 'graphics', figuresFeatureDistributionPassing[key])
+            figuresFeatureDistributionPassing[key] = re.sub('.*graphics', 'graphics',
+                                                            figuresFeatureDistributionPassing[key])
 
     item['FeatureConcentrationDistributionPassing'] = figuresFeatureDistributionPassing
-    
-    
+
     # Figures: Distributions for each feature FAILING SELECTION 
     if nfeaturesFailing != 0:
         figuresFeatureDistributionFailing = OrderedDict()
         temp = dict()
         if destinationPath:
-            temp['FeatureConcentrationDistributionFailing'] = os.path.join(graphicsPath, item['Name'] + '_FeatureConcentrationDistributionFailing_')
+            temp['FeatureConcentrationDistributionFailing'] = os.path.join(graphicsPath,
+                                                                           item['Name'] + '_featureFailViolin')
             saveAs = temp['FeatureConcentrationDistributionFailing']
         else:
-            print('Figure ' + str(figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be precisely measured) in final dataset (by sample type).')
-            figNo = figNo+1
-    
+            print('Figure ' + str(
+                figNo) + ': Relative concentration distributions, for features failing selection (i.e., not detected, or not able to be precisely measured) in final dataset (by sample type).')
+
         figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(
-                   dataset,
-                   featureMask=dataset.featureMetadata['Passing Selection']==False,
-                   featureName=labelFeaturesBy,
-                   logx=False,
-                   figures=figuresFeatureDistributionFailing,
-                   savePath=saveAs,
-                   figureFormat=dataset.Attributes['figureFormat'],
-                   dpi=dataset.Attributes['dpi'],
-                   figureSize=dataset.Attributes['figureSize'])
-    
+            dataset,
+            featureMask=dataset.featureMask == False,
+            labelFeaturesBy=labelFeaturesBy,
+            orderFeaturesBy=orderFeaturesBy,
+            figures=figuresFeatureDistributionFailing,
+            savePath=saveAs)
+
         for key in figuresFeatureDistributionFailing:
             if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistributionFailing[key]):
-                figuresFeatureDistributionFailing[key] = re.sub('.*graphics', 'graphics', figuresFeatureDistributionFailing[key])
-    
-        item['FeatureConcentrationDistributionFailing'] = figuresFeatureDistributionFailing
+                figuresFeatureDistributionFailing[key] = re.sub('.*graphics', 'graphics',
+                                                                figuresFeatureDistributionFailing[key])
 
+        item['FeatureConcentrationDistributionFailing'] = figuresFeatureDistributionFailing
 
     # Table 3: Summary of samples excluded
     if not destinationPath:
-        if 'StudySamples Exclusion Details' in sampleSummary:
+        if hasattr(sampleSummary, 'Missing/excluded SS Details'):
             print('Missing/Excluded Study Samples')
             print('\nTable 3: Details of missing/excluded study samples')
-            display(sampleSummary['StudySamples Exclusion Details'])
+            display(sampleSummary['Missing/excluded SS Details'])
 
-
-    # Write HTML if saving
+    # Write report to HTML if saving
     if destinationPath:
 
-        # Make paths for graphics local not absolute for use in the HTML.
-        for key in item:
-            if os.path.join(destinationPath, 'graphics') in str(item[key]):
-                #print(item[key])
-                item[key] = re.sub('.*graphics', 'graphics', item[key])
+        if coveragePDF:  # Copy NPC coverage pdf file for final report
+            shutil.copy2(os.path.join(toolboxPath(), 'Templates', 'NPC_assay_coverage.pdf'),
+                             os.path.join(graphicsPath, 'NPC_assay_coverage.pdf'))
+            item['coveragePDF'] = os.path.join(graphicsPath, 'NPC_assay_coverage.pdf')
 
-        # Generate report
-        from jinja2 import Environment, FileSystemLoader
-
-        env = Environment(loader=FileSystemLoader(os.path.join(toolboxPath(), 'Templates')))
- 
-        template = env.get_template('MS_peakPantheR_FinalSummaryReport.html')
-        filename = os.path.join(destinationPath, dataset.name + '_report_finalSummary.html')
-
-        f = open(filename,'w')
-        f.write(template.render(item=item,
-                                attributes=dataset.Attributes,
-                                version=version,
-                                graphicsPath=graphicsPath))
-        f.close()
-        copyBackingFiles(toolboxPath(), os.path.join(destinationPath, 'graphics'))
+        filename = os.path.join(destinationPath, dataset.name + '_final_report_peakpanther.html')
+        publishReport(item, destinationPath, graphicsPath, template, dataset.Attributes, filename, version, autoOpen=autoOpen)
 
     return None
-
-
-def _plotAbundanceBySampleType(dataset, SSmask, SPmask, ERmask, saveAs):
-
-    # Load toolbox wide color scheme
-    if 'sampleTypeColours' in dataset.Attributes.keys():
-        sTypeColourDict = copy.deepcopy(dataset.Attributes['sampleTypeColours'])
-        for stype in SampleType:
-            if stype.name in sTypeColourDict.keys():
-                sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-    else:
-        sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-                            SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', category=RuntimeWarning)
-        # Just for features which are passing selection
-        intensityData = dataset.intensityData[:, dataset.featureMask]
-        meanIntensities = OrderedDict()
-        temp = numpy.nanmean(intensityData[SSmask, :], axis=0)
-        temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Study Sample'] = temp
-        colour = [sTypeColourDict[SampleType.StudySample]]
-
-    if sum(SPmask) != 0:
-        temp = numpy.nanmean(intensityData[SPmask, :], axis=0)
-        temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Study Reference'] = temp
-        colour.append(sTypeColourDict[SampleType.StudyPool])
-    if sum(ERmask) != 0:
-        temp = numpy.nanmean(intensityData[ERmask, :], axis=0)
-        temp[numpy.isinf(temp)] = numpy.nan
-        meanIntensities['Long-Term Reference'] = temp
-        colour.append(sTypeColourDict[SampleType.ExternalReference])
-
-    histogram(meanIntensities,
-        xlabel='Mean Feature Intensity',
-        color=colour,
-        title='',
-        histBins=dataset.Attributes['histBins'],
-        logx=True,
-        savePath=saveAs,
-        figureFormat=dataset.Attributes['figureFormat'],
-        dpi=dataset.Attributes['dpi'],
-        figureSize=dataset.Attributes['figureSize'])

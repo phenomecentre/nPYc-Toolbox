@@ -2,15 +2,15 @@
 
 <div class="content">
 <!--Summary of samples acquired________________________________________________________________________________________________________________-->	
-<h2>Summary of Samples Acquired</h2>
+<h2>Summary of Samples in Dataset</h2>
 
-{{ item['Acquired'].to_html() }}
+{{ item['Dataset'].to_html() }}
 
 <!--Summary of samples missing from acquisition________________________________________________________________________________________________-->
 
-{% if 'NotAcquired' in item %}
+{% if 'Missing Details' in item %}
 	<h3>Samples Missing from Acquisition/Import (i.e., present in metadata file but not acquired/imported)</h3>
-	{{ item['NotAcquired'].to_html() }}
+	{{ item['Missing Details'].to_html() }}
 {% endif %}
 
 <!--Details of any excluded/missing samples____________________________________________________________________________________________________-->
@@ -21,15 +21,13 @@
 {% endif %}
 
 {% if 'Excluded Details' in item %}
-	{% if 'isFinalReport' in item %}
-    	{%if (item['isFinalReport'] == True) and ('StudySamples Exclusion Details' in item)%}
-        	<h3>Study Samples Missing/Excluded</h3><!--ie those marked with (_x)-->
-	    {{ item['StudySamples Exclusion Details'].to_html() }}
-	    {% endif %}
-	{% else %}
-	     <h3>Samples Excluded on Analytical Criteria</h3><!--ie those marked with (_x)-->
-	     {{ item['Excluded Details'].to_html() }}
-	{% endif %}
+	<h3>All Samples Missing/Excluded</h3>
+	{{ item['Excluded Details'].to_html() }}
+{% endif %}
+
+{% if 'Missing/excluded SS Details' in item %}
+	<h3>Missing/Excluded Study Samples</h3>
+	{{ item.sampleSummary['Missing/excluded SS Details'].to_html() }}
 {% endif %}
 
 {% if 'UnknownType Details' in item %}

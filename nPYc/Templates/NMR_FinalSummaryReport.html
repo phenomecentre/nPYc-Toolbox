@@ -1,8 +1,5 @@
 {% extends "base_QC.html" %}
 
-{% import 'pcaReport.html' as pca %}
-<!--{% import 'sampleReportChunk.html' as sampleReport %}-->
-
 {% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
 {% block content %}
@@ -22,7 +19,7 @@
 <!--Summary of samples in final dataset-->
 <div class='content'>
 	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
-	{{ item.sampleSummary['Acquired'].to_html() }}
+	{{ item.sampleSummary['Dataset'].to_html() }}
 	<p>For details on sample nomenclature see:
 		<a href="https://npyc-toolbox.readthedocs.io/en/latest/studydesign.html" target="_blank" rel="noopener noreferrer">Sample Nomenclature</a>
 	</p>
@@ -76,17 +73,11 @@
 		In a global profiling dataset, the a priori identity of these features is unknown, however please see the (assay specific) 'Further Information: Assay Coverage' section below for high level compound class information.</p>
 </div>
 
-
-<!--Multivariate -->
-{% if pcaPlots %}
-	{{ pca.basicPCAReport(pcaPlots) }}
-{% endif %}
-
 <!--Details of any missing/excluded samples-->
-{% if 'StudySamples Exclusion Details' in item.sampleSummary %}
+{% if 'Missing/excluded SS Details' in item.sampleSummary %}
 	<h2>Missing/Excluded Study Samples</h2>
 	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
-	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
+	{{ item.sampleSummary['Missing/excluded SS Details'].to_html() }}
 {% endif %}
 
 <!--Add annotated spectra/ion maps for all NPC assays-->
@@ -106,11 +97,13 @@
 	</p>
 </div>
 
-<h2>Further Information: Assay Coverage</h2>
+{% if 'coveragePDF' in item %}
+	<h2>Further Information: Assay Coverage</h2>
 
-<div class='content'>
-	<p>Please scroll down for information on the theoretical coverage of NPC assays</p>
-	<embed src="graphics/NPC_assay_coverage.pdf" width="1100" height="700" type="application/pdf">
-</div>
+	<div class='content'>
+		<p>Please scroll down for information on the theoretical coverage of NPC assays</p>
+		<embed src="{{ item.coveragePDF }}" width="1100" height="700" type="application/pdf">
+	</div>
+{% endif %}
 
 {% endblock %}

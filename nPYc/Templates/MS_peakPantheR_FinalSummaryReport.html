@@ -1,7 +1,5 @@
 {% extends "base_QC.html" %}
 
-{% import 'sampleReportChunk.html' as sampleReport %}
-
 {% block title %}Assay Summary Report For: {{ item.Name }}{% endblock %}
 
 {% block content %}
@@ -27,7 +25,7 @@
 <!--Summary of samples in final dataset-->
 <div class='content'>
 	<p class="caption"><span class="heading">Table&nbsp;1.</span> Sample summary table.</p>
-	{{ item.sampleSummary['Acquired'].to_html() }}
+	{{ item.sampleSummary['Dataset'].to_html() }}
 	<p>For details on sample nomenclature see:
 		<a href="https://npyc-toolbox.readthedocs.io/en/latest/studydesign.html" target="_blank" rel="noopener noreferrer">Sample Nomenclature</a>
 	</p>
@@ -40,30 +38,46 @@
 
 <div class='content'>
 	<p>Samples acquired in {{ item['batchesCollect'] }} between {{ item['start'] }} and {{ item['end'] }}</p>
-	<p>{{ item['batchesCorrect'] }})</p>
-	<p>For more details on run-order and batch correction see:
-		<a href="https://npyc-toolbox.readthedocs.io/en/latest/batchAndROCorrection.html" target="_blank" rel="noopener noreferrer">Batch and Run-order Correction</a>
-	</p>
-	<p></p>
-	<p>
-		For LC-MS datasets, filters are applied to ensure that only high quality features are retained, for more details see:
-		<a href="https://pubmed.ncbi.nlm.nih.gov/27479709/" target="_blank" rel="noopener noreferrer">Lewis et al. 2016</a>
-		In brief, features are filtered on three key criteria:
-		<ol type="1">
-  			<li>Correlation to dilution factor (calculated from SR samples acquired at known dilution factors), assess that features are measured relative to their true abundance</li>
-  			<li>Relative Standard Deviation, RSD (calculated across repeat injections of the SR sample), assesses that features are measured precisely</li>
-  			<li>Comparing RSD in SR and SS, assesses that the biological variance (RSD in SS) exceeds the analytical variance (RSD in SR)</li>
-		</ol>
-		For more details see:
-		<a href="https://npyc-toolbox.readthedocs.io/en/latest/reports.html#feature-summary-report-lc-ms-datasets" target="_blank" rel="noopener noreferrer">Feature Quality Assessment</a>
-	</p>
+
+	{% if 'batchesCorrect' in item %}
+		<p>Run-order and batch correction applied (LOWESS regression fitted to SR samples in {{ item['batchesCorrect'] }})</p>
+		<p>For more details on run-order and batch correction see:
+		<a href="https://npyc-toolbox.readthedocs.io/en/latest/batchAndROCorrection.html" target="_blank" rel="noopener noreferrer">Batch and Run-order Correction</a></p>
+	{% else %}
+		<p>Run-order and batch correction not applied</p>
+	{% endif %}
+
+	{% if 'featuresFiltered' in item %}
+		<p>
+			For LC-MS datasets, filters are applied to ensure that only high quality features are retained, for more details see:
+			<a href="https://pubmed.ncbi.nlm.nih.gov/27479709/" target="_blank" rel="noopener noreferrer">Lewis et al. 2016</a>
+			In brief, features are filtered on three key criteria:
+			<ol type="1">
+				<li>Relative Standard Deviation, RSD (calculated across repeat injections of the SR sample), assesses that features are measured precisely</li>
+				<li>Correlation to dilution factor (calculated from SR samples acquired at known dilution factors), assess that features are measured relative to their true abundance</li>
+				<li>Comparing RSD in SR and SS, assesses that the biological variance (RSD in SS) exceeds the analytical variance (RSD in SR)</li>
+			</ol>
+			For more details see:
+			<a href="https://npyc-toolbox.readthedocs.io/en/latest/reports.html#feature-summary-report-lc-ms-datasets" target="_blank" rel="noopener noreferrer">Feature Quality Assessment</a>
+		</p>
+
+		{% if 'FeatureConcentrationDistributionFailing' in item %}
+			<p>*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured precisely, thus results should be interpreted accordingly.</p>
+		{% endif %}
+
+	{% else %}
+		<p>
+			Important note: owing to sample number/volume limitations samples were acquired without our usual quality control samples and procedures.
+			Samples have been acquired in triplicate to enable assessment of analytical/instrumental performance, however, feature quality
+			according to recommended metrics (see:
+			<a href="https://pubmed.ncbi.nlm.nih.gov/27479709/" target="_blank" rel="noopener noreferrer">Lewis et al. 2016</a>)
+			can not be determined. Any observations can be interpreted qualitatively, for more confidence in feature quality
+			and robust analyses, larger sample numbers/volumes should be collected and analysed if possible.
+		</p>
+	{% endif %}
 
 	<p class="caption"><span class="heading">Table&nbsp;2.</span> Features selected based on the following criteria:</p>
 	{{ item['FeatureSelectionTable'].to_html() }}
-
-	{% if 'FeatureConcentrationDistributionFailing' in item %}
-		<p>*Features not passing these criteria are reported and exported as part of the final dataset, however it should be noted that these are not detected or not present in sufficient concentration to be measured precisely, thus results should be interpreted accordingly.</p>
-	{% endif %}
 	<p></p>
 </div>
 
@@ -71,8 +85,7 @@
 <div class='figure'>
 	<p class="caption"><span class="heading">Figure&nbsp;1.</span> RSD distribution for all samples and all features in final dataset (by sample type)</p>
 	<img src="{{ item.finalRSDdistributionFigure }}" alt="Residual Standard Deviation (RSD) distribution for all samples and all features in final dataset (by sample type).">
-	<p>This figure shows the distribution of RSD by sample type.
-		Ordered by RSD in SR samples, the biological variance (RSD in SS) must exceed the analytical variance (RSD in SR samples) for a feature to be present in the final dataset.</p>
+	<p>This figure shows the distribution of RSD by sample type, ordered by {{ item['orderFeaturesBy'] }}.</p>
 	{% if 'NfeaturesFailing' in item %}
 	 <p>Features passing selection (i.e., able to be precisely measured) can be found above the line and those failing (i.e., not able to be precisely measured) below the line.
 	{% endif %}
@@ -112,12 +125,11 @@
 	</div>
 {% endif %}
 
-
 <!--Details of any missing/excluded samples-->
-{% if 'StudySamples Exclusion Details' in item.sampleSummary %}
+{% if 'Missing/excluded SS Details' in item.sampleSummary %}
 	<h2>Missing/Excluded Study Samples</h2>
 	<p class="caption"><span class="heading">Table&nbsp;3.</span> Details of missing/excluded study samples.</p>
-	{{ item.sampleSummary['StudySamples Exclusion Details'].to_html() }}
+	{{ item.sampleSummary['Missing/excluded SS Details'].to_html() }}
 {% endif %}
 
 <!--Add annotated spectra/ion maps for all NPC assays-->
@@ -137,12 +149,13 @@
 	</p>
 </div>
 
-<h2>Further Information: Assay Coverage</h2>
+{% if 'coveragePDF' in item %}
+	<h2>Further Information: Assay Coverage</h2>
 
-<div class='content'>
-	<p>Please scroll down for information on the theoretical coverage of NPC assays</p>
-	<embed src="graphics/NPC_assay_coverage.pdf" width="1100" height="700" type="application/pdf">
-</div>
-
+	<div class='content'>
+		<p>Please scroll down for information on the theoretical coverage of NPC assays</p>
+		<embed src="{{ item.coveragePDF }}" width="1100" height="700" type="application/pdf">
+	</div>
+{% endif %}
 
 {% endblock %}

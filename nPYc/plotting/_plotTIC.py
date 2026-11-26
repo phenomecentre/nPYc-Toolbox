@@ -1,6 +1,7 @@
 import plotly
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy
 import pandas
 import copy
@@ -22,10 +23,10 @@ import datetime
 
 def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 			colourBy='SampleClass', colourType='categorical',
-			colourDict=None, markerDict=None, abbrDict=None,
+			colourDict={}, markerDict={}, abbrDict={},
 			logy=False, title='',
-			withExclusions=True, savePath=None,
-			figureFormat='png', dpi=72, figureSize=(11,7), opacity=.6):
+			withExclusions=False, savePath=None,
+			opacity=.6):
 	"""
 	Visualise TIC for all or a subset of features coloured by either dilution value or detector voltage.
 	With the option to shade by batch.
@@ -45,10 +46,6 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	:param bool withExclusions: If ``False``, discard masked features from the sum
 	:param savePath: If ``None`` plot interactively, otherwise save the figure to the path specified
 	:type savePath: None or str
-	:param str figureFormat: If saving the plot, use this format
-	:param int dpi: Plot resolution
-	:param figureSize: Dimensions of the figure
-	:type figureSize: tuple(float, float)
 	"""
 
 	# Check inputs
@@ -70,13 +67,16 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 		msData.applyMasks()
 
 	# List unique classes in msData.sampleMetadata[colourBy]
-	uniq_classes = msData.sampleMetadata[colourBy].unique()
-	uniq = [str(i) for i in uniq_classes]
+	uniq = msData.sampleMetadata[colourBy].unique()
 
 	if colourType == 'categorical':
 
+		# Ensure colourBy is string
+		msData.sampleMetadata[colourBy] = msData.sampleMetadata[colourBy].astype(str)
+		uniq = msData.sampleMetadata[colourBy].unique()
+
 		# If colourDict check colour defined for every unique entry in class
-		if colourDict is not None:
+		if colourDict:
 			if not all(k in colourDict.keys() for k in uniq):
 				raise ValueError('If colourDict is specified every unique entry in ' + colourBy + ' must be a key in colourDict')
 		# Otherwise create colour dict
@@ -87,7 +87,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 				colourDict[u] = rgb2hex(next(colors))
 
 		# If markerDict check colour defined for every unique entry in class
-		if markerDict is not None:
+		if markerDict:
 			if not all(k in markerDict.keys() for k in uniq):
 				raise ValueError('If markerDict is specified every unique entry in ' + colourBy + ' must be a key in markerDict')
 		else:
@@ -96,7 +96,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 				markerDict[u] = 'o'
 
 		# If abbrDict check abbr defined for every unique entry in class
-		if abbrDict is not None:
+		if abbrDict:
 			if not all(k in abbrDict.keys() for k in uniq):
 				raise ValueError('If abbrDict is specified every unique entry in ' + colourBy + ' must be a key in abbrDict')
 		else:
@@ -104,8 +104,11 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 			for u in uniq:
 				abbrDict[u] = u
 
+	else:
+		addViolin=False # No point adding violin plot for continuous data
+
 	#sns.set_color_codes(palette='deep')
-	fig = plt.figure(figsize=figureSize, dpi=dpi)
+	fig = plt.figure(figsize=dataset.Attributes['figureSize'], dpi=dataset.Attributes['dpi'])
 	gs = gridspec.GridSpec(1, 5)
 
 	if addViolin:
@@ -123,11 +126,11 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	if ('Acquired Time' in msData.sampleMetadata.columns):
 		formatter = DateFormatter('%d/%m/%y')
 		# X axis limits for formatting
-		minX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == min(msData.sampleMetadata['Run Order'])].values
-		maxX = msData.sampleMetadata['Acquired Time'].loc[msData.sampleMetadata['Run Order'] == max(msData.sampleMetadata['Run Order'])].values
+		minX = min(msData.sampleMetadata['Acquired Time'])
+		maxX = max(msData.sampleMetadata['Acquired Time'])
 		delta = maxX - minX
-		days = delta.astype('timedelta64[D]')
-		days = days / numpy.timedelta64(1, 'D')
+		#delta = delta.astype('timedelta64[D]')
+		days = delta / numpy.timedelta64(1, 'D')
 		if days < 1:
 			loc = HourLocator() # byhour=range(0, 24, 2)
 		elif days < 7:
@@ -151,7 +154,6 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 
 	tic = numpy.sum(msData.intensityData[:, tempFeatureMask == True], axis=1)
 
-	# Colour by categorical class
 	if colourType == 'categorical':
 		palette = {}
 		sampleMasks = []
@@ -162,7 +164,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 							s=30,
 							c=colourDict[u],
 							alpha=opacity,
-							label=u)
+							label=abbrDict[u])
 
 			if addViolin:
 				sampleMasks.append((abbrDict[u], msData.sampleMetadata[colourBy] == u))
@@ -170,13 +172,13 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 
 		if addViolin:
 			limits = ax.get_ylim()
-			_violinPlotHelper(ax2, tic, sampleMasks, None, 'Sample Type',
+			_violinPlotHelper(ax2, tic, sampleMasks, None, colourBy,
 							  palette=palette, ylimits=limits, logy=logy)
 
 	# Colour by continuous class
 	else:
 
-		cmap = plt.cm.RdYlBu_r
+		cmap = plt.cm.turbo#RdYlBu_r
 
 		if colourType == 'continuous':
 			mincol = numpy.nanmin(msData.sampleMetadata[colourBy])
@@ -207,7 +209,7 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 					~numpy.isnan(msData.sampleMetadata['Batch'].values)])).astype(int)
 
 		# Define the colours (different for each batch) and get axis y-limits
-		cmap = plt.get_cmap('gnuplot')
+		cmap = matplotlib.colormaps.get_cmap('gnuplot')
 		colors = [cmap(i) for i in numpy.linspace(0, 1, len(batches)+1)]
 		ymin, ymax = ax.get_ylim()
 		colIX = 1
@@ -265,10 +267,10 @@ def plotIntensity(dataset, addViolin=True, addBatchShading=False,
 	# Save or output
 	if savePath:
 		try:
-			plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
+			plt.savefig(savePath, bbox_inches='tight', format=dataset.Attributes['figureFormat'], dpi=dataset.Attributes['dpi'])
 
 		except UnboundLocalError:
-			plt.savefig(savePath, bbox_inches='tight', format=figureFormat, dpi=dpi)
+			plt.savefig(savePath, bbox_inches='tight', format=dataset.Attributes['figureFormat'], dpi=dataset.Attributes['dpi'])
 		plt.close()
 	else:
 
@@ -486,7 +488,7 @@ def plotIntensityInteractive(dataset,
 	figure = go.Figure(data=data, layout=layout)
 
 	if destinationPath:
-		saveTemp = msData.name + '_' + y.replace('/', '') + '_colourBy_' + colourBy + '.html'
+		saveTemp = msData.name + '_' + y.replace('/', '') + '_' + colourBy + '.html'
 		plotly.offline.plot(figure, filename=os.path.join(destinationPath, saveTemp), auto_open=autoOpen)
 
 	return figure

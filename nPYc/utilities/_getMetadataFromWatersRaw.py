@@ -43,7 +43,7 @@ def extractWatersRAWParams(filePath, queryItems):
 					logging.debug('Found on line: ' + str(indices[0]))
 					foundLine = contents[indices[0]]
 					logging.debug('Line reads: ' + foundLine.rstrip())
-					query = '(' + re.escape(findthis) + ')\W+(.+)\r'
+					query = r'(' + re.escape(findthis) + ')\W+(.+)\r'
 					logging.debug('Regex is: ' + query)
 					m = re.search(query, foundLine)
 					logging.debug('Found this: ' + m.group(1) + ' and: ' + m.group(2))

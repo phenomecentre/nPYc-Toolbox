@@ -1,17 +1,16 @@
 import matplotlib.pyplot as plt
 from ..plotting._violinPlot import _violinPlotHelper
-from ..enumerations import AssayRole, SampleType
-from ..utilities.ms import generateTypeRoleMasks
+from ..utilities import sampleClassMasks
+from matplotlib.colors import rgb2hex
 import numpy
 import math
 import copy
 
-def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name', featureMask=None, sampleTypes=['SS', 'SP', 'ER'], logx=False, figures=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11,7)):
+def plotTargetedFeatureDistribution(datasetOriginal, labelFeaturesBy='Feature Name', orderFeaturesBy='Feature Name', featureMask=None, figures=None, savePath=None):
 	"""
 	Plot the distribution (violin plots) of a set of features, e.g., peakPantheR outputs, coloured by sample type
 
-	:param MSDataset dataset: :py:class:`MSDataset`
-	:param bool logx: If ``True`` log-scale the x-axis
+	:param datasetOriginal dataset: :py:class:`MSDataset`
 	:param dict figures: If not ``None``, saves location of each figure for output in html report (see _generateMSReport.py)
 	"""
    
@@ -27,31 +26,48 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 	nf = math.ceil(nv/nax)
 	plotNo = 0
 
-	# Define sample masks
-	acquiredMasks = generateTypeRoleMasks(dataset.sampleMetadata)
-
-	# Define sample masks
+	# Define sample type masks for all samples in dataset
+	acquiredMasks = sampleClassMasks(dataset.sampleMetadata, on='SampleClass')
 	sampleMasks = []
-	palette = {}
+	palette = dataset.Attributes['sampleTypeColours']
 
-	sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-					   SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
+	for key in acquiredMasks:
 
-	# Plot data coloured by sample type
-	if sum(acquiredMasks['SSmask'] > 0) and 'SS' in sampleTypes:
-		sampleMasks.append(('SS', acquiredMasks['SSmask']))
-		palette['SS'] = sTypeColourDict[SampleType.StudySample]
-	if sum(acquiredMasks['SPmask'] > 0) and 'SP' in sampleTypes:
-		sampleMasks.append(('SR', acquiredMasks['SPmask']))
-		palette['SR'] = sTypeColourDict[SampleType.StudyPool]
-	if sum(acquiredMasks['ERmask'] > 0) and 'ER' in sampleTypes:
-		sampleMasks.append(('LTR', acquiredMasks['ERmask']))
-		palette['LTR'] = sTypeColourDict[SampleType.ExternalReference]
+		# Use abbreviation if available
+		if key in dataset.Attributes['sampleTypeAbbr']:
+			sampleMasks.append((dataset.Attributes['sampleTypeAbbr'][key], acquiredMasks[key]))
+
+		# Else use existing key
+		else:
+			sampleMasks.append((key, acquiredMasks[key]))
+
+	# Check all keys are in the palette, otherwise add
+	if not all(k in palette.keys() for k in acquiredMasks):
+		colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(acquiredMasks))))
+		for u in acquiredMasks:
+			palette[u] = rgb2hex(next(colors))
+
+	# If order of features specified, plot features ordered by FeatureMask, then by featureMetadata 'orderFeaturesBy' column values
+	if orderFeaturesBy:
+
+		# Copy featureMetadata
+		featureInfo = copy.deepcopy(dataset.featureMetadata)
+
+		# Add 'Passing Selection' column
+		if not hasattr(featureInfo, 'Passing Selection'):
+			featureInfo['Passing Selection'] = dataset.featureMask
+
+		featureInfo.sort_values(by=['Passing Selection', orderFeaturesBy], ascending=[False, True], inplace=True)
+
+		sortIndex = featureInfo.index
+
+	else:
+		sortIndex = range(dataset.featureMetadata.shape[0])
 
 	# Plot
 	for figNo in range(nf):
 
-		fig, axIXs = plt.subplots(1, nax, figsize=(figureSize[0], figureSize[1]/nax), dpi=dpi)
+		fig, axIXs = plt.subplots(1, nax, figsize=(dataset.Attributes['figureSize'][0], dataset.Attributes['figureSize'][1]/nax), dpi=dataset.Attributes['dpi'])
 
 		for axNo in range(len(axIXs)):
 
@@ -62,24 +78,27 @@ def plotTargetedFeatureDistribution(datasetOriginal, featureName='Feature Name',
 
 				# Plot distribution of feature by sample type
 				# Remove infinites and - infinites for targeted dataset.
-				valid_values = numpy.isfinite(dataset.intensityData[:,plotNo])
+				valid_values = numpy.isfinite(dataset.intensityData[:,sortIndex[plotNo]])
 
 				currentFeatureSampleMasks = list()
 				for maskIndex in range(len(sampleMasks)):
 					currentFeatureSampleMasks.append((sampleMasks[maskIndex][0], sampleMasks[maskIndex][1] & valid_values))
 				if valid_values.any():
-					_violinPlotHelper(axIXs[axNo], dataset.intensityData[:, plotNo], currentFeatureSampleMasks, None, 'Sample Type', palette=palette, logy=False)
+					_violinPlotHelper(axIXs[axNo],
+									  dataset.intensityData[:, sortIndex[plotNo]],
+									  currentFeatureSampleMasks,
+									  None, 'Sample Type', palette=palette, logy=False)
 
-				axIXs[axNo].set_title(dataset.featureMetadata.loc[plotNo, featureName])
+				axIXs[axNo].set_title(dataset.featureMetadata.loc[sortIndex[plotNo], labelFeaturesBy])
 
 			# Advance plotNo
 			plotNo = plotNo+1
 
 		if savePath:
 			if figures is not None:
-				figures['featureDistribution_' + str(figNo)] = savePath + 'featureDistribution_' + str(figNo) + '.' + figureFormat
+				figures['featureDistribution_' + str(figNo)] = savePath + '_' + str(figNo) + '.' + dataset.Attributes['figureFormat']
 
-			plt.savefig(savePath + 'featureDistribution_' + str(figNo) + '.' + figureFormat, bbox_inches='tight', format=figureFormat, dpi=dpi)
+			plt.savefig(savePath + '_' + str(figNo) + '.' + dataset.Attributes['figureFormat'], bbox_inches='tight', format=dataset.Attributes['figureFormat'], dpi=dataset.Attributes['dpi'])
 			plt.close()
 		else:
 			plt.show()

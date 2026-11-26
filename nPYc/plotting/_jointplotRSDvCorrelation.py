@@ -55,7 +55,7 @@ def jointplotRSDvCorrelation(rsd,
 		nbins = histBins
 
 	with sns.axes_style("white"):
-		my_cmap = mpl.cm.get_cmap('BuPu')
+		my_cmap = mpl.colormaps.get_cmap('BuPu')
 		my_cmap.set_under('w')
 		cax = ax.hexbin(rsd, correlation,
 						bins=bins,

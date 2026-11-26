@@ -9,5 +9,6 @@ The module implements\:
 """
 from .multivariateUtilities import pcaSignificance, metadataTypeGrouping
 from .exploratoryAnalysisPCA import exploratoryAnalysisPCA
+from .pcamodel import PCAmodel
 
-__all__ = ['pcaSignificance', 'metadataTypeGrouping', 'exploratoryAnalysisPCA']
+__all__ = ['pcaSignificance', 'metadataTypeGrouping', 'exploratoryAnalysisPCA', 'PCAmodel']

@@ -1,13 +1,9 @@
-import scipy
 import numpy
 import pandas
 import os
-#import isatools.isatab as isatab
-import json
 import inspect
 import re
-from ..enumerations import VariableType, DatasetLevel, SampleType, AssayRole
-from ..utilities.generic import removeDuplicateColumns
+from ..enumerations import VariableType, SampleType, AssayRole
 from .._toolboxPath import toolboxPath
 from datetime import datetime
 import copy
@@ -84,7 +80,7 @@ class Dataset:
 		""":math:`p` element vector, with ``True`` representing samples to be included in analysis, and ``False`` those to be excluded"""
 
 		self.Attributes = dict()
-		"""
+		r"""
 		Dictionary of object configuration attributes, including those loaded from :doc:`SOP files<configuration/builtinSOPs>`.
 
 		Defined attributes are as follows\:
@@ -108,6 +104,38 @@ class Dataset:
 		self.Attributes['Log'].append([datetime.now(), 'nPYc Toolbox version %s.' % (__version__)])
 		self._loadParameters(sop, sopPath)
 		self._Normalisation = normalisation.NullNormaliser()
+
+		# Define colour/marker/label options (based on keywords and enumerations)
+		self.Attributes["sampleTypeColours"] = {
+			SampleType.StudySample: "blue", "SS": "blue", "StudySample": "blue", "Assay": "blue", "Study Sample": "blue", "Sample": "blue",
+			SampleType.StudyPool: "darkgreen", "SR": "darkgreen", "StudyPool": "darkgreen", "Study Pool": "darkgreen", "Study Reference": "darkgreen",
+			SampleType.ExternalReference: "darkorange", "LTR": "darkorange", "ExternalReference": "darkorange", "External Reference": "darkorange", "Long-Term Reference": "darkorange", "Long Term Reference": "darkorange",
+			SampleType.LinearityReference: "red", "SRD": "red", "LinearityReference": "red", "Linearity Reference": "red",
+			SampleType.MethodReference: "blue", "MR": "blue", "MethodReference": "blue", "Method Reference": "blue",
+			SampleType.ProceduralBlank: "aquamarine", "ProceduralBlank": "aquamarine", "Procedural Blank": "aquamarine", "Blank": "aquamarine",
+			SampleType.UnknownType: "grey", "Other": "grey", "UnknownRole": "grey", "Unknown Role": "grey",
+			"Unknown Type": "grey", "Unknown": "grey", "UnknownType": "grey", "nan": "grey", "NaN": "grey",
+			"NA": "grey", "Unspecified SampleType or AssayRole": "grey", numpy.float64(numpy.nan): "grey"}
+		self.Attributes["sampleTypeMarkers"] = {
+			SampleType.StudySample: "8", "SS": "8", "StudySample": "8", "Assay": "8", "Study Sample": "8", "Sample": "8",
+			SampleType.StudyPool: "1", "SR": "8", "StudyPool": "1", "Study Pool": "1", "Study Reference": "1",
+			SampleType.ExternalReference: "2", "LTR": "2", "External Reference": "2", "Long-Term Reference": "2", "Long Term Reference": "2",
+			SampleType.LinearityReference: "4", "SRD": "4", "LinearityReference": "4", "Linearity Reference": "4",
+			SampleType.MethodReference: "3", "MR": "3", "MethodReference": "3", "Method Reference": "3",
+			SampleType.ProceduralBlank: "x", "ProceduralBlank": "x", "Procedural Blank": "x", "Blank": "x",
+			SampleType.UnknownType: "d", "Other": "d", "UnknownRole": "d", "Unknown Role": "d",
+			"Unknown Type": "d", "Unknown": "d", "UnknownType": "d", "nan": "d", "NaN": "d",
+			"NA": "d", "Unspecified SampleType or AssayRole": "d", numpy.float64(numpy.nan): "grey"}
+		self.Attributes["sampleTypeAbbr"] = {
+			SampleType.StudySample: "SS", "StudySample": "SS", "Assay": "Assay", "Study Sample": "SS", "Sample": "Sample",
+			SampleType.StudyPool: "SR", "StudyPool": "SR", "Study Pool": "SR", "Study Reference": "SR",
+			SampleType.ExternalReference: "LTR", "ExternalReference": "LTR", "External Reference": "LTR", "Long-Term Reference": "LTR", "Long Term Reference": "LTR",
+			SampleType.LinearityReference: "red", "LinearityReference": "SRD", "Linearity Reference": "SRD",
+			SampleType.MethodReference: "MR", "MethodReference": "MR", "Method Reference": "MR",
+			SampleType.ProceduralBlank: "Blank", "ProceduralBlank": "Blank", "Procedural Blank": "Blank", "Blank": "Blank",
+			SampleType.UnknownType: "NA", "Other": "NA", "UnknownRole": "NA", "Unknown Role": "NA",
+			"Unknown Type": "NA", "Unknown": "NA", "UnknownType": "NA", "nan": "NA", "NaN": "NA",
+			"NA": "NA", "Unspecified SampleType or AssayRole": "NA", numpy.float64(numpy.nan): "grey"}
 
 		# Allow SOP-loaded attributes to be overriden by kwargs
 		self.Attributes = {**self.Attributes, **kwargs}
@@ -193,6 +221,30 @@ class Dataset:
 			raise TypeError('Normalisation must implement the Normaliser ABC!')
 		else:
 			self._Normalisation = normaliser
+
+	# @property
+	# def sampleClassMasks(self):
+	# 	"""
+	# 	Returns a dictionary of boolean array defining locations of samples in each sampleclass.
+	#
+	# 	:return: key: value pairs, SampleClass: boolean array of location in data
+	# 	:rtype: dict
+	# 	"""
+	#
+	# 	self._sampleClassMasks = {}
+	#
+	# 	# If SampleClass available
+	# 	if hasattr(self.sampleMetadata, 'SampleClass'):
+	# 		stypes = self.sampleMetadata['SampleClass'].unique()
+	#
+	# 		for stype in stypes:
+	# 			self._sampleClassMasks[stype] = self.sampleMetadata['SampleClass'] == stype
+	#
+	# 	# Otherwise set all to unknown
+	# 	else:
+	# 		self._sampleClassMasks['Unknown'] = numpy.zeros(self.sampleMetadata.shape[0]).astype(bool)
+	#
+	# 	return self._sampleClassMasks
 
 	def __repr__(self):
 		"""
@@ -966,7 +1018,7 @@ class Dataset:
 		def splitext(path):
 			return {os.path.splitext(os.path.basename(path))[0]: path}
 
-		pattern = re.compile('.+?\.json$')
+		pattern = re.compile(r'.+?\.json$')
 
 		builtinSOPS = os.path.join(toolboxPath(), 'StudyDesigns', 'SOP')
 		sopPaths = buildFileList(builtinSOPS, pattern)
@@ -1087,7 +1139,7 @@ class Dataset:
 
 				# Delete excluded samples
 				self.sampleMetadata = self.sampleMetadata.loc[self.sampleMask]
-				self.sampleMetadata.reset_index(drop=True, inplace=True)
+				self.sampleMetadata = self.sampleMetadata.reset_index(drop=True)
 				self._intensityData = self._intensityData[self.sampleMask, :]
 
 				if hasattr(self, 'fit'):
@@ -1105,7 +1157,7 @@ class Dataset:
 
 				# Delete excluded features
 				self.featureMetadata = self.featureMetadata.loc[self.featureMask]
-				self.featureMetadata.reset_index(drop=True, inplace=True)
+				self.featureMetadata = self.featureMetadata.reset_index(drop=True)
 				self._intensityData = self._intensityData[:, self.featureMask]
 
 			self.Attributes['Log'].append([datetime.now(), '%i samples and %i features removed from dataset.' % (
@@ -1156,7 +1208,8 @@ class Dataset:
 		* **'Reference Ranges'** JSON file specifying upper and lower reference ranges for a feature.
 
 		:param str filePath: Path to the additional data to be added
-		:param str descriptionFormat:
+		:param descriptionFormat:
+		:type descriptionFormat: str or None
 		:param str featureId: Unique feature Id field in the metadata file provided to match with internal Feature Name
 		:raises NotImplementedError: if the descriptionFormat is not understood
 		"""
@@ -1180,18 +1233,18 @@ class Dataset:
 
 			for column in columnsToRemove:
 				if column in currentMetadata.columns:
-					currentMetadata.drop(column, axis=1, inplace=True)
+					currentMetadata =currentMetadata.drop(column, axis=1)
 
 			currentMetadata = currentMetadata.merge(csvData, how='left', left_on='Feature Name',
 													right_on=featureId, sort=False)
 
 			# Avoid duplicating feature ID field
 			if featureId != 'Feature Name':
-				currentMetadata.drop(featureId, axis=1, inplace=True)
+				currentMetadata = currentMetadata.drop(featureId, axis=1)
 
 			# Rename cpdName to Compound Name (for human readability)
 			if 'cpdName' in currentMetadata.columns:
-				currentMetadata.rename(columns={'cpdName': 'Compound Name'}, inplace=True)
+				currentMetadata = currentMetadata.rename(columns={'cpdName': 'Compound Name'})
 
 			self.featureMetadata = currentMetadata
 
@@ -1204,11 +1257,8 @@ class Dataset:
 		Do a basic join of the data in the csv file at filePath to the :py:attr:`sampleMetadata` dataframe on the 'Sample File Name'.
 		"""
 
-		try:
-			dateparse = lambda x: datetime.strptime(x, '%d/%m/%Y %H:%M')
-			csvData = pandas.read_csv(filePath, dtype={'Sample File Name':str, 'Sample ID': str}, parse_dates=['Acquired Time'], date_parser=dateparse)
-		except:
-			csvData = pandas.read_csv(filePath, dtype={'Sample File Name': str, 'Sample ID': str})
+		csvData = pandas.read_csv(filePath, dtype={'Sample File Name': str, 'Sample ID': str,
+												   'AssayRole': object, 'SampleType': object})
 		currentMetadata = self.sampleMetadata.copy()
 
 		# Check for essential columns
@@ -1219,65 +1269,62 @@ class Dataset:
 		if len(missing_list) > 0:
 			raise npycToolboxError("Missing required columns in Basic CSV file, please ensure all of the following fields are present: " + str(missing_list))
 
-		if 'Sample File Name' not in csvData.columns:
-			raise KeyError("No 'Sample File Name' column present, unable to join tables.")
-
 		# Check if there are any duplicates in the csv file
 		u_ids, u_counts = numpy.unique(csvData['Sample File Name'], return_counts=True)
 		if any(u_counts > 1):
 			warnings.warn('Check and remove duplicates in CSV file')
 			return
 
-		# Store previous AssayRole and SampleType in case they were parsed using from filename:
-		#
-		oldAssayRole = currentMetadata['AssayRole']
-		oldSampleType = currentMetadata['SampleType']
-		oldDilution = currentMetadata['Dilution']
-		##
-		# If colums exist in both csv data and dataset.sampleMetadata remove them from sampleMetadata
-		##
+		# Check information for all samples is present in csvFile
+		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False), :]
+
+		if acquired_butnotcsv.shape[0] != 0:
+			# Print warning that samples should be added to basic CSV or excluded from dataset
+			raise npycToolboxError(
+				'The following samples should be added to "Basic CSV" file, or excluded from dataset else nPYc-Toolbox functionality may be compromised: ',
+				table=acquired_butnotcsv)
+
+		# If columns exist in both csv data and dataset.sampleMetadata remove them from sampleMetadata
 		columnsToRemove = csvData.columns
 		columnsToRemove = columnsToRemove.drop(['Sample File Name'])
 
 		for column in columnsToRemove:
 			if column in currentMetadata.columns:
-				currentMetadata.drop(column, axis=1, inplace=True)
-
-		# If AssayRole or SampleType columns are present parse strings into enums
-
-		csvData['AssayRole'] = [(x.replace(" ", "")).lower() if type(x) is str else numpy.nan for x in csvData['AssayRole']]
-		csvData['SampleType'] = [(x.replace(" ", "")).lower() if type(x) is str else numpy.nan for x in csvData['SampleType']]
-
-		if 'AssayRole' in csvData.columns:
-			for role in AssayRole:
-				csvData.loc[csvData['AssayRole'].values == (str(role).replace(" ",  "")).lower(), 'AssayRole'] = role
-		if 'SampleType' in csvData.columns:
-			for stype in SampleType:
-				csvData.loc[csvData['SampleType'].values == (str(stype).replace(" ", "")).lower(), 'SampleType'] = stype
-
-		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
-		# which are used in some plotting functions
-		if 'Acquired Time' in csvData:
-			csv_datetime = pandas.to_datetime(csvData['Acquired Time'], errors='coerce') # errors='ignore'
-			csv_datetime = csv_datetime.dt.strftime('%d-%b-%Y %H:%M:%S')
-			csvData['Acquired Time'] = csv_datetime.apply(lambda x: datetime.strptime(x, '%d-%b-%Y %H:%M:%S') if isinstance(x, str) else None).astype('O')
+				currentMetadata = currentMetadata.drop(column, axis=1)
 
 		# Left join, without sort, so the intensityData matrix and the sample Masks are kept in order
-		# Preserve information about sample mask alongside merge even on the case of samples missing from CSV file.
+		joinedTable = pandas.merge(currentMetadata, csvData, how='left', on='Sample File Name', sort=False, validate='one_to_one')
 
-		# Is this required?? Masked field doesn't seem to be used anywhere else
-		currentMetadata['Masked'] = False
-		currentMetadata.loc[(self.sampleMask == False), 'Masked'] = True
+		# Ensure AssayRole and SampleType columns are enums where matching
+		for role in AssayRole:
+			joinedTable.loc[joinedTable['AssayRole']==str(role), 'AssayRole'] = role
+		for stype in SampleType:
+			joinedTable.loc[joinedTable['SampleType'] == str(stype), 'SampleType'] = stype
 
-		joinedTable = pandas.merge(currentMetadata, csvData, how='left', left_on='Sample File Name',
-								   right_on='Sample File Name', sort=False)
+		# If Acquired Time column is in the CSV file, reformat data to allow operations on timestamps and timedeltas,
+		# which are used in some plotting functions - note using mixed format and dayfirst here, this must be the format
+		# in the basicCSV file or will result in an error
+		if 'Acquired Time' in csvData:
+			joinedTable['Acquired Time'] = pandas.to_datetime(joinedTable['Acquired Time'],
+															  format='mixed',
+															  dayfirst=True,
+															  errors='raise')
 
-		merged_samples = pandas.merge(currentMetadata, csvData, how='inner', left_on='Sample File Name',
-								   right_on='Sample File Name', sort=False)
+		# By default, everything in the CSV has metadata available
+		joinedTable['Metadata Available'] = True
 
-		merged_samples = merged_samples['Sample File Name']
+		# Set sampleMask for acquired samples where 'Include Sample' column false
+		if 'Include Sample' in joinedTable.columns:
+			self.sampleMask = joinedTable['Include Sample'].values
 
-		merged_indices = joinedTable[joinedTable['Sample File Name'].isin(merged_samples)].index
+		# Add 'Sample Base Name' if not available (note - just setting to 'Sample File Name')
+		if 'Sample Base Name' not in joinedTable.columns:
+			joinedTable['Sample Base Name'] = joinedTable['Sample File Name']
+		if joinedTable['Sample Base Name'].dropna().empty:
+			joinedTable['Sample Base Name'] = joinedTable['Sample File Name']
+
+		# Save to self
+		self.sampleMetadata = joinedTable
 
 		# Samples in the CSV file but not acquired will go for sampleAbsentMetadata, for consistency with NPC Lims import
 		csv_butnotacq = csvData.loc[csvData['Sample File Name'].isin(currentMetadata['Sample File Name']) == False, :]
@@ -1286,83 +1333,14 @@ class Dataset:
 			sampleAbsentMetadata = csv_butnotacq.copy(deep=True)
 
 			# Convert SampleType and AssayRole to standard enums format
-			for st in SampleType:
-				sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'].str.match(st.value, na=False).astype(
-					bool), 'SampleType'] = st
-
-			for ar in AssayRole:
-				sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'].str.match(ar.value, na=False).astype(
-					bool), 'AssayRole'] = ar
-
-			# Remove duplicate columns (these will be appended with _x or _y)
-			cols = [c for c in sampleAbsentMetadata.columns if c[-2:] != '_y']
-			sampleAbsentMetadata = sampleAbsentMetadata[cols]
-			sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
+			for role in AssayRole:
+				sampleAbsentMetadata.loc[sampleAbsentMetadata['AssayRole'] == str(role), 'AssayRole'] = role
+			for stype in SampleType:
+				sampleAbsentMetadata.loc[sampleAbsentMetadata['SampleType'] == str(stype), 'SampleType'] = role
 
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
-		# By default everything in the CSV has metadata available and samples mentioned there will not be masked
-		# unless Include Sample field was == False
-		joinedTable.loc[merged_indices, 'Metadata Available'] = True
-
-		# Samples in the folder and processed but not mentioned in the CSV.
-		acquired_butnotcsv = currentMetadata.loc[(currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False), :]
-
-		# Ensure that acquired but no csv only counts samples which 1 are not in CSV and 2 - also have no other kind of
-		# AssayRole information provided (from parsing filenames for example)
-		if acquired_butnotcsv.shape[0] != 0:
-
-			noMetadataIndex = acquired_butnotcsv.index
-			# Find samples where metadata was there previously and is not on the new CSV
-			previousMetadataAvailable = currentMetadata.loc[(~oldSampleType.isnull()) & (~oldAssayRole.isnull())
-															& ((currentMetadata['Sample File Name'].isin(csvData['Sample File Name']) == False)), :].index
-			metadataNotAvailable = [x for x in noMetadataIndex if x not in previousMetadataAvailable]
-			# Keep old AssayRoles and SampleTypes for cases not mentioned in CSV for which this information was previously
-			# available
-			joinedTable.loc[previousMetadataAvailable, 'AssayRole'] = oldAssayRole[previousMetadataAvailable]
-			joinedTable.loc[previousMetadataAvailable, 'SampleType'] = oldSampleType[previousMetadataAvailable]
-			joinedTable.loc[previousMetadataAvailable, 'Dilution'] = oldDilution[previousMetadataAvailable]
-			
-			#  If not in the new CSV, but previously there, keep it and don't mask
-			if len(metadataNotAvailable) > 0:
-				joinedTable.loc[metadataNotAvailable, 'Metadata Available'] = False
-
-			# Print warning that samples should be added to basic CSV or excluded from dataset
-			raise npycToolboxError('The following samples should be added to "Basic CSV" file, or excluded from dataset else nPYc-Toolbox functionality may be compromised: ',
-								   table=acquired_butnotcsv)
-			#display(acquired_butnotcsv)
-			#print(*acquired_butnotcsv['Sample File Name'].values, sep='\n')
-
-		# 1) ACQ and in "include Sample" - drop and set mask to false
-		#  Samples Not ACQ and in "include Sample" set to False - drop and ignore from the dataframe
-
-		# Remove acquired samples where Include sample column equals false - does not remove, just masks the sample
-		if 'Include Sample' in csvData.columns:
-			which_to_drop = joinedTable[joinedTable['Include Sample'] == False].index
-			#self.intensityData = numpy.delete(self.intensityData, which_to_drop, axis=0)
-			#self.sampleMask = numpy.delete(self.sampleMask, which_to_drop)
-			self.sampleMask[which_to_drop] = False
-			#joinedTable.drop(which_to_drop, axis=0, inplace=True)
-			joinedTable.drop('Include Sample', inplace=True, axis=1)
-
-		previously_masked = joinedTable[joinedTable['Masked'] == True].index
-		self.sampleMask[previously_masked] = False
-		joinedTable.drop('Masked', inplace=True, axis=1)
-		# Regenerate the dataframe index for joined table
-		joinedTable.reset_index(inplace=True, drop=True)
-		self.sampleMetadata = joinedTable
-
-		# Commented out as we shouldn't need this here after removing the LIMS, but lets keep it
-		# This should make it work - but its assuming the sample "NAME" is the same as File name as in LIMS.
-		self.sampleMetadata['Sample Base Name'] = self.sampleMetadata['Sample File Name']
-
-		# Ensure there is a batch column
-		if 'Batch' not in self.sampleMetadata:
-			self.sampleMetadata['Batch'] = 1
-
-		# Check all samples have metadata
-
-
+		# Add to log
 		self.Attributes['Log'].append([datetime.now(), 'Basic CSV matched from %s' % (filePath)])
 
 	def _getSampleMetadataFromFilename(self, filenameSpec):
@@ -1392,22 +1370,28 @@ class Dataset:
 
 		# rename 'sample ID' to 'sampling ID' to match sampleMetadata format
 		if any(self.limsFile.columns.str.match('Sampling ID')):
-			self.limsFile.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
+			self.limsFile = self.limsFile.rename(columns={'Sampling ID': 'Sample ID'})
 
 		# Prepare data
 		# Create normalised columns
 		self.sampleMetadata.loc[:, 'Sample Base Name Normalised'] = self.sampleMetadata['Sample Base Name'].str.lower()
 		# if is float, make it a string with 'Assay data location'
+
 		if isinstance(self.limsFile.loc[0, 'Assay data name'], (int, float, numpy.integer, numpy.floating)):
-			self.limsFile.loc[:, 'Assay data name'] = self.limsFile.loc[:, 'Assay data location'].str.cat(
-				self.limsFile['Assay data name'].astype(str), sep='/')
+			self.limsFile['Assay data name'] = self.limsFile['Assay data name'].astype(str)
+			#self.limsFile.loc[:, 'Assay data name'] = self.limsFile.loc[:, 'Assay data location'].cat(self.limsFile['Assay data name'], sep='/')
+			self.limsFile["Assay data name"] = self.limsFile[["Assay data location", "Assay data name"]].agg("/".join, axis=1)
+
 		self.limsFile.loc[:, 'Assay data name Normalised'] = self.limsFile['Assay data name'].str.lower()
 
 		# Match limsFile to sampleMetdata for samples with data PRESENT
 		# Remove already present columns
-		if 'Sampling ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sampling ID'], axis=1, inplace=True)
-		if 'Sample ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Sample ID'], axis=1, inplace=True)
-		if 'Subject ID' in self.sampleMetadata.columns: self.sampleMetadata.drop(['Subject ID'], axis=1, inplace=True)
+		if 'Sampling ID' in self.sampleMetadata.columns:
+			self.sampleMetadata = self.sampleMetadata.drop(['Sampling ID'], axis=1)
+		if 'Sample ID' in self.sampleMetadata.columns:
+			self.sampleMetadata = self.sampleMetadata.drop(['Sample ID'], axis=1)
+		if 'Subject ID' in self.sampleMetadata.columns:
+			self.sampleMetadata = self.sampleMetadata.drop(['Subject ID'], axis=1)
 
 		merged_samples = pandas.merge(self.sampleMetadata, self.limsFile, how='inner',left_on='Sample Base Name Normalised',
 									  right_on='Assay data name Normalised', sort=False)
@@ -1429,16 +1413,15 @@ class Dataset:
 		# Remove duplicate columns (these will be appended with _x or _y)
 		cols = [c for c in self.sampleMetadata.columns if c[-2:] != '_y']
 		self.sampleMetadata = self.sampleMetadata[cols]
-		self.sampleMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
+		self.sampleMetadata = self.sampleMetadata.rename(columns=lambda x: x.replace('_x', ''))
 
 		# Find samples present in LIMS but not acquired
 		lims_butnotacq = self.limsFile.loc[self.limsFile['Assay data name Normalised'].isin(
 			self.sampleMetadata['Sample Base Name Normalised']) == False, :]
 
 		# Removed normalised index coloumns
-		self.sampleMetadata.drop(labels=['Sample Base Name Normalised', 'Assay data name Normalised'], axis=1,
-								 inplace=True)
-		self.limsFile.drop(labels=['Assay data name Normalised'], axis=1, inplace=True)
+		self.sampleMetadata = self.sampleMetadata.drop(labels=['Sample Base Name Normalised', 'Assay data name Normalised'], axis=1)
+		self.limsFile = self.limsFile.drop(labels=['Assay data name Normalised'], axis=1)
 
 		# Enforce string type on matched data
 		self.sampleMetadata['Assay data name'] = self.sampleMetadata['Assay data name'].astype(str)
@@ -1475,7 +1458,7 @@ class Dataset:
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in sampleAbsentMetadata.columns if c[-2:] != '_y']
 			sampleAbsentMetadata = sampleAbsentMetadata[cols]
-			sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
+			sampleAbsentMetadata = sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''))
 
 			self.sampleAbsentMetadata = sampleAbsentMetadata
 
@@ -1516,13 +1499,13 @@ class Dataset:
 												converters={'Subject ID': str, 'Sampling ID': str})
 		cols = [c for c in self.samplingEvents.columns if c[:7] != 'Unnamed']
 		self.samplingEvents = self.samplingEvents[cols]
-		self.samplingEvents.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
+		self.samplingEvents = self.samplingEvents.rename(columns={'Sampling ID': 'Sample ID'})
 
 		# Create one overall samplingInfo sheet - combine subjectInfo and samplingEvents for samples present in samplingEvents
 		self.samplingInfo = pandas.merge(self.samplingEvents, self.subjectInfo, left_on='Subject ID',
 										 right_on='Subject ID', how='left', sort=False)
 
-		self.samplingInfo.rename(columns={'Sampling ID': 'Sample ID'}, inplace=True)
+		self.samplingInfo = self.samplingInfo.rename(columns={'Sampling ID': 'Sample ID'})
 
 		# Remove duplicate columns (these will be appended with _x or _y)
 		self.samplingInfo = removeDuplicateColumns(self.samplingInfo)
@@ -1531,7 +1514,7 @@ class Dataset:
 
 		# Rename 'Sample Type' to 'Biofluid'
 		if hasattr(self.samplingInfo, 'Sample Type'):
-			self.samplingInfo.rename(columns={'Sample Type': 'Biofluid'}, inplace=True)
+			self.samplingInfo = self.samplingInfo.rename(columns={'Sample Type': 'Biofluid'})
 
 		# Check no duplicates in sampleInfo
 		u_ids, u_counts = numpy.unique(self.samplingInfo['Sample ID'], return_counts=True)
@@ -1547,7 +1530,7 @@ class Dataset:
 			# Remove duplicate columns (these will be appended with _x or _y)
 			cols = [c for c in self.sampleAbsentMetadata.columns if c[-2:] != '_y']
 			self.sampleAbsentMetadata = self.sampleAbsentMetadata[cols]
-			self.sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
+			self.sampleAbsentMetadata = self.sampleAbsentMetadata.rename(columns=lambda x: x.replace('_x', ''))
 
 			self.sampleAbsentMetadata['SubjectInfoData'] = False
 			self.sampleAbsentMetadata.loc[self.sampleAbsentMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
@@ -1559,7 +1542,7 @@ class Dataset:
 		# Remove duplicate columns (these will be appended with _x or _y)
 		cols = [c for c in self.sampleMetadata.columns if c[-2:] != '_y']
 		self.sampleMetadata = self.sampleMetadata[cols]
-		self.sampleMetadata.rename(columns=lambda x: x.replace('_x', ''), inplace=True)
+		self.sampleMetadata = self.sampleMetadata.rename(columns=lambda x: x.replace('_x', ''))
 
 		self.sampleMetadata['SubjectInfoData'] = False
 		self.sampleMetadata.loc[self.sampleMetadata['Subject ID'].notnull(), 'SubjectInfoData'] = True
@@ -1620,16 +1603,25 @@ class Dataset:
 		sampleMetadata['Sample File Name'] = sampleMetadata['Sample File Name'].astype(str)
 
 		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].apply(pandas.to_datetime)
-		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time']
-
+		# Jazz changing the next few lines to fix fails on mismatched data types
+		#sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time']
+		sampleMetadata['Acquired Time'] = sampleMetadata['Acquired Time'].dt.to_pydatetime()
 		# If AssayRole or SampleType columns are present parse strings into enums
-		if 'AssayRole' in sampleMetadata.columns:
-			for role in AssayRole:
-				sampleMetadata.loc[sampleMetadata['AssayRole'].values == str(role), 'AssayRole'] = role
-		if 'SampleType' in sampleMetadata.columns:
-			for stype in SampleType:
-				sampleMetadata.loc[sampleMetadata['SampleType'].values == str(stype), 'SampleType'] = stype
 
+		if 'AssayRole' in sampleMetadata.columns:
+			role_map = {str(role): role for role in AssayRole}
+			sampleMetadata['AssayRole'] = (
+				sampleMetadata['AssayRole'].map(role_map)
+			)
+			#for role in AssayRole:
+				#sampleMetadata.loc[sampleMetadata['AssayRole'].values == str(role), 'AssayRole'] = role
+		if 'SampleType' in sampleMetadata.columns:
+			role_map = {str(stype): stype for stype in SampleType}
+			#for stype in SampleType:
+				#sampleMetadata.loc[sampleMetadata['SampleType'].values == str(stype), 'SampleType'] = stype
+			sampleMetadata['SampleType'] = (
+				sampleMetadata['SampleType'].map(role_map)
+			)
 		return (objectName, intensityData, featureMetadata, sampleMetadata)
 
 
@@ -1740,11 +1732,7 @@ class Dataset:
 		* **UnifiedCSV** Exports :py:attr:`featureMetadata`, :py:attr:`sampleMetadata` and :py:attr:`intensityData` concatenated into a single CSV file
 
 		:param str destinationPath: Save data into the directory specified here
-		:param str format: File format for saved data, defaults to CSV.
-
-
-
-
+		:param str saveFormat: File format for saved data, defaults to CSV.
 		:param bool withExclusions: If ``True`` mask features and samples will be excluded
 		:param bool escapeDelimiters: If ``True`` remove characters commonly used as delimiters in csv files from metadata
 		:param bool filterMetadata: If ``True`` does not export the sampleMetadata and featureMetadata columns listed in self.Attributes['sampleMetadataNotExported'] and self.Attributes['featureMetadataNotExported']
@@ -1775,11 +1763,11 @@ class Dataset:
 			# sampleMetadata not exported
 			sampleMetaColToRemove = list(set(exportDataset.sampleMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['sampleMetadataNotExported']))
-			exportDataset.sampleMetadata.drop(sampleMetaColToRemove, axis=1, inplace=True)
+			exportDataset.sampleMetadata = exportDataset.sampleMetadata.drop(sampleMetaColToRemove, axis=1)
 			# sampleMetadata not exported
 			featureMetaColToRemove = list(set(exportDataset.featureMetadata.columns.tolist()) & set(
 				exportDataset.Attributes['featureMetadataNotExported']))
-			exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1, inplace=True)
+			exportDataset.featureMetadata = exportDataset.featureMetadata.drop(featureMetaColToRemove, axis=1)
 
 		if saveFormat == 'CSV':
 			destinationPath = os.path.join(destinationPath, exportDataset.name)
@@ -1886,7 +1874,7 @@ class Dataset:
 
 
 	def getFeatures(self, featureIDs, by=None, useMasks=True):
-		"""
+		r"""
 		Get a feature or list of features by name or ranges.
 
 		If :py:attr:`VariableType` is :py:attr:`~nPYc.enumerations.VariableType.Discrete`, :py:meth:`getFeature` expects either a single or list of values, and matching features are returned.

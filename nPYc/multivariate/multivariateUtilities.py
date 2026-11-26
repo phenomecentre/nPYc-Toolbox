@@ -3,6 +3,7 @@ from scipy.stats import kruskal
 from ..utilities._internal import _vcorrcoef
 import datetime
 import pandas
+from pandas.api.types import is_numeric_dtype
 
 def pcaSignificance(values, classes, valueType):
 	"""
@@ -75,7 +76,7 @@ def metadataTypeGrouping(classes, sampleGroups=None, catVsContRatio=0.75):
 		valueType = 'uniform' # uniformClass
 
 	# If numeric and ratio of number of unique groups to number of samples >= 0.75 - calculate correlation
-	elif (numpy.issubdtype(classes, numpy.number) & (len(uniq)/nsnan >= catVsContRatio)):
+	elif (is_numeric_dtype(classes)) & (len(uniq)/nsnan >= catVsContRatio):
 		valueType = 'continuous' # correlation
 
 	# If date
@@ -110,7 +111,6 @@ def metadataTypeGrouping(classes, sampleGroups=None, catVsContRatio=0.75):
 			for c in uniq:
 				if str(c) in {'nan', 'NaN', 'NaT', '', 'NA'}:
 					nmembers[i] = 0
-#					nnans = sum(classes.isnull())
 					nnans = sum(classes.values.astype(str) == str(c))
 				else:
 					nmembers[i] = sum(classes.values == c)

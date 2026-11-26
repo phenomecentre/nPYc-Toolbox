@@ -1,40 +1,39 @@
 from setuptools import setup, find_packages
+from pathlib import Path
+
+# Resolve the path to requirements.txt relative to this setup.py file,
+# so it works no matter what directory `pip install` is run from.
+HERE = Path(__file__).parent.resolve()
+
+def read_requirements(filename="requirements.txt"):
+    req_path = HERE / filename
+    with open(req_path, encoding="utf-8") as f:
+        lines = f.readlines()
+
+    requirements = []
+    for line in lines:
+        line = line.strip()
+        # Skip blank lines and comments
+        if not line or line.startswith("#"):
+            continue
+        # Skip options like -r other_file.txt or --index-url ...
+        if line.startswith("-"):
+            continue
+        requirements.append(line)
+    return requirements
 
 setup(name='nPYc',
-	version='2.0',
+	version='3.0',
 	description='National Phenome Centre toolbox',
 	url='https://github.com/phenomecentre/npyc-toolbox',
 	author='National Phenome Centre',
 	author_email='phenomecentre@imperial.ac.uk',
 	license='MIT',
 	packages=find_packages(),
-	install_requires=[
-		'cycler>=0.10.0',
-		'iPython>=6.3.1',
-		#'isaExplorer>=0.1',
-		#'isatools>=0.9.3',
-		'Jinja2>=3.0.1',
-		'lmfit>=0.9.7',
-		#'markupsafe==2.0.1',
-		'matplotlib==3.5.2',
-		'networkx>=2.5.1',
-		#'numpy>=1.14.2',
-		#'pandas>=0.23.0',
-		'numpy~=1.23.3',
-		'openpyxl',
-        #'jsonschema~=3.2.0',
-        'pandas~=1.5.0',
-		'plotly>=3.1.0',
-		'pyChemometrics>=0.1',
-		'scikit-learn>=0.19.1',
-		'scipy>=1.1.0',
-		'seaborn>=0.8.1',
-		'setuptools>=39.1.0',
-		'statsmodels>=0.9.0'
-	],
+	install_requires=read_requirements("requirements.txt"),
 	classifiers = [
 		"Programming Language :: Python",
-		"Programming Language :: Python :: 3.9",
+		"Programming Language :: Python :: 3.13",
 		"Intended Audience :: Science/Research",
 		"License :: OSI Approved :: MIT License",
 		"Operating System :: OS Independent",

@@ -4,6 +4,14 @@
 
 {% block content %}
 
+<!--Brief summary of dataset-->
+<div class='content'>
+	<span class="heading">Dataset summary.</span>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	<p></p>
+</div>
+
 <!-- Batch correction summary report  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <h3>Figure 1: Feature intensity histogram for all samples and all features in dataset (by sample type)</h3>
 <h3>Pre-correction</h3>

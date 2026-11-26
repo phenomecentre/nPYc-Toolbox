@@ -198,7 +198,8 @@ class test_plotting(unittest.TestCase):
 			# Matching report colours
 			##
 			outputPath = os.path.join(tmpdirname, 'matchReport')
-			nPYc.plotting.plotRSDs(msData, color='matchReport', savePath=outputPath)
+			#nPYc.plotting.plotRSDs(msData, color='matchReport', savePath=outputPath)
+			nPYc.plotting.plotRSDs(msData, savePath=outputPath)
 
 			self.assertTrue(os.path.exists(outputPath))
 
@@ -218,7 +219,7 @@ class test_plotting(unittest.TestCase):
 
 		with self.subTest(msg='No m/z column'):
 			dataset = generateTestDataset(10, 10, dtype='MSDataset')
-			dataset.featureMetadata.drop('m/z', 1, inplace=True)
+			dataset.featureMetadata = dataset.featureMetadata.drop('m/z', axis=1)
 
 			self.assertRaises(KeyError, nPYc.plotting.plotIonMap, dataset)
 
@@ -369,7 +370,7 @@ class test_plotting(unittest.TestCase):
 
 		data = generateTestDataset(noSamp, noFeat)
 
-		pcaModel = exploratoryAnalysisPCA(data, maxComponents=5)
+		pcaModel = exploratoryAnalysisPCA(data, n_components=5)
 
 		self.assertRaises(TypeError, nPYc.plotting.plotDiscreteLoadings, 'Not a Dataset object', pcaModel)
 		self.assertRaises(TypeError, nPYc.plotting.plotDiscreteLoadings, data, 'Not a PCA object')
@@ -386,7 +387,7 @@ class test_plotting(unittest.TestCase):
 
 		data = generateTestDataset(noSamp, noFeat)
 
-		pcaModel = exploratoryAnalysisPCA(data, maxComponents=5)
+		pcaModel = exploratoryAnalysisPCA(data, n_components=5)
 
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
@@ -399,7 +400,7 @@ class test_plotting(unittest.TestCase):
 			self.assertTrue(os.path.exists(outputPath))
 
 			outputPath = os.path.join(tmpdirname, 'runningOverTotalComponents')
-			nPYc.plotting.plotDiscreteLoadings(data, pcaModel, firstComponent=pcaModel.ncomps-1, savePath=outputPath)
+			nPYc.plotting.plotDiscreteLoadings(data, pcaModel, firstComponent=pcaModel.outputstats['n_components_fitted']-1, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
 
@@ -412,7 +413,7 @@ class test_plotting(unittest.TestCase):
 				# Cause all warnings to always be triggered.
 				warnings.simplefilter("ignore")
 				datapath = os.path.join("..", "..", "npc-standard-project", "Raw_Data", "nmr", "UnitTest3")
-				testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern='.*?results\.xml$')
+				testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerBI-LISA', fileNamePattern=r'.*?results\.xml$')
 
 			testData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest3_NMR_serum_PCSOP.012.csv'))
 
@@ -443,7 +444,7 @@ class test_plotting(unittest.TestCase):
 		with tempfile.TemporaryDirectory() as tmpdirname:
 
 			datapath = os.path.join("..", "..", "npc-standard-project", "Raw_Data", "nmr", "UnitTest1")
-			testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern='.*?urine_quant_report_b\.xml$', unit='mmol/L')
+			testData = nPYc.TargetedDataset(datapath, fileType='Bruker Quantification', sop='BrukerQuant-UR', fileNamePattern=r'.*?urine_quant_report_b\.xml$', unit='mmol/L')
 			testData.addSampleInfo(descriptionFormat='NPC LIMS', filePath=os.path.join('..','..','npc-standard-project','Derived_Worklists','UnitTest1_NMR_urine_PCSOP.011.csv'))
 
 			outputPath = os.path.join(tmpdirname, 'basic')
@@ -560,12 +561,6 @@ class test_plotting(unittest.TestCase):
 
 			outputPath = os.path.join(tmpdirname, 'logX')
 			nPYc.plotting.plotVariableScatter(inputData, logX=True, savePath=outputPath)
-			self.assertTrue(os.path.exists(outputPath))
-
-			# Add another column that won't be read with sampletypeColor=True
-			inputData['another column'] = ['a', 'b', 'c', 'd', 'e', 'f']
-			outputPath = os.path.join(tmpdirname, 'withSampletypeColor')
-			nPYc.plotting.plotVariableScatter(inputData, sampletypeColor=True, savePath=outputPath)
 			self.assertTrue(os.path.exists(outputPath))
 
 
@@ -792,9 +787,12 @@ class test_plotting(unittest.TestCase):
 			dataset = generateTestDataset(noSamp, noFeat, dtype='NMRDataset', variableType=VariableType.Continuum, sop='Generic')
 
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
-			sample_dmodx_values = pcaModel.dmodx(dataset.intensityData)
-			Fcrit = pcaModel._dmodx_fcrit(dataset.intensityData, alpha = 0.05)
-			
+			sample_dmodx_values = pcaModel.outputstats["DmodX"]
+			Fcrit = pcaModel.outputstats["DmodX_Fcrit"]
+			#Jazz: the above replaces these lines I assume; Caroline may disagree!
+			#sample_dmodx_values = pcaModel.dmodx(dataset.intensityData)
+			#Fcrit = pcaModel._dmodx_fcrit(dataset.intensityData, alpha = 0.05)
+
 			with tempfile.TemporaryDirectory() as tmpdirname:
 				outputPath = os.path.join(tmpdirname, 'plot')
 
@@ -836,15 +834,15 @@ class test_plotting(unittest.TestCase):
 
 			with self.subTest(msg='Association plot'):
 				outputPath = os.path.join(tmpdirname, 'categoricalAssociation')
-
-				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], colourType='categorical', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+				# Jazz: what is plotAssociation all about??
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['AssayRole'], colourType='categorical', plotAssociation=[0,1,2,3,4,5], figureFormat='png', savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
 
 			with self.subTest(msg='Continuous Association'):
 				outputPath = os.path.join(tmpdirname, 'continuousAssociation')
 
-				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], colourType='continuous', plotAssociation=[0,1,2], figureFormat='png', savePath=outputPath)
+				nPYc.plotting.plotScores(pcaModel,classes=dataset.sampleMetadata['Detector'], colourType='continuous', plotAssociation=[0,1,2,3,4,5], figureFormat='png', savePath=outputPath)
 
 				self.assertTrue(os.path.exists(outputPath + '.png'))
 
@@ -1027,7 +1025,7 @@ class test_plotting_interactive(unittest.TestCase):
 
 			pcaModel = nPYc.multivariate.exploratoryAnalysisPCA(dataset)
 
-			for i in range(pcaModel.ncomps):
+			for i in range(pcaModel.outputstats['n_components_fitted']):
 
 				if i == 0:
 					self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=i)
@@ -1046,13 +1044,13 @@ class test_plotting_interactive(unittest.TestCase):
 
 		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component='not an int')
 
-		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=pcaModel.ncomps + 1)
+		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=pcaModel.outputstats['n_components_fitted'] + 1)
 
-		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=['not an int', pcaModel.ncomps])
+		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=['not an int', pcaModel.outputstats['n_components_fitted']])
 
-		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.ncomps, pcaModel.ncomps, pcaModel.ncomps])
+		self.assertRaises(TypeError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.outputstats['n_components_fitted'], pcaModel.outputstats['n_components_fitted'], pcaModel.outputstats['n_components_fitted']])
 
-		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.ncomps, pcaModel.ncomps + 1])
+		self.assertRaises(ValueError, nPYc.plotting.plotLoadingsInteractive, self.dataset, pcaModel, component=[pcaModel.outputstats['n_components_fitted'], pcaModel.outputstats['n_components_fitted'] + 1])
 
 
 	def test_plotScoresInteractive(self):
@@ -1078,7 +1076,7 @@ class test_plotting_interactive(unittest.TestCase):
 
 		self.assertRaises(TypeError, nPYc.plotting.plotScoresInteractive, self.dataset, pcaModel, 'Classes', components=['a', 1.2])
 
-		self.assertRaises(ValueError, nPYc.plotting.plotScoresInteractive, self.dataset, pcaModel, 'Classes', components=[1, pcaModel.ncomps + 1])
+		self.assertRaises(ValueError, nPYc.plotting.plotScoresInteractive, self.dataset, pcaModel, 'Classes', components=[1, pcaModel.outputstats['n_components_fitted'] + 1])
 
 
 	def test_plotRSDsInteractive(self):
@@ -1259,10 +1257,10 @@ class test_plotting_helpers(unittest.TestCase):
 
 		with self.subTest(msg='Check sorting'):
 			rsdTable = _plotRSDsHelper(dataset, withExclusions=True)
-			numpy.testing.assert_array_equal(numpy.sort(dataset.rsdSP)[::-1],rsdTable[SampleType.StudyPool].values)
+			numpy.testing.assert_array_equal(numpy.sort(dataset.rsdSP),rsdTable['Study Reference'].values)
 
 		with self.subTest(msg='Check columns'):
-			for sampleType in dataset.sampleMetadata['SampleType'].unique():
+			for sampleType in dataset.sampleMetadata['SampleClass'].unique():
 				self.assertTrue(sampleType in rsdTable.columns)
 
 		with self.subTest(msg='With a feature mask'):

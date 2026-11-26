@@ -4,6 +4,14 @@
 
 {% block content %}
 
+<!--Brief summary of dataset-->
+<div class='content'>
+	<span class="heading">Dataset summary.</span>
+	<p>{{ item['Nsamples'] }} samples</p>
+	<p>{{ item['Nfeatures'] }} features</p>
+	<p></p>
+</div>
+
 <!--For each batch subset and mean overall; plot TIC by dilution, TIC by detector voltage and correlation histogram-->
 <h3>For each serial dilution (SRD) sample batch subset and mean overall; plots of Total Ion Count (TIC) by dilution, TIC by detector voltage and correlation to dilution histogram</h3>
 {% for key, value in item['figuresCorLRbyBatch'].items() %}

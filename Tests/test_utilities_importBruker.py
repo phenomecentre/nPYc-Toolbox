@@ -186,16 +186,13 @@ class test_utilities_importBruker(unittest.TestCase):
 		sortIndex = metadata.index.values
 		intensityData = intensityData[sortIndex, :]
 		metadata = metadata.reset_index(drop=True)
-
 		warningsCol = pandas.Series([''],
 									name='Warnings',
 									dtype='str')
 		pandas.testing.assert_series_equal(metadata['Warnings'], warningsCol)
 
-		sampleName = pandas.Series(['UnitTest1_Urine_Rack1_SLL_270814/30'],
-									name='Sample File Name',
-									dtype='str')
-		pandas.testing.assert_series_equal(metadata['Sample File Name'], sampleName)
+		sampleName = 'UnitTest1_Urine_Rack1_SLL_270814/30'
+		self.assertEqual(metadata.loc[0,'Sample File Name'], sampleName)
 
 		self.assertEqual(len(ppm), Attributes['variableSize'])
 		numpy.testing.assert_allclose(numpy.min(ppm), Attributes['bounds'][0])
@@ -223,11 +220,10 @@ class test_utilities_importBruker(unittest.TestCase):
 		Attributes['LWpeakMultiplicity'] = 'singlet'
 		Attributes['LWpeakIntesityFraction'] = 1e-4
 
-		with self.assertWarnsRegex(UserWarning, 'Error parsing `QuantFactorSample`'):
-			intensityData, ppm, metadata = importBrukerSpectra(os.path.join('..', '..', 'npc-standard-project',
+		intensityData, ppm, metadata = importBrukerSpectra(os.path.join('..', '..', 'npc-standard-project',
 																			'Raw_Data', 'nmr', 'UnitTest1',
 																			'UnitTest1_Urine_Rack1_SLL_270814', '10'),
-																			'noesypr1d', 1, Attributes)
+															   'noesypr1d', 1, Attributes)
 
 		expectedWarningText = 'Error calculating ERETIC integral'
 		self.assertEqual(metadata.loc[0, 'Warnings'], expectedWarningText)

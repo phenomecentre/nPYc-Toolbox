@@ -3,31 +3,23 @@ import os
 import numpy
 import pandas
 from collections import OrderedDict
-import matplotlib.pyplot as plt
 import seaborn as sns
 import copy
-from matplotlib import gridspec
 from .._toolboxPath import toolboxPath
 from ..objects import TargetedDataset
-from ..plotting import plotFeatureLOQ, plotLOQRunOrder, plotAccuracyPrecision, plotIntensity, histogram, plotLRTIC, \
-	jointplotRSDvCorrelation, plotRSDs, plotIonMap, plotBatchAndROCorrection, \
-	plotScores, plotLoadings, plotTargetedFeatureDistribution
+from ..plotting import plotFeatureLOQ, plotAccuracyPrecision, plotRSDs, plotTargetedFeatureDistribution
 from ._generateSampleReport import _generateSampleReport
-from ..reports._finalReportPeakPantheR import _plotAbundanceBySampleType
-from ..utilities import generateLRmask, rsd
+from ..utilities import rsd
 from ..utilities._internal import _copyBackingFiles as copyBackingFiles
-from ..enumerations import AssayRole, SampleType, CalibrationMethod, QuantificationType, AnalyticalPlatform
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
-from ._generateBasicPCAReport import generateBasicPCAReport
+from ..enumerations import AssayRole, SampleType, QuantificationType, AnalyticalPlatform
 from IPython.display import display
 from io import StringIO
-import warnings
 import re
-import shutil
+
 from ..__init__ import __version__ as version
 
 
-def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinationPath=None, numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20, pcaModel=None):
+def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinationPath=None, numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20):
 	"""
 	Summarise different aspects of a Targeted Dataset
 
@@ -134,7 +126,7 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 	item['TextQType'] = textQType
 	item['CountQType'] = countQType
 	item['pcaModel'] = None
-	sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
+	sampleSummary = _generateSampleReport(tData, destinationPath=None, returnOutput=True)
 
 	if reportType.lower() == 'feature summary':
 		item = _featureReport(tData, item, destinationPath, numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
@@ -142,10 +134,10 @@ def _generateReportTargeted(tDataIn, reportType, withExclusions=False, destinati
 		item = _mergeLOQAssessemnt(tData, item, destinationPath,
 								   numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
 	elif (reportType.lower() == 'final report') and (tData.AnalyticalPlatform == AnalyticalPlatform.MS):
-		item = _finalReportMS(tData, item, destinationPath, pcaModel, withAccPrec=True,
+		item = _finalReportMS(tData, item, destinationPath, withAccPrec=True,
 							  numberPlotPerRowLOQ=3, numberPlotPerRowFeature=2, percentRange=20)
 	elif (reportType.lower() == 'final report') and (tData.AnalyticalPlatform == AnalyticalPlatform.NMR):
-		item = _finalReportNMR(tData, item, destinationPath, pcaModel)
+		item = _finalReportNMR(tData, item, destinationPath)
 
 	template_options = {'featureSummary': 'Targeted_FeatureSummaryReport.html',
 						'mergeLoqAssessment': 'Targeted_MergeLOQReport.html',
@@ -355,7 +347,7 @@ def _featureReport(tData, item, destinationPath, numberPlotPerRowLOQ=3,
 			plotRSDs(tmpData,
 					 ratio=False,
 					 logx=True,
-					 color='matchReport',
+					 #color='matchReport', # Caro 2025-06-03 commented out, need to check
 					 featName=True,
 					 savePath=saveAs,
 					 figureFormat=tmpData.Attributes['figureFormat'],
@@ -596,24 +588,18 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 	# Table 1: Sample summary
 	# Generate sample summary
-	sampleSummary = _generateSampleReport(tData, withExclusions=True, destinationPath=None, returnOutput=True)
-
-	# Tidy table for final report format
-	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
-
-	# Drop rows where no samples present for that datatype
-	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
+	sampleSummary = _generateSampleReport(tData, destinationPath=None, returnOutput=True)
 
 	sampleSummary['isFinalReport'] = True
-	if 'StudySamples Exclusion Details' in sampleSummary:
-		sampleSummary['studySamplesExcluded'] = True
-	else:
-		sampleSummary['studySamplesExcluded'] = False
+	#if 'StudySamples Exclusion Details' in sampleSummary:
+	#	sampleSummary['studySamplesExcluded'] = True
+	#else:
+	#		sampleSummary['studySamplesExcluded'] = False
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
 		print('Sample Summary')
-		display(sampleSummary['Acquired'])
+		display(sampleSummary['Dataset'])
 		print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
 
@@ -706,12 +692,8 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 					 ratio=False,
 					 logx=True,
 					 color='matchReport',
-					 featName=True,
 					 featureName = 'Feature Name',
-					 savePath=saveAs,
-					 figureFormat=tmpData.Attributes['figureFormat'],
-					 dpi=tmpData.Attributes['dpi'],
-					 figureSize=(tmpData.Attributes['figureSize'][0], tmpData.Attributes['figureSize'][1] * (tmpData.noFeatures / 35)))
+					 savePath=saveAs)
 
 		## Figure: Measured concentrations distribution, split by sample types.
 		temp = dict()
@@ -727,13 +709,8 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 		figuresFeatureDistribution = plotTargetedFeatureDistribution(
 				tmpData,
-				logx=False,
-				sampleTypes=['SS', 'ER'],
 				figures=figuresFeatureDistribution,
-				savePath=saveAs,
-				figureFormat=tData.Attributes['figureFormat'],
-				dpi=tData.Attributes['dpi'],
-				figureSize=tData.Attributes['figureSize'])
+				savePath=saveAs)
 
 
 		for key in figuresFeatureDistribution:
@@ -744,37 +721,11 @@ def _finalReportMS(tData, item, destinationPath, pcaModel=None, withAccPrec=True
 
 		figNo = figNo+1
 
-
-	## Figure 5 and 6: (if available) PCA scores and loadings plots by sample type
-	if pcaModel is not None:
-		# Get sample types
-		#SSmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudySample) & (
-		#			tData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-		#SPmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-		#			tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		#ERmask = (tData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & (
-		#			tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-		# Linearity references not commonly used, but left here throughout.
-		#LRmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & (
-		#			tData.sampleMetadata['AssayRole'].values == AssayRole.LinearityReference)
-
-		#tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-		#tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-		#tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
-		#tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
-
-		if pcaModel:
-			if destinationPath:
-				pcaPath = destinationPath
-			else:
-				pcaPath = None
-			pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=figNo, destinationPath=pcaPath, fileNamePrefix='')
-
 	# Table: Summary of missing/excluded study samples
 	if not destinationPath:
-		if 'StudySamples Exclusion Details' in sampleSummary:
+		if 'Missing/excluded SS Details' in sampleSummary:
 			print('Missing/Excluded Study Samples')
-			display(sampleSummary['StudySamples Exclusion Details'])
+			display(sampleSummary['Missing/excluded SS Details'])
 
 	return item
 
@@ -832,14 +783,6 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	else:
 		graphicsPath = None
 
-	# Define sample masks
-	SSmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudySample) & \
-			 (tData.sampleMetadata['AssayRole'].values == AssayRole.Assay)
-	SPmask = (tData.sampleMetadata['SampleType'].values == SampleType.StudyPool) & \
-			 (tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-	ERmask = (tData.sampleMetadata['SampleType'].values == SampleType.ExternalReference) & \
-			 (tData.sampleMetadata['AssayRole'].values == AssayRole.PrecisionReference)
-
 	# Modify the required fields in item
 	item['NfeaturesPassing'] = numpy.where(tData.featureMetadata['Passing Selection'])[0].shape[0]
 	item['NfeaturesFailing'] = int(item['Nfeatures']) - item['NfeaturesPassing']
@@ -864,23 +807,13 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	# Generate sample summary
 	sampleSummary = _generateSampleReport(tData, destinationPath=None, returnOutput=True)
 
-	# Tidy table for final report format
-	sampleSummary['Acquired'].drop('Marked for Exclusion', inplace=True, axis=1)
-
-	# Drop rows where no samples present for that datatype
-	sampleSummary['Acquired'].drop(sampleSummary['Acquired'].index[sampleSummary['Acquired']['Total'].values == 0], axis=0, inplace=True)
-
 	sampleSummary['isFinalReport'] = True
-	if 'StudySamples Exclusion Details' in sampleSummary:
-		sampleSummary['studySamplesExcluded'] = True
-	else:
-		sampleSummary['studySamplesExcluded'] = False
 	item['sampleSummary'] = sampleSummary
 
 	if not destinationPath:
 		print('\n\nSample Summary')
 		print('\nTable 1: Sample summary table.')
-		display(sampleSummary['Acquired'])
+		display(sampleSummary['Dataset'])
 		print('\n*Details of any missing/excluded study samples given at the end of the report\n')
 
 	# reporting columns
@@ -1000,13 +933,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 	figuresFeatureDistributionPassing = plotTargetedFeatureDistribution(
 		tData,
 		featureMask=tData.featureMetadata['Passing Selection'],
-		featureName=featureName,
-		logx=False,
 		figures=figuresFeatureDistributionPassing,
-		savePath=saveAs,
-		figureFormat=tData.Attributes['figureFormat'],
-		dpi=tData.Attributes['dpi'],
-		figureSize=tData.Attributes['figureSize'])
+		savePath=saveAs)
 
 	for key in figuresFeatureDistributionPassing:
 		if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistributionPassing[key]):
@@ -1032,13 +960,8 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 		figuresFeatureDistributionFailing = plotTargetedFeatureDistribution(
 			tData,
 			featureMask=tData.featureMetadata['Passing Selection'] == False,
-			featureName=featureName,
-			logx=False,
 			figures=figuresFeatureDistributionFailing,
-			savePath=saveAs,
-			figureFormat=tData.Attributes['figureFormat'],
-			dpi=tData.Attributes['dpi'],
-			figureSize=tData.Attributes['figureSize'])
+			savePath=saveAs)
 
 		for key in figuresFeatureDistributionFailing:
 			if os.path.join(destinationPath, 'graphics') in str(figuresFeatureDistributionFailing[key]):
@@ -1049,31 +972,10 @@ def _finalReportNMR(tData, item, destinationPath, pcaModel=None, withAccPrec=Tru
 
 	# Table 3: Summary of samples excluded
 	if not destinationPath:
-		if 'StudySamples Exclusion Details' in sampleSummary:
+		if 'Missing/excluded SS Details' in sampleSummary:
 			print('Missing/Excluded Study Samples')
 			print('\nTable 4: Details of missing/excluded study samples')
-			display(sampleSummary['StudySamples Exclusion Details'])
-
-
-	## Figure 5 and 6: (if available) PCA scores and loadings plots by sample type
-	if pcaModel is not None:
-
-		#tData.sampleMetadata.loc[~SSmask & ~SPmask & ~ERmask, 'Plot Sample Type'] = 'Sample'
-		#tData.sampleMetadata.loc[SSmask, 'Plot Sample Type'] = 'Study Sample'
-		#tData.sampleMetadata.loc[SPmask, 'Plot Sample Type'] = 'Study Reference'
-		#tData.sampleMetadata.loc[ERmask, 'Plot Sample Type'] = 'Long-Term Reference'
-
-
-		if destinationPath:
-			pcaPath = destinationPath
-		else:
-			pcaPath = None
-
-		pcaModel = generateBasicPCAReport(pcaModel, tData, figureCounter=4, destinationPath=pcaPath,
-										fileNamePrefix='')
-		item['pcaModel'] = pcaModel
-	else:
-		item['pcaModel'] = None
+			display(sampleSummary['Missing/excluded SS Details'])
 
 	if destinationPath:
 		# Make paths for graphics local not absolute for use in the HTML.
@@ -1240,10 +1142,12 @@ def _getAccuracyPrecisionTable(tData, table='both'):
 			tmpStatTable = tmpStatTable.dropna(how='all')
 			tmpStatTable['Feature'] = featID
 			tmpStatTable['Sample Type'] = sType
-			statTable = statTable.append(tmpStatTable, ignore_index=True)
+			statTable = pandas.concat([statTable, tmpStatTable], ignore_index=True)
 
 		statTable['Sample Type'] = [str(x) for x in statTable['Sample Type'].tolist()]
-		statTable.fillna(value='', inplace=True)
+
+		for col in Conc:
+			statTable[col] = statTable[col].fillna(numpy.nan).astype(float)
 
 		return statTable
 

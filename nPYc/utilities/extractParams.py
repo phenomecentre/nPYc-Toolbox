@@ -46,7 +46,7 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
         acqTimeRE = re.compile(query)
 
     elif filetype == 'Waters .raw':
-        pattern = '.+?\.raw$'
+        pattern = r'.+?\.raw$'
         queryItems['_extern.inf'] = ['Resolution', 'Capillary (kV)', 'Sampling Cone', u'Source Temperature (°C)',
                                      'Source Offset', u'Desolvation Temperature (°C)', 'Cone Gas Flow (L/Hr)',
                                      'Desolvation Gas Flow (L/Hr)',
@@ -62,7 +62,7 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
         fileList = buildFileList(filepath, pattern)
 
     elif filetype == '.mzML':
-        pattern = '.+?\.mzML$'
+        pattern = r'.+?\.mzML$'
         queryItems = ['startTimeStamp']
         pattern = re.compile(pattern)
         fileList = buildFileList(filepath, pattern)
@@ -86,7 +86,9 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
         elif filetype == '.mzML':
             extractedmzML = extractmzMLParamsRegex(filename, queryItems)
             try:
-                extractedmzML['Acquired Time'] = pandas.to_datetime(extractedmzML['startTimeStamp'], infer_datetime_format=True)
+                #extractedmzML['Acquired Time'] = pandas.to_datetime(extractedmzML['startTimeStamp'], format='%d-%b-%Y %H:%M:%S')
+                extractedmzML['Acquired Time'] = pandas.to_datetime(extractedmzML['startTimeStamp'], format = "mixed", utc = True)
+
             except KeyError:
                 extractedmzML['Acquired Time'] = numpy.nan
             results.append(extractedmzML)
@@ -104,9 +106,8 @@ def extractParams(filepath, filetype, pdata=1, whichFiles=None):
             warnings.warn('Duplicate raw data loaded, discarding duplicates.', UserWarning)
             # Drop duplicate files
             resultsDF = resultsDF.loc[~resultsDF['Sample File Name'].duplicated(keep='first')]
-
-        resultsDF = resultsDF.apply(lambda x: pandas.to_numeric(x, errors='ignore'))
-        resultsDF['Acquired Time'] = pandas.to_datetime(resultsDF['Acquired Time'])
+        # Jazz: adding format="mixed" and utc=True to help with mixed datetimes
+        resultsDF['Acquired Time'] = pandas.to_datetime(resultsDF['Acquired Time'], format="mixed", utc=True)
     if filetype == '.mzML':
         resultsDF.drop(columns=['startTimeStamp'], inplace=True)
 

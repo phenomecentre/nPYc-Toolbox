@@ -3,12 +3,10 @@ from matplotlib.ticker import ScalarFormatter
 import matplotlib.patches as mpatches
 import seaborn as sns
 import numpy
-import pandas
 import copy
-from ..enumerations import VariableType, SampleType, AssayRole
+from matplotlib.colors import rgb2hex
 
-
-def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='', sampletypeColor=False, hLines=None, hLineStyle='-', hBox=None, vLines=None, vLineStyle=':', vBox=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11 ,7)):
+def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='', sTypeColourDict=None, sTypeAbbrDict=None, hLines=None, hLineStyle='-', hBox=None, vLines=None, vLineStyle=':', vBox=None, savePath=None, figureFormat='png', dpi=72, figureSize=(11 ,7)):
     """
     Plot values on x-axis, with ordering on the y-axis.
     Entries as rows are placed on the x-axis, values of all columns are plotted on y-axis with different colors.
@@ -72,7 +70,7 @@ def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='',
     sns.set_style("ticks", {'axes.linewidth': 0.75})
     fig = plt.figure(figsize=figureSize, dpi=dpi)
     ax = plt.subplot(1, 1, 1)
-    current_palette = sns.color_palette()
+    sns.color_palette("deep")
 
     data = copy.deepcopy(inputTable)
     data.reset_index(drop=True, inplace=True)
@@ -82,94 +80,43 @@ def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='',
     maxY = data.shape[0]
     data['yPos'] = list(reversed(range(minY, maxY+ 1)))
 
-    # Register +/-numpy.inf, all values for min/max
-    infNegY = []
-    infPosY = []
+    # Save all values for minX/maxX
     allVal = []
 
-    # color iterator and color scheme
-    colorIdx = 1
-    if sampletypeColor:
-        ## Try loading toolbox wide color scheme
-        # value just in case
-        sTypeColourDict = {SampleType.StudySample: 'b', SampleType.StudyPool: 'g', SampleType.ExternalReference: 'r',
-                           SampleType.MethodReference: 'm', SampleType.ProceduralBlank: 'c', 'Other': 'grey'}
-        # load from the SOP as we do not have access to object
-        try:
-            from .._toolboxPath import toolboxPath
-            import json
-            import os
+    # Get list of all sampletypes to plot
+    workingCols = list(set(inputTable.columns.tolist()) - set(['yName']))
 
-            with open(os.path.join(toolboxPath(), 'StudyDesigns', 'SOP', 'Generic.json')) as data_file:
-                attributes = json.load(data_file)
-            # convert key names to SampleType enum
-            if 'sampleTypeColours' in attributes.keys():
-                sTypeColourDict = copy.deepcopy(attributes['sampleTypeColours'])
-                for stype in SampleType:
-                    if stype.name in sTypeColourDict.keys():
-                        sTypeColourDict[stype] = sTypeColourDict.pop(stype.name)
-        except:
-            pass
-        # add cases specific to this plot
-        sTypeColourDict['All Samples'] = 'black'
-        sTypeColourDict['nan'] = 'grey'
+    # Generate colour scheme if not provided
+    if sTypeColourDict is None:
 
+        sTypeColourDict = {}
+        colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(workingCols))))
 
-    # Plot each columns of data
-    # columns of interest
-    if sampletypeColor:
-        # match the subset of columns while imposing the sampleType ordering (can't be done with a set)
-        expectedCols = pandas.DataFrame({'sType': [SampleType.StudySample, SampleType.ExternalReference, 'Other', 'All Samples', SampleType.StudyPool]})
-        workingCols = expectedCols['sType'][expectedCols.sType.isin(inputTable.columns.tolist())].tolist()
-    else:
-        workingCols = list(set(inputTable.columns.tolist()) - set(['yName']))
+        for wcol in workingCols:
+            c = rgb2hex(next(colors))
+            sTypeColourDict[wcol] = c
 
-    # plot each column, store +/-inf for later plot
+    if sTypeAbbrDict is None:
+        sTypeAbbrDict = {}
+
+        for wcol in workingCols:
+            sTypeAbbrDict[wcol] = wcol
+
+    # Plot each sampletype column of data, store +/-inf for later plot
     for wcol in workingCols:
-        # change plot alpha and linewidth
-        if sampletypeColor:
-            if wcol == SampleType.StudyPool:
-                lwPlot = 1
-                alphaPlot = 1
-            else:
-                lwPlot = 1
-                alphaPlot = 0.5
-            currentColor = sTypeColourDict[wcol]
-        else:
-            lwPlot = 1
-            alphaPlot = 1
-            currentColor = current_palette[colorIdx]
 
-        # Get name
-        if wcol == SampleType.StudySample:
-            name = 'Study Sample'
-        elif wcol == SampleType.StudyPool:
-            name = 'Study Reference'
-        elif wcol == SampleType.ExternalReference:
-            name = 'Long-Term Reference'
-        else:
-            name = wcol
+        pt = ax.scatter(x=data[wcol],
+                        y=data['yPos'],
+                        alpha=0.6,
+                        lw=1,
+                        c=sTypeColourDict[wcol],
+                        label=sTypeAbbrDict[wcol])
 
-        # only plot values, no inf or nan
-        valueMask = numpy.isfinite(data[wcol].tolist()).tolist()
-        tmpX = pandas.DataFrame({'x': data.loc[valueMask, wcol].tolist()})
-        tmpY = pandas.DataFrame({'y': data.loc[valueMask, 'yPos'].tolist()})
-        pt = ax.scatter(x=tmpX['x'], y=tmpY['y'], alpha=alphaPlot, lw=lwPlot, c=currentColor, label=name)
-        colorIdx += 1
-
-        # store position of inf
-        infNegY.extend(data.loc[(data[wcol] == -numpy.inf).tolist(), 'yPos'])
-        infPosY.extend(data.loc[(data[wcol] == numpy.inf).tolist(), 'yPos'])
-        allVal.extend(data.loc[valueMask, wcol])
+        allVal.extend(data[wcol])
 
     # Plot a marker for -inf/+inf
-    minX = min(allVal)
-    maxX = max(allVal)
-    infNegX = [minX] * len(infNegY)
-    infPosX = [maxX] * len(infPosY)
-    infX = infNegX + infPosX
-    infY = infNegY + infPosY
-    ax.scatter(x=infX, y=infY, marker='X', c='white', linewidth=1, edgecolor='black')
+    minX = numpy.nanmin(allVal) # Caro
+    maxX = numpy.nanmax(allVal)
 
     # Vertical lines
     if vLines is not None:
@@ -217,7 +164,7 @@ def plotVariableScatter(inputTable, logX=False, xLim=None, xLabel='', yLabel='',
     # Axis and legend
     ax.set_xlabel(xLabel)
     ax.set_ylabel(yLabel)
-    if 'yName' in inputTable.columns:
+    if yLabel != 'Feature Number':
         plt.yticks(data['yPos'], data['yName'])
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 

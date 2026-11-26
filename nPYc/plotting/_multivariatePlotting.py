@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 from matplotlib.collections import LineCollection
 import matplotlib.dates as mdates
+from matplotlib.patches import Ellipse
 import os
 import seaborn as sns
 import plotly
@@ -17,15 +18,14 @@ import plotly.graph_objs as go
 import pandas
 import numpy
 from ._violinPlot import _violinPlotHelper
-from pyChemometrics.ChemometricsPCA import ChemometricsPCA
 from ._plotDiscreteLoadings import plotDiscreteLoadings
 from ._plotting import checkAndSetPlotAttributes
 from ..objects import Dataset
-from ..enumerations import SampleType
 from ..utilities.generic import createDestinationPath
 import copy
 import datetime
 from ..enumerations import AssayRole, SampleType
+from ..multivariate import PCAmodel
 
 
 def plotScree(R2, Q2=None, title='', xlabel='', ylabel='', savePath=None, figureFormat='png', dpi=72,
@@ -64,53 +64,64 @@ def plotScree(R2, Q2=None, title='', xlabel='', ylabel='', savePath=None, figure
         plt.show()
 
 
-def plotScores(pcaModel, classes=None, colourType=None,
-               colourDict=None, markerDict=None, components=None,
+def plotScores(pcaModel,
+               classes=None,
+               colourType=None,
+               colourDict={},
+               markerDict={},
+               components=None,
                hotelling_alpha=0.05,
-               plotAssociation=None, title='', xlabel='', figures=None,
-               savePath=None, figureFormat='png', dpi=72,
-               figureSize=(11, 7), opacity=.6):
+               plotAssociation=None,
+               title='',
+               xlabel='',
+               figures=None,
+               savePath=None,
+               figureFormat='png',
+               dpi=72,
+               figureSize=(11, 7),
+               opacity=.6):
     """
 	Plot PCA scores for each pair of components in PCAmodel, coloured by values defined in classes, and with Hotelling's T2 ellipse (95%)
 
 	:param ChemometricsPCA pcaModel: PCA model object (scikit-learn based)
-	:param pandas.Series classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
-	:param str colourType: either 'categorical' or 'continuous'
+	:param classes: Measurement/groupings associated with each sample, e.g., BMI/treatment status
+	:type classes: None or pandas.Series
+	:param colourType: either 'categorical' or 'continuous'
+	:type colourType: None or str
 	:param dict colourDict:
 	:param dict markerDict:
 	:param components: If ``None`` plots all components in model, else plots those specified in components
-	:type components: tuple (int, int)
+	:type components: None or tuple (int, int)
 	:param float hotelling_alpha: Significance value for plotting Hotellings ellipse
-	:param bool plotAssociation: If ``True``, plots the association between each set of PCA scores and the metadata values
+	:param plotAssociation: If ``True``, plots the association between each set of PCA scores and the metadata values
+	:type plotAssociation: None or pandas.DataFrame
 	:param numpy.array significance: Significance of association of scores from each component with values in classes from correlation or Kruskal-Wallis test for example (see multivariateReport.py)
 	:param str title: Title for the plot
 	:param str xlabel: Label for the x-axis
-	:param dict figures: If not ``None``, saves location of each figure for output in html report (see multivariateReport.py)
+	:param figures: If specified saves location of each figure for output in html report (see multivariateReport.py)
+	:type figures: None or dict
 	"""
 
     #print("----->> Plotting scores %s" % colourType)
     # Check inputs
 
-    if not isinstance(pcaModel, ChemometricsPCA):
-        raise TypeError('PCAmodel must be an instance of ChemometricsPCA')
+#    if not isinstance(pcaModel, ChemometricsPCA):
+#        raise TypeError('PCAmodel must be an instance of ChemometricsPCA')
 
-    if classes is not None and colourType is None:
-        raise ValueError('If classes is specified, colourType must be')
+#    if classes is not None and colourType is None:
+#        raise ValueError('If classes is specified, colourType must be')
 
-    if colourType:
-        if colourType not in {'categorical', 'continuous', 'continuousCentered'}:
-            raise ValueError('colourType must be == ' + str({'categorical', 'continuous','continuousCentered'}))
+    if colourType is not None and colourType not in {'categorical', 'continuous', 'continuousCentered'}:
+        raise ValueError('colourType must be None or == ' + str({'categorical', 'continuous','continuousCentered'}))
 
-        # If colourDict check colour defined for every unique entry in class
-    if classes is not None and colourDict is not None:
+    # If colourDict check colour defined for every unique entry in class
+    if colourDict:
         uniq = classes.unique()
         if not all(k in colourDict.keys() for k in uniq):
             print("dict keys are %s" % colourDict.keys())
             print("Category keys are %s" % uniq)
             raise ValueError(
                 'If classes and colourDict are specified every unique entry in class must be a key in colourDict')
-
-    from matplotlib.patches import Ellipse
 
     # Preparation
     values = pcaModel.scores
@@ -127,7 +138,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
     nc = len(components)
 
     if title != '':
-        title = title.translate({ord(c): " " for c in "!@#$%^&*()[]{};:,./<>?\|`~-=_+"})
+        title = title.translate({ord(c): " " for c in "!@#$%^&*()[]{};:,./<>?\\|`~-=_+"})
         plotTitle = title + ' '
         title = ''.join(title.split())
     else:
@@ -152,8 +163,6 @@ def plotScores(pcaModel, classes=None, colourType=None,
     if 'Study Reference' in uniq:
         uniq.append(uniq.pop(uniq.index('Study Reference')))
 
-    # Calculate critical value for Hotelling's T2
-    # Fval = f.ppf(0.95, 2, ns-2)
     # Plot scores for each pair of components
     for i in numpy.arange(0, nc, 2):
 
@@ -162,21 +171,19 @@ def plotScores(pcaModel, classes=None, colourType=None,
         else:
             j = i + 1
 
-        if plotAssociation is not None:
+        if plotAssociation is None:
+            fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
+        else:
             fig = plt.figure(figsize=figureSize, dpi=dpi)
             gs = gridspec.GridSpec(2, 10)
             ax = plt.subplot(gs[:, 3:])
             ax1 = plt.subplot(gs[0, : 2])
             ax2 = plt.subplot(gs[1, : 2])
-        else:
-            fig, ax = plt.subplots(figsize=figureSize, dpi=dpi)
 
         # Add Hotelling's T2
         hotelling_ellipse = pcaModel.hotelling_T2(comps=numpy.array([components[i], components[j]]),
                                                   alpha=hotelling_alpha)
 
-        # a = numpy.sqrt(numpy.var(values[:,components[i]])*Fval*2*((ns-1)/(ns-2)));
-        # b = numpy.sqrt(numpy.var(values[:,components[j]])*Fval*2*((ns-1)/(ns-2)));
         ellipse = Ellipse(xy=(0, 0), width=hotelling_ellipse[0] * 2, height=hotelling_ellipse[1] * 2,
                           edgecolor='k', fc='None', lw=2)
         ax.add_patch(ellipse)
@@ -192,7 +199,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
         if colourType == 'categorical':
             # Plot according to user defined colours if available
 
-            if colourDict is not None:
+            if colourDict:
 
                 for u in uniq:
                     ax.scatter(values[classes.values == u, components[i]],
@@ -291,9 +298,9 @@ def plotScores(pcaModel, classes=None, colourType=None,
 
         # Annotate
         ylabel = 'PC' + str(components[j] + 1) + ' (' + '{0:.2f}'.format(
-            pcaModel.modelParameters['VarExpRatio'][components[j]] * 100) + '%)'
+            pcaModel.outputstats['VarExpRatio'][components[j]] * 100) + '%)'
         xlabel = 'PC' + str(components[i] + 1) + ' (' + '{0:.2f}'.format(
-            pcaModel.modelParameters['VarExpRatio'][components[i]] * 100) + '%)'
+            pcaModel.outputstats['VarExpRatio'][components[i]] * 100) + '%)'
         if plotAssociation is not None:
             ylabel = ylabel + ' significance: ' + '{0:.2f}'.format(plotAssociation[components[j]])
             xlabel = xlabel + ' significance: ' + '{0:.2f}'.format(plotAssociation[components[i]])
@@ -305,7 +312,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
         if savePath:
 
             if figures is not None:
-                saveTemp = title + 'PC' + str(components[i] + 1) + 'vsPC' + str(components[j] + 1)
+                saveTemp = title + '_PC' + str(components[i] + 1) + 'v' + str(components[j] + 1)
                 figures[saveTemp] = savePath + saveTemp + '.' + figureFormat
             else:
                 saveTemp = ''
@@ -316,7 +323,7 @@ def plotScores(pcaModel, classes=None, colourType=None,
             plt.show()
 
     # Return figures if saving for output in html report
-    if figures is not None:
+    if figures:
         return figures
 
 
@@ -335,10 +342,12 @@ def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
 	:param dict colourDict:
 	:param dict markerDict:
 	:param dict abbrDict:
-
-	:param float fCrit: If not none, plots a line at Fcrit
-	:param float fCritAlpha: Alpha value for Fcrit (for legend)
-	:param float pCritPercentile: If not none, plots a line at this quantile
+	:param fCrit: If not none, plots a line at Fcrit
+	:type fCrit: None or float or int
+	:param fCritAlpha: Alpha value for Fcrit (for legend)
+	:type fCritAlpha: float or int
+	:param pCritPercentile: If not none, plots a line at this quantile
+	:type pCritPercentile: None or int or float
 	:param str title: Title for the plot
 	:param str xlabel: Label for the x-axis
 	"""
@@ -363,7 +372,7 @@ def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
                                            defaultVal="blue")
     markerDict = checkAndSetPlotAttributes(uniqKeys=uniq, attribDict=markerDict, dictName="markerDict", defaultVal="o")
 
-    if abbrDict is not None:
+    if abbrDict:
         if not all(k in abbrDict.keys() for k in uniq):
             raise ValueError(
                 'If abbrDict is specified every key should appear in the SampleClass column')
@@ -396,8 +405,6 @@ def plotOutliers(values, runOrder, addViolin=False, sampleType=None,
         palette[abbrDict[u]] = colourDict[u]
 
     xmin, xmax = ax.get_xlim()
-
-    # TODO: DmodX from pyChemometrics, what about the other measure?
 
     # Plot lines at quantiles
     for q in numpy.arange(0, len(quantiles)):
@@ -552,7 +559,7 @@ def plotLoadings(pcaModel, msData, title='', figures=None, savePath=None, figure
         if savePath:
 
             if figures is not None:
-                saveTemp = title + 'PCAloadingsPC' + str(i + 1)
+                saveTemp = title + '_PC' + str(i + 1)
                 figures[saveTemp] = savePath + saveTemp + '.' + figureFormat
             else:
                 saveTemp = ''
@@ -570,14 +577,14 @@ def plotScoresInteractive(dataset,
                           pcaModel,
                           labelBy='Run Order',
                           colourBy='Run Order',
-                          colourDict=None,
-                          markerDict=None,
+                          colourDict={},
+                          markerDict={},
+                          plotAsCategorical=False,
                           components=[1, 2],
                           alpha=0.05,
                           withExclusions=False,
                           destinationPath=None,
-                          autoOpen=True,
-                          opacity=.6):
+                          autoOpen=True):
     """
 	Interactively visualise PCA scores (coloured by a given sampleMetadata field, and for a given pair of components) with plotly, provides tooltips to allow identification of samples.
 
@@ -595,8 +602,8 @@ def plotScoresInteractive(dataset,
     if not isinstance(dataset, Dataset):
         raise TypeError('dataset must be an instance of nPYc.Dataset')
 
-    if not isinstance(pcaModel, ChemometricsPCA):
-        raise TypeError('PCAmodel must be a ChemometricsPCA object')
+    if not isinstance(pcaModel, PCAmodel):
+        raise TypeError('PCA model must be an instance of nPYc.multivariate.PCAmodel')
 
     values = pcaModel.scores
     ns, nc = values.shape
@@ -679,7 +686,7 @@ def plotScoresInteractive(dataset,
         data.append(NaNplot)
 
     # Plot numeric values with a colorbar
-    if classes.dtype in (int, float):
+    if (classes.dtype in (int, float)) and (plotAsCategorical==False):
         CLASSplot = go.Scatter(
             x=values[plotnans == False, components[0]],
             y=values[plotnans == False, components[1]],
@@ -700,14 +707,12 @@ def plotScoresInteractive(dataset,
     else:
         uniq = numpy.unique(classes[plotnans == False])
 
-        if colourDict is None:
-            colourDict={}
+        if not colourDict:
             colors = iter(plt.cm.rainbow(numpy.linspace(0, 1, len(uniq))))
             for u in uniq:
                 colourDict[u] = rgb2hex(next(colors))
 
-        if markerDict is None:
-            markerDict = {}
+        if not markerDict:
             for u in uniq:
                 markerDict[u] = 'diamond-dot'
 
@@ -781,11 +786,11 @@ def plotScoresInteractive(dataset,
         ],
         'xaxis': dict(
             title='PC' + str(components[0] + 1) + ' (' + '{0:.2f}'.format(
-                pcaModel.modelParameters['VarExpRatio'][components[0]] * 100) + '%)'
+                pcaModel.outputstats['VarExpRatio'][components[0]] * 100) + '%)'
         ),
         'yaxis': dict(
             title='PC' + str(components[1] + 1) + ' (' + '{0:.2f}'.format(
-                pcaModel.modelParameters['VarExpRatio'][components[1]] * 100) + '%)'
+                pcaModel.outputstats['VarExpRatio'][components[1]] * 100) + '%)'
         ),
         'title': 'Coloured by ' + colourBy,
         'legend': dict(
@@ -799,8 +804,7 @@ def plotScoresInteractive(dataset,
 
     # Save to destinationPath
     if destinationPath:
-        saveTemp = dataset.name + '_PCAscoresPlot_' + colourBy + 'PC' + str(components[0] + 1) + 'vsPC' + str(
-            components[1] + 1) + '.html'
+        saveTemp = dataset.name + '_scores_' + colourBy + '_PC' + str(components[0] + 1) + 'v' + str(components[1] + 1) + '.html'
         plotly.offline.plot(figure, filename=os.path.join(destinationPath, saveTemp), auto_open=autoOpen)
 
     return figure
@@ -828,8 +832,8 @@ def plotLoadingsInteractive(dataset, pcaModel, component=1, withExclusions=False
     if not isinstance(dataset, Dataset):
         raise TypeError('dataset must be an instance of nPYc.Dataset')
 
-    if not isinstance(pcaModel, ChemometricsPCA):
-        raise TypeError('PCAmodel must be a ChemometricsPCA object')
+    #if not isinstance(pcaModel, ChemometricsPCA):
+    #    raise TypeError('PCAmodel must be a ChemometricsPCA object')
 
     if numpy.min(component) < 1:
         raise ValueError('integer value in component can not be less than 1')
@@ -1018,7 +1022,7 @@ def plotLoadingsInteractive(dataset, pcaModel, component=1, withExclusions=False
             'barmode': 'stack'
         }
 
-        saveTemp = dataMasked.name + '_PCAloadingsPlot_PC' + str(component + 1) + '.html'
+        saveTemp = dataMasked.name + '_loadings_PC' + str(component + 1) + '.html'
 
     # Plot multi PC
     else:
@@ -1049,8 +1053,7 @@ def plotLoadingsInteractive(dataset, pcaModel, component=1, withExclusions=False
             'barmode': 'stack'
         }
 
-        saveTemp = dataMasked.name + '_PCAloadingsPlot_PC' + str(component[0] + 1) + 'vsPC' + str(
-            component[1] + 1) + '.html'
+        saveTemp = dataMasked.name + '_loadings_PC' + str(component[0] + 1) + 'v' + str(component[1] + 1) + '.html'
 
     figure = go.Figure(data=data, layout=layout)
 
@@ -1126,7 +1129,7 @@ def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=N
                 #temp.sort_index(inplace=True)
 
                 ix = 0
-                cmap = plt.get_cmap('tab10')
+                cmap = matplotlib.colormaps.get_cmap('tab10')
 
                 for i in temp.index:
                     colors.append(rgb2hex(cmap(ix)[:3]))
@@ -1176,9 +1179,9 @@ def plotMetadataDistribution(sampleMetadata, valueType, figures=None, savePath=N
         if savePath:
             if figures is not None:
                 figures['metadataDistribution_' + valueType + str(
-                    figNo)] = savePath + 'metadataDistribution_' + valueType + str(figNo) + '.' + figureFormat
+                    figNo)] = savePath + valueType + str(figNo) + '.' + figureFormat
 
-            plt.savefig(savePath + 'metadataDistribution_' + valueType + str(figNo) + '.' + figureFormat,
+            plt.savefig(savePath + valueType + str(figNo) + '.' + figureFormat,
                         bbox_inches='tight', format=figureFormat, dpi=dpi)
             plt.close()
         else:

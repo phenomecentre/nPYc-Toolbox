@@ -76,7 +76,7 @@ def plotAccuracyPrecision(tData, accuracy=True, percentRange=None, savePath=None
         tmpStatTable = tmpStatTable.dropna(how='all')
         tmpStatTable['Feat'] = featID
         tmpStatTable['Conc'] = [str(i) for i in tmpStatTable.index]
-        statTable = statTable.append(tmpStatTable, ignore_index=True)
+        statTable = pandas.concat([statTable, tmpStatTable], ignore_index=True)
         # list separation line between compounds
         horzLines = [sum([x, tmpStatTable.shape[0]]) for x in horzLines]  # increase y of all previous lines by the number of rows added
         horzLines.append(0.5)
@@ -129,4 +129,20 @@ def plotAccuracyPrecision(tData, accuracy=True, percentRange=None, savePath=None
         yL = 'Feature'
         hL = horzLines
 
-        plotVariableScatter(statTable, logX=logx, xLim=None, sampletypeColor=True, xLabel=xL, yLabel=yL, hLines=hL, hLineStyle='-', hBox=hB, vLines=vL, vLineStyle=':', vBox=vB, savePath=savePath, figureFormat=figureFormat, dpi=dpi, figureSize=figsize)
+        plotVariableScatter(statTable,
+                            logX=logx,
+                            xLim=None,
+                            #sTypeColourDict=tData.Attributes['sampleTypeColours'],
+                            #sTypeAbbrDict=tData.Attributes['sampleTypeAbbr'],
+                            xLabel=xL,
+                            yLabel=yL,
+                            hLines=hL,
+                            hLineStyle='-',
+                            hBox=hB,
+                            vLines=vL,
+                            vLineStyle=':',
+                            vBox=vB,
+                            savePath=savePath,
+                            figureFormat=figureFormat,
+                            dpi=dpi,
+                            figureSize=figsize)
