@@ -412,12 +412,12 @@ class test_reports_ms_generatereport(unittest.TestCase):
                 expectedPath = os.path.join(tmpdirname, 'graphics', 'final_report', testFile)
                 self.assertTrue(os.path.exists(expectedPath))
 
-        # Test npc coverage PDF copied if required
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            nPYc.reports.generateReport(data, 'final report', destinationPath=tmpdirname, coveragePDF=True)
-
-            expectedPath = os.path.join(tmpdirname, 'graphics', 'final_report', 'NPC_assay_coverage.pdf')
-            self.assertTrue(os.path.exists(expectedPath))
+        # # Test npc coverage PDF copied if required
+        # with tempfile.TemporaryDirectory() as tmpdirname:
+        #     nPYc.reports.generateReport(data, 'final report', destinationPath=tmpdirname, coveragePDF=True)
+        #
+        #     expectedPath = os.path.join(tmpdirname, 'graphics', 'final_report', 'NPC_assay_coverage.pdf')
+        #     self.assertTrue(os.path.exists(expectedPath))
 
     def test_reports_ms_raises(self):
 

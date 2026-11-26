@@ -33,7 +33,7 @@ setup(name='nPYc',
 	install_requires=read_requirements("requirements.txt"),
 	classifiers = [
 		"Programming Language :: Python",
-		"Programming Language :: Python :: 3.9",
+		"Programming Language :: Python :: 3.13",
 		"Intended Audience :: Science/Research",
 		"License :: OSI Approved :: MIT License",
 		"Operating System :: OS Independent",
